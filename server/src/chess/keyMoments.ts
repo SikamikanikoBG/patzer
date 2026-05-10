@@ -1,16 +1,20 @@
-// Key moments detector — picks the 3–5 highest-impact plies for a "Game Report"
-// summary. Score combines win-percentage swing with a classification weight, so
-// a routine -200cp drop early in a winning position rates lower than a
-// blunder-out-of-equal that flips evaluation.
+// Key moments detector — picks the 3–5 highest-impact plies for the Game
+// Report summary. Score combines win-percentage swing with a classification
+// weight, so a routine cp drop in a winning position rates lower than a
+// blunder that flipped the eval.
+//
+// v6: re-weighted to put brilliants/greats above mistakes (chess.com's
+// highlight reel leads with positive-spotlight moves). cp_loss cap at 600
+// stops a mate-flip from drowning the weight signal. Spec §7 bug #11/#12.
 
 import type { AnalyzedMove, Classification } from '../types.js';
 import { cpToWinPct } from './classifier.js';
 
 const CLASS_WEIGHT: Partial<Record<Classification, number>> = {
-  blunder: 8,
-  miss: 7,
-  brilliant: 6,
-  great: 5,
+  brilliant: 9,
+  miss: 8,
+  great: 7,
+  blunder: 6,
   mistake: 4,
   inaccuracy: 1.5,
 };
@@ -40,7 +44,10 @@ export function extractKeyMoments(moves: AnalyzedMove[], max = 5): KeyMoment[] {
     const wpBefore = side === 'white' ? wpBeforeWhite : 100 - wpBeforeWhite;
     const wpAfter = side === 'white' ? wpAfterWhite : 100 - wpAfterWhite;
     const delta = Math.abs(wpBefore - wpAfter);
-    const score = m.centipawn_loss + 60 * weight;
+    // Cap the cp_loss component at 600 so a mate-flip ply (cp_loss = 1000)
+    // doesn't swamp the weight-based ranking.
+    const cpLossComponent = Math.min(600, m.centipawn_loss);
+    const score = cpLossComponent + 60 * weight + 2 * delta;
     candidates.push({
       ply: m.ply,
       side,

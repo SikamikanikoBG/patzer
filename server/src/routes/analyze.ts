@@ -7,11 +7,11 @@ import { StockfishEngine } from '../chess/stockfish.js';
 import {
   classifyByWpDrop, refineClassification, normalizeEval, cpToWinPct,
   cpLossForPly, moveAccuracy, estimateElo, estimateGamePerformance, BOOK_PLIES,
-  SCORING_VERSION,
+  winDropForPly, SCORING_VERSION,
 } from '../chess/classifier.js';
 import { gameAccuracy, type MoveAccPoint } from '../chess/accuracy.js';
 import { extractKeyMoments } from '../chess/keyMoments.js';
-import { lookupOpeningFromPgn } from '../chess/openings.js';
+import { lookupOpeningByEpd, fenToEpd, lookupOpeningFromPgn } from '../chess/openings.js';
 import type { AnalysisResult, AnalyzedMove, Color, KeyMomentSummary, PhaseSplit } from '../types.js';
 
 const router = new Hono();
@@ -213,6 +213,11 @@ export async function analyzePgnFull(
   let whiteCplSum = 0, whiteCplN = 0;
   let blackCplSum = 0, blackCplN = 0;
 
+  // ECO-based book tracking. Once a position falls out of the bundled ECO map,
+  // every subsequent ply is non-book even if it transposes back into a known
+  // line (chess.com's behaviour — book ends as soon as you leave theory).
+  let stillInBook = true;
+
   for (let i = 0; i < history.length; i++) {
     const move = history[i];
     if (!move) continue;
@@ -255,14 +260,33 @@ export async function analyzePgnFull(
 
     const playerWinBefore = sideToMove === 'white' ? wpBefore : 100 - wpBefore;
     const playerWinAfter = sideToMove === 'white' ? wpAfter : 100 - wpAfter;
-    const acc = moveAccuracy(playerWinBefore, playerWinAfter);
+    // `acc` is recomputed below from wpDrop, which is mate-aware. Holding the
+    // value here keeps the existing flow but the consumer uses the corrected
+    // input.
 
     const playerEvalBeforeCp = sideToMove === 'white' ? prevWhiteCp : -prevWhiteCp;
     const playerEvalAfterCp = sideToMove === 'white' ? nextWhiteCp : -nextWhiteCp;
     const cpLoss = cpLossForPly(playerEvalBeforeCp, playerEvalAfterCp);
-    const wpDrop = Math.max(0, playerWinBefore - playerWinAfter);
+    // Mate-aware win-drop: a "+M3 → +M2" sequence is still mating, so the
+    // 0.5% drift through the sigmoid shouldn't bleed into accuracy. Spec bug #4.
+    const wpDrop = winDropForPly(playerEvalBeforeCp, playerEvalAfterCp, playerWinBefore, playerWinAfter);
     const isBest = bestUci === move.from + move.to + (move.promotion ?? '');
     const baseCls = classifyByWpDrop(wpDrop, cpLoss, isBest);
+
+    // ECO-based book: probe the position BEFORE the played move against the
+    // bundled map. Once we fall out, we stay out for the rest of the game.
+    let inBookEpd = false;
+    if (stillInBook) {
+      const epdBefore = fenToEpd(fenBefore);
+      if (lookupOpeningByEpd(epdBefore)) {
+        inBookEpd = true;
+      } else {
+        stillInBook = false;
+      }
+    }
+    // Safety ceiling — chess.com almost never tags book past ply 20.
+    if ((i + 1) > 20) inBookEpd = false;
+
     const cls = refineClassification({
       base: baseCls,
       isBest,
@@ -275,9 +299,12 @@ export async function analyzePgnFull(
       ply: i + 1,
       legalMoveCount,
       candidatePlayerCps,
+      pvAfterPlayed: nextEval.pv,
+      inBook: inBookEpd,
     });
 
     const isBookMove = cls === 'book';
+    const acc = moveAccuracy(playerWinBefore, playerWinBefore - wpDrop);
     const point: MoveAccPoint = { acc, winPct: playerWinAfter, isBook: isBookMove };
     if (sideToMove === 'white') {
       whitePoints.push(point);
@@ -432,7 +459,11 @@ function computePhaseSplit(moves: AnalyzedMove[], openingPlies: number): PhaseSp
       const wpAfterWhite = cpToWinPct(m.eval_after_cp ?? 0);
       const wpBefore = isWhite ? wpBeforeWhite : 100 - wpBeforeWhite;
       const wpAfter = isWhite ? wpAfterWhite : 100 - wpAfterWhite;
-      const acc = moveAccuracy(wpBefore, wpAfter);
+      // Mate-aware: skip the sigmoid drift on "+M3 → +M2" sequences.
+      const playerEvalBefore = isWhite ? (m.eval_before_cp ?? 0) : -(m.eval_before_cp ?? 0);
+      const playerEvalAfter = isWhite ? (m.eval_after_cp ?? 0) : -(m.eval_after_cp ?? 0);
+      const wpDrop = winDropForPly(playerEvalBefore, playerEvalAfter, wpBefore, wpAfter);
+      const acc = moveAccuracy(wpBefore, wpBefore - wpDrop);
       const point: MoveAccPoint = { acc, winPct: wpAfter, isBook };
       if (isWhite) {
         wPoints.push(point);

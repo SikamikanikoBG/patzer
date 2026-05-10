@@ -345,6 +345,7 @@ export default function GameAnalyzer() {
                       moves={analysis.moves.map((m) => ({ ply: m.ply, san: m.san, classification: m.classification }))}
                       current={ply}
                       onSelect={setPly}
+                      phaseSplit={analysis.phase_split}
                       maxHeight={460}
                     />
                   )}
@@ -407,16 +408,22 @@ export default function GameAnalyzer() {
 
 function PlayerHeader({ name, accuracy, elo, side, fen, highlighted }: { name: string; accuracy?: number; elo?: number | null; side: 'white' | 'black'; fen: string; highlighted?: boolean }) {
   return (
-    <div className={`flex items-center justify-between rounded-lg px-3 py-2 ${highlighted ? 'bg-chesscom-900 text-white shadow-soft' : 'bg-white text-chesscom-900 shadow-soft dark:bg-chesscom-800 dark:text-chesscom-100'}`}>
+    <div
+      className={`flex items-center justify-between rounded-md px-3 py-2 shadow-soft transition-colors ${
+        highlighted
+          ? 'border-l-4 border-gold-500 bg-white dark:bg-chesscom-800 text-chesscom-900 dark:text-chesscom-100'
+          : 'bg-white text-chesscom-900 dark:bg-chesscom-800/70 dark:text-chesscom-100'
+      }`}
+    >
       <div className="flex min-w-0 items-center gap-2">
         <span className={`h-3 w-3 rounded-full ${side === 'white' ? 'bg-white border border-chesscom-300' : 'bg-chesscom-900 border border-chesscom-700'}`} />
         <span className="truncate text-sm font-semibold">{name}</span>
-        {elo != null && <span className={`font-mono text-xs tabular-nums ${highlighted ? 'text-chesscom-300' : 'text-chesscom-500'}`}>({elo})</span>}
+        {elo != null && <span className="font-mono text-xs font-semibold tabular-nums text-chesscom-500">({elo})</span>}
       </div>
       <div className="flex items-center gap-3">
         <CapturedPieces fen={fen} side={side} />
         {accuracy != null && (
-          <span className="font-mono text-sm font-semibold tabular-nums">{accuracy.toFixed(1)}<span className="text-xs opacity-70">%</span></span>
+          <span className="font-mono text-sm font-bold tabular-nums">{accuracy.toFixed(1)}<span className="text-xs opacity-70">%</span></span>
         )}
       </div>
     </div>

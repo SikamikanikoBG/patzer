@@ -13,7 +13,9 @@
 html, body, #root { height: 100%; }
 body {
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  /* v4.0.0 chess.com palette: light = warm off-white panel, dark = deep sage. */
+  font-size: 14px;
+  line-height: 1.45;
+  /* v5 chess.com palette: light = warm off-white, dark = deep sage. */
   background: #f1f1f0;
   color: #262421;
 }
@@ -25,31 +27,30 @@ body {
 
 /* Polished chessground tweaks */
 cg-board {
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
-/* Last-move highlight — chess.com gold (#ffc934 @ ~50% on light, ~65% on
-   dark) instead of the v3 amber. Reads instantly as "last move" without
-   shouting at the user. */
+/* Last-move highlight — translucent yellow (chess.com's actual color),
+   distinct from the gold accent reserved for nav + focus rings. */
 cg-board square.last-move {
-  background-color: rgba(255, 201, 52, 0.50) !important;
+  background-color: rgba(255, 235, 59, 0.40) !important;
   animation: last-move-pulse 360ms ease-out;
 }
 cg-board square.last-move.move-dest,
 cg-board square.last-move.premove-dest {
-  background-color: rgba(255, 201, 52, 0.62) !important;
+  background-color: rgba(255, 235, 59, 0.55) !important;
 }
 
 @keyframes last-move-pulse {
-  0%   { background-color: rgba(255, 201, 52, 0.65) !important; }
-  100% { background-color: rgba(255, 201, 52, 0.50) !important; }
+  0%   { background-color: rgba(255, 235, 59, 0.65) !important; }
+  100% { background-color: rgba(255, 235, 59, 0.40) !important; }
 }
 
 /* Board themes — overlay an inline-SVG checkerboard on top of cg-board. The
    SVG describes one 2×2 unit (one light, one dark square in each corner);
    tiled at 25% × 25% it yields a clean 8×8 axis-aligned board.
-   v4 default is "green" (chess.com's default). */
+   Default is "green" (chess.com's canonical theme). */
 .board-theme-wood cg-board {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 2' shape-rendering='crispEdges'><rect width='2' height='2' fill='%23f0d9b5'/><rect x='1' width='1' height='1' fill='%23b58863'/><rect y='1' width='1' height='1' fill='%23b58863'/></svg>") !important;
   background-size: 25% 25% !important;
@@ -70,49 +71,51 @@ cg-board square.last-move.premove-dest {
 }
 
 @layer components {
+  /* Buttons — rounded-md (6px) per chess.com spec. */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gold-500/50 focus-visible:ring-offset-panel dark:focus-visible:ring-offset-chesscom-900 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gold-500/50 focus-visible:ring-offset-panel dark:focus-visible:ring-offset-chesscom-900 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98];
   }
-  /* v4 primary CTA = chess.com gold. Reserve for the most important action on
-     each screen (Start game, Generate review). Secondary actions stay neutral. */
-  .btn-primary { @apply btn bg-gold-500 text-chesscom-900 hover:bg-gold-600 shadow-soft; }
+  /* PRIMARY CTA = chess.com green. Reserve for the most important action on
+     each screen (Start game, Generate review, Send challenge). */
+  .btn-primary { @apply btn bg-green-500 text-white hover:bg-green-600 active:bg-green-700 shadow-soft; }
   .btn-secondary { @apply btn bg-chesscom-100 text-chesscom-900 hover:bg-chesscom-200 dark:bg-chesscom-700 dark:text-chesscom-100 dark:hover:bg-chesscom-600; }
   .btn-ghost { @apply btn text-chesscom-700 hover:bg-chesscom-100 dark:text-chesscom-200 dark:hover:bg-chesscom-800; }
   .btn-danger { @apply btn bg-bad text-white hover:bg-red-600; }
-  /* v4 "play / start" emphasis CTA — chess.com's signature green button. */
-  .btn-play { @apply btn bg-board-dark text-white hover:bg-[#5d7d3f] shadow-soft; }
+  /* Alias for .btn-primary — kept for any unmigrated callsite. */
+  .btn-play { @apply btn-primary; }
 
+  /* Cards — rounded-lg (8px), 1px solid border, soft shadow. Chess.com-tight. */
   .card {
-    @apply rounded-2xl bg-white border border-chesscom-200/80 shadow-soft dark:bg-chesscom-800/80 dark:border-chesscom-700/60 backdrop-blur-sm;
+    @apply rounded-lg bg-white border border-chesscom-200 shadow-soft dark:bg-chesscom-800 dark:border-chesscom-700;
   }
 
   .card-hover {
-    @apply card transition-all duration-200 hover:shadow-lift hover:-translate-y-0.5 hover:border-chesscom-300/60 dark:hover:border-chesscom-600/80;
+    @apply card transition-all duration-150 hover:shadow-lift hover:-translate-y-0.5 hover:border-chesscom-300 dark:hover:border-chesscom-600;
   }
 
   .input {
-    @apply block w-full rounded-xl border border-chesscom-200 bg-white px-3 py-2 text-sm text-chesscom-900 placeholder:text-chesscom-300 transition-colors focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 focus:outline-none dark:bg-chesscom-900 dark:border-chesscom-700 dark:text-chesscom-100 dark:placeholder:text-chesscom-400;
+    @apply block w-full rounded-md border border-chesscom-200 bg-white px-3 py-2 text-sm text-chesscom-900 placeholder:text-chesscom-300 transition-colors focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 focus:outline-none dark:bg-chesscom-900 dark:border-chesscom-700 dark:text-chesscom-100 dark:placeholder:text-chesscom-400;
   }
 
-  .label { @apply text-xs font-medium uppercase tracking-wide text-chesscom-500 dark:text-chesscom-300; }
+  .label { @apply text-[11px] font-semibold uppercase tracking-wide text-chesscom-500 dark:text-chesscom-300; }
 
   .badge { @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium; }
 
   /* Section header used inside cards */
   .section-header {
-    @apply flex items-center gap-3 border-b border-chesscom-100 bg-chesscom-50/60 px-5 py-3 dark:border-chesscom-700 dark:bg-chesscom-900/40;
+    @apply flex items-center gap-3 border-b border-chesscom-200 bg-chesscom-50 px-4 py-3 dark:border-chesscom-700 dark:bg-chesscom-900/40;
   }
   .section-icon {
-    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg;
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-md;
   }
   .section-title { @apply font-semibold leading-tight; }
   .section-desc  { @apply text-xs text-chesscom-500; }
 
   /* Page header shorthand */
-  .page-h1 { @apply text-3xl font-bold tracking-tight; }
+  .page-h1 { @apply text-2xl font-bold tracking-tight; letter-spacing: -0.01em; }
   .page-sub { @apply mt-1 text-sm text-chesscom-500; }
 
-  /* Pill-style tab strip used by the new ReviewTabs / KeyMomentsList nav. */
+  /* Pill-style tab strip used by ReviewTabs / KeyMomentsList nav. */
   .tab-pill {
     @apply relative px-3 py-2 text-sm font-medium text-chesscom-500 hover:text-chesscom-900 dark:hover:text-chesscom-100 transition-colors;
   }
@@ -127,5 +130,5 @@ cg-board square.last-move.premove-dest {
 
 /* Scrollbar polish */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.3); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.5); }
+::-webkit-scrollbar-thumb { background: rgba(125, 118, 112, 0.3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(125, 118, 112, 0.5); }

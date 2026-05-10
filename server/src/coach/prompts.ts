@@ -2,19 +2,23 @@ import { Chess } from 'chess.js';
 import type { Audience, Language, Classification } from '../types.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Coach prompt design (rewritten 2.1.0):
+// Coach prompt design (rewritten 5.0.0 for chess.com Game Review parity):
 //
-// Small LLMs hallucinate when asked to reason about chess. So we don't ask them
-// to reason — we hand them a structured set of pre-computed FACTS (piece names,
-// squares, captures, classification, engine recommendation, all derived from
-// chess.js + the engine PV) and tell them to render those facts in prose.
+// THREE-SECTION SCAFFOLD: PERSONA → HARD RULES → TASK CONTRACT.
+// Each call builds a system prompt with these three blocks (the persona +
+// hard rules are stable; the task contract varies per call type) and a user
+// message that contains a JSON FACTS object followed by a one-line TASK
+// directive. No ASCII board, no SAN — every piece of context is pre-rendered
+// in natural language in the requested output language so a small LLM never
+// sees information it isn't allowed to repeat.
 //
-// Rules baked into the system prompt:
-//   1) Use only the facts. Never invent pieces, squares, threats, or moves.
-//   2) Output natural language for moves: "the knight to f3", "the bishop
-//      takes on e5". NEVER SAN like "Nf3" or "Bxe5".
+// Why three sections: small models (1B-7B) follow stable structural headers
+// dramatically better than free prose. Audience tuning lives in the persona
+// block; anti-hallucination lives in the hard rules; the task contract has
+// only the directive ("explain", "hint", "describe key moment"). This split
+// is what gives us chess.com-narrator tone while keeping the model honest.
 //
-// The board diagram is kept as a small sanity-check, not as the primary input.
+// Spec: .claude/specs/coach.md §2, §3, §5.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PIECE_NAME_EN: Record<string, string> = { K: 'king', Q: 'queen', R: 'rook', B: 'bishop', N: 'knight', P: 'pawn' };
@@ -23,72 +27,134 @@ const PIECE_NAME_KID_EN: Record<string, string> = { K: 'king', Q: 'queen', R: 'c
 const PIECE_NAME_KID_BG: Record<string, string> = { K: 'цар', Q: 'дама', R: 'топче', B: 'офицер', N: 'конче', P: 'пешка' };
 const PIECE_VALUE: Record<string, number> = { K: 0, Q: 9, R: 5, B: 3, N: 3, P: 1 };
 
-function pieceNames(language: Language, audience: Audience): Record<string, string> {
+export function pieceNames(language: Language, audience: Audience): Record<string, string> {
   if (audience === 'kid') return language === 'bg' ? PIECE_NAME_KID_BG : PIECE_NAME_KID_EN;
   return language === 'bg' ? PIECE_NAME_BG : PIECE_NAME_EN;
 }
 
-const TONE: Record<Audience, Record<Language, string>> = {
+// ─────────────────────────────────────────────────────────────────────────────
+// Persona / audience block — chess.com-narrator voice, audience-tuned.
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface AudienceBlock {
+  tone: string;
+  sentences: string;
+  allowed: string;
+  banned: string;
+}
+
+const AUDIENCE_EN: Record<Audience, AudienceBlock> = {
   kid: {
-    en: `You are a warm, patient chess coach for a 7–10 year old.
-TONE: Simple words. Pieces are characters: the knight is a horsey, the rook is a castle, the queen is the strongest piece. Be encouraging — even a mistake is a learning chance.
-LENGTH: 2–3 short sentences. No lists, no headings.`,
-    bg: `Ти си мил и търпелив шах треньор за дете на 7–10 години.
-ТОН: Прости думи. Фигурите са герои: конят е кончето, топът е топчето, дамата е най-силната. Бъди окуражителен — и грешката е урок.
-ДЪЛЖИНА: 2–3 кратки изречения. Без списъци, без заглавия.`,
+    tone: 'Warm, gentle, encouraging. Mistakes are "oops", not "errors". Pieces are characters: the knight is a horsey, the rook is a castle.',
+    sentences: '2 short sentences, 6-12 words each.',
+    allowed: 'simple words; piece names; "looks", "watching", "safe", "attack", "defend"',
+    banned: 'blunder, evaluation, prophylaxis, outpost, tempo, initiative, pin, skewer, discovered attack, weak square',
   },
   beginner: {
-    en: `You are a friendly chess coach for a beginner.
-STYLE: Plain language. When useful, mention a chess principle (king safety, piece development, control of the center, piece activity). Encourage when something is right.
-LENGTH: 3–4 short sentences. No lists.`,
-    bg: `Ти си приятелски шах треньор за начинаещ.
-СТИЛ: Прост език. Когато е уместно, спомени принцип (безопасност на царя, развитие, контрол на центъра, активност на фигурите). Окуражавай при добър ход.
-ДЪЛЖИНА: 3–4 кратки изречения. Без списъци.`,
+    tone: 'Friendly, instructional, principle-first. Name ONE concept per moment (king safety, development, counting attackers/defenders).',
+    sentences: '3 short sentences, 10-18 words each.',
+    allowed: 'king safety, development, center, capture, attack, defend, threat, piece value',
+    banned: 'prophylaxis, outpost, minority attack, restraint, zugzwang, fortress, undermining',
   },
   intermediate: {
-    en: `You are a chess coach for an intermediate player.
-STYLE: Concrete reasoning. Standard chess concepts (pin, fork, weak square, outposts, pawn structure). Mention the principle behind the move.
-LENGTH: 3–5 sentences. No lists.`,
-    bg: `Ти си шах треньор за играч със средно ниво.
-СТИЛ: Конкретни разсъждения. Стандартни понятия (пирон, вилица, слабо поле, аванпост, пешечна структура). Винаги спомени принципа.
-ДЪЛЖИНА: 3–5 изречения. Без списъци.`,
+    tone: 'Concrete sport-commentary. Name standard tactical and positional motifs by name.',
+    sentences: '3-5 sentences, 14-22 words each.',
+    allowed: 'pin, fork, skewer, discovered attack, deflection, overload, weak square, outpost, open file, pawn structure, king safety, piece activity, tempo, initiative',
+    banned: 'prophylaxis, minority attack, zugzwang, fortress, restraint, undermining',
   },
   advanced: {
-    en: `You are a chess coach for an advanced club player.
-STYLE: Discuss the positional theme, the key squares, the longer-term plan. Identify tactical motifs by name (pin, fork, deflection, discovered attack).
-LENGTH: 3–6 sentences. No lists.`,
-    bg: `Ти си шах треньор за напреднал клубен играч.
-СТИЛ: Позиционна тема, ключови полета, дългосрочен план. Назовавай тактическите мотиви (пирон, вилица, отклонение, скрит удар).
-ДЪЛЖИНА: 3–6 изречения. Без списъци.`,
+    tone: 'Peer-to-peer, fast, motif-dense. Plan and key squares matter more than basics.',
+    sentences: '3-6 sentences, 16-26 words each.',
+    allowed: 'prophylaxis, minority attack, restraint, undermining, breakthrough, fortress, zugzwang, opposition, triangulation, plus all intermediate vocabulary',
+    banned: '(no banned list at this tier — write peer-to-peer)',
   },
 };
 
-// Hard-rule block appended to every system prompt. It is the SAME for every
-// audience because hallucination is universally bad.
-const HARD_RULES_EN = `
-HARD RULES — these come before everything else:
-1. You are a RENDERER, not an analyst. Below the rules you will receive a list of FACTS already computed about this position. Do NOT add chess analysis the facts do not contain. Do NOT mention pieces, squares, threats, captures, or moves not present in the facts.
-2. NEVER use chess notation like "Nf3", "Bxe5", "Qd1", "O-O" in your reply. Always say things in natural language: "the knight goes to f3", "the bishop takes on e5", "the queen drops back to d1", "short castles". Squares like d4, e5, f7 are fine on their own.
-3. Begin directly. Do NOT start with "Sure", "Of course", "Let me explain", or repeat the question.
-4. Speak in the second person to the player ("you played…").`;
+const AUDIENCE_BG: Record<Audience, AudienceBlock> = {
+  kid: {
+    tone: 'Мил, нежен, насърчителен. Грешките са "опс", не "грешки". Фигурите са герои: конят е кончето, топът е топчето.',
+    sentences: '2 кратки изречения, 6-12 думи всяко.',
+    allowed: 'прости думи; имена на фигури; "гледа", "пази", "атакува", "защитава"',
+    banned: 'блъндер, оценка, профилактика, аванпост, темпо, инициатива, пирон, шиш, скрит удар, слабо поле',
+  },
+  beginner: {
+    tone: 'Приятелски, обучаващ, принципно ориентиран. Назовавай ЕДИН принцип на момент (безопасност на царя, развитие, атакуващи и защитници).',
+    sentences: '3 кратки изречения, 10-18 думи всяко.',
+    allowed: 'безопасност на царя, развитие, център, взимане, атака, защита, заплаха, стойност на фигура',
+    banned: 'профилактика, аванпост, малцинствена атака, ограничение, цугцванг, крепост, подкопаване',
+  },
+  intermediate: {
+    tone: 'Конкретен спортен коментар. Назовавай стандартни тактически и позиционни мотиви.',
+    sentences: '3-5 изречения, 14-22 думи всяко.',
+    allowed: 'пирон, вилица, шиш, скрит удар, отклонение, претоварване, слабо поле, аванпост, отворена линия, пешечна структура, безопасност на царя, активност на фигурите, темпо, инициатива',
+    banned: 'профилактика, малцинствена атака, цугцванг, крепост, ограничение, подкопаване',
+  },
+  advanced: {
+    tone: 'Колега до колега, бързо, мотиви плътно. Планът и ключовите полета имат значение повече от основите.',
+    sentences: '3-6 изречения, 16-26 думи всяко.',
+    allowed: 'профилактика, малцинствена атака, ограничение, подкопаване, пробив, крепост, цугцванг, опозиция, триангулация и цялата средна лексика',
+    banned: '(няма забранен списък на това ниво — пиши колега до колега)',
+  },
+};
 
-const HARD_RULES_BG = `
-ТВЪРДИ ПРАВИЛА — над всичко останало:
-1. Ти си РЕНДЕРЕР, не анализатор. По-долу ще получиш списък с ФАКТИ, които вече са изчислени за тази позиция. Не добавяй анализ извън фактите. Не споменавай фигури, полета, заплахи, ходове, които не са във фактите.
-2. НИКОГА не използвай шахматна нотация като "Кf3", "Оxe5", "Дd1", "0-0". Винаги говори на естествен език: "конят отива на f3", "офицерът взема на e5", "дамата се връща на d1", "къса рокада". Полета като d4, e5, f7 могат да се споменават.
-3. Започвай директно. Не започвай с "Разбира се", "Нека ти обясня" или с повтаряне на въпроса.
-4. Говори във второ лице на играча ("ти изигра…").`;
+function audienceBlock(audience: Audience, language: Language): string {
+  const b = language === 'bg' ? AUDIENCE_BG[audience] : AUDIENCE_EN[audience];
+  if (language === 'bg') {
+    return `Аудитория: ${audience}.\nТОН: ${b.tone}\nДЪЛЖИНА: ${b.sentences}\nРАЗРЕШЕНИ ПОНЯТИЯ: ${b.allowed}.\nЗАБРАНЕНИ ПОНЯТИЯ: ${b.banned}.`;
+  }
+  return `Audience: ${audience}.\nTONE: ${b.tone}\nLENGTH: ${b.sentences}\nALLOWED CONCEPTS: ${b.allowed}.\nBANNED CONCEPTS: ${b.banned}.`;
+}
+
+const PERSONA_EN = `=== PERSONA ===
+You are Patzer's chess coach. Your voice is Chess.com's Game Review narrator: warm, friendly, sport-commentary energy, never condescending, always concrete. You speak directly to the player as "you".`;
+
+const PERSONA_BG = `=== ПЕРСОНА ===
+Ти си шах треньорът на Patzer. Гласът ти е този на разказвача в Game Review на Chess.com: топъл, приятелски, спортно-коментарна енергия, никога снизходителен, винаги конкретен. Говориш директно на играча с "ти".`;
+
+const HARD_RULES_EN = `=== HARD RULES ===
+You are a RENDERER, not an analyst. The user message contains a JSON object named FACTS that has already been computed by Stockfish + chess.js. Your only job is to phrase those facts in the persona above.
+
+R1. Use only what is in FACTS. Never name a piece, square, capture, threat, move, or continuation that is not in FACTS. If FACTS does not include it, it does not exist.
+R2. Never write chess notation (Nf3, Bxh7, O-O, Qd2+). Use natural language only. Squares (h7, e4) on their own are fine.
+R3. Never invent continuations past FACTS.engine_pv. If engine_pv has N entries, describe at most N follow-up moves.
+R4. Never claim winning / losing / mating unless FACTS.forced_mate_in is set or FACTS.verdict says so. Quote FACTS.verdict verbatim when describing the engine's overall judgement.
+R5. Output language: English. Every word in English. Translate piece names (queen, knight, etc.).
+R6. Length cap: see the audience block. No bullet lists, no headings, no markdown unless TASK asks for JSON.
+R7. Begin directly with the explanation. No "Sure!", "Of course!", "Let me explain", "Here's what happened", or repeating the question.
+R8. One praise phrase per response, maximum ("nicely done", "great find", "well played"). Never praise a mistake, blunder, or inaccuracy.
+R9. Use only ALLOWED CONCEPTS from the audience block. Never use a BANNED CONCEPT.
+R10. Don't say "in this position" / "as we can see" / "let's dive in" / "overall" / "in conclusion" — those are AI tells. Sound like a sportscaster, not a textbook.`;
+
+const HARD_RULES_BG = `=== ТВЪРДИ ПРАВИЛА ===
+Ти си РЕНДЕРЕР, не анализатор. В съобщението има JSON обект FACTS, който вече е изчислен от Stockfish + chess.js. Единствената ти задача е да преведеш фактите в гласа на персоната по-горе.
+
+R1. Използвай само това, което е във FACTS. Не споменавай фигура, поле, взимане, заплаха, ход или продължение, което не е във FACTS.
+R2. Никога не използвай шахматна нотация (Кf3, Оxh7, 0-0, Дd2+). Само естествен език. Полета (h7, e4) сами по себе си са ок.
+R3. Не измисляй продължения извън FACTS.engine_pv. Ако engine_pv има N хода, опиши най-много N последващи хода.
+R4. Не казвай "печели" / "губи" / "матиран" освен ако FACTS.forced_mate_in е зададено или FACTS.verdict го казва. Цитирай FACTS.verdict дословно за общата оценка.
+R5. Език на изхода: български. Всяка дума на български. Превеждай имената на фигурите (дама, кон, и т.н.).
+R6. Лимит на дължина: виж блока за аудиторията. Без списъци, без заглавия, без markdown освен ако TASK не иска JSON.
+R7. Започвай директно с обяснението. Без "Разбира се!", "Нека ти обясня", "Ето какво се случи" или повтаряне на въпроса.
+R8. Една похвална фраза на отговор, максимум ("страхотно", "браво", "добре изиграно"). Никога не хвали грешка, блъндер или неточност.
+R9. Използвай само РАЗРЕШЕНИ ПОНЯТИЯ от блока за аудиторията. Никога ЗАБРАНЕНО ПОНЯТИЕ.
+R10. Не казвай "в тази позиция" / "както виждаме" / "нека започнем" / "като цяло" / "в заключение" — това са AI-маркери. Звучи като спортен коментатор, не като учебник.`;
 
 export function systemPrompt(audience: Audience, language: Language): string {
-  return TONE[audience][language] + (language === 'bg' ? HARD_RULES_BG : HARD_RULES_EN);
+  if (language === 'bg') {
+    return `${PERSONA_BG}\n\n${audienceBlock(audience, language)}\n\n${HARD_RULES_BG}`;
+  }
+  return `${PERSONA_EN}\n\n${audienceBlock(audience, language)}\n\n${HARD_RULES_EN}`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Natural-language move rendering
+// Natural-language move rendering — converts a SAN move (in a given position)
+// into "the knight takes on f7" prose. Language- AND audience-aware so a
+// Bulgarian kid review gets "кончето на f7" while an English advanced review
+// gets "the knight to f7". Used to build FACTS payloads — the LLM never sees
+// SAN directly.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Convert a SAN move (in a given position) into "the knight takes on f7" prose. */
-function sanToNatural(san: string, fenBefore: string, language: Language, audience: Audience): string {
+export function sanToNatural(san: string, fenBefore: string, language: Language, audience: Audience): string {
   const names = pieceNames(language, audience);
   let res: ReturnType<Chess['move']> | null = null;
   try {
@@ -97,7 +163,6 @@ function sanToNatural(san: string, fenBefore: string, language: Language, audien
   } catch { /* fall through */ }
   if (!res) return san; // can't parse — fall back to SAN
 
-  // Castling
   const flags = res.flags ?? '';
   if (flags.includes('k')) {
     return language === 'bg' ? 'къса рокада' : 'short castles';
@@ -119,7 +184,6 @@ function sanToNatural(san: string, fenBefore: string, language: Language, audien
       ? `${pieceName} взема ${captured} на ${res.to}`
       : `the ${pieceName} takes the ${captured} on ${res.to}`;
   } else if (piece === 'P') {
-    // Pawns read better as "pawn to e4"
     core = language === 'bg' ? `${pieceName} на ${res.to}` : `the ${pieceName} to ${res.to}`;
   } else {
     core = language === 'bg'
@@ -137,146 +201,82 @@ function sanToNatural(san: string, fenBefore: string, language: Language, audien
   return core;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Board context (still useful as a sanity diagram)
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface BoardContext {
-  ascii: string;
-  whiteInv: string;
-  blackInv: string;
-  turn: 'white' | 'black';
-  inCheck: boolean;
-  capturedByWhite: string;
-  capturedByBlack: string;
-  materialBalance: number;
-}
-
-function fenToBoardContext(fen: string, language: Language, audience: Audience): BoardContext {
-  const parts = fen.split(' ');
-  const board = parts[0] ?? '';
-  const turn: 'white' | 'black' = parts[1] === 'w' ? 'white' : 'black';
-  const names = pieceNames(language, audience);
-
-  const rows = board.split('/');
-  const ascii: string[] = [];
-  const counts = { white: { K: 0, Q: 0, R: 0, B: 0, N: 0, P: 0 } as Record<string, number>, black: { K: 0, Q: 0, R: 0, B: 0, N: 0, P: 0 } as Record<string, number> };
-  const inv: { white: Record<string, string[]>; black: Record<string, string[]> } = {
-    white: { K: [], Q: [], R: [], B: [], N: [], P: [] },
-    black: { K: [], Q: [], R: [], B: [], N: [], P: [] },
-  };
-
-  for (let r = 0; r < 8; r++) {
-    const rank = 8 - r;
-    let line = `${rank} | `;
-    let file = 0;
-    for (const ch of rows[r] ?? '') {
-      if (/\d/.test(ch)) {
-        for (let i = 0; i < Number(ch); i++) { line += '. '; file++; }
-      } else {
-        line += ch + ' ';
-        const sq = String.fromCharCode(97 + file) + rank;
-        const piece = ch.toUpperCase();
-        if (ch === ch.toUpperCase()) { counts.white[piece] = (counts.white[piece] ?? 0) + 1; inv.white[piece]?.push(sq); }
-        else { counts.black[piece] = (counts.black[piece] ?? 0) + 1; inv.black[piece]?.push(sq); }
-        file++;
-      }
-    }
-    ascii.push(line.trimEnd());
-  }
-  ascii.push('    a b c d e f g h');
-
-  function fmtInv(side: Record<string, string[]>): string {
-    const order = ['K', 'Q', 'R', 'B', 'N', 'P'];
-    const parts: string[] = [];
-    for (const k of order) {
-      const list = side[k];
-      if (list && list.length > 0) parts.push(`${names[k]}: ${list.join(',')}`);
-    }
-    return parts.join(' | ') || '—';
-  }
-
-  const startCounts = { K: 1, Q: 1, R: 2, B: 2, N: 2, P: 8 };
-  function capturedFrom(curr: Record<string, number>): { list: string; value: number } {
-    const lost: string[] = [];
-    let value = 0;
-    for (const [k, n] of Object.entries(startCounts)) {
-      const missing = n - (curr[k] ?? 0);
-      if (missing > 0) {
-        for (let i = 0; i < missing; i++) { lost.push(names[k]!); value += PIECE_VALUE[k] ?? 0; }
-      }
-    }
-    return { list: lost.length ? lost.join(', ') : '—', value };
-  }
-  const blackTook = capturedFrom(counts.white);
-  const whiteTook = capturedFrom(counts.black);
-
-  let inCheck = false;
-  try {
-    const c = new Chess(fen);
-    inCheck = c.isCheck();
-  } catch { /* ignore */ }
-
-  return {
-    ascii: ascii.join('\n'),
-    whiteInv: fmtInv(inv.white),
-    blackInv: fmtInv(inv.black),
-    turn,
-    inCheck,
-    capturedByWhite: whiteTook.list,
-    capturedByBlack: blackTook.list,
-    materialBalance: whiteTook.value - blackTook.value,
-  };
-}
-
-export function fenToContext(fen: string, language: Language = 'en', audience: Audience = 'beginner'): string {
-  const ctx = fenToBoardContext(fen, language, audience);
-  const turnLabel = language === 'bg'
-    ? (ctx.turn === 'white' ? 'Бели' : 'Черни')
-    : (ctx.turn === 'white' ? 'White' : 'Black');
-  const headers = language === 'bg'
-    ? { whiteHdr: 'Бели фигури', blackHdr: 'Черни фигури', turnHdr: 'На ход', checkHdr: 'Шах', capW: 'Бели взеха', capB: 'Черни взеха', mat: 'Материален баланс' }
-    : { whiteHdr: 'White pieces', blackHdr: 'Black pieces', turnHdr: 'To move', checkHdr: 'In check', capW: 'White has captured', capB: 'Black has captured', mat: 'Material balance' };
-  const matSign = ctx.materialBalance > 0 ? `+${ctx.materialBalance}` : `${ctx.materialBalance}`;
-  return [
-    ctx.ascii,
-    '',
-    `${headers.whiteHdr}: ${ctx.whiteInv}`,
-    `${headers.blackHdr}: ${ctx.blackInv}`,
-    `${headers.capW}: ${ctx.capturedByWhite}`,
-    `${headers.capB}: ${ctx.capturedByBlack}`,
-    `${headers.mat}: ${matSign} (white perspective)`,
-    `${headers.turnHdr}: ${turnLabel}${ctx.inCheck ? `  [${headers.checkHdr}]` : ''}`,
-  ].join('\n');
-}
-
-// Recent move history in compact SAN — kept as background context.
-export function recentMovesSan(history: string[], maxPlies = 8): string {
-  if (!history.length) return '—';
-  const start = Math.max(0, history.length - maxPlies);
-  const slice = history.slice(start);
-  const startMoveNum = Math.floor(start / 2) + 1;
-  const startedOnBlack = (start % 2) === 1;
+/** Replay a PV (UCI or SAN) through chess.js and render each move into the
+ *  requested language. Max-length capped so prompts stay tight on small models. */
+export function pvToNaturalSan(pvSan: string[], fromFen: string, language: Language, audience: Audience, max = 4): string[] {
+  if (!pvSan.length) return [];
+  const replay = new Chess(fromFen);
   const out: string[] = [];
-  let n = startMoveNum;
-  let i = 0;
-  if (startedOnBlack) {
-    out.push(`${n}...${slice[i]!}`);
-    i++; n++;
+  for (const s of pvSan.slice(0, max)) {
+    const before = replay.fen();
+    const phrase = sanToNatural(s, before, language, audience);
+    try { replay.move(s, { strict: false }); } catch { break; }
+    out.push(phrase);
   }
-  while (i < slice.length) {
-    const w = slice[i]; const b = slice[i + 1];
-    out.push(`${n}.${w}${b ? ' ' + b : ''}`);
-    i += 2; n++;
+  return out;
+}
+
+/** Convert the last N plies of a SAN history into natural-language phrases for
+ *  the FACTS.history_recent field. The LLM never sees SAN this way. */
+export function recentMovesNatural(history: string[], language: Language, audience: Audience, maxPlies = 5): string[] {
+  if (!history.length) return [];
+  const start = Math.max(0, history.length - maxPlies);
+  const replay = new Chess();
+  // Replay from start up to `start` to catch up the position, then start emitting
+  // natural-language renderings.
+  for (let i = 0; i < start; i++) {
+    try { replay.move(history[i]!, { strict: false }); } catch { /* fall through */ }
   }
-  return out.join(' ');
+  const out: string[] = [];
+  for (let i = start; i < history.length; i++) {
+    const before = replay.fen();
+    const phrase = sanToNatural(history[i]!, before, language, audience);
+    try { replay.move(history[i]!, { strict: false }); } catch { break; }
+    out.push(phrase);
+  }
+  return out;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Build the FACTS the LLM has to render
+// Verdict phrasing (used by FACTS.verdict — the LLM may quote verbatim)
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface MoveContext {
+const CLASS_PHRASE_EN: Record<Classification, string> = {
+  brilliant: 'a brilliant move — the engine\'s top pick AND a real sacrifice',
+  great: 'a great move — the only move that held the position',
+  best: 'the engine\'s top choice',
+  excellent: 'an excellent move',
+  good: 'a solid move',
+  book: 'a known opening / theory move',
+  forced: 'a forced move — the only legal option',
+  inaccuracy: 'a small inaccuracy',
+  mistake: 'a mistake — a meaningfully better move was on the board',
+  blunder: 'a blunder — significant material or position lost',
+  miss: 'a missed win — a much stronger move was available',
+};
+const CLASS_PHRASE_BG: Record<Classification, string> = {
+  brilliant: 'брилянтен ход — топ изборът на двигателя И истинска жертва',
+  great: 'страхотен ход — единственият, който държеше позицията',
+  best: 'топ изборът на двигателя',
+  excellent: 'отличен ход',
+  good: 'солиден ход',
+  book: 'теоретичен ход',
+  forced: 'принуден ход — единственият легален',
+  inaccuracy: 'малка неточност',
+  mistake: 'грешка — имаше осезаемо по-добър ход',
+  blunder: 'блъндер — губи значително',
+  miss: 'пропуснат шанс — имаше много по-силен ход',
+};
+
+export function verdictPhrase(c: Classification, language: Language): string {
+  return (language === 'bg' ? CLASS_PHRASE_BG : CLASS_PHRASE_EN)[c];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Typed FACTS for the three call types — see spec §3.
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ExplainMoveInput {
   fen: string;
   player: 'White' | 'Black';
   played_san: string;
@@ -288,130 +288,122 @@ interface MoveContext {
   user_perspective?: boolean;
 }
 
-const CLASS_PHRASE_EN: Record<Classification, string> = {
-  brilliant: 'a brilliant move (the engine\'s top pick, and it sacrificed material)',
-  great: 'a great move — the only move that kept the position',
-  best: 'the engine\'s top choice — exactly the right move',
-  excellent: 'an excellent move',
-  good: 'a solid, good move',
-  book: 'a known opening move from theory',
-  forced: 'a forced move — this was the only legal move',
-  inaccuracy: 'a small inaccuracy — there was a slightly better move',
-  mistake: 'a mistake — a meaningfully better move was available',
-  blunder: 'a blunder — this loses significant material or position',
-  miss: 'a miss — you were winning, and a much stronger move was on the table',
-};
-const CLASS_PHRASE_BG: Record<Classification, string> = {
-  brilliant: 'брилянтен ход (топ изборът на двигателя — и е жертва на материал)',
-  great: 'страхотен ход — единственият, който държи позицията',
-  best: 'топ изборът на двигателя — точно правилният ход',
-  excellent: 'отличен ход',
-  good: 'солиден, добър ход',
-  book: 'известен теоретичен ход',
-  forced: 'принуден ход — единственият легален ход',
-  inaccuracy: 'малка неточност — имаше малко по-добър ход',
-  mistake: 'грешка — имаше осезаемо по-добър ход',
-  blunder: 'блъндер — този ход губи значителен материал или позиция',
-  miss: 'пропуск — печелиш, а имаше много по-силен ход',
-};
+function parseMoveDetail(san: string, fenBefore: string, language: Language, audience: Audience) {
+  try {
+    const c = new Chess(fenBefore);
+    const m = c.move(san, { strict: false });
+    if (!m) return { natural: san, is_capture: false, captured_piece: null as string | null, is_check: san.endsWith('+'), is_castle: false as false | 'short' | 'long', is_promotion: null as string | null, from_sq: '', to_sq: '' };
+    const flags = m.flags ?? '';
+    const isCastle: 'short' | 'long' | false = flags.includes('k') ? 'short' : flags.includes('q') ? 'long' : false;
+    const names = pieceNames(language, audience);
+    const captured = m.captured ? (names[m.captured.toUpperCase()] ?? null) : null;
+    const promotion = m.promotion ? (names[m.promotion.toUpperCase()] ?? null) : null;
+    return {
+      natural: sanToNatural(san, fenBefore, language, audience),
+      is_capture: Boolean(m.captured),
+      captured_piece: captured,
+      is_check: san.endsWith('+') || san.endsWith('#'),
+      is_castle: isCastle,
+      is_promotion: promotion,
+      from_sq: m.from,
+      to_sq: m.to,
+    };
+  } catch {
+    return { natural: san, is_capture: false, captured_piece: null, is_check: false, is_castle: false as false, is_promotion: null, from_sq: '', to_sq: '' };
+  }
+}
 
-function severityFromCpLoss(cpLoss: number, language: Language): string {
+/** FACTS payload for /api/coach/explain. */
+export function factsForExplain(input: ExplainMoveInput, language: Language, audience: Audience) {
+  const played = parseMoveDetail(input.played_san, input.fen, language, audience);
+  const bestSameAsPlayed = !input.best_san || input.best_san === input.played_san;
+  const best = bestSameAsPlayed
+    ? { natural: null, is_same_as_played: true }
+    : { natural: sanToNatural(input.best_san!, input.fen, language, audience), is_same_as_played: false };
+  const pvNatural = bestSameAsPlayed ? [] : pvToNaturalSan(input.pv_san ?? [], input.fen, language, audience, 4);
+
+  // Material balance after the played move (white perspective, in pawn units).
+  let materialDiff = 0;
+  try {
+    const c = new Chess(input.fen);
+    c.move(input.played_san, { strict: false });
+    const board = c.fen().split(' ')[0] ?? '';
+    for (const ch of board) {
+      if (ch === '/' || /\d/.test(ch)) continue;
+      const v = PIECE_VALUE[ch.toUpperCase()] ?? 0;
+      if (ch === ch.toUpperCase()) materialDiff += v;
+      else materialDiff -= v;
+    }
+  } catch { /* leave 0 */ }
+
+  return {
+    lang: language,
+    audience,
+    perspective: input.user_perspective ? (language === 'bg' ? 'ти' : 'you') : input.player,
+    side_to_move_before: input.player.toLowerCase(),
+    history_recent: recentMovesNatural(input.history ?? [], language, audience, 5),
+    played,
+    best,
+    engine_pv: pvNatural,
+    classification: input.classification,
+    cp_loss: input.cp_loss,
+    material_diff_after_white: materialDiff,
+    verdict: verdictPhrase(input.classification, language),
+  };
+}
+
+/** Build the user-message body for /api/coach/explain. */
+export function explainMovePrompt(input: ExplainMoveInput, language: Language, audience: Audience = 'beginner'): string {
+  const facts = factsForExplain(input, language, audience);
+  const factsJson = JSON.stringify(facts, null, 2);
+
   if (language === 'bg') {
-    if (cpLoss < 15) return 'без загуба на оценка';
-    if (cpLoss < 50) return 'дребна разлика в оценката';
-    if (cpLoss < 100) return 'забележима загуба на оценка';
-    if (cpLoss < 250) return 'голяма загуба на оценка';
-    return 'тежка загуба на оценка';
+    const persp = input.user_perspective ? 'ти' : (input.player === 'White' ? 'Бели' : 'Черни');
+    return `FACTS:\n${factsJson}\n\nTASK: Обясни хода. Обърни се към играча като "${persp}". Без шахматна нотация. Без JSON. Само естествен език на български.`;
   }
-  if (cpLoss < 15) return 'no real loss in evaluation';
-  if (cpLoss < 50) return 'a tiny dip in evaluation';
-  if (cpLoss < 100) return 'a noticeable loss in evaluation';
-  if (cpLoss < 250) return 'a large loss in evaluation';
-  return 'a heavy loss in evaluation';
+  const persp = input.user_perspective ? 'you' : input.player;
+  return `FACTS:\n${factsJson}\n\nTASK: Explain the move. Address the player as "${persp}". No chess notation. No JSON. Natural language only, in English.`;
 }
 
-export function explainMovePrompt(ctx: MoveContext, language: Language, audience: Audience = 'beginner'): string {
-  const board = fenToContext(ctx.fen, language, audience);
-  const recent = recentMovesSan(ctx.history ?? [], 6);
-
-  const playerLabel = ctx.user_perspective
-    ? (language === 'bg' ? 'Ти' : 'You')
-    : (language === 'bg' ? (ctx.player === 'White' ? 'Бели' : 'Черни') : ctx.player);
-
-  const playedNatural = sanToNatural(ctx.played_san, ctx.fen, language, audience);
-  const bestNatural = ctx.best_san && ctx.best_san !== ctx.played_san
-    ? sanToNatural(ctx.best_san, ctx.fen, language, audience)
-    : null;
-
-  const classPhrase = (language === 'bg' ? CLASS_PHRASE_BG : CLASS_PHRASE_EN)[ctx.classification];
-  const severity = severityFromCpLoss(ctx.cp_loss, language);
-
-  // Convert PV (next few engine moves) into natural language by replaying it.
-  let pvLine = '';
-  if (ctx.pv_san && ctx.pv_san.length > 0) {
-    const replay = new Chess(ctx.fen);
-    const parts: string[] = [];
-    for (const s of ctx.pv_san.slice(0, 4)) {
-      const before = replay.fen();
-      const phrase = sanToNatural(s, before, language, audience);
-      try { replay.move(s, { strict: false }); } catch { break; }
-      parts.push(phrase);
-    }
-    if (parts.length) {
-      pvLine = language === 'bg'
-        ? `\n- Възможно продължение според двигателя: ${parts.join('; след това ')}.`
-        : `\n- Engine's expected continuation: ${parts.join('; then ')}.`;
-    }
-  }
-
-  const headerEn = `Board (before the move):
-${board}
-
-Recent moves (for context only — do not invent extra ones): ${recent}
-
-FACTS — render these in coach prose, do not add chess analysis beyond them:
-- Player: ${playerLabel}
-- What ${playerLabel} did: ${playedNatural}.
-- ${bestNatural ? `Engine's best alternative was: ${bestNatural}.` : 'This was the engine\'s top choice.'}
-- Engine verdict: ${classPhrase}.
-- Magnitude: ${severity}.${pvLine}`;
-
-  const headerBg = `Дъска (преди хода):
-${board}
-
-Последни ходове (само за контекст — не измисляй други): ${recent}
-
-ФАКТИ — преведи ги в реч на треньор, без да добавяш свой анализ:
-- Играч: ${playerLabel}
-- Какво направи ${playerLabel}: ${playedNatural}.
-- ${bestNatural ? `Препоръката на двигателя беше: ${bestNatural}.` : 'Това беше топ изборът на двигателя.'}
-- Оценка от двигателя: ${classPhrase}.
-- Размер: ${severity}.${pvLine}`;
-
-  const askEn = ctx.user_perspective
-    ? `\n\nWrite the explanation. Address the player directly ("you played…"). Use natural piece names ("knight", "bishop"), never SAN like "Nf3" or "Bxe5".`
-    : `\n\nWrite the explanation in coach voice. Use natural piece names ("knight", "bishop"), never SAN like "Nf3" or "Bxe5".`;
-
-  const askBg = ctx.user_perspective
-    ? `\n\nНапиши обяснението. Говори на играча директно ("ти изигра…"). Използвай естествени имена ("кон", "офицер"), никога нотация като "Кf3".`
-    : `\n\nНапиши обяснението с глас на треньор. Използвай естествени имена ("кон", "офицер"), никога нотация като "Кf3".`;
-
-  return language === 'bg' ? headerBg + askBg : headerEn + askEn;
-}
-
+/** Build the user-message body for /api/coach/hint. */
 export function hintPrompt(fen: string, audience: Audience, language: Language, history: string[] = []): string {
-  const board = fenToContext(fen, language, audience);
-  const recent = recentMovesSan(history, 6);
-  const recentLine = history.length
-    ? (language === 'bg' ? `\nПоследни ходове (само за контекст): ${recent}` : `\nRecent moves (context only): ${recent}`)
-    : '';
-
+  const recent = recentMovesNatural(history, language, audience, 5);
+  const phaseGuess = history.length < 14 ? 'opening' : history.length < 50 ? 'middlegame' : 'endgame';
+  const facts = {
+    lang: language,
+    audience,
+    side_to_move: fen.split(' ')[1] === 'w' ? 'white' : 'black',
+    history_recent: recent,
+    phase: phaseGuess,
+  };
+  const factsJson = JSON.stringify(facts, null, 2);
   if (language === 'bg') {
-    return audience === 'kid'
-      ? `Дъска:\n${board}${recentLine}\n\nДай малък намек какво да гледаме в позицията — НЕ казвай конкретен ход. Едно изречение. Естествен език, без нотация.`
-      : `Дъска:\n${board}${recentLine}\n\nДай концептуален намек — тактически мотив, слабо поле, или общ план — БЕЗ да казваш конкретен ход. 1–2 изречения. Естествен език, без нотация.`;
+    return `FACTS:\n${factsJson}\n\nTASK: Дай концептуален намек за позицията — НЕ казвай конкретен ход, фигура или продължение. Покажи накъде да гледаме. Без шахматна нотация. 1-2 изречения на български.`;
   }
-  return audience === 'kid'
-    ? `Board:\n${board}${recentLine}\n\nGive a tiny hint about what to look at here — do NOT reveal a concrete move. One simple sentence. Use natural language, no chess notation.`
-    : `Board:\n${board}${recentLine}\n\nGive a conceptual hint — a tactical motif, weak square, or general plan — do NOT reveal a concrete move. 1–2 sentences. Natural language only, no chess notation.`;
+  return `FACTS:\n${factsJson}\n\nTASK: Give a conceptual hint about the position — do NOT name a specific move, piece, or continuation. Point at the right idea. No chess notation. 1-2 sentences in English.`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Compatibility helpers retained for legacy callers (coach/review.ts uses
+// pieceNatural and recentMovesSan). New code should reach for the typed
+// builders above.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** @deprecated — use sanToNatural directly. Kept so review.ts keeps compiling
+ *  during the migration. */
+export function pieceNatural(san: string, fenBefore: string, language: Language = 'en', audience: Audience = 'beginner'): string {
+  return sanToNatural(san, fenBefore, language, audience);
+}
+
+/** Recent moves in compact natural language joined with commas. Kept for
+ *  callers that want a single string rather than an array. */
+export function recentMovesSan(history: string[], maxPlies = 8): string {
+  if (!history.length) return '—';
+  return recentMovesNatural(history, 'en', 'beginner', maxPlies).join('; ');
+}
+
+/** @deprecated — board ASCII is no longer emitted to the LLM (spec §9.6).
+ *  Retained so any debug caller compiles. */
+export function fenToContext(fen: string, _language: Language = 'en', _audience: Audience = 'beginner'): string {
+  return `(FEN: ${fen})`;
 }

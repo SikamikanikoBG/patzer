@@ -4,6 +4,124 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0] — 2026-05-10
+
+The chess.com-fidelity major. Three specialist agents (UI Designer, Chess
+Nerd, AI Expert) produced concrete specs against the live chess.com Game
+Review, Help Center, and the Lichess accuracy formula; this release lands the
+top-priority gaps from each.
+
+### ⚠️ Breaking
+
+- **`SCORING_VERSION` bumped 5 → 6.** All cached analyses silently re-run
+  on next view with the new chess.com-aligned classification thresholds,
+  Elo curve, accuracy aggregator, and book detector.
+- **`REVIEW_PROSE_VERSION` bumped 1 → 2.** Cached AI Game Reviews silently
+  re-generate with the new persona/hard-rules system prompt and slot-filled
+  moment prose.
+
+### Changed — Chess math (chess.com Game Review parity)
+
+- **Re-anchored ACPL→Elo curve** to hit the hissha anchors (Magnus 91.2 →
+  2720, Cramling 83 → 1900, club 1500 → ~1600 ±50). Old curve ran ~290 Elo
+  cool at the GM end and ~150 Elo hot at the novice end.
+- **Game accuracy 0.6 vol + 0.4 harmonic blend** (was 50/50) plus a 3rd-worst
+  floor on the harmonic mean so multi-blunder games don't get punished
+  linearly — chess.com explicitly "reduces multi-blunder penalty" (AC).
+- **Distribution shift** of `+4·(1−blend/100)^1.5` so accuracy lands in
+  chess.com's reported 50-95 band on club games while perfect games stay
+  ~100.
+- **ECO-based book detection** replacing the flat `ply ≤ 10` rule. A novelty
+  out of theory is no longer mis-tagged as "book"; a deep Berlin Wall stays
+  book through ply 18. 20-ply safety hatch.
+- **Mate-line Miss** — engine saw mate, you played a non-mating move that
+  loses the win. Previously only +150cp→<+50cp squanders were tagged miss.
+- **Eval-flip Great** — a move that lifts a losing position into equality is
+  now tagged great even when MultiPV is unavailable.
+- **Trivial-recapture filter on Brilliant** — sacrifices that recover material
+  in the engine's continuation are demoted to "best".
+- **Mate-aware win-drop** — `+M3 → +M2` sequences no longer bleed sigmoid
+  drift into accuracy.
+- **Accuracy nudge weight 0.4 → 0.2** in both `estimateElo` and
+  `estimateGamePerformance` — accuracy is monotone in ACPL, over-weighting
+  doubles the same signal.
+- **Performance rating: 600-Elo gap clamp** addresses chess.com's stated
+  "large rating gap" caveat — a 1500 destroying a 600 no longer anchors
+  down to 1200.
+- **Looser cp-loss tiebreakers** on Excellent/Good (50/100 cp, was 30/60) —
+  chess.com's reported distribution puts more moves in those buckets.
+- **Key moments re-weighted** to put brilliants/greats above mistakes
+  (chess.com's highlight reel leads with positive-spotlight moves); cp_loss
+  component capped at 600 so mate-flips don't drown the weight signal.
+
+### Changed — AI Coach (chess.com-narrator voice)
+
+- **New 3-section prompt scaffold**: PERSONA → HARD RULES → TASK CONTRACT.
+  Each section has a stable header small models follow much better than
+  free prose. Persona uses chess.com Game Review narrator voice.
+- **Typed JSON FACTS** replaces the free-text "FACTS block". The ASCII
+  board diagram is gone (small models routinely pulled pieces off it).
+  SAN history is gone (the model is told never to use SAN, yet it saw SAN
+  in context — it sometimes copied it verbatim). Both are now natural
+  language in the requested output language.
+- **R5 output-language lock**: the prompt now explicitly forces every word
+  to be in the requested language. Bulgarian reviews used to leak English
+  piece names because `pieceNatural()` was hardcoded English — fixed.
+- **Audience BANNED CONCEPTS list** per tier (kid / beginner / intermediate
+  / advanced) so the model can't slide into "prophylaxis" when talking to a
+  beginner.
+- **Slot-filled Game Review moments**: instead of asking the model for
+  "3-4 sentences of analysis", we ask for `{title, what_happened,
+  why_it_matters, what_to_learn}` and concatenate. Cuts hallucination
+  dramatically on 1-3B models.
+- **Fixed**: `/api/coach/explain`'s zod enum was missing `'great'` and
+  `'forced'` — those classifications were 400'ing before reaching the LLM.
+
+### Changed — UI (chess.com fidelity)
+
+- **Primary CTA is green, not gold** — `.btn-primary` now matches the
+  chess.com "Play" button (same `#769656` as dark squares). Gold is
+  reserved for nav underline, last-move highlight, and focus rings.
+- **Cards drop to `rounded-lg` (8px)**, buttons to `rounded-md` (6px). The
+  v4 `rounded-2xl` cards looked like a consumer app; chess.com is tool-like.
+- **Last-move highlight = translucent yellow** (`rgba(255,235,59,0.40)`),
+  not gold.
+- **Eval bar thinned 32px → 18px** with a board-green 0-tick at the midpoint.
+- **Eval graph height 144px → 96px**, gold scrubber (was emerald), axis
+  labels removed (chess.com's graph has none), hover hairline + cp chip added.
+- **Accuracy donut 72 → 96px**, stroke 10 → 12, added 95+ teal "Master"
+  band, added skill-band label below the donut ("Master" / "Strong" /
+  "Decent" / "Weak" / "Poor").
+- **Game Report layout** reordered to chess.com's `donuts → breakdown →
+  phases` (phases used to sit between donuts and breakdown).
+- **Highlighted player header** uses a 4px gold left border instead of
+  full-background inversion — chess.com's subtle treatment.
+- **Move list**: no more alternate-row striping (chess.com uses only 1px
+  hairlines), selection chip switched from `ink-900` to `chesscom-900`,
+  phase divider rows (OPENING / MIDDLEGAME / ENDGAME) inserted between
+  pairs, brilliants and greats now earn their own positive-spotlight tints
+  (teal / steel blue).
+- **Classification badge** repositions in percentage units so it scales with
+  the board at any size (was a fixed 30px), with a spring-overshoot entry
+  animation.
+- **Active clock** = chess.com board-green (was mint emerald `accent-500`);
+  goes red below 10s with a soft pulse.
+- **Setup difficulty pills** swap from `ink-900` to `green-500` for the
+  selected state.
+- **Layout shell** gets a Settings cog button between the user chip and the
+  logout icon (chess.com pattern).
+- **Shadow alpha base** switches from slate-blue to pure-black so cards
+  feel warmer over the sage/cream chrome.
+
+### Removed
+
+- Legacy `ink-*`, `cream`, `accent-*` Tailwind tokens are *aliased* to
+  chess.com-equivalent values for now so unmigrated callsites still render
+  correctly. They'll be deleted in a future minor release.
+- Coach prompts no longer emit an ASCII board diagram (`fenToContext` is
+  retained as a stub for any debug caller).
+- `font-chess` Tailwind family (was unused).
+
 ## [4.0.0] — 2026-05-10
 
 The chess.com-parity major. Three specialist agents (UI designer, chess

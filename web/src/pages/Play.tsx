@@ -372,12 +372,12 @@ export default function Play() {
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {DIFFICULTIES.map((d) => (
                   <button key={d} onClick={() => setDifficulty(d)}
-                    className={`rounded-xl border p-3 text-left transition-colors
+                    className={`rounded-md border p-3 text-left transition-colors
                       ${difficulty === d
-                        ? 'border-ink-900 bg-ink-900 text-cream dark:border-cream dark:bg-cream dark:text-ink-900'
-                        : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}>
+                        ? 'border-green-500 bg-green-500 text-white shadow-soft'
+                        : 'border-chesscom-200 bg-white hover:border-chesscom-300 dark:border-chesscom-700 dark:bg-chesscom-800 dark:hover:border-chesscom-600'}`}>
                     <div className="text-sm font-semibold">{t(`play.diff.${d}`)}</div>
-                    <div className={`mt-1 text-xs ${difficulty === d ? 'opacity-80' : 'text-ink-500'}`}>{t(`play.diffDesc.${d}`)}</div>
+                    <div className={`mt-1 text-xs ${difficulty === d ? 'opacity-90' : 'text-chesscom-500'}`}>{t(`play.diffDesc.${d}`)}</div>
                   </button>
                 ))}
               </div>
@@ -536,7 +536,7 @@ export default function Play() {
           )}
 
           <div className="card max-h-72 overflow-auto p-4">
-            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-500">{t('review.moves')}</h3>
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-chesscom-500">{t('review.moves')}</h3>
             <MovesList moves={moves} />
           </div>
 
@@ -663,8 +663,8 @@ export default function Play() {
 
 function TabButton({ active, onClick, icon: Icon, children }: { active: boolean; onClick: () => void; icon: React.ElementType; children: React.ReactNode }) {
   return (
-    <button onClick={onClick} className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors
-      ${active ? 'bg-ink-900 text-cream dark:bg-cream dark:text-ink-900' : 'bg-ink-100 text-ink-700 hover:bg-ink-200 dark:bg-ink-800 dark:text-ink-200 dark:hover:bg-ink-700'}`}>
+    <button onClick={onClick} className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors
+      ${active ? 'bg-chesscom-900 text-white dark:bg-chesscom-100 dark:text-chesscom-900' : 'bg-chesscom-100 text-chesscom-700 hover:bg-chesscom-200 dark:bg-chesscom-800 dark:text-chesscom-200 dark:hover:bg-chesscom-700'}`}>
       <Icon className="h-4 w-4" /> {children}
     </button>
   );
@@ -789,14 +789,14 @@ function FriendTab({ onChallengeAccepted }: { onChallengeAccepted: (gameId: numb
             <div className="max-h-72 space-y-1 overflow-auto">
               {users.map((u) => (
                 <button key={u.id} onClick={() => setTarget(u.id)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors
-                    ${target === u.id ? 'bg-ink-900 text-cream dark:bg-cream dark:text-ink-900' : 'hover:bg-ink-100 dark:hover:bg-ink-800'}`}>
+                  className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors
+                    ${target === u.id ? 'bg-chesscom-900 text-white dark:bg-chesscom-100 dark:text-chesscom-900' : 'hover:bg-chesscom-100 dark:hover:bg-chesscom-800'}`}>
                   <span className="text-xl">{u.avatar_emoji}</span>
                   <div className="flex-1">
                     <div className="text-sm font-medium">{u.display_name}</div>
                     <div className="text-xs opacity-70">@{u.username}</div>
                   </div>
-                  <span className={`h-2.5 w-2.5 rounded-full ${u.online ? 'bg-accent-500' : 'bg-ink-400/60'}`} title={u.online ? 'online' : 'offline'} />
+                  <span className={`h-2.5 w-2.5 rounded-full ${u.online ? 'bg-green-500' : 'bg-chesscom-400/60'}`} title={u.online ? 'online' : 'offline'} />
                 </button>
               ))}
             </div>
@@ -814,11 +814,14 @@ function FriendTab({ onChallengeAccepted }: { onChallengeAccepted: (gameId: numb
 }
 
 function ClockBar({ timeMs, active, label, flip }: { timeMs: number; active: boolean; label: string; flip?: boolean }) {
+  const low = active && timeMs > 0 && timeMs < 10_000;
   return (
-    <div className={`flex items-center justify-between rounded-xl px-4 py-2 transition-colors
-      ${active ? 'bg-accent-500 text-white' : 'bg-ink-100 text-ink-500 dark:bg-ink-800 dark:text-ink-300'} ${flip ? '' : ''}`}>
-      <span className="text-xs font-medium uppercase">{label}</span>
-      <span className="font-mono text-lg font-semibold tabular-nums">{fmtClock(timeMs)}</span>
+    <div className={`flex items-center justify-between rounded-md px-4 py-2 transition-colors
+      ${active
+        ? (low ? 'bg-bad text-white animate-pulse-soft' : 'bg-green-500 text-white')
+        : 'bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-800 dark:text-chesscom-300'} ${flip ? '' : ''}`}>
+      <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
+      <span className="font-mono text-lg font-bold tabular-nums">{fmtClock(timeMs)}</span>
     </div>
   );
 }
@@ -826,11 +829,11 @@ function ClockBar({ timeMs, active, label, flip }: { timeMs: number; active: boo
 function MovesList({ moves }: { moves: Move[] }) {
   const rows: { num: number; w?: Move; b?: Move }[] = [];
   for (let i = 0; i < moves.length; i += 2) rows.push({ num: i / 2 + 1, w: moves[i], b: moves[i + 1] });
-  if (rows.length === 0) return <div className="text-sm text-ink-400">—</div>;
+  if (rows.length === 0) return <div className="text-sm text-chesscom-400">—</div>;
   return (
     <div className="grid grid-cols-[auto,1fr,1fr] gap-x-3 gap-y-1 text-sm">
       {rows.flatMap((r) => [
-        <span key={`n${r.num}`} className="text-ink-400">{r.num}.</span>,
+        <span key={`n${r.num}`} className="text-chesscom-400">{r.num}.</span>,
         <span key={`w${r.num}`}>{r.w?.san ?? ''}{r.w?.classification && <ClsGlyph c={r.w.classification} />}</span>,
         <span key={`b${r.num}`}>{r.b?.san ?? ''}{r.b?.classification && <ClsGlyph c={r.b.classification} />}</span>,
       ])}

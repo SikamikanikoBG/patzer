@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { styleFor } from '../lib/classification';
 
 interface Eval { ply: number; cp: number | null }
@@ -10,7 +10,7 @@ interface Props {
   onClick?: (ply: number) => void;
   /** Plies where blunders/mistakes/inaccuracies happened, drawn as colored dots. */
   markers?: Mistake[];
-  /** Pixel height; defaults to 144 (h-36) which gives the graph room to breathe. */
+  /** Pixel height; defaults to 96 (chess.com Game Review). */
   height?: number;
 }
 
@@ -25,9 +25,6 @@ function cpToWinShare(cp: number): number {
 
 function fmtCp(cp: number | null): string {
   if (cp == null) return '0.0';
-  // The classifier encodes mate as ±10000 - 10·moves (see mateToCp). Decode
-  // back to a human-friendly `M{n}` so the eval pill in the analyzer doesn't
-  // flatten "mate in 3" to a generic "#".
   if (cp >= 9000) {
     const moves = Math.max(1, Math.round((10000 - cp) / 10));
     return `M${moves}`;
@@ -40,11 +37,12 @@ function fmtCp(cp: number | null): string {
   return `${sign}${(Math.abs(cp) / 100).toFixed(2)}`;
 }
 
-// Hand-rolled SVG eval graph — Lichess-style filled area showing win-share for
-// white above the midline, black below. We don't use Recharts here: the chart
-// is small, doesn't need axes, and rendering it ourselves shaves ~80 KB off the
-// bundle and lets us draw in win-percent space rather than clamped centipawns.
-export default function EvalGraph({ evals, current, onClick, markers = [], height = 144 }: Props) {
+// Hand-rolled SVG eval graph — chess.com-style horizontal area chart. White's
+// win-share is filled from the top, black's from the bottom, midline at 0.0.
+// Mistake/blunder/brilliancy markers are circles colored by class. Hovering
+// shows a vertical hairline + chip with the ply's cp value.
+export default function EvalGraph({ evals, current, onClick, markers = [], height = 96 }: Props) {
+  const [hoverPly, setHoverPly] = useState<number | null>(null);
   const points = useMemo(() => {
     if (!evals.length) return [] as Array<{ x: number; y: number; share: number; cp: number; ply: number }>;
     const w = 100;
@@ -57,10 +55,9 @@ export default function EvalGraph({ evals, current, onClick, markers = [], heigh
   }, [evals]);
 
   if (!points.length) {
-    return <div style={{ height }} className="grid w-full place-items-center text-xs text-ink-400">No evaluation yet</div>;
+    return <div style={{ height }} className="grid w-full place-items-center text-xs text-chesscom-400">No evaluation yet</div>;
   }
 
-  // Build the area path: line across the data, then close along the bottom.
   const linePath = points.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
   const lastX = points[points.length - 1]!.x.toFixed(2);
   const firstX = points[0]!.x.toFixed(2);
@@ -73,41 +70,48 @@ export default function EvalGraph({ evals, current, onClick, markers = [], heigh
     return evals[idx]?.ply ?? evals[0]!.ply;
   }
 
+  const hoverPoint = hoverPly != null ? points[hoverPly - 1] : undefined;
+  const hoverCp = hoverPoint?.cp ?? null;
+
   return (
     <div className="relative w-full" style={{ height }}>
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         className="block h-full w-full cursor-crosshair"
+        onMouseMove={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setHoverPly(pickPly(e.clientX, rect));
+        }}
+        onMouseLeave={() => setHoverPly(null)}
         onClick={(e) => {
           if (!onClick) return;
           const rect = e.currentTarget.getBoundingClientRect();
           onClick(pickPly(e.clientX, rect));
         }}
       >
-        {/* White's territory (above midline) — slightly muted in dark mode so
-            it doesn't punch out of the page. */}
-        <path d={whiteArea} className="fill-cream opacity-95 dark:fill-ink-300/90" />
+        {/* White's territory */}
+        <path d={whiteArea} className="fill-white opacity-95 dark:fill-chesscom-200" />
         {/* Black's territory */}
-        <path d={blackArea} className="fill-ink-900 opacity-95 dark:fill-ink-950" />
+        <path d={blackArea} className="fill-chesscom-900 opacity-95" />
         {/* Midline */}
-        <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(100,116,139,0.5)" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
-        {/* Eval line — slate so it reads against both halves */}
-        <path d={linePath} fill="none" stroke="#64748b" strokeWidth="0.7" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-        {/* Mistake / blunder / brilliancy markers — color comes from the shared
-            classification table so the graph and the move-list agree. */}
+        <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(100,116,139,0.40)" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+        {/* Eval line — chesscom-400 reads on both halves */}
+        <path d={linePath} fill="none" stroke="#7d7670" strokeWidth="0.7" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        {/* Mistake / blunder / brilliancy markers */}
         {markers.map((m) => {
           const idx = m.ply - 1;
           const p = points[idx];
           if (!p) return null;
           const s = styleFor(m.classification);
           if (!s) return null;
+          const radius = m.classification === 'brilliant' ? 2.6 : 2.0;
           return (
             <circle
               key={m.ply}
               cx={p.x}
               cy={p.y}
-              r="2"
+              r={radius}
               fill={s.hex}
               stroke="#fff"
               strokeWidth="0.5"
@@ -115,27 +119,37 @@ export default function EvalGraph({ evals, current, onClick, markers = [], heigh
             />
           );
         })}
-        {/* Current-ply scrubber */}
+        {/* Current-ply scrubber — chess.com gold, not emerald */}
         {current !== undefined && (() => {
           const p = points[current - 1] ?? points[0];
           if (!p) return null;
           return (
             <g>
-              <line x1={p.x} y1={0} x2={p.x} y2={100} stroke="#10b981" strokeWidth="0.4" strokeDasharray="1 1" vectorEffect="non-scaling-stroke" />
-              <circle cx={p.x} cy={p.y} r="2" fill="#10b981" stroke="#fff" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+              <line x1={p.x} y1={0} x2={p.x} y2={100} stroke="#ffc934" strokeWidth="0.5" strokeDasharray="1 1" vectorEffect="non-scaling-stroke" />
+              <circle cx={p.x} cy={p.y} r="2.4" fill="#ffc934" stroke="#fff" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
             </g>
           );
         })()}
+        {/* Hover hairline */}
+        {hoverPoint && hoverPoint.ply !== current && (
+          <line x1={hoverPoint.x} y1={0} x2={hoverPoint.x} y2={100} stroke="rgba(125,118,112,0.55)" strokeWidth="0.4" vectorEffect="non-scaling-stroke" />
+        )}
       </svg>
-      {/* Pawn-unit Y-axis labels — moved to LEFT (chess.com convention) */}
-      <div className="pointer-events-none absolute inset-y-1 left-1 flex flex-col justify-between text-[9px] font-medium tabular-nums text-ink-400">
-        <span>+5</span>
-        <span>0</span>
-        <span>−5</span>
-      </div>
-      {/* Current eval pill */}
+      {/* Hover eval chip — top-right of cursor */}
+      {hoverPoint && (
+        <div
+          className="pointer-events-none absolute top-1 rounded-sm bg-chesscom-900/90 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-white shadow-soft"
+          style={{
+            left: `calc(${hoverPoint.x}% + 4px)`,
+            transform: hoverPoint.x > 80 ? 'translateX(-100%)' : undefined,
+          }}
+        >
+          {fmtCp(hoverCp)}
+        </div>
+      )}
+      {/* Current eval pill — top-right corner, always dark */}
       {current !== undefined && points[current - 1] && (
-        <div className="pointer-events-none absolute right-2 top-2 rounded-md bg-ink-900/80 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-cream backdrop-blur-sm dark:bg-cream/80 dark:text-ink-900">
+        <div className="pointer-events-none absolute right-2 top-2 rounded-sm bg-chesscom-900/85 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-white backdrop-blur-sm">
           {fmtCp(points[current - 1]!.cp)}
         </div>
       )}

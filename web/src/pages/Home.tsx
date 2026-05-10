@@ -54,8 +54,8 @@ export default function Home() {
               {t('app.tagline')}
             </p>
             <div className="mt-auto pt-6">
-              <span className="inline-flex items-center gap-2 rounded-xl bg-gold-500 px-4 py-2.5 text-sm font-bold text-chesscom-900 shadow-soft transition-transform group-hover:translate-x-1">
-                <Swords className="h-4 w-4" /> {t('home.playTitle')}
+              <span className="inline-flex items-center gap-2 rounded-md bg-white px-4 py-2.5 text-sm font-bold text-chesscom-900 shadow-soft transition-transform group-hover:translate-x-1">
+                <Swords className="h-4 w-4 text-green-500" /> {t('home.playTitle')}
               </span>
             </div>
           </div>

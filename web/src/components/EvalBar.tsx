@@ -38,9 +38,10 @@ export default function EvalBar({ cp, mate, orientation = 'white', height }: Pro
   const label = mate != null ? (mate > 0 ? `M${mate}` : `M${-mate}`) : fmtCp(cp);
   const isMate = mate != null;
 
+  // 18px wide, matches chess.com.
   const wrapStyle: React.CSSProperties = height != null
-    ? { height, width: 32 }
-    : { width: 32, alignSelf: 'stretch' };
+    ? { height, width: 18 }
+    : { width: 18, alignSelf: 'stretch' };
 
   // Smooth tween instead of spring — chess.com's bar feels glide-y, not bouncy.
   const ease = [0.22, 1, 0.36, 1] as const;
@@ -48,31 +49,35 @@ export default function EvalBar({ cp, mate, orientation = 'white', height }: Pro
   return (
     <div className="relative">
       <div
-        className={`flex flex-col overflow-hidden rounded-md border border-ink-300 bg-ink-200 shadow-soft dark:border-ink-700 ${isMate ? 'shadow-glow' : ''}`}
+        className={`relative flex flex-col overflow-hidden rounded-l-md border border-chesscom-300 bg-chesscom-200 shadow-soft dark:border-chesscom-700 ${isMate ? 'shadow-glow' : ''}`}
         style={wrapStyle}
       >
         <motion.div
-          className={`flex items-start justify-center text-[10px] font-semibold tabular-nums text-cream/90 ${
-            isMate && !whiteAdvantage ? 'bg-bad' : 'bg-ink-900'
+          className={`flex items-start justify-center text-[9px] font-semibold tabular-nums text-white/90 ${
+            isMate && !whiteAdvantage ? 'bg-bad' : 'bg-chesscom-900'
           }`}
           animate={{ height: `${flip ? whitePct : blackPct}%` }}
           transition={{ type: 'tween', duration: 0.28, ease }}
         />
         <motion.div
-          className={`flex items-end justify-center text-[10px] font-semibold tabular-nums text-ink-900 ${
-            isMate && whiteAdvantage ? 'bg-warn' : 'bg-cream'
+          className={`flex items-end justify-center text-[9px] font-semibold tabular-nums text-chesscom-900 ${
+            isMate && whiteAdvantage ? 'bg-warn' : 'bg-white'
           }`}
           animate={{ height: `${flip ? blackPct : whitePct}%` }}
           transition={{ type: 'tween', duration: 0.28, ease }}
         />
+        {/* 0-tick: thin board-green line at the midpoint so 0.0 is always visible. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 h-px"
+          style={{ top: '50%', backgroundColor: 'rgba(118,150,86,0.55)' }}
+        />
       </div>
-      {/* Floating score chip on the advantaged side, outside the bar — pinned to
-          the top or bottom depending on who's winning AND board orientation. */}
+      {/* Floating score chip on the advantaged side, outside the bar. */}
       <div
-        className={`pointer-events-none absolute left-1/2 -translate-x-1/2 rounded px-1.5 py-0.5 text-[10px] font-semibold tabular-nums shadow-soft ${
+        className={`pointer-events-none absolute left-1/2 -translate-x-1/2 rounded-sm px-1 py-0.5 text-[10px] font-bold tabular-nums shadow-soft ${
           whiteAdvantage
-            ? 'bg-cream text-ink-900 ring-1 ring-ink-300'
-            : 'bg-ink-900 text-cream ring-1 ring-ink-700'
+            ? 'bg-white text-chesscom-900 ring-1 ring-chesscom-200'
+            : 'bg-chesscom-900 text-white ring-1 ring-chesscom-700'
         }`}
         style={{
           [whiteAdvantage === !flip ? 'bottom' : 'top']: 4,

@@ -125,9 +125,17 @@ export default function Layout() {
               </div>
             </NavLink>
 
+            <NavLink
+              to="/settings"
+              className="hidden rounded-md p-2 text-chesscom-300 hover:bg-chesscom-800 hover:text-white sm:inline-flex"
+              title={t('common.settings')}
+            >
+              <SettingsIcon className="h-4 w-4" />
+            </NavLink>
+
             <button
               onClick={logout}
-              className="hidden rounded-lg p-2 text-chesscom-300 hover:bg-chesscom-800 hover:text-white sm:inline-flex"
+              className="hidden rounded-md p-2 text-chesscom-300 hover:bg-chesscom-800 hover:text-white sm:inline-flex"
               title={t('common.logout')}
             >
               <LogOut className="h-4 w-4" />

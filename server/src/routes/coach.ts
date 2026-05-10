@@ -18,7 +18,7 @@ const explainSchema = z.object({
   player: z.enum(['White', 'Black']),
   played_san: z.string(),
   best_san: z.string().nullable(),
-  classification: z.enum(['brilliant', 'best', 'excellent', 'good', 'book', 'inaccuracy', 'mistake', 'blunder', 'miss']),
+  classification: z.enum(['brilliant', 'great', 'best', 'excellent', 'good', 'book', 'forced', 'inaccuracy', 'mistake', 'blunder', 'miss']),
   cp_loss: z.number(),
   pv_san: z.array(z.string()).optional(),
   history: z.array(z.string()).optional(),

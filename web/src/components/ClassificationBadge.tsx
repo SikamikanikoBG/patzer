@@ -8,10 +8,10 @@ interface Props {
   size?: 'sm' | 'md';
 }
 
-// Floating pictogram badge anchored to the corner of a board square. Must be
-// placed inside a position:relative parent that's exactly the size of the
-// chessboard. The badge hangs slightly above and to the right of the square so
-// it doesn't obscure the piece silhouette underneath.
+// Floating pictogram badge anchored to the corner of a board square. Position
+// is computed in percentage units of the parent so the badge scales with the
+// board at any size (chess.com's badge stays 24% of a square wide). Place
+// inside a position:relative parent that's exactly the size of the chessboard.
 export default function ClassificationBadge({ classification, square, orientation = 'white', size = 'md' }: Props) {
   const style = styleFor(classification);
   if (!style) return null;
@@ -22,24 +22,36 @@ export default function ClassificationBadge({ classification, square, orientatio
   if (Number.isNaN(file) || Number.isNaN(rank)) return null;
 
   const flip = orientation === 'black';
-  const colPct = (flip ? 7 - file : file) * 12.5;
-  const rowPct = (flip ? rank : 7 - rank) * 12.5;
+  const colPct = (flip ? 7 - file : file) * 12.5;  // 0..87.5
+  const rowPct = (flip ? rank : 7 - rank) * 12.5;  // 0..87.5
 
-  const px = size === 'sm' ? 22 : 30;
-  const left = `calc(${colPct}% + 12.5% - ${px * 0.65}px)`;
-  const top  = `calc(${rowPct}% - ${px * 0.35}px)`;
+  // Badge sits at the top-right corner of the destination square, anchored
+  // by its CENTER (so it overhangs the corner by half its width). Badge
+  // diameter is 24% of one square = 3% of the whole board (per spec §4.4).
+  const badgePctOfBoard = size === 'sm' ? 2.4 : 3.0; // square is 12.5% wide
+  const left = `calc(${colPct}% + 12.5% - ${badgePctOfBoard / 2}%)`;
+  const top = `calc(${rowPct}% - ${badgePctOfBoard / 2}%)`;
 
   return (
-    <div className="pointer-events-none absolute z-10 animate-fade-in" style={{ left, top }}>
+    <div
+      className="pointer-events-none absolute z-10 animate-badge-pop"
+      style={{
+        left,
+        top,
+        width: `${badgePctOfBoard}%`,
+        // Use aspect-ratio for the height — keeps the badge perfectly round
+        // regardless of board pixel size.
+        aspectRatio: '1 / 1',
+      }}
+    >
       <div
         className={cn(
-          'flex items-center justify-center rounded-full text-white shadow-lg ring-2 ring-white/80 dark:ring-ink-900/80',
+          'flex h-full w-full items-center justify-center rounded-full text-white shadow-lift ring-2 ring-white/90 dark:ring-chesscom-900/90',
           style.bgClass,
         )}
-        style={{ width: px, height: px }}
         title={classification}
       >
-        <svg viewBox="0 0 24 24" width={px * 0.7} height={px * 0.7} aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="70%" height="70%" aria-hidden="true">
           {GLYPH_SVG[style.glyph]}
         </svg>
       </div>
