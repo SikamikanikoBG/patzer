@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +10,8 @@ import EvalGraph from '../components/EvalGraph';
 import MoveList from '../components/MoveList';
 import CoachPanel from '../components/CoachPanel';
 import ClassificationStats from '../components/ClassificationStats';
+import ClassificationBadge from '../components/ClassificationBadge';
+import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
 import { api } from '../api';
 import { fmtAccuracy } from '../lib/utils';
 import { useAuth } from '../state/auth';
@@ -91,6 +93,17 @@ export default function GameAnalyzer() {
 
   useEffect(() => { setPly(0); }, [gameId]);
 
+  // Play move sounds as the user steps through the game
+  const prevPlyRef = useRef(ply);
+  useEffect(() => {
+    if (ply === prevPlyRef.current) return;
+    if (ply > 0 && positions[ply]?.san) {
+      const flags = inferMoveFlagsFromSan(positions[ply]!.san!);
+      soundForMove(flags);
+    }
+    prevPlyRef.current = ply;
+  }, [ply, positions]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement | null)?.tagName;
@@ -161,17 +174,20 @@ export default function GameAnalyzer() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[auto,minmax(0,1fr)] lg:gap-6">
-        <div className="mx-auto w-full max-w-[560px] lg:mx-0">
-          <div className="flex items-stretch gap-2">
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+        <div className="mx-auto w-full lg:mx-0 lg:flex-1 lg:max-w-[760px]">
+          <div className="relative flex items-stretch gap-2">
             <EvalBar cp={currentEvalCp} orientation={orientation} />
-            <div className={`min-w-0 flex-1 board-theme-${user?.profile.board_theme ?? 'wood'}`}>
+            <div className={`relative min-w-0 flex-1 board-theme-${user?.profile.board_theme ?? 'wood'}`}>
               <ChessBoard
                 fen={pos?.fen ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'}
                 orientation={orientation}
                 lastMove={pos?.from && pos?.to ? [pos.from as never, pos.to as never] : undefined}
                 arrows={arrow as never[]}
               />
+              {move && pos?.to && (
+                <ClassificationBadge classification={move.classification} square={pos.to} orientation={orientation} />
+              )}
             </div>
           </div>
           <div className="mt-2 flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm shadow-soft dark:bg-ink-800">
@@ -189,16 +205,18 @@ export default function GameAnalyzer() {
               {fmtCp(currentEvalCp)}
             </div>
           </div>
-          <div className="mt-2 flex justify-center gap-1">
-            <button onClick={() => setPly(0)} className="btn-ghost p-2"><ChevronsLeft className="h-4 w-4" /></button>
-            <button onClick={() => setPly((p) => Math.max(0, p - 1))} className="btn-ghost p-2"><ChevronLeft className="h-4 w-4" /></button>
-            <span className="flex items-center px-3 text-sm tabular-nums text-ink-500">{ply} / {positions.length - 1}</span>
-            <button onClick={() => setPly((p) => Math.min(positions.length - 1, p + 1))} className="btn-ghost p-2"><ChevronRight className="h-4 w-4" /></button>
-            <button onClick={() => setPly(positions.length - 1)} className="btn-ghost p-2"><ChevronsRight className="h-4 w-4" /></button>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <button onClick={() => setPly(0)} className="btn-secondary h-12 w-12 p-0" title="First"><ChevronsLeft className="h-5 w-5" /></button>
+            <button onClick={() => setPly((p) => Math.max(0, p - 1))} className="btn-secondary h-12 w-12 p-0" title="Previous"><ChevronLeft className="h-5 w-5" /></button>
+            <div className="flex h-12 min-w-[5.5rem] items-center justify-center rounded-xl bg-ink-100 px-3 text-sm font-mono tabular-nums dark:bg-ink-800">
+              {ply} / {positions.length - 1}
+            </div>
+            <button onClick={() => setPly((p) => Math.min(positions.length - 1, p + 1))} className="btn-secondary h-12 w-12 p-0" title="Next"><ChevronRight className="h-5 w-5" /></button>
+            <button onClick={() => setPly(positions.length - 1)} className="btn-secondary h-12 w-12 p-0" title="Last"><ChevronsRight className="h-5 w-5" /></button>
           </div>
         </div>
 
-        <div className="min-w-0 space-y-3">
+        <div className="min-w-0 space-y-3 lg:w-[360px] lg:flex-initial lg:max-w-md">
           {!analysis && (
             <button onClick={() => analyze(requestedDepth, false)} disabled={analyzing} className="btn-primary w-full">
               <Sparkles className="h-4 w-4" />

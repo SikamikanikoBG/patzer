@@ -179,6 +179,33 @@ export default function Settings() {
         </div>
       </section>
 
+      {/* Sound + warnings */}
+      <section className="card overflow-hidden">
+        <div className="section-header">
+          <div className="section-icon bg-blue-500/15 text-blue-600"><Sparkles className="h-4 w-4" /></div>
+          <div>
+            <div className="section-title">Sound & assistance</div>
+            <div className="section-desc">Audio feedback and learning aids during play.</div>
+          </div>
+        </div>
+        <div className="space-y-3 p-5">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-ink-50 dark:hover:bg-ink-700/50">
+            <input type="checkbox" className="mt-1" checked={!!form.sound_enabled} onChange={(e) => set('sound_enabled', e.target.checked ? 1 : 0)} />
+            <div>
+              <div className="text-sm font-medium">Sound effects</div>
+              <div className="text-xs text-ink-500">Play piece-move, capture, check, castle and game-end sounds.</div>
+            </div>
+          </label>
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-ink-50 dark:hover:bg-ink-700/50">
+            <input type="checkbox" className="mt-1" checked={!!form.blunder_warning} onChange={(e) => set('blunder_warning', e.target.checked ? 1 : 0)} />
+            <div>
+              <div className="text-sm font-medium">Blunder warning before move</div>
+              <div className="text-xs text-ink-500">When playing, the engine quickly checks your move. If it looks like a mistake or blunder, ask before committing. Recommended for kids and beginners.</div>
+            </div>
+          </label>
+        </div>
+      </section>
+
       {/* Voice */}
       <section className="card overflow-hidden">
         <div className="section-header">

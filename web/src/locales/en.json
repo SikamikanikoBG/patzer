@@ -97,6 +97,19 @@
     "hint": "Hint",
     "yourTurn": "Your turn",
     "thinking": "Thinking…",
+    "tabBot": "vs Bot",
+    "tabFriend": "vs Friend",
+    "checking": "Checking…",
+    "connecting": "Connecting to game…",
+    "warn": {
+      "mistake": "That looks like a mistake!",
+      "blunder": "Wait — this is a big blunder!",
+      "miss": "You're about to miss a winning move!"
+    },
+    "warnHelp": "The engine sees a much better move available. Want to try again?",
+    "warnHint": "It suggests {{move}} instead.",
+    "tryAnother": "Try another",
+    "playAnyway": "Play it anyway",
     "result": {
       "win": "You won!",
       "loss": "You lost",
@@ -161,6 +174,18 @@
       "on_demand": "On demand",
       "always_on_pedagogical": "Always on (pedagogical)"
     }
+  },
+  "challenge": {
+    "incoming": "New challenge",
+    "someoneChallenges": "Someone wants to play with you.",
+    "incomingList": "Incoming challenges",
+    "waiting": "Waiting for accept",
+    "players": "Players",
+    "playersDesc": "Pick someone, choose your side and time, then send a challenge.",
+    "noPlayers": "No other players exist yet. Ask an admin to create another account.",
+    "send": "Send challenge",
+    "accept": "Accept",
+    "decline": "Decline"
   },
   "settings": {
     "title": "Settings",

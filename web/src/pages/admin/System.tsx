@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, AlertCircle, Save, Sparkles, Cpu, Loader2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Save, Sparkles, Cpu, Loader2, FlaskConical } from 'lucide-react';
 import { api } from '../../api';
 
 interface SysSettings {
@@ -18,6 +18,8 @@ export default function AdminSystem() {
   const [stockfishStatus, setStockfishStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [saved, setSaved] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [allTesting, setAllTesting] = useState(false);
+  const [allResults, setAllResults] = useState<Array<{ model: string; ok: boolean; latencyMs: number; sample?: string; error?: string }> | null>(null);
 
   useEffect(() => {
     api.get<SysSettings>('/api/admin/system').then((d) => {
@@ -67,6 +69,18 @@ export default function AdminSystem() {
     setSaved(true); setTimeout(() => setSaved(false), 1500);
   }
 
+  async function testAllModels() {
+    if (!s.ollama_url) return;
+    setAllTesting(true); setAllResults(null);
+    try {
+      const r = await api.post<{ ok: boolean; results?: Array<{ model: string; ok: boolean; latencyMs: number; sample?: string; error?: string }>; error?: string }>(
+        '/api/admin/test/ollama-models', { url: s.ollama_url }
+      );
+      if (r.ok && r.results) setAllResults(r.results);
+      else setAllResults([{ model: 'all', ok: false, latencyMs: 0, error: r.error ?? 'failed' }]);
+    } finally { setAllTesting(false); }
+  }
+
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-20">
       <header>
@@ -102,7 +116,38 @@ export default function AdminSystem() {
           </div>
           <div>
             <label className="label mb-1 block">{t('admin.ollamaModel')}</label>
-            {loadingModels ? (
+            <button onClick={testAllModels} disabled={!s.ollama_url || allTesting} className="btn-secondary text-xs">
+            {allTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FlaskConical className="h-3.5 w-3.5" />}
+            Test ALL models
+          </button>
+          {allResults && (
+            <div className="overflow-hidden rounded-xl border border-ink-200 dark:border-ink-700">
+              <table className="w-full text-xs">
+                <thead className="bg-ink-50 text-[10px] uppercase tracking-wider text-ink-500 dark:bg-ink-900">
+                  <tr>
+                    <th className="px-3 py-2 text-left">Model</th>
+                    <th className="px-3 py-2 text-left">Status</th>
+                    <th className="px-3 py-2 text-right">Latency</th>
+                    <th className="px-3 py-2 text-left">Sample / error</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allResults.map((r) => (
+                    <tr key={r.model} className="border-t border-ink-100 dark:border-ink-800">
+                      <td className="px-3 py-2 font-mono">{r.model}</td>
+                      <td className="px-3 py-2">
+                        {r.ok ? <span className="inline-flex items-center gap-1 text-accent-600"><CheckCircle2 className="h-3 w-3" />OK</span>
+                          : <span className="inline-flex items-center gap-1 text-bad"><AlertCircle className="h-3 w-3" />FAIL</span>}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono text-ink-500">{r.latencyMs}ms</td>
+                      <td className="px-3 py-2 truncate text-ink-500" title={r.sample ?? r.error ?? ''}>{r.sample ?? r.error ?? ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {loadingModels ? (
               <div className="flex h-10 items-center gap-2 rounded-xl bg-ink-100 px-3 text-sm text-ink-500 dark:bg-ink-800">
                 <Loader2 className="h-4 w-4 animate-spin" /> Loading models from Ollama…
               </div>

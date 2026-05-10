@@ -42,7 +42,7 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS games (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    source TEXT NOT NULL CHECK(source IN ('chesscom','played','imported')),
+    source TEXT NOT NULL CHECK(source IN ('chesscom','played','imported','pvp')),
     external_id TEXT,
     pgn TEXT NOT NULL,
     white TEXT,
@@ -51,6 +51,7 @@ const SCHEMA = [
     time_control TEXT,
     end_time TEXT,
     user_color TEXT CHECK(user_color IN ('white','black')),
+    opponent_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(user_id, source, external_id)
   )`,
@@ -66,6 +67,18 @@ const SCHEMA = [
   )`,
   `CREATE INDEX IF NOT EXISTS idx_games_user ON games(user_id, end_time DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)`,
+  `CREATE TABLE IF NOT EXISTS challenges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    from_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    to_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    color TEXT NOT NULL CHECK(color IN ('white','black','random')),
+    time_control TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','accepted','declined','cancelled','expired')),
+    game_id INTEGER REFERENCES games(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_challenges_to ON challenges(to_user_id, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_challenges_from ON challenges(from_user_id, status)`,
 ];
 
 for (const stmt of SCHEMA) db.exec(stmt);
@@ -80,6 +93,9 @@ function ensureColumn(table: string, col: string, def: string) {
 ensureColumn('analyses', 'estimated_elo_white', 'INTEGER');
 ensureColumn('analyses', 'estimated_elo_black', 'INTEGER');
 ensureColumn('profiles', 'site_theme', `TEXT NOT NULL DEFAULT 'auto'`);
+ensureColumn('profiles', 'blunder_warning', `INTEGER NOT NULL DEFAULT 0`);
+ensureColumn('profiles', 'sound_enabled', `INTEGER NOT NULL DEFAULT 1`);
+ensureColumn('games', 'opponent_user_id', `INTEGER REFERENCES users(id) ON DELETE SET NULL`);
 
 // Cleanup expired sessions on startup
 db.prepare(`DELETE FROM sessions WHERE expires_at < datetime('now')`).run();

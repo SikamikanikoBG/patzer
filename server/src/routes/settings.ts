@@ -21,6 +21,8 @@ const profileSchema = z.object({
   board_theme: z.enum(['wood', 'green', 'blue']).optional(),
   piece_set: z.string().optional(),
   site_theme: z.enum(['light', 'dark', 'auto']).optional(),
+  blunder_warning: z.boolean().optional(),
+  sound_enabled: z.boolean().optional(),
 });
 
 router.get('/profile', (c) => {

@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Sparkles, Volume2, VolumeX, Pause, Play } from 'lucide-react';
 import { useAuth } from '../state/auth';
 import { speak, cancel as cancelSpeak } from '../lib/tts';
-import { renderMarkdown } from '../lib/markdown';
+import { renderMarkdown, stripReasoning } from '../lib/markdown';
+import { ThinkingDots } from './Spinner';
 
 const MUTE_STORAGE_KEY = 'coach.mute';
 
@@ -163,15 +164,18 @@ export default function CoachPanel({ systemConfigured, request, autoPlay, trigge
         </div>
       </div>
       {muted && <div className="text-sm italic text-ink-400">— muted —</div>}
-      {!muted && busy && !text && <div className="text-sm text-ink-500">{t('coach.thinking')}</div>}
+      {!muted && busy && !text && <ThinkingDots label={t('coach.thinking')} />}
       {!muted && text && (
         <div
           className="coach-md min-w-0 break-words text-sm text-ink-800 dark:text-ink-100"
           style={{ overflowWrap: 'anywhere', wordBreak: 'break-word' }}
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(text) }}
+          dangerouslySetInnerHTML={{ __html: renderMarkdown(stripReasoning(text)) }}
         />
       )}
-      {!muted && error && <div className="text-sm text-bad">{error}</div>}
+      {!muted && busy && text && (
+        <div className="mt-2 text-xs text-ink-400"><ThinkingDots /></div>
+      )}
+      {!muted && error && <div className="rounded-lg border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-bad">{error}</div>}
     </div>
   );
 }

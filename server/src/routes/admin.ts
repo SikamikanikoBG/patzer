@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db, getSetting, setSetting } from '../db.js';
 import { requireAdmin } from '../auth/middleware.js';
 import { hashPassword } from '../auth/passwords.js';
-import { testOllama, ollamaUrl, ollamaModel } from '../coach/ollama.js';
+import { testOllama, testModel, ollamaUrl, ollamaModel } from '../coach/ollama.js';
 import { StockfishEngine } from '../chess/stockfish.js';
 import type { Profile, Role } from '../types.js';
 
@@ -140,6 +140,23 @@ router.post('/test/ollama', async (c) => {
     : ollamaUrl();
   if (!url) return c.json({ ok: false, error: 'no_url_configured' });
   return c.json(await testOllama(url));
+});
+
+router.post('/test/ollama-models', async (c) => {
+  const body = await c.req.json().catch(() => ({}));
+  const url = (body && typeof body === 'object' && 'url' in body && typeof body.url === 'string')
+    ? body.url
+    : ollamaUrl();
+  if (!url) return c.json({ ok: false, error: 'no_url_configured' }, 400);
+  const tags = await testOllama(url);
+  if (!tags.ok) return c.json({ ok: false, error: tags.error });
+  // Test each model serially with a 30s budget per model.
+  const results: Array<{ model: string; ok: boolean; latencyMs: number; sample?: string; error?: string }> = [];
+  for (const m of tags.models) {
+    const r = await testModel(url, m.name, 30_000);
+    results.push({ model: m.name, ...r });
+  }
+  return c.json({ ok: true, results });
 });
 
 router.post('/test/stockfish', async (c) => {

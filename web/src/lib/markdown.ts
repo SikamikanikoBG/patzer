@@ -68,3 +68,21 @@ export function stripMarkdown(md: string): string {
     .replace(/\n{3,}/g, '\n\n')                        // collapse blank-line runs
     .trim();
 }
+
+// Strip reasoning/thinking blocks emitted by some models (gpt-oss, deepseek-r1,
+// qwq, and similar). Closed blocks are removed entirely; an unclosed leading
+// block (still streaming) is hidden until it closes — so the user sees the
+// final answer instead of the chain-of-thought.
+const REASONING_BLOCK = /<(thinking|reasoning|think|analysis)>[\s\S]*?<\/\1>/gi;
+const REASONING_PIPE  = /<\|(?:start_)?reasoning\|>[\s\S]*?<\|(?:end_)?reasoning\|>/gi;
+const OPEN_REASONING_HEAD = /^[\s\S]*?<(?:thinking|reasoning|think|analysis)>([\s\S]*)$/i;
+
+export function stripReasoning(text: string): string {
+  if (!text) return '';
+  let s = text.replace(REASONING_BLOCK, '').replace(REASONING_PIPE, '');
+  // If a reasoning block opened but never closed (still streaming), hide
+  // everything from the opener onward.
+  const m = s.match(/<(thinking|reasoning|think|analysis)>/i);
+  if (m) s = s.slice(0, m.index);
+  return s.trim();
+}

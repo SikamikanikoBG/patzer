@@ -13,7 +13,10 @@ import gamesRoutes from './routes/games.js';
 import analyzeRoutes from './routes/analyze.js';
 import coachRoutes from './routes/coach.js';
 import metaRoutes from './routes/meta.js';
+import lobbyRoutes from './routes/lobby.js';
+import challengesRoutes from './routes/challenges.js';
 import { attachPlayWebSocket } from './ws/play.js';
+import { attachLobbyWebSocket } from './ws/lobby.js';
 
 const app = new Hono();
 app.use('*', logger());
@@ -35,6 +38,8 @@ app.route('/api/admin', adminRoutes);
 app.route('/api/games', gamesRoutes);
 app.route('/api/analyze', analyzeRoutes);
 app.route('/api/coach', coachRoutes);
+app.route('/api/lobby', lobbyRoutes);
+app.route('/api/challenges', challengesRoutes);
 
 // In production, serve the built web app
 import { existsSync, readFileSync } from 'node:fs';
@@ -77,3 +82,4 @@ const server = serve({ fetch: app.fetch, port: config.port, hostname: config.hos
 });
 
 attachPlayWebSocket(server as unknown as Server);
+attachLobbyWebSocket(server as unknown as Server);

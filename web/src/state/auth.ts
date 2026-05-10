@@ -24,6 +24,8 @@ export interface Profile {
   board_theme: BoardTheme;
   piece_set: string;
   site_theme: SiteTheme;
+  blunder_warning: number;
+  sound_enabled: number;
 }
 
 export interface User {
