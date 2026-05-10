@@ -170,7 +170,13 @@
     "notesPlaceholder": "Личните ти бележки за тази партия…",
     "notesPrivate": "Само ти ги виждаш.",
     "notesUnsaved": "Кликни извън за запазване",
-    "setUsername": "Задай Chess.com име"
+    "setUsername": "Задай Chess.com име",
+    "lines": "Линии на двигателя",
+    "linesShow": "Покажи топ линиите",
+    "linesHide": "Скрий",
+    "linesFetching": "зарежда…",
+    "linesRefreshing": "обновява…",
+    "linesPlayed": "изигран"
   },
   "classification": {
     "brilliant": "Брилянтен",
@@ -344,6 +350,15 @@
     "played": "Игри",
     "score": "Резултат",
     "acc": "Точност",
+    "achievements": "Постижения",
+    "achUnlocked": "отключени",
+    "achEmpty": "Играй и анализирай партии, за да започнеш да печелиш значки.",
+    "ach": {
+      "milestone": "Етапи",
+      "mastery": "Майсторство",
+      "tactics": "Тактика",
+      "streaks": "Серии"
+    },
     "tax": {
       "hung": "Висящи фигури",
       "hungDesc": "≥2 пешки материал загубен",
@@ -360,6 +375,75 @@
       "promisingLosing": "Изпуснати предимства",
       "promisingLosingDesc": "+1.5 → нула с един ход"
     }
+  },
+  "openings": {
+    "nav": "Дебюти",
+    "title": "Дебюти",
+    "subtitle": "Твоят репертоар като дърво.",
+    "tree": "Дърво на репертоара",
+    "totalGames": "{{n}} игри в репертоара",
+    "startPosition": "Начална позиция",
+    "selectPrompt": "Натисни възел от дървото, за да видиш детайли.",
+    "empty": "Все още няма данни за дебютите",
+    "emptyDesc": "Импортирай или анализирай няколко игри и репертоарът ти ще се разклони тук.",
+    "moreBranches": "+ още разклонения (редки линии скрити)",
+    "wins": "Победи",
+    "draws": "Равни",
+    "losses": "Загуби",
+    "score": "Резултат",
+    "avgAccuracy": "Средна точност",
+    "played": "Изиграни",
+    "afterMove": "след {{san}}",
+    "unknownLine": "Нетеоретична линия",
+    "trainCta": "Тренирай ги →"
+  },
+  "plan": {
+    "nav": "План",
+    "title": "План за подобрение",
+    "subtitle": "Фокусиран набор от седмични цели според играта ти.",
+    "regenerate": "Прегенерирай",
+    "regenerating": "Прегенерира…",
+    "generate": "Генерирай план",
+    "empty": "Все още няма цели — генерирай първия си план.",
+    "emptyDesc": "Планът ти се обновява седмично с фокусирани цели по реалните ти слабости.",
+    "activeGroup": "Активни",
+    "completedGroup": "Завършени тази седмица",
+    "expiredGroup": "Изтекли",
+    "progress": "Напредък",
+    "done": "Готово",
+    "expired": "Изтече",
+    "daysLeft": "{{n}}д остават",
+    "endsToday": "приключва днес",
+    "cta": {
+      "puzzles_solve": "Тренирай",
+      "opening_play": "Играй",
+      "review_games": "Преглед",
+      "accuracy": "Играй",
+      "win_streak": "Играй"
+    }
+  },
+  "lab": {
+    "nav": "Лаборатория",
+    "title": "Лаборатория",
+    "subtitle": "Свободна дъска с Stockfish при поискване.",
+    "whiteToMove": "Белите играят",
+    "blackToMove": "Черните играят",
+    "fenPlaceholder": "Постави FEN…",
+    "setFen": "Зареди",
+    "invalidFen": "Невалиден FEN",
+    "reset": "Нулирай",
+    "flip": "Обърни дъската",
+    "engine": "Анализ от двигателя",
+    "analyze": "Анализирай",
+    "analyzing": "Анализира…",
+    "crunching": "Изчислява позиции…",
+    "analyzeError": "Анализът неуспешен. Stockfish конфигуриран ли е?",
+    "idlePrompt": "Натисни Анализирай, за да видиш мнението на Stockfish.",
+    "depth": "Дълбочина",
+    "lines": "Линии",
+    "depthLabel": "дълбочина",
+    "moves": "Ходове",
+    "startPos": "Начало"
   },
   "home": {
     "greeting": "Здрасти, {{name}}!",
@@ -385,6 +469,15 @@
     "fromGame": "От твоята игра срещу {{opp}}",
     "topOpening": "Топ твоят дебют",
     "recentGames": "Последни игри",
-    "viewAll": "Виж всички →"
+    "viewAll": "Виж всички →",
+    "planLabel": "План за тази седмица",
+    "planActive": "активни",
+    "planEmpty": "Създай първия си план за подобрение",
+    "planEmptyDesc": "Избери няколко седмични цели — задачи, дебюти, точност.",
+    "achievementsLabel": "Постижения",
+    "achievementsRecent": "Скоро отключени",
+    "achievementsEmpty": "Спечели първата си значка като изиграеш игра",
+    "achievementsEmptyDesc": "0 от {{n}} отключени",
+    "whatsNew": "Ново: планове, постижения и панел с топ 3 линии в Прегледа."
   }
 }

@@ -4,6 +4,79 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.0.0] — 2026-05-10
+
+The "Beyond Chess.com 2.0" major — Personal Power Suite. Where v6 added the
+features chess.com refuses to ship, v7 turns Patzer into a personal coach: a
+weekly improvement plan that knows your weaknesses, a clickable opening tree
+of your own repertoire, an achievement system tied to *your* games, an engine
+sandbox to think out loud, and on-demand multi-PV in the analyzer.
+
+### Added — Improvement Plan (`/plan`)
+
+- **Weekly goals tailored to your data.** Five goal kinds (`puzzles_solve`,
+  `opening_play`, `review_games`, `accuracy`, `win_streak`) seeded from
+  insights — e.g. "play 3 games as White in your weakest opening" picks the
+  actual ECO from your repertoire row with the worst score.
+- **Live progress.** Each goal's bar advances as you play, train, or review.
+  Goals expire after 7 days; completed ones get a gold sparkle.
+- **`POST /api/plan/regenerate`** swaps in a fresh week.
+- **Home tile** surfaces the most-imminent goal so the plan never goes cold.
+
+### Added — Opening Tree Explorer (`/openings`)
+
+- **`GET /api/openings/tree`** builds an EPD-keyed trie from your analyzed
+  games (depth-capped at ply 20, top 8 children per node), attaches ECO and
+  opening name where the position matches the curated book.
+- **Clickable tree UI** with score chips (green ≥55%, red ≤40%), per-node
+  W/D/L counts, and a mini-board that updates on selection.
+- **"Train these →"** deep-links each node into Review filtered by opening.
+
+### Added — Achievements
+
+- **11 achievements across 4 categories** (milestone / mastery / tactics /
+  streaks): from `first_game` and `first_win` through `centurion`,
+  `puzzle_master`, `tactician`, `accurate_player`, three `streaker_*` tiers,
+  and `opening_explorer`.
+- **`GET /api/achievements`** returns the full catalog with live progress and
+  first-unlock latching (`achievements_unlocked` table is write-once).
+- **Insights page achievements section** (anchor-linkable via `#achievements`)
+  shows all badges grouped by category — unlocked get a gold ring.
+- **Home achievements tile** counts unlocked / total and previews the three
+  most-recently-unlocked badges.
+
+### Added — Engine Lab (`/lab`)
+
+- **Position sandbox** with both colors movable, FEN paste/load/reset, board
+  flip, and a side-to-move indicator.
+- **`POST /api/analyze/position`** runs Stockfish multi-PV (lines 1-5, depth
+  8-22) on demand. Each candidate returns UCI, SAN, full PV in SAN (8 plies),
+  and cp/mate score.
+- **Top-N lines panel** with click-to-play SAN, hint arrow for the engine's
+  best move, and a move history list with click-to-revert.
+
+### Added — Top-3 lines in Game Analyzer
+
+- **Lines panel** in the right rail shows the engine's top 3 alternatives at
+  the current ply. Toggle on/off; auto-fetches with 400ms debounce as you
+  navigate. Hover a line to preview that move on the board.
+
+### Added — Navigation & UX polish
+
+- **Three new top-bar entries** (Openings, Plan, Lab) and matching mobile
+  drawer items.
+- **`g X` shortcuts** extended: `g o` (Openings), `g n` (plaN), `g l` (Lab).
+- **Command palette** entries for the new pages.
+- **"What's new" v7.0.0 badge** on Home (dismissible, persisted in
+  localStorage).
+- **Staggered framer-motion entrance** on Home tiles.
+
+### Database
+
+- **`goals`** — per-user weekly goals (kind, target, progress is computed),
+  with auto-expire sweep at startup.
+- **`achievements_unlocked`** — write-once table, one row per first-unlock.
+
 ## [6.0.0] — 2026-05-10
 
 The "Beyond Chess.com" major. Where v4/v5 were *parity passes*, v6 lands the

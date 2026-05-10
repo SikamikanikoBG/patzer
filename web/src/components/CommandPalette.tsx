@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Search, Home, Swords, BookOpen, BarChart3, Settings as SettingsIcon, Target,
   Trophy, Frown, Equal, Users, Server, Sun, Moon, Globe, LogOut, Star,
+  BookMarked, ListChecks, Microscope,
 } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
@@ -59,6 +60,9 @@ export default function CommandPalette({ open, onClose }: Props) {
       { id: 'nav-review', label: t('review.title'), icon: BookOpen, group: 'nav', run: () => { nav('/review'); onClose(); } },
       { id: 'nav-insights', label: t('insights.title', { defaultValue: 'Insights' }), icon: BarChart3, group: 'nav', run: () => { nav('/insights'); onClose(); } },
       { id: 'nav-train', label: t('train.title', { defaultValue: 'Tactic Trainer' }), icon: Target, group: 'nav', keywords: 'puzzle tactic train practice', run: () => { nav('/train'); onClose(); } },
+      { id: 'nav-openings', label: t('openings.title', { defaultValue: 'Openings' }), icon: BookMarked, group: 'nav', keywords: 'opening repertoire tree eco', run: () => { nav('/openings'); onClose(); } },
+      { id: 'nav-plan', label: t('plan.title', { defaultValue: 'Improvement plan' }), icon: ListChecks, group: 'nav', keywords: 'plan goals weekly improvement', run: () => { nav('/plan'); onClose(); } },
+      { id: 'nav-lab', label: t('lab.title', { defaultValue: 'Lab' }), icon: Microscope, group: 'nav', keywords: 'lab sandbox engine analyze stockfish position', run: () => { nav('/lab'); onClose(); } },
       { id: 'nav-settings', label: t('common.settings'), icon: SettingsIcon, group: 'nav', run: () => { nav('/settings'); onClose(); } },
       { id: 'nav-bookmarks', label: t('palette.bookmarks', { defaultValue: 'Starred games' }), icon: Star, group: 'nav', run: () => { nav('/review?bookmarked=1'); onClose(); } },
     ];

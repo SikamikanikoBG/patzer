@@ -1,12 +1,43 @@
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Swords, BookOpen, Settings as SettingsIcon, ChevronRight, Trophy, Frown, Equal, Flame, Target, Activity, Download, Sparkles, BarChart3 } from 'lucide-react';
+import * as Icons from 'lucide-react';
+import { Swords, BookOpen, Settings as SettingsIcon, ChevronRight, Trophy, Frown, Equal, Flame, Target, Activity, Download, Sparkles, BarChart3, ListChecks, Award, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../state/auth';
 import { api } from '../api';
 import { fmtAccuracy } from '../lib/utils';
 import type { GameRow } from '../types';
+
+const APP_VERSION = 'v7.0.0';
+const CHANGELOG_KEY = 'patzer.lastSeenChangelog';
+
+type Achievement = {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: 'milestone' | 'mastery' | 'tactics' | 'streaks';
+  unlocked: boolean;
+  unlocked_at: string | null;
+  progress: number;
+  target: number;
+};
+
+type PlanGoal = {
+  id: number;
+  kind: 'puzzles_solve' | 'opening_play' | 'review_games' | 'accuracy' | 'win_streak';
+  title: string;
+  description: string;
+  target: number;
+  progress: number;
+  status: 'active' | 'completed' | 'expired';
+  icon: string;
+  created_at: string;
+  completes_at: string;
+  metadata: Record<string, unknown> | null;
+};
 
 interface Stats {
   total: number; wins: number; losses: number; draws: number;
@@ -52,8 +83,33 @@ export default function Home() {
     queryFn: () => api.get<NextPuzzle>('/api/train/next'),
   });
 
+  const { data: planData } = useQuery({
+    queryKey: ['plan-home'],
+    queryFn: () => api.get<{ goals: PlanGoal[] }>('/api/plan'),
+  });
+
+  const { data: achievementsData } = useQuery({
+    queryKey: ['achievements-home'],
+    queryFn: () => api.get<{ achievements: Achievement[] }>('/api/achievements'),
+  });
+
   const games = gamesData?.games ?? [];
   const topOpening = insights?.opening_repertoire?.[0] ?? null;
+
+  // What's new toast — surface v7.0.0 highlights once.
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem(CHANGELOG_KEY);
+      if (seen !== APP_VERSION) setShowWhatsNew(true);
+    } catch {
+      // localStorage unavailable — ignore.
+    }
+  }, []);
+  function dismissWhatsNew() {
+    try { localStorage.setItem(CHANGELOG_KEY, APP_VERSION); } catch { /* ignore */ }
+    setShowWhatsNew(false);
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -173,6 +229,17 @@ export default function Home() {
         </section>
       )}
 
+      {/* Plan + Achievements */}
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05, duration: 0.25 }}
+        className="grid gap-3 md:grid-cols-2"
+      >
+        <PlanTile goals={planData?.goals ?? null} />
+        <AchievementsTile achievements={achievementsData?.achievements ?? null} />
+      </motion.section>
+
       {/* Today's tactic + Top opening */}
       {(nextPuzzle?.puzzle || topOpening) && (
         <section className="grid gap-3 md:grid-cols-2">
@@ -214,6 +281,25 @@ export default function Home() {
             </Link>
           )}
         </section>
+      )}
+
+      {/* What's new — small dismissible badge */}
+      {showWhatsNew && (
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card flex items-center gap-3 p-3"
+        >
+          <span className="inline-flex h-7 shrink-0 items-center rounded-full bg-gold-500/15 px-2.5 text-[10px] font-bold uppercase tracking-wider text-gold-600">
+            {APP_VERSION}
+          </span>
+          <div className="min-w-0 flex-1 text-xs text-chesscom-600 dark:text-chesscom-300">
+            {t('home.whatsNew', { defaultValue: "What's new: plans, achievements, and a top-3 lines panel in Review." })}
+          </div>
+          <button onClick={dismissWhatsNew} className="btn-ghost p-1.5 text-chesscom-500" title={t('common.cancel')}>
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </motion.div>
       )}
 
       {/* Recent games */}
@@ -292,6 +378,133 @@ function Sparkline({ values }: { values: number[] }) {
       <path d={path} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
+}
+
+function PlanTile({ goals }: { goals: PlanGoal[] | null }) {
+  const { t } = useTranslation();
+  const list = goals ?? [];
+  const active = list.filter((g) => g.status === 'active');
+  const imminent = active.length
+    ? [...active].sort((a, b) => new Date(a.completes_at).getTime() - new Date(b.completes_at).getTime())[0]!
+    : null;
+
+  if (active.length === 0) {
+    return (
+      <Link to="/plan" className="card-hover flex items-start gap-3 p-5">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-board-dark/15 text-board-dark">
+          <ListChecks className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-chesscom-500">{t('home.planLabel', { defaultValue: "This week's plan" })}</div>
+          <div className="mt-0.5 text-sm font-semibold">{t('home.planEmpty', { defaultValue: 'Build your first improvement plan' })}</div>
+          <div className="mt-1 truncate text-[11px] text-chesscom-500">
+            {t('home.planEmptyDesc', { defaultValue: 'Pick a few weekly goals — puzzles, openings, accuracy.' })}
+          </div>
+        </div>
+        <ChevronRight className="h-4 w-4 text-chesscom-400" />
+      </Link>
+    );
+  }
+
+  const pct = imminent ? Math.min(100, Math.round((imminent.progress / Math.max(1, imminent.target)) * 100)) : 0;
+  return (
+    <Link to="/plan" className="card-hover p-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-board-dark/15 text-board-dark">
+          <ListChecks className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-chesscom-500">{t('home.planLabel', { defaultValue: "This week's plan" })}</div>
+            <div className="font-mono text-[10px] tabular-nums text-chesscom-500">{active.length} {t('home.planActive', { defaultValue: 'active' })}</div>
+          </div>
+          {imminent && (
+            <>
+              <div className="mt-0.5 truncate text-sm font-semibold">{imminent.title}</div>
+              <div className="mt-1 truncate text-[11px] text-chesscom-500">{imminent.description}</div>
+              <div className="mt-2 flex items-center gap-2">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-chesscom-100 dark:bg-chesscom-900">
+                  <div className="h-full bg-board-dark transition-all" style={{ width: `${pct}%` }} />
+                </div>
+                <span className="font-mono text-[10px] tabular-nums text-chesscom-500">{imminent.progress}/{imminent.target}</span>
+              </div>
+            </>
+          )}
+        </div>
+        <ChevronRight className="h-4 w-4 text-chesscom-400" />
+      </div>
+    </Link>
+  );
+}
+
+function AchievementsTile({ achievements }: { achievements: Achievement[] | null }) {
+  const { t } = useTranslation();
+  const list = achievements ?? [];
+  const unlocked = list.filter((a) => a.unlocked);
+  const recent = [...unlocked]
+    .sort((a, b) => new Date(b.unlocked_at ?? 0).getTime() - new Date(a.unlocked_at ?? 0).getTime())
+    .slice(0, 3);
+
+  if (list.length > 0 && unlocked.length === 0) {
+    return (
+      <Link to="/insights#achievements" className="card-hover flex items-start gap-3 p-5">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gold-500/15 text-gold-600">
+          <Award className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-chesscom-500">{t('home.achievementsLabel', { defaultValue: 'Achievements' })}</div>
+          <div className="mt-0.5 text-sm font-semibold">{t('home.achievementsEmpty', { defaultValue: 'Earn your first badge by playing a game' })}</div>
+          <div className="mt-1 truncate text-[11px] text-chesscom-500">
+            {t('home.achievementsEmptyDesc', { defaultValue: '0 of {{n}} unlocked', n: list.length })}
+          </div>
+        </div>
+        <ChevronRight className="h-4 w-4 text-chesscom-400" />
+      </Link>
+    );
+  }
+
+  return (
+    <Link to="/insights#achievements" className="card-hover p-5">
+      <div className="flex items-start gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gold-500/15 text-gold-600">
+          <Award className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-chesscom-500">{t('home.achievementsLabel', { defaultValue: 'Achievements' })}</div>
+            <div className="font-mono text-[10px] tabular-nums text-chesscom-500">{unlocked.length}/{list.length || '—'}</div>
+          </div>
+          <div className="mt-1 truncate text-sm font-semibold">
+            {recent.length > 0
+              ? t('home.achievementsRecent', { defaultValue: 'Recently unlocked' })
+              : t('home.achievementsLabel', { defaultValue: 'Achievements' })}
+          </div>
+          {recent.length > 0 && (
+            <div className="mt-2 flex items-center gap-1.5">
+              {recent.map((a) => {
+                const Icon = resolveIcon(a.icon);
+                return (
+                  <span key={a.id} title={a.title}
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gold-500/15 text-gold-600 ring-1 ring-gold-500/30">
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                );
+              })}
+              {unlocked.length > 3 && (
+                <span className="text-[10px] text-chesscom-500">+{unlocked.length - 3}</span>
+              )}
+            </div>
+          )}
+        </div>
+        <ChevronRight className="h-4 w-4 text-chesscom-400" />
+      </div>
+    </Link>
+  );
+}
+
+function resolveIcon(name: string): React.ComponentType<{ className?: string }> {
+  const lib = Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>;
+  return lib[name] ?? lib.Award ?? (() => null);
 }
 
 function ResultIcon({ r }: { r: string }) {

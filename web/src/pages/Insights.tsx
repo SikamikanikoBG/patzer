@@ -2,12 +2,25 @@
 // rating trajectory, opening repertoire, mistake taxonomy, time-class breakdown.
 // All charts are inline SVG (no extra deps); calls /api/insights/v2.
 
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { Activity, BarChart3, Target, TrendingUp, Flame, AlertTriangle, BookOpen } from 'lucide-react';
+import * as Icons from 'lucide-react';
+import { Activity, BarChart3, Target, TrendingUp, Flame, AlertTriangle, BookOpen, Award, Lock } from 'lucide-react';
 import { api } from '../api';
+
+type Achievement = {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: 'milestone' | 'mastery' | 'tactics' | 'streaks';
+  unlocked: boolean;
+  unlocked_at: string | null;
+  progress: number;
+  target: number;
+};
 
 type Color = 'white' | 'black';
 interface OpeningRow { eco: string; name: string; color: Color; played: number; wins: number; draws: number; losses: number; avg_accuracy: number | null }
@@ -32,6 +45,22 @@ export default function Insights() {
     queryKey: ['insights-v2'],
     queryFn: () => api.get<InsightsV2>('/api/insights/v2'),
   });
+  const { data: achievementsData } = useQuery({
+    queryKey: ['achievements'],
+    queryFn: () => api.get<{ achievements: Achievement[] }>('/api/achievements'),
+  });
+
+  // Anchor-scroll into #achievements when the route hash is present.
+  const achievementsRef = useRef<HTMLElement | null>(null) as React.MutableRefObject<HTMLElement | null>;
+  const location = useLocation();
+  useEffect(() => {
+    if (location.hash !== '#achievements') return;
+    // Wait a tick so the section has rendered.
+    const id = window.setTimeout(() => {
+      achievementsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+    return () => window.clearTimeout(id);
+  }, [location.hash, achievementsData]);
 
   if (isLoading) return <Skeleton />;
   if (!data || data.games_analyzed === 0) {
@@ -51,6 +80,9 @@ export default function Insights() {
         <h1 className="page-h1">{t('insights.title', { defaultValue: 'Insights' })}</h1>
         <p className="page-sub">{t('insights.subv2', { defaultValue: 'Patterns across your last {{n}} analyzed games.', n: data.games_analyzed })}</p>
       </header>
+
+      {/* Achievements */}
+      <AchievementsSection sectionRef={achievementsRef} achievements={achievementsData?.achievements ?? null} />
 
       {/* Phase accuracy + Time-class breakdown side-by-side */}
       <div className="grid gap-4 md:grid-cols-2">
@@ -481,6 +513,88 @@ function OpeningRepertoireCard({ data }: { data: OpeningRow[] }) {
       </table>
     </section>
   );
+}
+
+/* ───── Achievements ───────────────────────────────────────────────────── */
+const AchievementsSection = ({ achievements, sectionRef }: { achievements: Achievement[] | null; sectionRef: React.MutableRefObject<HTMLElement | null> }) => {
+  const { t } = useTranslation();
+  const list = achievements ?? [];
+  const order: { key: Achievement['category']; label: string }[] = [
+    { key: 'milestone', label: t('insights.ach.milestone', { defaultValue: 'Milestones' }) },
+    { key: 'mastery', label: t('insights.ach.mastery', { defaultValue: 'Mastery' }) },
+    { key: 'tactics', label: t('insights.ach.tactics', { defaultValue: 'Tactics' }) },
+    { key: 'streaks', label: t('insights.ach.streaks', { defaultValue: 'Streaks' }) },
+  ];
+  const grouped = order.map((g) => ({ ...g, items: list.filter((a) => a.category === g.key) })).filter((g) => g.items.length > 0);
+  const unlocked = list.filter((a) => a.unlocked).length;
+
+  return (
+    <section ref={(node) => { sectionRef.current = node; }} id="achievements" className="card p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Award className="h-4 w-4 text-gold-500" />
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">{t('insights.achievements', { defaultValue: 'Achievements' })}</h2>
+        </div>
+        <span className="font-mono text-[10px] tabular-nums text-chesscom-500">
+          {unlocked}/{list.length || '—'} {t('insights.achUnlocked', { defaultValue: 'unlocked' })}
+        </span>
+      </div>
+      {list.length === 0 ? (
+        <div className="py-4 text-center text-xs text-chesscom-400">
+          {t('insights.achEmpty', { defaultValue: 'Play and analyze games to start earning badges.' })}
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {grouped.map((g) => (
+            <div key={g.key}>
+              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-chesscom-500">{g.label}</div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                {g.items.map((a) => <AchievementBadge key={a.id} a={a} />)}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
+
+function AchievementBadge({ a }: { a: Achievement }) {
+  const Icon = resolveLucide(a.icon);
+  const pct = Math.min(100, Math.round((a.progress / Math.max(1, a.target)) * 100));
+  return (
+    <div className={`rounded-lg border p-3 transition-colors ${
+      a.unlocked
+        ? 'border-gold-500/40 bg-gold-500/5 ring-1 ring-gold-500/30'
+        : 'border-chesscom-200 bg-chesscom-50/40 opacity-70 dark:border-chesscom-700 dark:bg-chesscom-900/40'
+    }`}>
+      <div className="flex items-start gap-2">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+          a.unlocked ? 'bg-gold-500/15 text-gold-600' : 'bg-chesscom-100 text-chesscom-400 dark:bg-chesscom-800'
+        }`}>
+          {a.unlocked ? <Icon className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-xs font-semibold">{a.title}</div>
+          <div className="mt-0.5 line-clamp-2 text-[10px] text-chesscom-500">{a.description}</div>
+        </div>
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <div className="h-1 flex-1 overflow-hidden rounded-full bg-chesscom-100 dark:bg-chesscom-900">
+          <div className={`h-full ${a.unlocked ? 'bg-gold-500' : 'bg-board-dark/50'}`} style={{ width: `${pct}%` }} />
+        </div>
+        <span className="font-mono text-[10px] tabular-nums text-chesscom-500">{a.progress}/{a.target}</span>
+      </div>
+      {a.unlocked && a.unlocked_at && (
+        <div className="mt-1 text-[10px] text-chesscom-400">{new Date(a.unlocked_at).toLocaleDateString()}</div>
+      )}
+    </div>
+  );
+}
+
+function resolveLucide(name: string): React.ComponentType<{ className?: string }> {
+  const lib = Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>;
+  return lib[name] ?? lib.Award ?? Award;
 }
 
 function Skeleton() {

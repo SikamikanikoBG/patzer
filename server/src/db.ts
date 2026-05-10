@@ -184,6 +184,37 @@ db.exec(`CREATE TABLE IF NOT EXISTS puzzle_attempts (
 db.exec(`CREATE INDEX IF NOT EXISTS idx_puzzle_attempts_user ON puzzle_attempts(user_id, created_at DESC)`);
 db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_puzzle_attempts_unique ON puzzle_attempts(user_id, game_id, ply)`);
 
+// v7.0.0 — Improvement Plan goals. Each goal is a one-week target with a kind
+// (puzzles_solve / opening_play / review_games / accuracy / win_streak), a
+// numeric target, and free-form metadata. Progress is computed live from
+// per-kind queries rather than being incremented here.
+db.exec(`CREATE TABLE IF NOT EXISTS goals (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  target INTEGER NOT NULL,
+  metadata TEXT,
+  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','completed','expired')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  completes_at TEXT NOT NULL,
+  completed_at TEXT
+)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_goals_user_status ON goals(user_id, status)`);
+
+// v7.0.0 — Achievement unlocks (one row per user × achievement). Progress is
+// computed live; this table is just the unlock latch + timestamp.
+db.exec(`CREATE TABLE IF NOT EXISTS achievements_unlocked (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  achievement_id TEXT NOT NULL,
+  unlocked_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, achievement_id)
+)`);
+
+// Auto-expire any active goal whose week elapsed while the server was down.
+db.prepare(`UPDATE goals SET status='expired' WHERE status='active' AND completes_at < datetime('now')`).run();
+
 // Cleanup expired sessions on startup
 db.prepare(`DELETE FROM sessions WHERE expires_at < datetime('now')`).run();
 // Sweep stale challenges on startup. Pending challenges older than 15 minutes

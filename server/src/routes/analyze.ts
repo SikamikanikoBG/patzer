@@ -27,6 +27,16 @@ const schema = z.object({
 // double-click on "Analyze" — or two browser tabs — spawns two concurrent
 // Stockfish processes against the same PGN, doubling CPU and racing inserts.
 const inflight = new Map<number, Promise<unknown>>();
+// Same idea for ad-hoc position evals — the "Explorer" view in the frontend
+// keeps the engine fed as the user clicks through moves, and we don't want
+// two boards racing each other.
+const positionInflight = new Map<number, Promise<unknown>>();
+
+const positionSchema = z.object({
+  fen: z.string().min(10),
+  depth: z.number().int().min(8).max(22).default(16),
+  lines: z.number().int().min(1).max(5).default(3),
+});
 
 interface AnalysisRow {
   depth: number;
@@ -151,6 +161,82 @@ router.post('/', async (c) => {
     return c.json({ analysis: result, cached: false });
   } finally {
     inflight.delete(user.id);
+  }
+});
+
+// Ad-hoc position multi-PV. Used by the explorer / coach side panel to ask
+// "what does the engine think of this FEN?" without touching games/analyses.
+// We spin up a fresh Stockfish per call and always quit it in `finally` — the
+// engine is cheap to start (~50 ms) and this keeps long-lived state out of
+// the route. Single-flight per user prevents tab-flipping from stacking
+// concurrent searches.
+router.post('/position', async (c) => {
+  const user = c.get('user');
+  const body = await c.req.json().catch(() => null);
+  const parsed = positionSchema.safeParse(body);
+  if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
+  const { fen, depth, lines } = parsed.data;
+
+  // chess.js throws on invalid FEN. We trust its parser as the FEN validator
+  // since we'll need a Chess instance to convert UCI → SAN anyway.
+  let probe: Chess;
+  try {
+    probe = new Chess(fen);
+  } catch {
+    return c.json({ error: 'invalid_fen' }, 400);
+  }
+
+  if (positionInflight.has(user.id)) return c.json({ error: 'already_analyzing' }, 429);
+
+  const work = (async () => {
+    const engine = new StockfishEngine();
+    try {
+      await engine.start();
+      await engine.setOption('Threads', '2');
+      await engine.setOption('Hash', '64');
+      const result = await engine.evaluateMulti(fen, depth, lines);
+      // Build the response: convert UCI → SAN by replaying the PV against a
+      // fresh Chess for each candidate. Cap PV at 8 plies — beyond that the
+      // engine's projection is noisy and the payload bloats.
+      const linesOut = result.candidates.map((cand) => {
+        const first = cand.pv[0] ?? '';
+        let uci = first;
+        let san: string | null = null;
+        const replay = new Chess(probe.fen());
+        const pvSan: string[] = [];
+        for (const u of cand.pv.slice(0, 8)) {
+          const m = replay.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u.slice(4) || undefined });
+          if (!m) break;
+          if (san === null) san = m.san;
+          pvSan.push(m.san);
+        }
+        return {
+          uci,
+          san: san ?? '',
+          pv_san: pvSan,
+          cp: cand.cp,
+          mate: cand.mate,
+          multipv: cand.multipv,
+        };
+      });
+      return {
+        fen,
+        depth: result.depth || depth,
+        lines: linesOut,
+      };
+    } finally {
+      await engine.quit();
+    }
+  })();
+
+  positionInflight.set(user.id, work);
+  try {
+    const result = await work;
+    return c.json(result);
+  } catch (err) {
+    return c.json({ error: 'engine_error', detail: err instanceof Error ? err.message : String(err) }, 500);
+  } finally {
+    positionInflight.delete(user.id);
   }
 });
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard } from 'lucide-react';
+import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { cn } from '../lib/utils';
@@ -101,6 +101,9 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             <NavPill to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
             <NavPill to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
             <NavPill to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
+            <NavPill to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />
+            <NavPill to="/plan" icon={ListChecks} label={t('plan.nav', { defaultValue: 'Plan' })} />
+            <NavPill to="/lab" icon={Microscope} label={t('lab.nav', { defaultValue: 'Lab' })} />
             {user?.role === 'admin' && (
               <>
                 <span className="mx-2 h-5 w-px bg-chesscom-700" />
@@ -197,6 +200,9 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
               <MobileNavItem to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
               <MobileNavItem to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
               <MobileNavItem to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
+              <MobileNavItem to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />
+              <MobileNavItem to="/plan" icon={ListChecks} label={t('plan.nav', { defaultValue: 'Plan' })} />
+              <MobileNavItem to="/lab" icon={Microscope} label={t('lab.nav', { defaultValue: 'Lab' })} />
               <MobileNavItem to="/settings" icon={SettingsIcon} label={t('common.settings')} />
               {user?.role === 'admin' && (
                 <>

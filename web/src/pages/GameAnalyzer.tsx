@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sparkles, Settings as SettingsIcon, Copy, Download, Check, ListOrdered, Lightbulb, FileText, Star, Share2, FlipVertical2, NotebookPen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sparkles, Settings as SettingsIcon, Copy, Download, Check, ListOrdered, Lightbulb, FileText, Star, Share2, FlipVertical2, NotebookPen, Search, Loader2 } from 'lucide-react';
 import { Chess } from 'chess.js';
 import ChessBoard from '../components/ChessBoard';
 import EvalBar from '../components/EvalBar';
@@ -32,6 +32,15 @@ interface GameDetail {
     moves_json: string;
   } | null;
   analysis_stale?: boolean;
+}
+
+interface EngineLine {
+  uci: string;
+  san: string;
+  pv_san: string[];
+  cp: number | null;
+  mate: number | null;
+  multipv: number;
 }
 
 function fmtCp(cp: number | null | undefined): string {
@@ -209,11 +218,37 @@ export default function GameAnalyzer() {
     },
   }) : null;
 
-  const arrow = move?.best_move_uci && move.best_move_uci !== move.uci ? [{
+  // Top engine lines panel (multiPV) — fetched on demand, debounced when enabled.
+  const [linesEnabled, setLinesEnabled] = useState(false);
+  const [lines, setLines] = useState<EngineLine[]>([]);
+  const [linesLoading, setLinesLoading] = useState(false);
+  const [linesError, setLinesError] = useState(false);
+  const [linesHover, setLinesHover] = useState<EngineLine | null>(null);
+  const currentFen = pos?.fen ?? '';
+  useEffect(() => {
+    if (!linesEnabled || !currentFen) return;
+    let cancelled = false;
+    setLinesError(false);
+    setLinesLoading(true);
+    const handle = window.setTimeout(() => {
+      api.post<{ fen: string; depth: number; lines: EngineLine[] }>('/api/analyze/position', { fen: currentFen, depth: 18, lines: 3 })
+        .then((r) => { if (!cancelled) { setLines(r.lines ?? []); setLinesLoading(false); } })
+        .catch(() => { if (!cancelled) { setLinesError(true); setLinesLoading(false); setLines([]); } });
+    }, 400);
+    return () => { cancelled = true; window.clearTimeout(handle); };
+  }, [linesEnabled, currentFen]);
+
+  const baseArrow = move?.best_move_uci && move.best_move_uci !== move.uci ? [{
     orig: move.best_move_uci.slice(0, 2) as never,
     dest: move.best_move_uci.slice(2, 4) as never,
     brush: 'paleBlue',
   }] : [];
+  const hoverArrow = linesHover?.uci ? [{
+    orig: linesHover.uci.slice(0, 2) as never,
+    dest: linesHover.uci.slice(2, 4) as never,
+    brush: 'paleGreen',
+  }] : [];
+  const arrow = [...baseArrow, ...hoverArrow];
 
   const eco = analysis?.opening_eco ?? data.game.eco ?? null;
   const openingName = analysis?.opening_name ?? data.game.opening_name ?? null;
@@ -421,6 +456,17 @@ export default function GameAnalyzer() {
                 </div>
               </div>
 
+              <LinesPanel
+                enabled={linesEnabled}
+                onToggle={() => setLinesEnabled((s) => !s)}
+                lines={lines}
+                loading={linesLoading}
+                error={linesError}
+                playedUci={positions[ply + 1] ? (positions[ply + 1]!.from ?? '') + (positions[ply + 1]!.to ?? '') : null}
+                onAdvance={() => setPly((p) => Math.min(positions.length - 1, p + 1))}
+                onHover={setLinesHover}
+              />
+
               <GameMetaToolbar
                 gameId={gameId}
                 bookmarked={!!data.game.bookmarked}
@@ -584,6 +630,84 @@ function ExportRow({ pgn, fen, fileBase }: { pgn: string; fen: string; fileBase:
         <Download className="h-3.5 w-3.5" />
         {t('common.download')}
       </button>
+    </div>
+  );
+}
+
+function LinesPanel({ enabled, onToggle, lines, loading, error, playedUci, onAdvance, onHover }: {
+  enabled: boolean;
+  onToggle: () => void;
+  lines: EngineLine[];
+  loading: boolean;
+  error: boolean;
+  playedUci: string | null;
+  onAdvance: () => void;
+  onHover: (l: EngineLine | null) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="card overflow-hidden">
+      <div className="flex items-center gap-1 border-b border-chesscom-100 bg-chesscom-50/40 px-3 py-2 dark:border-chesscom-700 dark:bg-chesscom-900/40">
+        <Search className="h-3.5 w-3.5 text-chesscom-500" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">
+          {t('review.lines', { defaultValue: 'Engine lines' })}
+        </span>
+        <button
+          onClick={onToggle}
+          className={`btn-ghost ml-auto px-2 py-1 text-xs ${enabled ? 'text-board-dark' : ''}`}
+        >
+          {enabled
+            ? t('review.linesHide', { defaultValue: 'Hide' })
+            : t('review.linesShow', { defaultValue: 'Show top engine lines' })}
+        </button>
+      </div>
+      {enabled && (
+        <div className="space-y-1 p-2">
+          {loading && lines.length === 0 && (
+            <div className="flex items-center gap-2 px-2 py-3 text-xs text-chesscom-500">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> {t('review.linesFetching', { defaultValue: 'fetching…' })}
+            </div>
+          )}
+          {!loading && !error && lines.length === 0 && (
+            <div className="px-2 py-3 text-xs text-chesscom-400">—</div>
+          )}
+          {error && (
+            <div className="px-2 py-3 text-xs text-chesscom-400">—</div>
+          )}
+          {lines.map((l) => {
+            const isPlayed = playedUci != null && playedUci.length >= 4 && l.uci.slice(0, 4) === playedUci.slice(0, 4);
+            const pv = l.pv_san.slice(0, 6).join(' ');
+            return (
+              <button
+                key={l.multipv}
+                onClick={() => { if (isPlayed) onAdvance(); }}
+                onMouseEnter={() => onHover(l)}
+                onMouseLeave={() => onHover(null)}
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${
+                  isPlayed
+                    ? 'cursor-pointer bg-board-dark/10 hover:bg-board-dark/15'
+                    : 'cursor-default hover:bg-chesscom-50 dark:hover:bg-chesscom-900/40'
+                }`}
+              >
+                <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                  l.multipv === 1 ? 'bg-gold-500/20 text-gold-600' : 'bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-800'
+                }`}>{l.multipv}</span>
+                <span className="w-12 shrink-0 font-mono text-xs font-semibold tabular-nums">
+                  {l.mate != null ? (l.mate > 0 ? `#${l.mate}` : `-#${Math.abs(l.mate)}`) : fmtCp(l.cp)}
+                </span>
+                <span className="w-12 shrink-0 truncate font-mono font-semibold text-chesscom-900 dark:text-chesscom-100">{l.san}</span>
+                <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-chesscom-500">{pv}</span>
+                {isPlayed && <span className="shrink-0 text-[9px] uppercase text-board-dark">{t('review.linesPlayed', { defaultValue: 'played' })}</span>}
+              </button>
+            );
+          })}
+          {loading && lines.length > 0 && (
+            <div className="flex items-center gap-2 px-2 pt-1 text-[10px] text-chesscom-400">
+              <Loader2 className="h-3 w-3 animate-spin" /> {t('review.linesRefreshing', { defaultValue: 'refreshing…' })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

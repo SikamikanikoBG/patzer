@@ -14,6 +14,9 @@ import Review from './pages/Review';
 import GameAnalyzer from './pages/GameAnalyzer';
 import Insights from './pages/Insights';
 import Train from './pages/Train';
+import Openings from './pages/Openings';
+import Plan from './pages/Plan';
+import Lab from './pages/Lab';
 import AdminUsers from './pages/admin/Users';
 import AdminSystem from './pages/admin/System';
 import IncomingChallengeModal from './components/IncomingChallengeModal';
@@ -96,7 +99,7 @@ export default function App() {
       }
       const since = Date.now() - gPrefixRef.current;
       if (since < 1200) {
-        const map: Record<string, string> = { h: '/', p: '/play', r: '/review', i: '/insights', t: '/train', s: '/settings' };
+        const map: Record<string, string> = { h: '/', p: '/play', r: '/review', i: '/insights', t: '/train', s: '/settings', o: '/openings', n: '/plan', l: '/lab' };
         const target = map[e.key.toLowerCase()];
         if (target) {
           e.preventDefault();
@@ -167,6 +170,9 @@ export default function App() {
           <Route path="/review/:id" element={<GameAnalyzer />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/train" element={<Train />} />
+          <Route path="/openings" element={<Openings />} />
+          <Route path="/plan" element={<Plan />} />
+          <Route path="/lab" element={<Lab />} />
           <Route path="/settings" element={<SettingsPage />} />
           {user.role === 'admin' && <Route path="/admin/users" element={<AdminUsers />} />}
           {user.role === 'admin' && <Route path="/admin/system" element={<AdminSystem />} />}

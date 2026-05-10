@@ -170,7 +170,13 @@
     "notesPlaceholder": "Your private notes on this game…",
     "notesPrivate": "Only you can see this.",
     "notesUnsaved": "Click outside to save",
-    "setUsername": "Set Chess.com username"
+    "setUsername": "Set Chess.com username",
+    "lines": "Engine lines",
+    "linesShow": "Show top engine lines",
+    "linesHide": "Hide",
+    "linesFetching": "fetching…",
+    "linesRefreshing": "refreshing…",
+    "linesPlayed": "played"
   },
   "classification": {
     "brilliant": "Brilliant",
@@ -344,6 +350,15 @@
     "played": "Games",
     "score": "Score",
     "acc": "Acc",
+    "achievements": "Achievements",
+    "achUnlocked": "unlocked",
+    "achEmpty": "Play and analyze games to start earning badges.",
+    "ach": {
+      "milestone": "Milestones",
+      "mastery": "Mastery",
+      "tactics": "Tactics",
+      "streaks": "Streaks"
+    },
     "tax": {
       "hung": "Hung pieces",
       "hungDesc": "≥2 pawns of material lost",
@@ -360,6 +375,75 @@
       "promisingLosing": "Squandered advantages",
       "promisingLosingDesc": "+1.5 → flat in one move"
     }
+  },
+  "openings": {
+    "nav": "Openings",
+    "title": "Openings",
+    "subtitle": "Your repertoire as a tree.",
+    "tree": "Repertoire tree",
+    "totalGames": "{{n}} games in repertoire",
+    "startPosition": "Start position",
+    "selectPrompt": "Click a node in the tree to inspect it.",
+    "empty": "No opening data yet",
+    "emptyDesc": "Import or analyze a few games and your repertoire will branch out here.",
+    "moreBranches": "+ more branches (rare lines hidden)",
+    "wins": "Wins",
+    "draws": "Draws",
+    "losses": "Losses",
+    "score": "Score",
+    "avgAccuracy": "Avg accuracy",
+    "played": "Played",
+    "afterMove": "after {{san}}",
+    "unknownLine": "Untheorized line",
+    "trainCta": "Train these →"
+  },
+  "plan": {
+    "nav": "Plan",
+    "title": "Improvement plan",
+    "subtitle": "A focused set of weekly goals based on your recent play.",
+    "regenerate": "Regenerate",
+    "regenerating": "Regenerating…",
+    "generate": "Generate plan",
+    "empty": "No goals yet — generate your first plan.",
+    "emptyDesc": "Your plan refreshes weekly with focused targets drawn from what you actually need to improve.",
+    "activeGroup": "Active",
+    "completedGroup": "Completed this week",
+    "expiredGroup": "Expired",
+    "progress": "Progress",
+    "done": "Done",
+    "expired": "Expired",
+    "daysLeft": "{{n}}d left",
+    "endsToday": "ends today",
+    "cta": {
+      "puzzles_solve": "Train",
+      "opening_play": "Play",
+      "review_games": "Review",
+      "accuracy": "Play",
+      "win_streak": "Play"
+    }
+  },
+  "lab": {
+    "nav": "Lab",
+    "title": "Lab",
+    "subtitle": "A sandbox board with Stockfish on tap.",
+    "whiteToMove": "White to move",
+    "blackToMove": "Black to move",
+    "fenPlaceholder": "Paste a FEN…",
+    "setFen": "Set",
+    "invalidFen": "Invalid FEN",
+    "reset": "Reset",
+    "flip": "Flip board",
+    "engine": "Engine analysis",
+    "analyze": "Analyze",
+    "analyzing": "Analyzing…",
+    "crunching": "Crunching positions…",
+    "analyzeError": "Analysis failed. Is Stockfish configured?",
+    "idlePrompt": "Click Analyze to see what Stockfish thinks.",
+    "depth": "Depth",
+    "lines": "Lines",
+    "depthLabel": "depth",
+    "moves": "Moves",
+    "startPos": "Start"
   },
   "home": {
     "greeting": "Hi, {{name}}!",
@@ -385,6 +469,15 @@
     "fromGame": "From your game vs {{opp}}",
     "topOpening": "Your top opening",
     "recentGames": "Recent games",
-    "viewAll": "View all →"
+    "viewAll": "View all →",
+    "planLabel": "This week's plan",
+    "planActive": "active",
+    "planEmpty": "Build your first improvement plan",
+    "planEmptyDesc": "Pick a few weekly goals — puzzles, openings, accuracy.",
+    "achievementsLabel": "Achievements",
+    "achievementsRecent": "Recently unlocked",
+    "achievementsEmpty": "Earn your first badge by playing a game",
+    "achievementsEmptyDesc": "0 of {{n}} unlocked",
+    "whatsNew": "What's new: plans, achievements, and a top-3 lines panel in Review."
   }
 }
