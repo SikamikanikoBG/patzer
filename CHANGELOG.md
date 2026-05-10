@@ -4,6 +4,94 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [6.0.0] — 2026-05-10
+
+The "Beyond Chess.com" major. Where v4/v5 were *parity passes*, v6 lands the
+features chess.com itself doesn't ship: a global command palette, a personal
+tactic trainer drawn from your own blunders, year-of-games analytics, and a
+keyboard-first power UX.
+
+### Added — Tactic Trainer
+
+- **`/train` page (and `/api/train/*` endpoints).** Solves puzzles extracted
+  from your own analyzed blunders / mistakes / misses. The puzzle is the
+  exact FEN before the move you got wrong; the solution is the engine's best
+  move. Every solve is retraining a real pattern *you* lost rating to —
+  unlike chess.com's generic puzzle dump.
+- **Hint arrow** (engine's best-move hint, on demand).
+- **Solved/Failed/Accuracy** counters; recent attempt stream stored in a new
+  `puzzle_attempts` table (idempotent per `(user, game, ply)`, accepts
+  multiple PV moves so equally-best alternatives both count as solved).
+- **Home tile** surfaces "Today's puzzle" pulled from the next unseen
+  blunder.
+- **Open in Review** link from any puzzle deep-links to that exact ply in
+  the full game analyzer.
+
+### Added — Insights v2 (chess.com analytics, but more of it)
+
+- **`/api/insights/v2`** returns six aggregates in one round-trip:
+  activity heatmap, rating trajectory, opening repertoire, mistake taxonomy,
+  per-time-class W/D/L + accuracy, and an accuracy trend series.
+- **GitHub-style activity heatmap** — 53-week × 7-day calendar with
+  intensity buckets.
+- **Rating trajectory chart** — multi-series line chart for bullet/blitz/
+  rapid/daily, drawn from `rating_history`.
+- **Mistake taxonomy** with seven personalized buckets: hung pieces,
+  one-move blunders, back-rank weakness, missed wins/mates, opening
+  pitfalls, endgame drift, squandered advantages. Each tile links to the
+  Tactic Trainer with one click.
+- **Top openings table** — top 10 played by side, with W/D/L score % and
+  average accuracy. Color-coded score column (green ≥55%, red ≤40%).
+- **Time-class breakdown** with horizontal stacked bars (W/D/L proportions)
+  and per-class accuracy.
+- **Accuracy-trend chart** with avg-line marker and per-game result dots
+  (green=win / red=loss / grey=draw).
+
+### Added — Power UX
+
+- **Command palette (⌘K / Ctrl K).** Global search-and-act for navigation,
+  recent games, theme, language, logout. The first first-class keyboard
+  surface in the app.
+- **Keyboard shortcuts overlay (`?`)** documenting every binding.
+- **`g X` prefix navigation** (g h, g p, g r, g i, g t, g s) for one-key
+  jumps to Home / Play / Review / Insights / Train / Settings.
+- **Game Review keys** — `F` flips the board, `S` copies a deep-link to
+  the current position. Existing arrow / Home / End navigation kept.
+- **Deep-link review** — the URL now carries `?ply=N` so refresh and
+  share both jump to the exact move you were viewing.
+
+### Added — Per-game bookmarks + notes
+
+- **Star a game** to mark it for later. Star toggles inline on the Review
+  list (with optimistic update) and from the game analyzer toolbar.
+- **Private notes** per game (4000-char textarea, autosave on blur).
+  Searchable via the new Review search input.
+- **Filter "Starred only"** + free-text search across players, opening
+  names, and notes.
+
+### Changed — Layout
+
+- **Top nav** gains a `Train` pill plus a chess.com-style "Search" chip
+  (⌘K shortcut hint included), and a keyboard-help button.
+- **Home dashboard** gets:
+  - Inline accuracy sparkline on the avg-accuracy stat tile.
+  - "Today's puzzle" tile pulled from `/api/train/next`.
+  - "Top opening" tile sourced from `/api/insights/v2`.
+
+### Schema additions (idempotent)
+
+- `games.bookmarked INTEGER NOT NULL DEFAULT 0`
+- `games.notes TEXT`
+- New table `puzzle_attempts(user_id, game_id, ply, fen, solution_uci,
+  attempted_uci, solved, created_at)` with unique `(user, game, ply)`.
+- Existing `analyses` schema is **untouched** — v5 analyses remain valid;
+  no SCORING_VERSION bump needed for any of the v6 features.
+
+### i18n
+
+- Full BG translations added for palette, shortcuts, train, insights v2,
+  home tiles, review search/notes/star strings.
+
 ## [5.0.0] — 2026-05-10
 
 The chess.com-fidelity major. Three specialist agents (UI Designer, Chess

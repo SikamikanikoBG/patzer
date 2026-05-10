@@ -11,23 +11,58 @@ router.use('*', requireAuth);
 router.get('/', (c) => {
   const user = c.get('user');
   const limit = Math.min(Number(c.req.query('limit') ?? 50), 200);
+  const bookmarked = c.req.query('bookmarked') === '1';
+  const q = (c.req.query('q') ?? '').trim().toLowerCase();
   // An analysis cached at an older scoring_version reads as "not analyzed" in
   // the list — accuracy values from the old scoring would mislead the user.
+  const filters: string[] = ['g.user_id = ?'];
+  const params: unknown[] = [user.id];
+  if (bookmarked) filters.push('g.bookmarked = 1');
+  if (q) {
+    filters.push('(LOWER(g.white) LIKE ? OR LOWER(g.black) LIKE ? OR LOWER(g.opening_name) LIKE ? OR LOWER(g.notes) LIKE ?)');
+    const like = `%${q}%`;
+    params.push(like, like, like, like);
+  }
   const rows = db.prepare(`
     SELECT g.id, g.source, g.external_id, g.white, g.black, g.result, g.time_control, g.time_class,
            g.eco, g.opening_name, g.end_time, g.user_color, g.rated,
            g.user_rating_after, g.opponent_rating_after,
+           g.bookmarked, g.notes,
            CASE WHEN a.game_id IS NOT NULL AND a.scoring_version >= ? THEN 1 ELSE 0 END as analyzed,
            CASE WHEN a.scoring_version >= ? THEN a.accuracy_white ELSE NULL END as accuracy_white,
            CASE WHEN a.scoring_version >= ? THEN a.accuracy_black ELSE NULL END as accuracy_black,
            CASE WHEN a.scoring_version >= ? THEN a.performance_white ELSE NULL END as performance_white,
            CASE WHEN a.scoring_version >= ? THEN a.performance_black ELSE NULL END as performance_black
     FROM games g LEFT JOIN analyses a ON a.game_id = g.id
-    WHERE g.user_id = ?
+    WHERE ${filters.join(' AND ')}
     ORDER BY g.end_time DESC NULLS LAST, g.id DESC
     LIMIT ?
-  `).all(SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, user.id, limit);
+  `).all(SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, ...params, limit);
   return c.json({ games: rows });
+});
+
+const notesSchema = z.object({ notes: z.string().max(4000) });
+router.patch('/:id/notes', async (c) => {
+  const user = c.get('user');
+  const id = Number(c.req.param('id'));
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = notesSchema.safeParse(body);
+  if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
+  const r = db.prepare('UPDATE games SET notes = ? WHERE id = ? AND user_id = ?').run(parsed.data.notes, id, user.id);
+  if (r.changes === 0) return c.json({ error: 'not_found' }, 404);
+  return c.json({ ok: true });
+});
+
+const bookmarkSchema = z.object({ bookmarked: z.boolean() });
+router.patch('/:id/bookmark', async (c) => {
+  const user = c.get('user');
+  const id = Number(c.req.param('id'));
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = bookmarkSchema.safeParse(body);
+  if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
+  const r = db.prepare('UPDATE games SET bookmarked = ? WHERE id = ? AND user_id = ?').run(parsed.data.bookmarked ? 1 : 0, id, user.id);
+  if (r.changes === 0) return c.json({ error: 'not_found' }, 404);
+  return c.json({ ok: true, bookmarked: parsed.data.bookmarked });
 });
 
 router.get('/:id', (c) => {

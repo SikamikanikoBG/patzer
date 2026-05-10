@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3 } from 'lucide-react';
+import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { cn } from '../lib/utils';
@@ -12,8 +12,14 @@ import { LogoMark, LogoLockup } from './Logo';
 // Replaces the v3 narrow left rail. The dark sage navbar (`bg-chesscom-900`)
 // gives the app the same chrome as chess.com itself; primary nav pills carry
 // gold underlines on the active route (matches chess.com's premium accent).
+// v6: command palette trigger + shortcuts trigger live in the right cluster.
 
-export default function Layout() {
+interface LayoutProps {
+  onOpenPalette?: () => void;
+  onOpenShortcuts?: () => void;
+}
+
+export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) {
   const { t, i18n } = useTranslation();
   const { user, refresh } = useAuth();
   const nav = useNavigate();
@@ -94,6 +100,7 @@ export default function Layout() {
             <NavPill to="/play" icon={Swords} label={t('home.playTitle')} />
             <NavPill to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
             <NavPill to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
+            <NavPill to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
             {user?.role === 'admin' && (
               <>
                 <span className="mx-2 h-5 w-px bg-chesscom-700" />
@@ -104,6 +111,27 @@ export default function Layout() {
           </nav>
 
           <div className="flex flex-1 items-center justify-end gap-2 md:flex-none">
+            {/* Command palette quick-trigger — visible cue for ⌘K. */}
+            {onOpenPalette && (
+              <button
+                onClick={onOpenPalette}
+                className="hidden items-center gap-2 rounded-md border border-chesscom-700 bg-chesscom-800/70 px-2.5 py-1.5 text-xs text-chesscom-300 hover:bg-chesscom-800 hover:text-white sm:inline-flex"
+                title="Command palette (⌘K)"
+              >
+                <Search className="h-3.5 w-3.5" />
+                <span className="hidden lg:inline">{t('palette.search', { defaultValue: 'Search' })}</span>
+                <kbd className="hidden rounded border border-chesscom-700 px-1 font-mono text-[10px] text-chesscom-300 lg:inline">⌘K</kbd>
+              </button>
+            )}
+            {onOpenShortcuts && (
+              <button
+                onClick={onOpenShortcuts}
+                className="hidden rounded-md p-2 text-chesscom-300 hover:bg-chesscom-800 hover:text-white sm:inline-flex"
+                title={t('shortcuts.title', { defaultValue: 'Keyboard shortcuts' })}
+              >
+                <Keyboard className="h-4 w-4" />
+              </button>
+            )}
             {/* Language toggle */}
             <div className="hidden rounded-lg border border-chesscom-700 bg-chesscom-800 p-0.5 text-xs sm:flex">
               <button
@@ -168,6 +196,7 @@ export default function Layout() {
               <MobileNavItem to="/play" icon={Swords} label={t('home.playTitle')} />
               <MobileNavItem to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
               <MobileNavItem to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
+              <MobileNavItem to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
               <MobileNavItem to="/settings" icon={SettingsIcon} label={t('common.settings')} />
               {user?.role === 'admin' && (
                 <>

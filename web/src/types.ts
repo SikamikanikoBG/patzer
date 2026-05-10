@@ -86,6 +86,8 @@ export interface GameRow {
   accuracy_black: number | null;
   performance_white: number | null;
   performance_black: number | null;
+  bookmarked: number | null;
+  notes: string | null;
 }
 
 export interface RatingRow {

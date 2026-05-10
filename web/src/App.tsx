@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './state/auth';
@@ -13,9 +13,12 @@ import Play from './pages/Play';
 import Review from './pages/Review';
 import GameAnalyzer from './pages/GameAnalyzer';
 import Insights from './pages/Insights';
+import Train from './pages/Train';
 import AdminUsers from './pages/admin/Users';
 import AdminSystem from './pages/admin/System';
 import IncomingChallengeModal from './components/IncomingChallengeModal';
+import CommandPalette from './components/CommandPalette';
+import ShortcutsModal from './components/ShortcutsModal';
 import { LogoMark } from './components/Logo';
 
 export default function App() {
@@ -63,6 +66,48 @@ export default function App() {
       void i18n.changeLanguage(user.profile.language);
     }
   }, [user, i18n]);
+
+  // Global keyboard shortcuts (only when authenticated). ⌘K / Ctrl+K opens
+  // the command palette, ? opens the shortcuts overlay, "g X" jumps pages.
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const gPrefixRef = useRef<number>(0);
+  useEffect(() => {
+    if (!user) return;
+    function isTextField(t: EventTarget | null): boolean {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+    }
+    function onKey(e: KeyboardEvent) {
+      // ⌘K / Ctrl+K — palette (always, even in inputs).
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setPaletteOpen((v) => !v);
+        return;
+      }
+      if (isTextField(e.target)) return;
+      if (e.key === '?') { e.preventDefault(); setShortcutsOpen(true); return; }
+      // "g X" prefix navigation
+      if (e.key === 'g' || e.key === 'G') {
+        gPrefixRef.current = Date.now();
+        return;
+      }
+      const since = Date.now() - gPrefixRef.current;
+      if (since < 1200) {
+        const map: Record<string, string> = { h: '/', p: '/play', r: '/review', i: '/insights', t: '/train', s: '/settings' };
+        const target = map[e.key.toLowerCase()];
+        if (target) {
+          e.preventDefault();
+          gPrefixRef.current = 0;
+          nav(target);
+        }
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [user, nav]);
 
   // Apply site theme (light / dark / auto) — toggles `dark` class on <html>
   useEffect(() => {
@@ -115,12 +160,13 @@ export default function App() {
   return (
     <>
       <Routes>
-        <Route element={<Layout />}>
+        <Route element={<Layout onOpenPalette={() => setPaletteOpen(true)} onOpenShortcuts={() => setShortcutsOpen(true)} />}>
           <Route path="/" element={<Home />} />
           <Route path="/play" element={<Play />} />
           <Route path="/review" element={<Review />} />
           <Route path="/review/:id" element={<GameAnalyzer />} />
           <Route path="/insights" element={<Insights />} />
+          <Route path="/train" element={<Train />} />
           <Route path="/settings" element={<SettingsPage />} />
           {user.role === 'admin' && <Route path="/admin/users" element={<AdminUsers />} />}
           {user.role === 'admin' && <Route path="/admin/system" element={<AdminSystem />} />}
@@ -128,6 +174,8 @@ export default function App() {
         </Route>
       </Routes>
       <IncomingChallengeModal />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <ShortcutsModal open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </>
   );
 }

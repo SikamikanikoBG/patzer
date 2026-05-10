@@ -19,6 +19,8 @@ import statsRoutes from './routes/stats.js';
 import reviewRoutes from './routes/review.js';
 import ratingsRoutes from './routes/ratings.js';
 import insightsRoutes from './routes/insights.js';
+import insightsV2Routes from './routes/insightsV2.js';
+import trainRoutes from './routes/train.js';
 import { attachPlayWebSocket } from './ws/play.js';
 import { attachLobbyWebSocket } from './ws/lobby.js';
 
@@ -88,6 +90,8 @@ app.route('/api/challenges', challengesRoutes);
 app.route('/api/stats', statsRoutes);
 app.route('/api/ratings', ratingsRoutes);
 app.route('/api/insights', insightsRoutes);
+app.route('/api/insights/v2', insightsV2Routes);
+app.route('/api/train', trainRoutes);
 
 // In production, serve the built web app
 import { existsSync, readFileSync } from 'node:fs';

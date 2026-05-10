@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Swords, BookOpen, Settings as SettingsIcon, ChevronRight, Trophy, Frown, Equal, Flame, Target, Activity, Download, Sparkles } from 'lucide-react';
+import { Swords, BookOpen, Settings as SettingsIcon, ChevronRight, Trophy, Frown, Equal, Flame, Target, Activity, Download, Sparkles, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../state/auth';
 import { api } from '../api';
@@ -14,11 +14,20 @@ interface Stats {
   streak: { kind: 'win' | 'loss' | 'draw'; count: number } | null;
 }
 
+interface TrainStats { total: number; solved: number; failed: number; accuracy: number }
+
+interface InsightsLite {
+  accuracy_trend: { t: string; acc: number; result: string | null }[];
+  opening_repertoire: { eco: string; name: string; played: number; wins: number; draws: number; losses: number; color: 'white' | 'black' }[];
+}
+
+interface NextPuzzle { puzzle: { game_id: number; ply: number; played_san: string; classification: string; white: string; black: string } | null }
+
 export default function Home() {
   const { t } = useTranslation();
   const { user } = useAuth();
 
-  const { data, isLoading } = useQuery({
+  const { data: gamesData, isLoading } = useQuery({
     queryKey: ['games', 'home'],
     queryFn: () => api.get<{ games: GameRow[] }>('/api/games?limit=4'),
   });
@@ -28,11 +37,27 @@ export default function Home() {
     queryFn: () => api.get<Stats>('/api/stats/me'),
   });
 
-  const games = data?.games ?? [];
+  const { data: trainStats } = useQuery({
+    queryKey: ['train-stats'],
+    queryFn: () => api.get<TrainStats>('/api/train/stats'),
+  });
+
+  const { data: insights } = useQuery({
+    queryKey: ['insights-home'],
+    queryFn: () => api.get<InsightsLite>('/api/insights/v2'),
+  });
+
+  const { data: nextPuzzle } = useQuery({
+    queryKey: ['train-next'],
+    queryFn: () => api.get<NextPuzzle>('/api/train/next'),
+  });
+
+  const games = gamesData?.games ?? [];
+  const topOpening = insights?.opening_repertoire?.[0] ?? null;
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      {/* Hero Play tile — chess.com green gradient with prominent CTA */}
+      {/* Hero Play tile */}
       <motion.section
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
         className="grid gap-4 md:grid-cols-[1.4fr_1fr]"
@@ -59,7 +84,6 @@ export default function Home() {
               </span>
             </div>
           </div>
-          {/* Decorative chessboard art on the right */}
           <svg className="pointer-events-none absolute -right-10 -top-10 hidden h-72 w-72 opacity-20 sm:block" viewBox="0 0 8 8" shapeRendering="crispEdges">
             {Array.from({ length: 64 }).map((_, i) => {
               const x = i % 8; const y = Math.floor(i / 8);
@@ -81,7 +105,7 @@ export default function Home() {
           </Link>
           <Link to="/insights" className="card-hover flex items-center gap-3 p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-board-dark/15 text-board-dark">
-              <Activity className="h-5 w-5" />
+              <BarChart3 className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold">{t('insights.title', { defaultValue: 'Insights' })}</div>
@@ -92,36 +116,34 @@ export default function Home() {
         </div>
       </motion.section>
 
-      {/* First-run empty state — fires when the user has zero saved games.
-          Without this the page collapses to greeting + 3 cards on a fresh
-          install, leaving 70% of the viewport blank with no next step. */}
+      {/* First-run empty state */}
       {stats && stats.total === 0 && (
         <section className="card-hover relative overflow-hidden border-dashed">
           <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-500/15 text-accent-600">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-board-dark/15 text-board-dark">
                 <Sparkles className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Play your first game</h3>
-                <p className="mt-1 text-sm text-ink-500 dark:text-ink-300">
+                <h3 className="text-lg font-semibold">{t('home.firstRunTitle', { defaultValue: 'Play your first game' })}</h3>
+                <p className="mt-1 text-sm text-chesscom-500 dark:text-chesscom-300">
                   {user?.profile.chesscom_username
-                    ? "Ready to go. Hop into Play vs Bot — or import your Chess.com games to review."
-                    : "Pick an opponent and a time control, or set your Chess.com username in Settings to import existing games."}
+                    ? t('home.firstRunReady', { defaultValue: 'Ready to go. Hop into Play vs Bot — or import your Chess.com games to review.' })
+                    : t('home.firstRunNoUsername', { defaultValue: 'Pick an opponent and a time control, or set your Chess.com username in Settings to import existing games.' })}
                 </p>
               </div>
             </div>
             <div className="flex shrink-0 gap-2">
               <Link to="/play" className="btn-primary text-sm">
-                <Swords className="h-4 w-4" /> Play vs Bot
+                <Swords className="h-4 w-4" /> {t('home.playTitle')}
               </Link>
               {user?.profile.chesscom_username ? (
                 <Link to="/review" className="btn-secondary text-sm">
-                  <Download className="h-4 w-4" /> Import games
+                  <Download className="h-4 w-4" /> {t('home.importGames', { defaultValue: 'Import games' })}
                 </Link>
               ) : (
                 <Link to="/settings" className="btn-secondary text-sm">
-                  <SettingsIcon className="h-4 w-4" /> Set username
+                  <SettingsIcon className="h-4 w-4" /> {t('home.setUsername', { defaultValue: 'Set username' })}
                 </Link>
               )}
             </div>
@@ -129,31 +151,78 @@ export default function Home() {
         </section>
       )}
 
-      {/* Stats strip */}
+      {/* Stats strip with sparkline */}
       {stats && stats.total > 0 && (
         <section>
           <div className="mb-3 flex items-center gap-2">
-            <Activity className="h-4 w-4 text-accent-500" />
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-500">Your stats</h2>
+            <Activity className="h-4 w-4 text-board-dark" />
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">{t('home.yourStats', { defaultValue: 'Your stats' })}</h2>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard icon={Activity} label="Games" value={String(stats.total)} sublabel={`${stats.wins}W · ${stats.draws}D · ${stats.losses}L`} />
-            <StatCard icon={Trophy} label="Win rate" value={`${Math.round((stats.wins / Math.max(1, stats.total)) * 100)}%`} sublabel={stats.wins ? `${stats.wins} wins` : undefined} />
-            <StatCard icon={Target} label="Avg accuracy" value={stats.avg_accuracy != null ? `${stats.avg_accuracy}%` : '—'} sublabel="across analyzed games" />
-            <StatCard icon={Flame} label="Streak" value={stats.streak ? `${stats.streak.count} ${stats.streak.kind}` : '—'} highlight={stats.streak?.kind === 'win'} />
+            <StatCard icon={Activity} label={t('home.statGames', { defaultValue: 'Games' })} value={String(stats.total)} sublabel={`${stats.wins}W · ${stats.draws}D · ${stats.losses}L`} />
+            <StatCard icon={Trophy} label={t('home.statWinRate', { defaultValue: 'Win rate' })} value={`${Math.round((stats.wins / Math.max(1, stats.total)) * 100)}%`} sublabel={stats.wins ? `${stats.wins} wins` : undefined} />
+            <StatCard
+              icon={Target}
+              label={t('home.statAccuracy', { defaultValue: 'Avg accuracy' })}
+              value={stats.avg_accuracy != null ? `${stats.avg_accuracy}%` : '—'}
+              sublabel={t('home.acrossAnalyzed', { defaultValue: 'across analyzed games' })}
+              chart={insights?.accuracy_trend && insights.accuracy_trend.length > 1 ? <Sparkline values={insights.accuracy_trend.map((p) => p.acc)} /> : undefined}
+            />
+            <StatCard icon={Flame} label={t('home.statStreak', { defaultValue: 'Streak' })} value={stats.streak ? `${stats.streak.count} ${stats.streak.kind}` : '—'} highlight={stats.streak?.kind === 'win'} />
           </div>
         </section>
       )}
 
-      {/* (Hero strip + small tiles above replace the old 3-card grid.) */}
+      {/* Today's tactic + Top opening */}
+      {(nextPuzzle?.puzzle || topOpening) && (
+        <section className="grid gap-3 md:grid-cols-2">
+          {nextPuzzle?.puzzle && (
+            <Link to="/train" className="card-hover relative overflow-hidden p-5">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-mistake/15 text-mistake">
+                  <Target className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-chesscom-500">{t('home.todayPuzzle', { defaultValue: "Today's puzzle" })}</div>
+                  <div className="mt-0.5 truncate text-sm font-semibold text-chesscom-900 dark:text-chesscom-100">
+                    {t('home.todayPuzzleTitle', { defaultValue: "You played {{san}}. Find a stronger move.", san: nextPuzzle.puzzle.played_san })}
+                  </div>
+                  <div className="mt-1 truncate text-[11px] text-chesscom-500">
+                    {t('home.fromGame', { defaultValue: 'From your game vs {{opp}}', opp: user?.profile.display_name === nextPuzzle.puzzle.white ? nextPuzzle.puzzle.black : nextPuzzle.puzzle.white })}
+                    {trainStats && trainStats.total > 0 && <> · {trainStats.solved}/{trainStats.total} solved</>}
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-chesscom-400" />
+              </div>
+            </Link>
+          )}
+          {topOpening && (
+            <Link to="/insights" className="card-hover p-5">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gold-500/15 text-gold-600">
+                  <BookOpen className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-chesscom-500">{t('home.topOpening', { defaultValue: 'Your top opening' })}</div>
+                  <div className="mt-0.5 truncate text-sm font-semibold">{topOpening.name}</div>
+                  <div className="mt-1 truncate text-[11px] text-chesscom-500">
+                    {topOpening.played} games · {topOpening.wins}W / {topOpening.draws}D / {topOpening.losses}L · {topOpening.color === 'white' ? '♔' : '♚'}
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-chesscom-400" />
+              </div>
+            </Link>
+          )}
+        </section>
+      )}
 
       {/* Recent games */}
       {!isLoading && games.length > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-500">Recent games</h2>
-            <Link to="/review" className="text-xs font-medium text-accent-600 hover:text-accent-700">
-              View all →
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">{t('home.recentGames', { defaultValue: 'Recent games' })}</h2>
+            <Link to="/review" className="text-xs font-medium text-board-dark hover:text-board-dark/80">
+              {t('home.viewAll', { defaultValue: 'View all →' })}
             </Link>
           </div>
           <div className="grid gap-2">
@@ -164,23 +233,23 @@ export default function Home() {
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">
                     {g.user_color === 'white'
-                      ? <><span className="text-ink-900 dark:text-cream">{g.white}</span> <span className="text-ink-400">vs</span> {g.black}</>
-                      : <>{g.white} <span className="text-ink-400">vs</span> <span className="text-ink-900 dark:text-cream">{g.black}</span></>}
-                    <span className="ml-2 text-[11px] text-ink-400">{g.time_control}</span>
+                      ? <><span className="text-chesscom-900 dark:text-chesscom-100">{g.white}</span> <span className="text-chesscom-400">vs</span> {g.black}</>
+                      : <>{g.white} <span className="text-chesscom-400">vs</span> <span className="text-chesscom-900 dark:text-chesscom-100">{g.black}</span></>}
+                    <span className="ml-2 text-[11px] text-chesscom-400">{g.time_control}</span>
                   </div>
-                  <div className="text-[11px] text-ink-500">{new Date(g.end_time).toLocaleString()}</div>
+                  <div className="text-[11px] text-chesscom-500">{new Date(g.end_time).toLocaleString()}</div>
                 </div>
                 {g.analyzed ? (
                   <div className="text-right text-[11px]">
-                    <div className="text-ink-400">accuracy</div>
+                    <div className="text-chesscom-400">accuracy</div>
                     <div className="font-mono font-semibold tabular-nums">
                       <span>{fmtAccuracy(g.accuracy_white)}</span>
-                      <span className="mx-1 text-ink-400">/</span>
+                      <span className="mx-1 text-chesscom-400">/</span>
                       <span>{fmtAccuracy(g.accuracy_black)}</span>
                     </div>
                   </div>
                 ) : (
-                  <span className="badge bg-ink-100 text-ink-500 dark:bg-ink-700 dark:text-ink-300">unreviewed</span>
+                  <span className="badge bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300">unreviewed</span>
                 )}
               </Link>
             ))}
@@ -191,21 +260,42 @@ export default function Home() {
   );
 }
 
-function StatCard({ icon: Icon, label, value, sublabel, highlight }: { icon: React.ElementType; label: string; value: string; sublabel?: string; highlight?: boolean }) {
+function StatCard({ icon: Icon, label, value, sublabel, highlight, chart }: { icon: React.ElementType; label: string; value: string; sublabel?: string; highlight?: boolean; chart?: React.ReactNode }) {
   return (
-    <div className={`card flex flex-col gap-1 p-4 ${highlight ? 'ring-2 ring-accent-500/30' : ''}`}>
-      <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-ink-500">
+    <div className={`card flex flex-col gap-1 p-4 ${highlight ? 'ring-2 ring-gold-500/30' : ''}`}>
+      <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-chesscom-500">
         <Icon className="h-3.5 w-3.5" />
         {label}
       </div>
-      <div className="font-mono text-2xl font-bold tabular-nums">{value}</div>
-      {sublabel && <div className="text-[11px] text-ink-400">{sublabel}</div>}
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="font-mono text-2xl font-bold tabular-nums">{value}</div>
+        {chart && <div className="opacity-90">{chart}</div>}
+      </div>
+      {sublabel && <div className="text-[11px] text-chesscom-400">{sublabel}</div>}
     </div>
   );
 }
 
+function Sparkline({ values }: { values: number[] }) {
+  if (values.length < 2) return null;
+  const W = 64, H = 22;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(1, max - min);
+  const path = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * (W - 2) + 1;
+    const y = H - 1 - ((v - min) / range) * (H - 2);
+    return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  return (
+    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} className="text-board-dark">
+      <path d={path} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function ResultIcon({ r }: { r: string }) {
-  if (r === 'win') return <div className="rounded-lg bg-accent-100 p-2 text-accent-700"><Trophy className="h-4 w-4" /></div>;
-  if (r === 'loss') return <div className="rounded-lg bg-bad/10 p-2 text-bad"><Frown className="h-4 w-4" /></div>;
-  return <div className="rounded-lg bg-ink-100 p-2 text-ink-500 dark:bg-ink-700 dark:text-ink-300"><Equal className="h-4 w-4" /></div>;
+  if (r === 'win') return <div className="rounded-lg bg-board-dark/15 p-2 text-board-dark"><Trophy className="h-4 w-4" /></div>;
+  if (r === 'loss') return <div className="rounded-lg bg-mistake/15 p-2 text-mistake"><Frown className="h-4 w-4" /></div>;
+  return <div className="rounded-lg bg-chesscom-100 p-2 text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300"><Equal className="h-4 w-4" /></div>;
 }

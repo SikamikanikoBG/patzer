@@ -162,6 +162,28 @@ ensureColumn('analyses', 'prose_version', `INTEGER NOT NULL DEFAULT 0`);
 ensureColumn('analyses', 'prose_lang', `TEXT`);
 ensureColumn('analyses', 'prose_audience', `TEXT`);
 
+// v6.0.0 — bookmarks + notes (per-game, per-user). Lets users star a game and
+// jot personal notes. Both are user-scoped because games rows are per-user
+// (one chess.com game imported by two users would have two rows already).
+ensureColumn('games', 'bookmarked', `INTEGER NOT NULL DEFAULT 0`);
+ensureColumn('games', 'notes', `TEXT`);
+
+// v6.0.0 — Tactic Trainer attempts. Each row is one user attempt at a puzzle
+// extracted from one of their own blunders / missed mates.
+db.exec(`CREATE TABLE IF NOT EXISTS puzzle_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  game_id INTEGER NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  ply INTEGER NOT NULL,
+  fen TEXT NOT NULL,
+  solution_uci TEXT NOT NULL,
+  attempted_uci TEXT,
+  solved INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_puzzle_attempts_user ON puzzle_attempts(user_id, created_at DESC)`);
+db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_puzzle_attempts_unique ON puzzle_attempts(user_id, game_id, ply)`);
+
 // Cleanup expired sessions on startup
 db.prepare(`DELETE FROM sessions WHERE expires_at < datetime('now')`).run();
 // Sweep stale challenges on startup. Pending challenges older than 15 minutes

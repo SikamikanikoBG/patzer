@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sparkles, Settings as SettingsIcon, Copy, Download, Check, ListOrdered, Lightbulb, FileText } from 'lucide-react';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sparkles, Settings as SettingsIcon, Copy, Download, Check, ListOrdered, Lightbulb, FileText, Star, Share2, FlipVertical2, NotebookPen } from 'lucide-react';
 import { Chess } from 'chess.js';
 import ChessBoard from '../components/ChessBoard';
 import EvalBar from '../components/EvalBar';
@@ -21,7 +21,7 @@ import { useAuth } from '../state/auth';
 import type { AnalysisResult, AnalyzedMove, KeyMomentSummary, PhaseSplit } from '../types';
 
 interface GameDetail {
-  game: { id: number; pgn: string; white: string; black: string; result: string; user_color: 'white' | 'black' | null; eco?: string | null; opening_name?: string | null };
+  game: { id: number; pgn: string; white: string; black: string; result: string; user_color: 'white' | 'black' | null; eco?: string | null; opening_name?: string | null; bookmarked?: number | null; notes?: string | null };
   analysis: {
     depth: number; accuracy_white: number; accuracy_black: number;
     estimated_elo_white: number | null; estimated_elo_black: number | null;
@@ -63,6 +63,10 @@ export default function GameAnalyzer() {
   const [showDepthControl, setShowDepthControl] = useState(false);
   const [reviewProse, setReviewProse] = useState<GameReviewProse | null>(null);
   const [tab, setTab] = useState<Tab>('review');
+  // Local UI state for new features.
+  const [flipped, setFlipped] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     if (!data) return;
@@ -120,9 +124,23 @@ export default function GameAnalyzer() {
     return list;
   }, [data]);
 
-  const [ply, setPly] = useState(0);
+  // Read initial ?ply= from the URL so deep-links to a specific position
+  // open at that move on first render. After that we keep them in sync.
+  const initialPly = (() => {
+    const v = Number(searchParams.get('ply'));
+    return Number.isFinite(v) && v >= 0 ? v : 0;
+  })();
+  const [ply, setPly] = useState(initialPly);
 
-  useEffect(() => { setPly(0); }, [gameId]);
+  useEffect(() => { setPly(initialPly); /* eslint-disable-line react-hooks/exhaustive-deps */ }, [gameId]);
+
+  // Keep ?ply= in the URL so refresh + share work. Replace, don't push.
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (ply > 0) next.set('ply', String(ply)); else next.delete('ply');
+    if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ply]);
 
   const prevPlyRef = useRef(ply);
   useEffect(() => {
@@ -142,6 +160,14 @@ export default function GameAnalyzer() {
       else if (e.key === 'ArrowRight') setPly((p) => Math.min(positions.length - 1, p + 1));
       else if (e.key === 'Home') setPly(0);
       else if (e.key === 'End') setPly(positions.length - 1);
+      else if (e.key === 'f' || e.key === 'F') setFlipped((f) => !f);
+      else if (e.key === 's' || e.key === 'S') {
+        const url = window.location.href;
+        navigator.clipboard?.writeText(url).then(() => {
+          setLinkCopied(true);
+          setTimeout(() => setLinkCopied(false), 1400);
+        }).catch(() => undefined);
+      }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -163,7 +189,9 @@ export default function GameAnalyzer() {
   const pos = positions[ply] ?? positions[0];
   const move: AnalyzedMove | undefined = analysis?.moves[ply - 1];
   const userColor = data.game.user_color ?? 'white';
-  const orientation = userColor;
+  const orientation: 'white' | 'black' = flipped
+    ? (userColor === 'white' ? 'black' : 'white')
+    : userColor;
   const currentEvalCp = move?.eval_after_cp ?? 0;
 
   const historySoFar = analysis?.moves.slice(0, ply - 1).map((m) => m.san) ?? [];
@@ -393,6 +421,21 @@ export default function GameAnalyzer() {
                 </div>
               </div>
 
+              <GameMetaToolbar
+                gameId={gameId}
+                bookmarked={!!data.game.bookmarked}
+                notes={data.game.notes ?? ''}
+                onFlip={() => setFlipped((f) => !f)}
+                linkCopied={linkCopied}
+                onShare={() => {
+                  const url = window.location.href;
+                  navigator.clipboard?.writeText(url).then(() => {
+                    setLinkCopied(true);
+                    setTimeout(() => setLinkCopied(false), 1400);
+                  }).catch(() => undefined);
+                }}
+              />
+
               <ExportRow
                 pgn={data.game.pgn}
                 fen={pos?.fen ?? ''}
@@ -402,6 +445,71 @@ export default function GameAnalyzer() {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function GameMetaToolbar({ gameId, bookmarked, notes, onFlip, onShare, linkCopied }: { gameId: number; bookmarked: boolean; notes: string; onFlip: () => void; onShare: () => void; linkCopied: boolean }) {
+  const { t } = useTranslation();
+  const [showNotes, setShowNotes] = useState(false);
+  const [draft, setDraft] = useState(notes);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  useEffect(() => { setDraft(notes); }, [notes]);
+
+  const star = useMutation({
+    mutationFn: (next: boolean) => api.patch(`/api/games/${gameId}/bookmark`, { bookmarked: next }),
+  });
+  const [isStarred, setStarred] = useState(bookmarked);
+  useEffect(() => { setStarred(bookmarked); }, [bookmarked]);
+
+  const saveNotes = useMutation({
+    mutationFn: (text: string) => api.patch(`/api/games/${gameId}/notes`, { notes: text }),
+    onSuccess: () => { setSavedAt(Date.now()); setTimeout(() => setSavedAt(null), 1400); },
+  });
+
+  return (
+    <div className="card overflow-hidden">
+      <div className="flex flex-wrap items-center gap-1 px-2 py-1.5">
+        <button
+          onClick={() => { const next = !isStarred; setStarred(next); star.mutate(next); }}
+          className={`btn-ghost px-2 py-1 text-xs ${isStarred ? 'text-gold-600 dark:text-gold-400' : ''}`}
+          title={t('shortcuts.bookmark', { defaultValue: 'Toggle bookmark' })}
+        >
+          <Star className={`h-3.5 w-3.5 ${isStarred ? 'fill-gold-500' : ''}`} />
+          {isStarred ? t('review.starred', { defaultValue: 'Starred' }) : t('review.star', { defaultValue: 'Star' })}
+        </button>
+        <button onClick={onFlip} className="btn-ghost px-2 py-1 text-xs" title={t('shortcuts.flipBoard', { defaultValue: 'Flip board' })}>
+          <FlipVertical2 className="h-3.5 w-3.5" /> {t('review.flip', { defaultValue: 'Flip' })}
+        </button>
+        <button onClick={onShare} className="btn-ghost px-2 py-1 text-xs" title={t('shortcuts.share', { defaultValue: 'Copy link to position' })}>
+          {linkCopied ? <Check className="h-3.5 w-3.5 text-board-dark" /> : <Share2 className="h-3.5 w-3.5" />}
+          {linkCopied ? t('common.copied') : t('review.share', { defaultValue: 'Share position' })}
+        </button>
+        <button
+          onClick={() => setShowNotes((s) => !s)}
+          className={`btn-ghost ml-auto px-2 py-1 text-xs ${showNotes ? 'text-chesscom-900 dark:text-chesscom-100' : ''}`}
+          title={t('review.notes', { defaultValue: 'Notes' })}
+        >
+          <NotebookPen className="h-3.5 w-3.5" />
+          {t('review.notes', { defaultValue: 'Notes' })}
+          {notes && !showNotes && <span className="ml-0.5 inline-block h-1.5 w-1.5 rounded-full bg-gold-500" />}
+        </button>
+      </div>
+      {showNotes && (
+        <div className="border-t border-chesscom-200 p-2 dark:border-chesscom-700">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onBlur={() => { if (draft !== notes) saveNotes.mutate(draft); }}
+            placeholder={t('review.notesPlaceholder', { defaultValue: 'Your private notes on this game…' })}
+            className="input min-h-[88px] w-full resize-y text-sm"
+          />
+          <div className="mt-1 flex items-center justify-between text-[10px] text-chesscom-400">
+            <span>{t('review.notesPrivate', { defaultValue: 'Only you can see this.' })}</span>
+            <span>{savedAt ? t('common.saved', { defaultValue: 'Saved' }) : (draft !== notes ? t('review.notesUnsaved', { defaultValue: 'Click outside to save' }) : '')}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
