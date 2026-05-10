@@ -11,6 +11,7 @@ import MoveList from '../components/MoveList';
 import CoachPanel from '../components/CoachPanel';
 import ClassificationStats from '../components/ClassificationStats';
 import ClassificationBadge from '../components/ClassificationBadge';
+import CapturedPieces from '../components/CapturedPieces';
 import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
 import { api } from '../api';
 import { fmtAccuracy } from '../lib/utils';
@@ -144,6 +145,7 @@ export default function GameAnalyzer() {
   const orientation = userColor;
   const currentEvalCp = move?.eval_after_cp ?? 0;
 
+  const historySoFar = analysis?.moves.slice(0, ply - 1).map((m) => m.san) ?? [];
   const coachReq = move ? () => ({
     url: '/api/coach/explain',
     body: {
@@ -154,6 +156,7 @@ export default function GameAnalyzer() {
       classification: move.classification,
       cp_loss: move.centipawn_loss,
       pv_san: move.best_pv,
+      history: historySoFar,
     },
   }) : null;
 
@@ -176,6 +179,8 @@ export default function GameAnalyzer() {
 
       <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
         <div className="mx-auto w-full lg:mx-0 lg:flex-1 lg:max-w-[760px]">
+          {/* Captured by the side at top of the board */}
+          <div className="mb-1 px-1"><CapturedPieces fen={pos?.fen ?? ''} side={orientation === 'white' ? 'black' : 'white'} /></div>
           <div className="relative flex items-stretch gap-2">
             <EvalBar cp={currentEvalCp} orientation={orientation} />
             <div className={`relative min-w-0 flex-1 board-theme-${user?.profile.board_theme ?? 'wood'}`}>
@@ -190,6 +195,8 @@ export default function GameAnalyzer() {
               )}
             </div>
           </div>
+          {/* Captured by the side at the bottom (the player whose POV we're in) */}
+          <div className="mt-1 px-1"><CapturedPieces fen={pos?.fen ?? ''} side={orientation} /></div>
           <div className="mt-2 flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm shadow-soft dark:bg-ink-800">
             <div className="min-w-0 truncate text-ink-500">
               {move ? (

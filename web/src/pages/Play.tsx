@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ChessBoard from '../components/ChessBoard';
 import ClassificationBadge from '../components/ClassificationBadge';
 import CoachPanel from '../components/CoachPanel';
+import CapturedPieces from '../components/CapturedPieces';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../state/auth';
 import { useLobby } from '../state/lobby';
@@ -81,6 +82,8 @@ export default function Play() {
   const [previewing, setPreviewing] = useState(false);
   const [lastClassifiedMove, setLastClassifiedMove] = useState<{ ply: number; san: string; uci: string; classification: Classification; cp_loss: number; best_san: string | null; fen_before: string } | null>(null);
   const [boardArrows, setBoardArrows] = useState<{ orig: string; dest: string; brush: string }[]>([]);
+  const [boardKey, setBoardKey] = useState(0);
+  const forceBoardSync = () => setBoardKey((k) => k + 1);
 
   const wsRef = useRef<WebSocket | null>(null);
   const tickRef = useRef<number | null>(null);
@@ -242,6 +245,11 @@ export default function Play() {
       case 'analysis_ready':
         // PvP analysis is ready — could refresh UI; for now just no-op
         break;
+      case 'error':
+        // Server rejected something (illegal move etc) — re-sync the board
+        forceBoardSync();
+        setPreviewing(false);
+        break;
     }
   }
 
@@ -264,8 +272,7 @@ export default function Play() {
 
   function tryAnotherMove() {
     setBlunder(null);
-    // fenBeforeMoveRef.current is still our position; just clear blunder state
-    // Chessground in our wrapper resets to current `fen` automatically.
+    forceBoardSync(); // roll back the chessground visual to the authoritative FEN
   }
 
   function resign() { wsRef.current?.send(JSON.stringify({ type: 'resign' })); }
@@ -346,6 +353,7 @@ export default function Play() {
   const lastMoveDestSquare = lastMoveOnBoard?.uci?.slice(2, 4);
 
   // Coach context: explain user's last classified move if available, else give a hint
+  const moveSans = moves.map((m) => m.san);
   const coachReq = lastClassifiedMove ? () => ({
     url: '/api/coach/explain',
     body: {
@@ -356,14 +364,17 @@ export default function Play() {
       classification: lastClassifiedMove.classification,
       cp_loss: lastClassifiedMove.cp_loss,
       pv_san: [],
+      history: moveSans.slice(0, lastClassifiedMove.ply - 1),
       user_perspective: true,
     },
   }) : (turn === userColor && coachConfigured ? () => ({
     url: '/api/coach/hint',
-    body: { fen },
+    body: { fen, history: moveSans },
   }) : null);
 
-  const oppLabel = opponent ? `${opponent.display_name}${opponent.online ? '' : ' (offline)'}` : (userColor === 'white' ? t('play.black') : t('play.white'));
+  const oppLabel = opponent ? opponent.display_name : (userColor === 'white' ? t('play.black') : t('play.white'));
+  const isPvP = !!pvpGameId;
+  const oppDisconnected = isPvP && opponent && !opponent.online;
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -371,6 +382,15 @@ export default function Play() {
         {/* BOARD COLUMN */}
         <div className="mx-auto w-full lg:mx-0 lg:flex-1 lg:max-w-[760px]">
           <ClockBar timeMs={userColor === 'white' ? blackMs : whiteMs} active={turn !== userColor} label={oppLabel} flip />
+          {oppDisconnected && (
+            <div className="mb-2 flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+              <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-amber-500" />
+              {opponent?.display_name} disconnected — waiting for them to come back…
+            </div>
+          )}
+          <div className="my-1 flex items-center justify-between gap-2">
+            <CapturedPieces fen={fen} side={userColor === 'white' ? 'black' : 'white'} />
+          </div>
           <div className="relative my-2">
             <div className={`board-theme-${user?.profile.board_theme ?? 'wood'}`}>
               <ChessBoard
@@ -380,12 +400,16 @@ export default function Play() {
                 turnColor={turn}
                 onMove={attemptMove}
                 arrows={boardArrows as never[]}
+                resetKey={boardKey}
               />
             </div>
             {/* Classification badge for the last classified user move (bot mode only) */}
             {lastClassifiedMove && lastMoveDestSquare === lastClassifiedMove.uci.slice(2, 4) && (
               <ClassificationBadge classification={lastClassifiedMove.classification} square={lastClassifiedMove.uci.slice(2, 4)} orientation={userColor} />
             )}
+          </div>
+          <div className="my-1 flex items-center justify-between gap-2">
+            <CapturedPieces fen={fen} side={userColor} />
           </div>
           <ClockBar timeMs={userColor === 'white' ? whiteMs : blackMs} active={turn === userColor} label={user?.profile.display_name ?? (userColor === 'white' ? t('play.white') : t('play.black'))} />
 

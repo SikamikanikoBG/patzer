@@ -37,6 +37,7 @@ interface BotSession {
   chess: Chess;
   engine: StockfishEngine;            // plays the bot moves at chosen skill
   analysisEngine: StockfishEngine | null; // lazy, used for hints + classification + blunder preview at full strength
+  analysisQueue: Promise<void>;       // serializes evaluations on the analysis engine
   difficulty: Difficulty;
   userColor: 'white' | 'black';
   timeControl: { initial: number; increment: number } | null;
@@ -62,6 +63,7 @@ interface PvpSession {
   lastMoveAt: number;
   saved: boolean;
   analysisEngine: StockfishEngine | null;
+  analysisQueue: Promise<void>;
 }
 
 const pvpSessions = new Map<number, PvpSession>(); // game_id → session
@@ -90,6 +92,19 @@ async function ensureAnalysisEngine(holder: { analysisEngine: StockfishEngine | 
   await e.setOption('Hash', '32');
   holder.analysisEngine = e;
   return e;
+}
+
+// Serialize work on the analysis engine. Two concurrent evaluate() calls would
+// interleave UCI commands and corrupt the engine's state.
+function runOnAnalysisEngine<T>(holder: { analysisQueue: Promise<void> }, fn: () => Promise<T>): Promise<T> {
+  let release!: () => void;
+  const next = new Promise<void>((res) => { release = res; });
+  const prev = holder.analysisQueue;
+  holder.analysisQueue = next;
+  return prev.then(async () => {
+    try { return await fn(); }
+    finally { release(); }
+  });
 }
 
 // Quick-classify a played move: eval position before (best move + score),
@@ -220,7 +235,7 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
 
         session = {
           kind: 'bot', user,
-          chess: new Chess(), engine, analysisEngine: null,
+          chess: new Chess(), engine, analysisEngine: null, analysisQueue: Promise.resolve(),
           difficulty, userColor,
           timeControl: tc,
           whiteTimeMs: tc?.initial ?? 0,
@@ -264,17 +279,19 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
           whiteTimeMs: session.whiteTimeMs, blackTimeMs: session.blackTimeMs,
         });
 
-        // Background classification of user move
-        void (async () => {
+        // Capture the post-user-move state SYNCHRONOUSLY before the bot moves.
+        // (Reading session.chess.fen() inside the async IIFE was racing with playBotMove.)
+        const fenAfterUserMove = session.chess.fen();
+        const userPly = session.chess.history().length;
+        void runOnAnalysisEngine(session, async () => {
           try {
             const a = await ensureAnalysisEngine(session!);
             const result = await quickClassify({
-              engine: a, fenBefore, fenAfter: session!.chess.fen(),
+              engine: a, fenBefore, fenAfter: fenAfterUserMove,
               moveUci: uci, depth: 10,
             });
             send(ws, 'move_classified', {
-              ply: session!.chess.history().length,
-              uci,
+              ply: userPly, uci,
               classification: result.classification,
               cp_loss: result.cp_loss,
               best_uci: result.best_uci,
@@ -284,7 +301,7 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
           } catch (err) {
             console.error('[classify-user-move]', err);
           }
-        })();
+        });
 
         if (await checkBotGameOver(ws, session)) return;
         await playBotMove(ws, session);
@@ -292,33 +309,38 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
         // Used by kid mode — pre-evaluate before committing
         const uci = msg.uci as string;
         if (!uci || uci.length < 4) return;
-        try {
-          const fenBefore = session.chess.fen();
-          // Apply temporarily on a clone
-          const probe = new Chess(fenBefore);
-          const m = probe.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4) || undefined });
-          if (!m) { send(ws, 'preview_result', { ok: false, message: 'illegal' }); return; }
-          const a = await ensureAnalysisEngine(session);
-          const result = await quickClassify({
-            engine: a, fenBefore, fenAfter: probe.fen(),
-            moveUci: uci, depth: 10,
-          });
-          send(ws, 'preview_result', { ok: true, uci, ...result });
-        } catch (err) {
-          send(ws, 'preview_result', { ok: false, message: (err as Error).message });
-        }
+        const fenBefore = session.chess.fen();
+        const probe = new Chess(fenBefore);
+        const m = probe.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4) || undefined });
+        if (!m) { send(ws, 'preview_result', { ok: false, message: 'illegal' }); return; }
+        const fenAfter = probe.fen();
+        await runOnAnalysisEngine(session, async () => {
+          try {
+            const a = await ensureAnalysisEngine(session!);
+            const result = await quickClassify({
+              engine: a, fenBefore, fenAfter,
+              moveUci: uci, depth: 10,
+            });
+            send(ws, 'preview_result', { ok: true, uci, ...result });
+          } catch (err) {
+            send(ws, 'preview_result', { ok: false, message: (err as Error).message });
+          }
+        });
       } else if (type === 'resign' && session) {
         await endBotGame(ws, session, session.userColor === 'white' ? '0-1' : '1-0', 'resignation');
       } else if (type === 'request_hint' && session) {
         // Use the analysis engine, NOT the bot engine — avoids contention
         // and keeps the bot game state clean.
-        try {
-          const a = await ensureAnalysisEngine(session);
-          const ev = await a.evaluate(session.chess.fen(), 12);
-          send(ws, 'hint', { best_uci: ev.bestMoveUci, eval_cp: ev.cp });
-        } catch (err) {
-          send(ws, 'hint', { best_uci: null, error: (err as Error).message });
-        }
+        const fen = session.chess.fen();
+        await runOnAnalysisEngine(session, async () => {
+          try {
+            const a = await ensureAnalysisEngine(session!);
+            const ev = await a.evaluate(fen, 12);
+            send(ws, 'hint', { best_uci: ev.bestMoveUci, eval_cp: ev.cp });
+          } catch (err) {
+            send(ws, 'hint', { best_uci: null, error: (err as Error).message });
+          }
+        });
       }
     } catch (err) {
       send(ws, 'error', { message: err instanceof Error ? err.message : String(err) });
@@ -441,11 +463,17 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
     }
     const tcKey = row.time_control || 'untimed';
     const tc = TIME_CONTROLS[tcKey] ?? null;
+    // Hydrate chess state from saved PGN if present (lets us resume after
+    // a server restart or a F5 refresh in the middle of a game).
+    const chess = new Chess();
+    if (row.pgn && row.pgn.trim()) {
+      try { chess.loadPgn(row.pgn, { strict: false }); } catch (err) { console.warn('[pvp] pgn restore failed', err); }
+    }
     session = {
       kind: 'pvp',
       game_id: gameId,
       external_id: row.external_id,
-      chess: new Chess(),
+      chess,
       white: row.user_color === 'white'
         ? { user_id: user.id, ws: null, display_name: row.white }
         : { user_id: opponentId, ws: null, display_name: row.white },
@@ -458,6 +486,7 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
       lastMoveAt: Date.now(),
       saved: false,
       analysisEngine: null,
+      analysisQueue: Promise.resolve(),
     };
     pvpSessions.set(gameId, session);
   }
@@ -526,30 +555,39 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
       } else if (type === 'preview_move') {
         const uci = msg.uci as string;
         if (!uci || uci.length < 4) return;
-        try {
-          const fenBefore = session.chess.fen();
-          const probe = new Chess(fenBefore);
-          const m = probe.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4) || undefined });
-          if (!m) { send(ws, 'preview_result', { ok: false, message: 'illegal' }); return; }
-          const a = await ensureAnalysisEngine(session);
-          const result = await quickClassify({
-            engine: a, fenBefore, fenAfter: probe.fen(),
-            moveUci: uci, depth: 10,
-          });
-          send(ws, 'preview_result', { ok: true, uci, ...result });
-        } catch (err) {
-          send(ws, 'preview_result', { ok: false, message: (err as Error).message });
-        }
+        const fenBefore = session.chess.fen();
+        const probe = new Chess(fenBefore);
+        const m = probe.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4) || undefined });
+        if (!m) { send(ws, 'preview_result', { ok: false, message: 'illegal' }); return; }
+        const fenAfter = probe.fen();
+        await runOnAnalysisEngine(session, async () => {
+          try {
+            const a = await ensureAnalysisEngine(session!);
+            const result = await quickClassify({
+              engine: a, fenBefore, fenAfter,
+              moveUci: uci, depth: 10,
+            });
+            send(ws, 'preview_result', { ok: true, uci, ...result });
+          } catch (err) {
+            send(ws, 'preview_result', { ok: false, message: (err as Error).message });
+          }
+        });
       } else if (type === 'resign') {
         await endPvpGame(session, myColor === 'white' ? '0-1' : '1-0', 'resignation');
       } else if (type === 'request_hint') {
-        try {
-          const a = await ensureAnalysisEngine(session);
-          const ev = await a.evaluate(session.chess.fen(), 12);
-          send(ws, 'hint', { best_uci: ev.bestMoveUci, eval_cp: ev.cp });
-        } catch (err) {
-          send(ws, 'hint', { best_uci: null, error: (err as Error).message });
-        }
+        const turn = session.chess.turn();
+        const isMyTurn = (turn === 'w' && me === session.white) || (turn === 'b' && me === session.black);
+        if (!isMyTurn) { send(ws, 'hint', { best_uci: null, error: 'not_your_turn' }); return; }
+        const fen = session.chess.fen();
+        await runOnAnalysisEngine(session, async () => {
+          try {
+            const a = await ensureAnalysisEngine(session!);
+            const ev = await a.evaluate(fen, 12);
+            send(ws, 'hint', { best_uci: ev.bestMoveUci, eval_cp: ev.cp });
+          } catch (err) {
+            send(ws, 'hint', { best_uci: null, error: (err as Error).message });
+          }
+        });
       }
     } catch (err) {
       send(ws, 'error', { message: err instanceof Error ? err.message : String(err) });

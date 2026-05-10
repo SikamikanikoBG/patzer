@@ -15,6 +15,7 @@ import coachRoutes from './routes/coach.js';
 import metaRoutes from './routes/meta.js';
 import lobbyRoutes from './routes/lobby.js';
 import challengesRoutes from './routes/challenges.js';
+import statsRoutes from './routes/stats.js';
 import { attachPlayWebSocket } from './ws/play.js';
 import { attachLobbyWebSocket } from './ws/lobby.js';
 
@@ -40,6 +41,7 @@ app.route('/api/analyze', analyzeRoutes);
 app.route('/api/coach', coachRoutes);
 app.route('/api/lobby', lobbyRoutes);
 app.route('/api/challenges', challengesRoutes);
+app.route('/api/stats', statsRoutes);
 
 // In production, serve the built web app
 import { existsSync, readFileSync } from 'node:fs';

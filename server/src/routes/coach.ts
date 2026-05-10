@@ -18,9 +18,11 @@ const explainSchema = z.object({
   player: z.enum(['White', 'Black']),
   played_san: z.string(),
   best_san: z.string().nullable(),
-  classification: z.enum(['best', 'excellent', 'good', 'book', 'inaccuracy', 'mistake', 'blunder']),
+  classification: z.enum(['brilliant', 'best', 'excellent', 'good', 'book', 'inaccuracy', 'mistake', 'blunder', 'miss']),
   cp_loss: z.number(),
   pv_san: z.array(z.string()).optional(),
+  history: z.array(z.string()).optional(),
+  user_perspective: z.boolean().optional(),
   language: z.enum(['en', 'bg']).optional(),
   audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).optional(),
 });
@@ -42,6 +44,8 @@ router.post('/explain', async (c) => {
     classification: parsed.data.classification as Classification,
     cp_loss: parsed.data.cp_loss,
     pv_san: parsed.data.pv_san,
+    history: parsed.data.history,
+    user_perspective: parsed.data.user_perspective,
   }, lang);
 
   return streamSSE(c, async (stream) => {
@@ -59,6 +63,7 @@ router.post('/explain', async (c) => {
 
 const hintReqSchema = z.object({
   fen: z.string(),
+  history: z.array(z.string()).optional(),
   language: z.enum(['en', 'bg']).optional(),
   audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).optional(),
 });
@@ -72,7 +77,7 @@ router.post('/hint', async (c) => {
   const aud: Audience = parsed.data.audience ?? user.profile.audience;
 
   const sys = systemPrompt(aud, lang);
-  const usr = hintPrompt(parsed.data.fen, aud, lang);
+  const usr = hintPrompt(parsed.data.fen, aud, lang, parsed.data.history);
 
   return streamSSE(c, async (stream) => {
     try {

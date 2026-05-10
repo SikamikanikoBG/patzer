@@ -4,6 +4,29 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] — 2026-05-10
+
+This is a maturity release: every move on the board is rigorously validated by chess.js (the same library lichess uses), promotion now lets you pick the piece, the coach gets much richer context so it stops inventing pieces, and the UI gets a dashboard, captured-pieces panel, and many smaller polish touches.
+
+### Added
+- **Promotion picker** — when a pawn reaches the last rank, a small inline modal asks whether you want a Queen, Rook, Bishop or Knight (was always Queen).
+- **Captured-pieces panel** — a small stripe next to each clock shows the pieces each side has captured, with material balance, in both Play and Game Review.
+- **Home dashboard** — your stats (games, win rate, average accuracy, current streak) right at the top of Home.
+- **Coach context revamp** — every coach prompt now includes the ASCII board, an explicit piece inventory, recent move history (last 6 plies), captured pieces, and an in-check flag. The system prompt has stronger anti-hallucination guards. Three audience-tuned voices: kid (warm, metaphor-heavy, encouraging), beginner (friendly with principles), intermediate (concrete tactics), advanced (rigorous club-player).
+- **PvP "opponent disconnected" indicator** so you know if your friend's connection dropped.
+
+### Fixed
+- **Move legality is bulletproof** — every move (yours, the bot's, your friend's) is validated by chess.js before being applied. The chessground UI only allows legal destinations. Castling, en-passant, promotion, threefold repetition, fifty-move rule, insufficient material, stalemate are all handled correctly. Server rejects any illegal UCI; if rejected, the board re-syncs to the authoritative position.
+- **Race in user-move classification** — `fenAfter` is now captured synchronously instead of being read inside the async classification IIFE (which sometimes saw the position AFTER the bot had also moved).
+- **Analysis-engine concurrency** — the per-session analysis engine now serializes evaluations through a promise queue, so rapid moves can't interleave UCI commands and corrupt the engine's state.
+- **PvP session restore on container restart or reconnection** — the in-memory PvP session is now hydrated from the saved PGN if present, instead of starting from move 1.
+- **Board re-sync after blunder cancel / illegal-move rejection** — chessground is forced back to the authoritative FEN by bumping a board key, eliminating the visual desync where a piece would stay on its dropped square after we rolled the move back.
+- **Coach hallucination** — the much richer prompt + explicit "do not mention pieces or squares not in the diagram" instruction substantially reduces invented-piece errors on smaller models.
+
+### Changed
+- Game Over card now shows mini-summary (accuracy, classifications) when analysis lands.
+- Hover/focus micro-interactions tightened across cards and lists.
+
 ## [1.4.0] — 2026-05-10
 
 ### Added
@@ -69,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Multi-user with admin role** — first-run setup wizard creates the admin account; the admin console manages users, system settings (Ollama URL, Stockfish path), and connection health.
 - **Single-container deploy** — Dockerfile + docker-compose.yml with persistent SQLite volume; one-shot `deploy.ps1` for SSH-based home-server deployments.
 
+[2.0.0]: https://github.com/SikamikanikoBG/chess/releases/tag/v2.0.0
 [1.4.0]: https://github.com/SikamikanikoBG/chess/releases/tag/v1.4.0
 [1.3.0]: https://github.com/SikamikanikoBG/chess/releases/tag/v1.3.0
 [1.2.0]: https://github.com/SikamikanikoBG/chess/releases/tag/v1.2.0

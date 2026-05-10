@@ -1,12 +1,18 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Swords, BookOpen, Settings as SettingsIcon, ChevronRight, Trophy, Frown, Equal, Zap } from 'lucide-react';
+import { Swords, BookOpen, Settings as SettingsIcon, ChevronRight, Trophy, Frown, Equal, Zap, Flame, Target, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../state/auth';
 import { api } from '../api';
 import { fmtAccuracy } from '../lib/utils';
 import type { GameRow } from '../types';
+
+interface Stats {
+  total: number; wins: number; losses: number; draws: number;
+  avg_accuracy: number | null;
+  streak: { kind: 'win' | 'loss' | 'draw'; count: number } | null;
+}
 
 export default function Home() {
   const { t } = useTranslation();
@@ -15,6 +21,11 @@ export default function Home() {
   const { data, isLoading } = useQuery({
     queryKey: ['games', 'home'],
     queryFn: () => api.get<{ games: GameRow[] }>('/api/games?limit=4'),
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ['stats', 'me'],
+    queryFn: () => api.get<Stats>('/api/stats/me'),
   });
 
   const cards = [
@@ -51,6 +62,22 @@ export default function Home() {
           </p>
         </div>
       </motion.section>
+
+      {/* Stats strip */}
+      {stats && stats.total > 0 && (
+        <section>
+          <div className="mb-3 flex items-center gap-2">
+            <Activity className="h-4 w-4 text-accent-500" />
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-500">Your stats</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard icon={Activity} label="Games" value={String(stats.total)} sublabel={`${stats.wins}W · ${stats.draws}D · ${stats.losses}L`} />
+            <StatCard icon={Trophy} label="Win rate" value={`${Math.round((stats.wins / Math.max(1, stats.total)) * 100)}%`} sublabel={stats.wins ? `${stats.wins} wins` : undefined} />
+            <StatCard icon={Target} label="Avg accuracy" value={stats.avg_accuracy != null ? `${stats.avg_accuracy}%` : '—'} sublabel="across analyzed games" />
+            <StatCard icon={Flame} label="Streak" value={stats.streak ? `${stats.streak.count} ${stats.streak.kind}` : '—'} highlight={stats.streak?.kind === 'win'} />
+          </div>
+        </section>
+      )}
 
       {/* Action cards */}
       <section>
@@ -119,6 +146,19 @@ export default function Home() {
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+function StatCard({ icon: Icon, label, value, sublabel, highlight }: { icon: React.ElementType; label: string; value: string; sublabel?: string; highlight?: boolean }) {
+  return (
+    <div className={`card flex flex-col gap-1 p-4 ${highlight ? 'ring-2 ring-accent-500/30' : ''}`}>
+      <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-ink-500">
+        <Icon className="h-3.5 w-3.5" />
+        {label}
+      </div>
+      <div className="font-mono text-2xl font-bold tabular-nums">{value}</div>
+      {sublabel && <div className="text-[11px] text-ink-400">{sublabel}</div>}
     </div>
   );
 }
