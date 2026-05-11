@@ -11,6 +11,7 @@
 }
 
 html, body, #root { height: 100%; }
+html, body { overflow-x: clip; }
 body {
   font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 14px;
@@ -29,6 +30,38 @@ body {
 cg-board {
   border-radius: 6px;
   overflow: hidden;
+}
+
+/* Chessground's default coord positioning uses fixed pixel offsets
+   (top: -20px on ranks, left: 24px on files) that are calibrated for
+   a large desktop board. On a small mobile board those become a large
+   fraction of the width and labels visibly drift off their squares.
+   Switch to pure percentage positioning so labels stay aligned at any
+   size, and put them inside the board edges (lichess/chess.com style). */
+.cg-wrap coords.ranks {
+  top: 0;
+  left: 2px;
+  width: auto;
+  height: 100%;
+  font-weight: 600;
+  font-size: clamp(8px, 1.6vmin, 11px);
+}
+.cg-wrap coords.ranks coord {
+  transform: none;
+  padding-top: 1px;
+  text-align: left;
+}
+.cg-wrap coords.files {
+  left: 0;
+  bottom: 1px;
+  width: 100%;
+  height: auto;
+  font-weight: 600;
+  font-size: clamp(8px, 1.6vmin, 11px);
+}
+.cg-wrap coords.files coord {
+  padding-right: 4px;
+  text-align: right;
 }
 
 /* Last-move highlight — translucent yellow (chess.com's actual color),
