@@ -27,12 +27,14 @@
 // prose_version, language, audience). Re-runs only when one of those changes.
 
 import { chatJsonRetry } from './ollama.js';
-import { systemPrompt, sanToNatural, pvToNaturalSan, verdictPhrase } from './prompts.js';
+import { systemPrompt, sanToNatural, pvToNaturalSan, verdictPhrase, boardPiecesNatural } from './prompts.js';
 import type { AnalysisResult, AnalyzedMove, Audience, Classification, GamePhase, KeyMomentSummary, Language } from '../types.js';
 
 // Bump on every output-shape or prompt change so cached prose at the old
-// version is invalidated. v2 = chess.com parity pass.
-export const REVIEW_PROSE_VERSION = 2;
+// version is invalidated.
+// v2 = chess.com parity pass.
+// v3 = anti-hallucination FACTS pass: piece inventory + win-prob in key moments.
+export const REVIEW_PROSE_VERSION = 3;
 
 // JSON-mode rule append-on. R10 in the consolidated 10-rule scheme. We use
 // "R10:" numbering to extend prompts.ts's existing rule block cleanly.
@@ -162,6 +164,9 @@ async function callKeyMoment(
   const best = moment.best_san ? sanToNatural(moment.best_san, moment.fen_before, language, audience) : null;
   const pv = pvToNaturalSan(moment.best_pv, moment.fen_before, language, audience, 3);
   const verdict = verdictPhrase(moment.classification, language);
+  // Piece inventory of the position BEFORE the moment — without this, small
+  // models hallucinate pieces and squares that aren't on the board.
+  const board = boardPiecesNatural(moment.fen_before, moment.side, language, audience);
 
   const facts = {
     lang: language,
@@ -177,6 +182,10 @@ async function callKeyMoment(
       cp_loss: moment.cp_loss,
       win_pct_delta: moment.win_pct_delta,
       verdict,
+      // Pieces still on the board at this moment — the model must not name
+      // pieces or squares outside this list (R1).
+      your_pieces: board.player,
+      opponent_pieces: board.opponent,
     },
   };
 

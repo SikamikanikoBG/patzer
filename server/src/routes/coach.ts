@@ -20,6 +20,11 @@ const explainSchema = z.object({
   best_san: z.string().nullable(),
   classification: z.enum(['brilliant', 'great', 'best', 'excellent', 'good', 'book', 'forced', 'inaccuracy', 'mistake', 'blunder', 'miss']),
   cp_loss: z.number(),
+  // Optional engine eval (cp, white-perspective) before/after — when provided,
+  // the FACTS payload gains win-probability and a natural-language eval state.
+  // Strong grounding for small models that otherwise hallucinate trained prose.
+  eval_before_cp: z.number().nullable().optional(),
+  eval_after_cp: z.number().nullable().optional(),
   pv_san: z.array(z.string()).optional(),
   history: z.array(z.string()).optional(),
   user_perspective: z.boolean().optional(),
@@ -43,6 +48,8 @@ router.post('/explain', async (c) => {
     best_san: parsed.data.best_san,
     classification: parsed.data.classification as Classification,
     cp_loss: parsed.data.cp_loss,
+    eval_before_cp: parsed.data.eval_before_cp,
+    eval_after_cp: parsed.data.eval_after_cp,
     pv_san: parsed.data.pv_san,
     history: parsed.data.history,
     user_perspective: parsed.data.user_perspective,
@@ -53,7 +60,9 @@ router.post('/explain', async (c) => {
       await chatStream(
         [{ role: 'system', content: sys }, { role: 'user', content: usr }],
         async (chunk) => { await stream.writeSSE({ data: chunk }); },
-        { temperature: 0.3 }, // low — we want the LLM to render facts faithfully, not invent
+        // Aggressive low temperature — we want faithful rendering of FACTS,
+        // not creative chess prose. Small models hallucinate freely above 0.2.
+        { temperature: 0.15 },
       );
     } catch (err) {
       await stream.writeSSE({ event: 'error', data: err instanceof Error ? err.message : String(err) });

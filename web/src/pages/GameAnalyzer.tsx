@@ -51,7 +51,7 @@ function fmtCp(cp: number | null | undefined): string {
   return `${sign}${(Math.abs(cp) / 100).toFixed(2)}`;
 }
 
-type Tab = 'review' | 'report' | 'moments' | 'coach';
+type Tab = 'moves' | 'report' | 'moments' | 'coach';
 
 export default function GameAnalyzer() {
   const { id } = useParams<{ id: string }>();
@@ -71,7 +71,7 @@ export default function GameAnalyzer() {
   const [requestedDepth, setRequestedDepth] = useState(16);
   const [showDepthControl, setShowDepthControl] = useState(false);
   const [reviewProse, setReviewProse] = useState<GameReviewProse | null>(null);
-  const [tab, setTab] = useState<Tab>('review');
+  const [tab, setTab] = useState<Tab>('moves');
   // Local UI state for new features.
   const [flipped, setFlipped] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -193,9 +193,31 @@ export default function GameAnalyzer() {
     }
   }
 
+  // Top engine lines panel (multiPV) — fetched on demand, debounced when enabled.
+  // These hooks live BEFORE the loading early-return below so hook order stays
+  // stable across the loading → loaded transition (React error #310).
+  const [linesEnabled, setLinesEnabled] = useState(false);
+  const [lines, setLines] = useState<EngineLine[]>([]);
+  const [linesLoading, setLinesLoading] = useState(false);
+  const [linesError, setLinesError] = useState(false);
+  const [linesHover, setLinesHover] = useState<EngineLine | null>(null);
+  const pos = data ? (positions[ply] ?? positions[0]) : undefined;
+  const currentFen = pos?.fen ?? '';
+  useEffect(() => {
+    if (!linesEnabled || !currentFen) return;
+    let cancelled = false;
+    setLinesError(false);
+    setLinesLoading(true);
+    const handle = window.setTimeout(() => {
+      api.post<{ fen: string; depth: number; lines: EngineLine[] }>('/api/analyze/position', { fen: currentFen, depth: 18, lines: 3 })
+        .then((r) => { if (!cancelled) { setLines(r.lines ?? []); setLinesLoading(false); } })
+        .catch(() => { if (!cancelled) { setLinesError(true); setLinesLoading(false); setLines([]); } });
+    }, 400);
+    return () => { cancelled = true; window.clearTimeout(handle); };
+  }, [linesEnabled, currentFen]);
+
   if (isLoading || !data) return <AnalyzerSkeleton />;
 
-  const pos = positions[ply] ?? positions[0];
   const move: AnalyzedMove | undefined = analysis?.moves[ply - 1];
   const userColor = data.game.user_color ?? 'white';
   const orientation: 'white' | 'black' = flipped
@@ -213,30 +235,15 @@ export default function GameAnalyzer() {
       best_san: move.best_move_san,
       classification: move.classification,
       cp_loss: move.centipawn_loss,
+      // Sending eval before/after lets the server build win-probability and
+      // a natural-language eval state into FACTS — strong grounding so a
+      // small local model stops inventing winning attacks from training data.
+      eval_before_cp: move.eval_before_cp,
+      eval_after_cp: move.eval_after_cp,
       pv_san: move.best_pv,
       history: historySoFar,
     },
   }) : null;
-
-  // Top engine lines panel (multiPV) — fetched on demand, debounced when enabled.
-  const [linesEnabled, setLinesEnabled] = useState(false);
-  const [lines, setLines] = useState<EngineLine[]>([]);
-  const [linesLoading, setLinesLoading] = useState(false);
-  const [linesError, setLinesError] = useState(false);
-  const [linesHover, setLinesHover] = useState<EngineLine | null>(null);
-  const currentFen = pos?.fen ?? '';
-  useEffect(() => {
-    if (!linesEnabled || !currentFen) return;
-    let cancelled = false;
-    setLinesError(false);
-    setLinesLoading(true);
-    const handle = window.setTimeout(() => {
-      api.post<{ fen: string; depth: number; lines: EngineLine[] }>('/api/analyze/position', { fen: currentFen, depth: 18, lines: 3 })
-        .then((r) => { if (!cancelled) { setLines(r.lines ?? []); setLinesLoading(false); } })
-        .catch(() => { if (!cancelled) { setLinesError(true); setLinesLoading(false); setLines([]); } });
-    }, 400);
-    return () => { cancelled = true; window.clearTimeout(handle); };
-  }, [linesEnabled, currentFen]);
 
   const baseArrow = move?.best_move_uci && move.best_move_uci !== move.uci ? [{
     orig: move.best_move_uci.slice(0, 2) as never,
@@ -264,8 +271,14 @@ export default function GameAnalyzer() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:gap-5">
-        {/* BOARD COLUMN */}
+      {/* Workspace fits the fold on lg+: the flex row is capped by viewport
+          height; right rail scrolls inside itself (`overflow-y-auto` + `min-h-0`).
+          Page-level scroll is eliminated. */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:gap-5 lg:max-h-[calc(100vh-11rem)] lg:overflow-hidden">
+        {/* BOARD COLUMN — column itself is wide (max 760px). The BOARD element
+            is what's capped by viewport height (aspect-square keeps it square
+            while the height limit shrinks both dimensions). The eval graph
+            moved into the right rail to leave more vertical room here. */}
         <div className="mx-auto w-full lg:mx-0 lg:flex-1 lg:max-w-[760px]">
           <PlayerHeader
             name={orientation === 'white' ? data.game.black : data.game.white}
@@ -274,9 +287,16 @@ export default function GameAnalyzer() {
             side={orientation === 'white' ? 'black' : 'white'}
             fen={pos?.fen ?? ''}
           />
-          <div className="relative my-2 flex items-stretch gap-2">
+          {/* Board sized so column fits in the workspace height. Chrome math:
+              workspace chrome (header + breadcrumb + page padding + footer) ≈
+              11rem; board-column chrome (top header + bottom header + eval row +
+              step controls) ≈ 13rem. Board side ≤ 100vh − 24rem keeps the whole
+              column flush. `aspect-square` makes height = width. */}
+          <div className="relative my-2 flex items-stretch justify-center gap-2">
             <EvalBar cp={currentEvalCp} orientation={orientation} />
-            <div className={`relative min-w-0 flex-1 board-theme-${user?.profile.board_theme ?? 'green'}`}>
+            <div
+              className={`relative aspect-square w-full min-w-0 board-theme-${user?.profile.board_theme ?? 'green'} lg:max-w-[calc(100vh-24rem)]`}
+            >
               <ChessBoard
                 fen={pos?.fen ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'}
                 orientation={orientation}
@@ -312,42 +332,47 @@ export default function GameAnalyzer() {
               {fmtCp(currentEvalCp)}
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-center gap-2">
-            <button onClick={() => setPly(0)} className="btn-secondary h-12 w-12 p-0" title="First"><ChevronsLeft className="h-5 w-5" /></button>
-            <button onClick={() => setPly((p) => Math.max(0, p - 1))} className="btn-secondary h-12 w-12 p-0" title="Previous"><ChevronLeft className="h-5 w-5" /></button>
-            <div className="flex h-12 min-w-[5.5rem] items-center justify-center rounded-xl bg-chesscom-100 px-3 text-sm font-mono tabular-nums dark:bg-chesscom-800">
+          <div className="mt-3 flex items-center justify-center gap-1.5 sm:gap-2">
+            <button onClick={() => setPly(0)} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title="First"><ChevronsLeft className="h-5 w-5" /></button>
+            <button onClick={() => setPly((p) => Math.max(0, p - 1))} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title="Previous"><ChevronLeft className="h-5 w-5" /></button>
+            <div className="flex h-10 min-w-[5rem] items-center justify-center rounded-xl bg-chesscom-100 px-3 text-sm font-mono tabular-nums dark:bg-chesscom-800 sm:h-12 sm:min-w-[5.5rem]">
               {ply} / {positions.length - 1}
             </div>
-            <button onClick={() => setPly((p) => Math.min(positions.length - 1, p + 1))} className="btn-secondary h-12 w-12 p-0" title="Next"><ChevronRight className="h-5 w-5" /></button>
-            <button onClick={() => setPly(positions.length - 1)} className="btn-secondary h-12 w-12 p-0" title="Last"><ChevronsRight className="h-5 w-5" /></button>
+            <button onClick={() => setPly((p) => Math.min(positions.length - 1, p + 1))} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title="Next"><ChevronRight className="h-5 w-5" /></button>
+            <button onClick={() => setPly(positions.length - 1)} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title="Last"><ChevronsRight className="h-5 w-5" /></button>
           </div>
 
-          {analysis && (
-            <div className="mt-3 card p-2">
-              <EvalGraph
-                evals={analysis.moves.map((m) => ({ ply: m.ply, cp: m.eval_after_cp }))}
-                current={ply}
-                onClick={(p) => setPly(p)}
-                markers={analysis.moves
-                  .filter((m) => ['blunder','mistake','inaccuracy','miss','brilliant','great'].includes(m.classification))
-                  .map((m) => ({ ply: m.ply, classification: m.classification }))}
-              />
-            </div>
-          )}
         </div>
 
-        {/* RIGHT RAIL */}
-        <div className="min-w-0 space-y-3 lg:w-[380px] lg:flex-initial lg:max-w-md">
+        {/* RIGHT RAIL — scrolls inside itself on lg+ so the page stays fixed.
+            `min-h-0` lets the flex child shrink below content height; without it
+            flex would force the page to grow. */}
+        <div className="min-w-0 space-y-3 lg:w-[380px] lg:flex-initial lg:max-w-md lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           {!analysis && (
             <button onClick={() => analyze(requestedDepth, false)} disabled={analyzing} className="btn-primary w-full">
               <Sparkles className="h-4 w-4" />
-              {analyzing ? t('review.analyzing', { progress: '…' }) : t('review.analyze')}
+              {analyzing
+                ? t('review.analyzing', { progress: '…' })
+                : t('review.runEngine', { defaultValue: 'Run engine analysis' })}
             </button>
           )}
 
           {analysis && (
             <>
               <OpeningBanner eco={eco} name={openingName} prose={reviewProse?.opening?.prose} />
+
+              {/* Eval graph lives here (moved from below the board) so the
+                  board column stays short enough to fit the fold. */}
+              <div className="card p-2">
+                <EvalGraph
+                  evals={analysis.moves.map((m) => ({ ply: m.ply, cp: m.eval_after_cp }))}
+                  current={ply}
+                  onClick={(p) => setPly(p)}
+                  markers={analysis.moves
+                    .filter((m) => ['blunder','mistake','inaccuracy','miss','brilliant','great'].includes(m.classification))
+                    .map((m) => ({ ply: m.ply, classification: m.classification }))}
+                />
+              </div>
 
               <GameReportCard
                 whiteName={data.game.white}
@@ -391,25 +416,27 @@ export default function GameAnalyzer() {
                 </div>
               )}
 
-              {/* Tab strip — Review (move list), Report (AI prose), Moments, Coach */}
+              {/* Tabbed workspace — Moves / AI report / Key moments / Engine / Coach.
+                  This is the ONLY tabbed surface on the page: engine lines moved in
+                  here (previously a peer card) so there is one mental model, not three. */}
               <div className="card overflow-hidden">
-                <div className="flex items-center gap-1 border-b border-chesscom-100 bg-chesscom-50/40 px-2 dark:border-chesscom-700 dark:bg-chesscom-900/40">
-                  <TabBtn active={tab === 'review'} onClick={() => setTab('review')} icon={ListOrdered} label={t('review.moves')} />
-                  <TabBtn active={tab === 'report'} onClick={() => setTab('report')} icon={FileText} label={t('review.gameReport', { defaultValue: 'Report' })} />
-                  <TabBtn active={tab === 'moments'} onClick={() => setTab('moments')} icon={Sparkles} label={t('review.keyMoments', { defaultValue: 'Key' })} />
-                  <TabBtn active={tab === 'coach'} onClick={() => setTab('coach')} icon={Lightbulb} label={t('coach.title')} />
+                <div className="flex items-center gap-0.5 border-b border-chesscom-100 bg-chesscom-50/40 px-1 dark:border-chesscom-700 dark:bg-chesscom-900/40 sm:gap-1 sm:px-2">
+                  <TabBtn active={tab === 'moves'} onClick={() => setTab('moves')} icon={ListOrdered} label={t('review.moves', { defaultValue: 'Moves' })} />
+                  <TabBtn active={tab === 'report'} onClick={() => setTab('report')} icon={FileText} label={t('review.gameReport', { defaultValue: 'AI report' })} />
+                  <TabBtn active={tab === 'moments'} onClick={() => setTab('moments')} icon={Sparkles} label={t('review.keyMoments', { defaultValue: 'Key moments' })} />
+                  <TabBtn active={tab === 'coach'} onClick={() => setTab('coach')} icon={Lightbulb} label={t('coach.title', { defaultValue: 'Coach' })} />
                   <button onClick={() => setShowDepthControl((s) => !s)} className="btn-ghost ml-auto p-1.5" title={t('review.depth')}>
                     <SettingsIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
                 <div className="p-3">
-                  {tab === 'review' && (
+                  {tab === 'moves' && (
                     <MoveList
                       moves={analysis.moves.map((m) => ({ ply: m.ply, san: m.san, classification: m.classification }))}
                       current={ply}
                       onSelect={setPly}
                       phaseSplit={analysis.phase_split}
-                      maxHeight={460}
+                      maxHeight={typeof window !== 'undefined' && window.innerWidth < 768 ? 320 : 460}
                     />
                   )}
                   {tab === 'report' && (
@@ -586,10 +613,15 @@ function PlayerHeader({ name, accuracy, elo, side, fen, highlighted }: { name: s
 
 function TabBtn({ active, onClick, icon: Icon, label }: { active: boolean; onClick: () => void; icon: React.ElementType; label: string }) {
   return (
-    <button onClick={onClick} className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors ${active ? 'text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500 hover:text-chesscom-900 dark:hover:text-chesscom-100'}`}>
-      <Icon className="h-3.5 w-3.5" />
-      <span>{label}</span>
-      {active && <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-gold-500" />}
+    <button
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className={`relative flex items-center gap-1 px-2 py-2 text-xs font-medium transition-colors sm:gap-1.5 sm:px-3 ${active ? 'text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500 hover:text-chesscom-900 dark:hover:text-chesscom-100'}`}
+    >
+      <Icon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+      <span className="hidden sm:inline">{label}</span>
+      {active && <span className="absolute inset-x-1 -bottom-px h-0.5 rounded-full bg-gold-500 sm:inset-x-2" />}
     </button>
   );
 }

@@ -4,6 +4,215 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.3.0] — 2026-05-11
+
+### Fixed — mobile board coordinate alignment
+
+Chessground's default coord CSS uses fixed pixel offsets (`top: -20px` on
+ranks, `left: 24px` on files) calibrated for a desktop board. On a small
+mobile board those become a much larger fraction of the width, and the a/b/c
+file labels visibly drift off their squares. Replaced with pure percentage
+positioning anchored inside the board edges (lichess/chess.com style), with
+a responsive `clamp(8px, 1.6vmin, 11px)` font size. Labels now stay aligned
+at any board size.
+
+### Changed — nav label "Play vs Bot" → "Play"
+
+The Play page lets you set up a game against either a bot OR another player,
+but the nav pill (and home CTA) said "Play vs Bot". Renamed the
+`home.playTitle` i18n key in both EN and BG, plus the matching `playDesc`
+and `firstRunReady` strings.
+
+### Changed — AI coach hardening (anti-hallucination FACTS pass)
+
+Diagnosis: small local models (default `gemma3:1b`) routinely hallucinated
+piece locations and motifs in Game Review because the FACTS payload sent to
+them only described *the move* — no piece inventory, no win-probability, no
+natural-language eval state. With abstract terms only, the model fell back
+to chess-trained prose ("your bishop pins the knight on f6") about pieces
+that aren't on the board.
+
+Fixes in `server/src/coach/`:
+
+- **Piece inventory in FACTS.** New `boardPiecesNatural(fen, color)` helper
+  walks the FEN and emits `your_pieces` / `opponent_pieces` lists like
+  `["queen on d1", "rook on a1", "8 pawns"]`. Injected into both
+  `/api/coach/explain` and per–key-moment FACTS in the pre-generated review.
+  This is the critical grounding — the model now has the exact piece list
+  to reference.
+- **Win-probability and natural-language eval state.** `factsForExplain`
+  now ships `win_pct_before/after/delta`, an `evaluation_state` label
+  ("winning", "slightly worse", "roughly equal"…), and a
+  `material_balance` phrase ("you are down a knight"). Strong concrete
+  anchors to repeat instead of inventing.
+- **Tighter system prompt.** R1 explicitly forbids naming any piece or
+  square outside `your_pieces`/`opponent_pieces`. New R11: "if FACTS
+  doesn't have a detail, STAY GENERAL — don't invent details to fill
+  space." Added one worked GOOD vs BAD example showing what a faithful
+  rendering looks like versus a hallucination.
+- **Per-call TASK nudge.** The TASK line tells the model to use
+  `FACTS.evaluation_state` OR `FACTS.material_balance` as its anchor.
+- **Lower temperature.** Explain endpoint 0.3 → 0.15 — we want faithful
+  rendering of FACTS, not creative chess prose.
+- **`REVIEW_PROSE_VERSION` 2 → 3** so cached game reviews regenerate with
+  the new grounded payload.
+
+UX in `web/src/components/CoachPanel.tsx`:
+
+- **"Show context" toggle.** A small info-icon button next to the coach
+  controls now reveals a collapsible block with the exact JSON FACTS
+  payload that was sent for the current ask. Directly answers "what is
+  actually being injected into the prompt?" — every call is inspectable.
+
+Wired `eval_before_cp` / `eval_after_cp` from `GameAnalyzer.tsx` through
+the explain endpoint schema so the new win-probability fields are populated
+in Game Review.
+
+## [7.2.0] — 2026-05-11
+
+### Changed — Home redesign
+
+Home was doing too much: 7 stacked sections, repeating icon-on-tinted-square
+patterns on every tile, tiny uppercase tracking-wide labels stacked three at
+a time, a "what's new" toast, a kitschy inline SVG checkerboard ornament in
+the hero. It read like a wireframe. New layout is 3 sections:
+
+- **Hero** — greeting (time-aware), avatar, the player's name as the H1, and
+  stats inlined as one bold-number-plus-tiny-label row (`142 GAMES · 67% WIN
+  RATE · 78% ACCURACY · 3 WIN STREAK`). Background uses a single soft
+  radial-fade chessboard pattern instead of the rectangular SVG ornament.
+  Primary action (Play) sits next to the greeting with a subtle right-pull
+  arrow on hover. Secondary "Review" is a glass pill.
+- **Continue your journey** — one row of three compact tiles (puzzle / plan /
+  achievements). Each tile has the same scaffold so the row reads as a unit.
+  Plan progress bar animates from 0 → pct on mount (one element only).
+- **Recent games** — a single rounded list with hairline dividers instead of
+  five separate card-hover boxes. W/L/D pill on the left, names, date +
+  opening, accuracy on the right. The active side's accuracy is emphasized
+  in semibold; the opponent's is muted.
+
+Removed: standalone Stats strip, First-run state card, "What's new" toast.
+Stats live in the hero now; the version chip in the footer already surfaces
+"what's new".
+
+Motion is restrained: one entrance fade-up on each section, 60ms stagger on
+the three continue tiles, a one-time width animation on the plan progress
+bar. No constant looping, no scale wobble.
+
+## [7.1.3] — 2026-05-11
+
+### Changed — board sizing and scroll behaviour (rearranged, not just wrapped)
+
+- **Board column is wide again on laptops.** The previous fix capped the
+  column's `max-width` by viewport height, which produced a narrow column on
+  short screens. Reverted to `lg:max-w-[760px]`. The **board element itself**
+  is now `aspect-square` with `lg:max-w-[calc(100vh-Xrem)]` — the height cap
+  shrinks both dimensions while the column stays wide.
+- **Eval graph moved out of the board column into the right rail.** Sits
+  between the opening banner and the report card. Removes ~8rem of vertical
+  chrome from the board column, which lets the board itself be larger.
+- **MoveRow no longer cascades `scrollIntoView` to the page.** Stepping
+  through moves used to scroll the page down to the move list on every
+  click. The new effect finds the FIRST scrollable ancestor (the move-list
+  wrapper) and scrolls only that. Right rail stays still. Page stays still.
+  The board stays where the user is looking.
+- **Play page** uses the same aspect-square + viewport-height-aware board
+  cap. Wider column on lg+ than the previous fix.
+
+## [7.1.2] — 2026-05-11
+
+### Fixed
+
+- **Game Analyzer (`/review/:id`) fits the fold.** Same treatment as Play:
+  the workspace's flex row is capped at `calc(100vh − 11rem)` on lg+ with
+  `overflow-hidden`, the board column caps at `min(760px, calc(100vh − 31rem))`,
+  and the right rail (which legitimately has more cards than fit — opening
+  banner, report card, tabs, lines, toolbar, export) scrolls *inside itself*
+  via `overflow-y-auto` + `min-h-0`. No more page-level scroll on desktop.
+
+## [7.1.1] — 2026-05-11
+
+### Fixed
+
+- **React error #310 in Game Analyzer.** Five `useState` and a `useEffect`
+  for the engine-lines panel sat after the `if (isLoading || !data) return`
+  early-return in `GameAnalyzer.tsx`. The hook count differed between the
+  loading and loaded renders — a latent bug surfaced by 7.1.0's
+  SCORING_VERSION bump, which makes the loading→loaded transition happen
+  more often (cached analyses re-run on view). Hooks hoisted above the
+  early return.
+- **Play page fits in the viewport.** The board column on lg+ now caps at
+  `min(760px, calc(100vh - 22rem))` so the board + clocks + step controls
+  + turn row cluster never overflows the fold. Previously the square board
+  could be ~760px tall and forced page-level scrolling.
+
+## [7.1.0] — 2026-05-11
+
+The "feels like chess.com 2" polish — tightens the analytical engine and
+unsticks the "analysis within analysis" feel of the Game Review screen, plus
+a broad mobile-friendliness pass.
+
+### Changed — analytical engine (SCORING_VERSION 6 → 7; old caches re-run)
+
+- **Brilliant is a real sacrifice now.** The trivial-recapture filter
+  (`classifier.ts:isTrivialRecapture`) replays the engine PV 4 plies through
+  chess.js and re-checks material. Previously it only inspected the immediate
+  material delta — equal-trade exchange sacs were classifying as Brilliant.
+- **Great is no longer pinned to engine #1.** A non-#1 played move can also
+  classify as Great when it's within 30cp of best AND the top engine
+  candidate dominates the second-best by ≥150cp.
+- **ACPL aggregation capped at 300 per ply** (`cpLossForAcpl`). One mate-flip
+  ply previously added 1000/N to the average, dragging estimated Elo by
+  ~300-400 points on otherwise-clean games.
+- **`ucinewgame` between analyses.** The shared engine instance no longer
+  carries TT state across games.
+- **Stockfish threads + hash are env-tunable.** `STOCKFISH_THREADS` (default
+  2) and `STOCKFISH_HASH` (MB, default 128). Match your host.
+- **Forced moves excluded from accuracy aggregate** — they weren't your
+  choice, like book moves.
+- **Game-accuracy floor only when n ≥ 5.** Short games no longer collapse
+  onto the worst move.
+- **`mate_before` / `mate_after` on each AnalyzedMove.** Eval bar / graph
+  consumers can render "M3" instead of decoding ±10000-cp spikes.
+- **Per-game performance no longer leaks user RD as opponent RD** in
+  `analyze.ts`. Without per-opponent RD storage, opponent confidence defaults
+  to 350 (low) — cleaner than silently mis-blending.
+- **Wider key-moment dedupe** (±4 plies) so adjacent inaccuracies in one
+  tactical sequence don't both make the highlights cut.
+
+### Changed — Game Analyzer UI
+
+- **Tab strip renamed** for clarity: `Moves / AI report / Key moments / Coach`
+  (was `Review / Report / Key / Coach`, with truncated labels that overlapped
+  the page title "Game Review"). The internal `Tab` type's `'review'` value
+  is now `'moves'`.
+- **Removed nested "Game Report" header** inside the AI report panel — it sat
+  inside a tab already labeled "AI report", stacking two identical titles.
+  This is the root cause of the "analysis within analysis" feel.
+- **Page-level CTA renamed** "Analyze" → "Run engine analysis" to distinguish
+  it from the in-tab "Write AI report" button (different pipelines).
+- **Tab labels icon-only below 640px** so the strip fits comfortably on a
+  phone.
+
+### Changed — mobile pass
+
+- **`html, body { overflow-x: clip; }`** in `index.css` — safety net against
+  any wide element triggering horizontal scroll on phones.
+- **Game Report donuts stack on phones** (`grid-cols-1 sm:grid-cols-2`).
+- **Openings repertoire table** wrapped in `overflow-x-auto` with
+  `min-w-[28rem]` + per-cell `whitespace-nowrap` — previously clipped
+  rightmost columns at <400px.
+- **Settings theme pickers stack on phones** (3-up → 1-up below 640px).
+- **Analyzer step controls** drop from `h-12` to `h-10` below 640px so they
+  fit on iPhone SE.
+- **Play.tsx turn/hint/resign row** now `flex-wrap`; rewind buttons drop a
+  size on phones too.
+- **Mobile drawer shows the user chip** at the top — previously the only
+  identity cue was hidden under `sm:`.
+- **Admin → New user grid** stacks on phones.
+- **Move list height caps at 320px below 768px** so the right rail doesn't
+  expand into a second screen of scroll.
+
 ## [7.0.0] — 2026-05-10
 
 The "Beyond Chess.com 2.0" major — Personal Power Suite. Where v6 added the
