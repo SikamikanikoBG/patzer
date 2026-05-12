@@ -7,11 +7,16 @@ interface SysSettings {
   ollama_url: string | null;
   ollama_model: string | null;
   stockfish_path: string | null;
+  last_model_used?: string | null;
+  last_error?: string | null;
+  p95_ms?: number | null;
+  call_count?: number;
 }
 
 export default function AdminSystem() {
   const { t } = useTranslation();
   const [s, setS] = useState<SysSettings>({ ollama_url: '', ollama_model: '', stockfish_path: '' });
+  const [runtime, setRuntime] = useState<{ last_model_used: string | null; last_error: string | null; p95_ms: number | null; call_count: number } | null>(null);
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [ollamaStatus, setOllamaStatus] = useState<{ ok: boolean; msg: string } | null>(null);
@@ -21,12 +26,20 @@ export default function AdminSystem() {
   const [allTesting, setAllTesting] = useState(false);
   const [allResults, setAllResults] = useState<Array<{ model: string; ok: boolean; latencyMs: number; sample?: string; error?: string }> | null>(null);
 
-  useEffect(() => {
-    api.get<SysSettings>('/api/admin/system').then((d) => {
+  function loadSettings() {
+    return api.get<SysSettings>('/api/admin/system').then((d) => {
       setS({ ollama_url: d.ollama_url ?? '', ollama_model: d.ollama_model ?? '', stockfish_path: d.stockfish_path ?? '' });
+      setRuntime({
+        last_model_used: d.last_model_used ?? null,
+        last_error: d.last_error ?? null,
+        p95_ms: d.p95_ms ?? null,
+        call_count: d.call_count ?? 0,
+      });
       setHydrated(true);
     });
-  }, []);
+  }
+
+  useEffect(() => { void loadSettings(); }, []);
 
   // Auto-load models on first load (and whenever the user pastes a different URL).
   useEffect(() => {
@@ -157,11 +170,32 @@ export default function AdminSystem() {
               </select>
             ) : (
               <div className="space-y-1">
-                <input className="input" value={s.ollama_model ?? ''} onChange={(e) => setS({ ...s, ollama_model: e.target.value })} placeholder="gemma3:1b" />
+                <input className="input" value={s.ollama_model ?? ''} onChange={(e) => setS({ ...s, ollama_model: e.target.value })} placeholder="gemma3:27b" />
                 <p className="text-xs text-ink-400">No models loaded — set the URL above and click Test, or type a model name manually.</p>
               </div>
             )}
           </div>
+          {/* Runtime panel — shows the model the coach actually called last, so
+              admins can verify the saved setting is being honored. Updates only
+              after at least one coach call has fired since server boot. */}
+          {runtime && (
+            <div className="rounded-xl border border-ink-200 bg-ink-50/50 p-3 text-xs dark:border-ink-700 dark:bg-ink-900/30">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="font-semibold uppercase tracking-wide text-ink-500">Runtime</span>
+                <button onClick={() => void loadSettings()} className="text-ink-500 hover:text-ink-700 dark:hover:text-ink-200">refresh</button>
+              </div>
+              <div className="grid grid-cols-[7rem_1fr] gap-y-1">
+                <span className="text-ink-500">Last model used</span>
+                <span className="font-mono">{runtime.last_model_used ?? <span className="text-ink-400">— no coach call yet —</span>}</span>
+                <span className="text-ink-500">Coach calls</span>
+                <span className="font-mono">{runtime.call_count} {runtime.p95_ms != null && <span className="text-ink-400">(p95 {runtime.p95_ms}ms)</span>}</span>
+                {runtime.last_error && (<>
+                  <span className="text-ink-500">Last error</span>
+                  <span className="font-mono text-bad">{runtime.last_error}</span>
+                </>)}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

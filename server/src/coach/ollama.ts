@@ -120,6 +120,13 @@ export async function chatStream(
         model,
         messages,
         stream: true,
+        // Reasoning models (gemma4, gpt-oss, …) emit a chain-of-thought into
+        // `message.thinking` and only put the final answer into
+        // `message.content`. With a tight num_predict that CoT eats the whole
+        // budget and the user sees an empty stream. The coach is a faithful
+        // FACTS renderer, not an analyst — disable reasoning everywhere.
+        // Non-reasoning models silently ignore this flag.
+        think: false,
         // num_predict caps the worst-case token blast — coach sentences rarely
         // need more than ~220 tokens. top_p keeps the model from venturing into
         // rare-token rambles when temperature is already low.
@@ -195,6 +202,8 @@ export async function chatJson<T = unknown>(
         messages,
         stream: false,
         format: 'json',
+        // Same reasoning-model defence as chatStream — see the comment there.
+        think: false,
         options: {
           temperature: opts.temperature ?? 0.2,
           num_predict: opts.numPredict ?? 1500,

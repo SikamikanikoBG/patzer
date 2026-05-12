@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db, getSetting, setSetting } from '../db.js';
 import { requireAdmin } from '../auth/middleware.js';
 import { hashPassword } from '../auth/passwords.js';
-import { testOllama, testModel, ollamaUrl, ollamaModel } from '../coach/ollama.js';
+import { testOllama, testModel, ollamaUrl, ollamaModel, ollamaStats } from '../coach/ollama.js';
 import { StockfishEngine } from '../chess/stockfish.js';
 import type { Profile, Role } from '../types.js';
 
@@ -116,10 +116,18 @@ router.delete('/users/:id', (c) => {
 // ---- System settings ----
 
 router.get('/system', async (c) => {
+  const stats = ollamaStats();
   return c.json({
     ollama_url: getSetting('ollama_url'),
     ollama_model: getSetting('ollama_model'),
     stockfish_path: getSetting('stockfish_path'),
+    // Live runtime stats so admins can confirm which model the coach is
+    // actually calling (the saved setting vs. what runtime resolved to may
+    // diverge if the saved model isn't pulled on the Ollama host).
+    last_model_used: stats.lastModelUsed,
+    last_error: stats.lastError,
+    p95_ms: stats.p95Ms,
+    call_count: stats.count,
   });
 });
 

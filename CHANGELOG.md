@@ -4,6 +4,46 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.6.1] — 2026-05-12
+
+### Fixed — coach hallucinating + reasoning models returned empty
+
+Investigation triggered by the user reporting frequent hallucinations from
+the live coach despite the admin UI showing a larger model selected.
+
+Findings on the live host:
+- The admin UI **was** saving correctly; SQLite `settings.ollama_model` held
+  the chosen model and `chatStream` reads it fresh per request.
+- The configured model (`ministral-3:14b`) was the one actually being
+  called — confirmed via Ollama logs + VRAM resident snapshot — but at 14B
+  parameters it still produces confidently-wrong chess prose ("e4 and e5
+  lock in the queenside while leaving the kingside exposed") despite the
+  FACTS scaffolding.
+- A separate latent bug: reasoning models on this host (gemma4:26b,
+  gpt-oss:20b-patched) emit their chain-of-thought into `message.thinking`
+  and only put the final answer into `message.content`. The chess
+  `chatStream` parser only reads `content`, so the user saw an empty
+  stream. With `num_predict` capped at 220 the CoT also ate the entire
+  budget before the answer ever arrived.
+
+Changes:
+
+- `coach/ollama.ts`: pass `think: false` on every `/api/chat` call.
+  Non-reasoning models silently ignore it; reasoning models behave like
+  normal chat. The coach is a faithful FACTS renderer — reasoning is
+  counterproductive and burns budget.
+- `routes/admin.ts` GET `/api/admin/system`: now also returns
+  `last_model_used`, `last_error`, `p95_ms`, `call_count` from the
+  module-level latency / model-name tracker, so admins can verify what the
+  coach actually called rather than just what's saved.
+- `pages/admin/System.tsx`: new "Runtime" panel below the model picker
+  showing the last-used model, call count, p95 latency, and last error
+  with a refresh button.
+- DB setting `ollama_model` switched from `ministral-3:14b` to
+  `gemma3:27b` on the live host (Gemma 3 27B was the best of the three
+  large models tested — clean, faithful output, no chain-of-thought).
+  Default fallback in code stays the same; admins can repick freely.
+
 ## [7.6.0] — 2026-05-12
 
 ### Fixed — pawn promotion was silently rejected

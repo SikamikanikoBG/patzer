@@ -26,9 +26,10 @@ export default function ClassificationBadge({ classification, square, orientatio
   const rowPct = (flip ? rank : 7 - rank) * 12.5;  // 0..87.5
 
   // Badge sits at the top-right corner of the destination square, anchored
-  // by its CENTER (so it overhangs the corner by half its width). Badge
-  // diameter is 24% of one square = 3% of the whole board (per spec §4.4).
-  const badgePctOfBoard = size === 'sm' ? 2.4 : 3.0; // square is 12.5% wide
+  // by its CENTER (so it overhangs the corner by half its width). Bigger
+  // than the chess.com default (~3% of board) so the glyph reads at a glance
+  // on a laptop board.
+  const badgePctOfBoard = size === 'sm' ? 3.2 : 4.4; // square is 12.5% wide
   const left = `calc(${colPct}% + 12.5% - ${badgePctOfBoard / 2}%)`;
   const top = `calc(${rowPct}% - ${badgePctOfBoard / 2}%)`;
 

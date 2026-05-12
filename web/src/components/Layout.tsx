@@ -166,10 +166,11 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
 
             <button
               onClick={logout}
-              className="hidden rounded-md p-2 text-chesscom-300 hover:bg-chesscom-800 hover:text-white sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-md border border-chesscom-700 bg-chesscom-800/50 px-2.5 py-1.5 text-sm text-chesscom-200 hover:border-bad/60 hover:bg-bad/15 hover:text-white sm:inline-flex"
               title={t('common.logout')}
             >
               <LogOut className="h-4 w-4" />
+              <span className="hidden lg:inline">{t('common.logout')}</span>
             </button>
 
             {/* Mobile menu button */}
