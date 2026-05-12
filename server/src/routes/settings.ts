@@ -23,6 +23,7 @@ const profileSchema = z.object({
   site_theme: z.enum(['light', 'dark', 'auto']).optional(),
   blunder_warning: z.boolean().optional(),
   sound_enabled: z.boolean().optional(),
+  kid_piece_emotions: z.boolean().optional(),
 });
 
 router.get('/profile', (c) => {

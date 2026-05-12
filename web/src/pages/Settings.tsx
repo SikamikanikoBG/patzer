@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check } from 'lucide-react';
+import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
 import { api } from '../api';
 import { useAuth, type Profile, type BoardTheme, type SiteTheme } from '../state/auth';
 import { getVoices, onVoicesReady, speak } from '../lib/tts';
@@ -43,6 +43,7 @@ export default function Settings() {
       site_theme: form.site_theme,
       sound_enabled: !!form.sound_enabled,
       blunder_warning: !!form.blunder_warning,
+      kid_piece_emotions: !!form.kid_piece_emotions,
     });
     await i18n.changeLanguage(form.language);
     await refresh();
@@ -208,6 +209,42 @@ export default function Settings() {
         </div>
       </section>
 
+      {/* Living pieces — only for the kid audience. The toggle is gated on
+          `audience === 'kid'` so older players don't see a feature meant for
+          7-10 year olds. The previews are static SVGs of the actual moods. */}
+      {form.audience === 'kid' && (
+        <section className="card overflow-hidden">
+          <div className="section-header">
+            <div className="section-icon bg-pink-500/15 text-pink-600"><Smile className="h-4 w-4" /></div>
+            <div>
+              <div className="section-title">{t('settings.kidEmotions')}</div>
+              <div className="section-desc">{t('settings.kidEmotionsDesc')}</div>
+            </div>
+          </div>
+          <div className="space-y-4 p-5">
+            <label className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-ink-50 dark:hover:bg-ink-700/50">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={!!form.kid_piece_emotions}
+                onChange={(e) => set('kid_piece_emotions', e.target.checked ? 1 : 0)}
+              />
+              <div>
+                <div className="text-sm font-medium">{t('settings.kidEmotionsEnable')}</div>
+                <div className="text-xs text-ink-500">{t('settings.kidEmotionsEnableHelp')}</div>
+              </div>
+            </label>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <MoodPreview moodClass="mood-hero"     glyph="🦸" title={t('settings.mood.hero')}     desc={t('settings.mood.heroDesc')} />
+              <MoodPreview moodClass="mood-stressed" glyph="😱" title={t('settings.mood.stressed')} desc={t('settings.mood.stressedDesc')} />
+              <MoodPreview moodClass="mood-guarding" glyph="🛡️" title={t('settings.mood.guarding')} desc={t('settings.mood.guardingDesc')} />
+              <MoodPreview moodClass="mood-sleeping" glyph="💤" title={t('settings.mood.sleeping')} desc={t('settings.mood.sleepingDesc')} />
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Voice */}
       <section className="card overflow-hidden">
         <div className="section-header">
@@ -273,6 +310,18 @@ export default function Settings() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function MoodPreview({ moodClass, glyph, title, desc }: { moodClass: string; glyph: string; title: string; desc: string }) {
+  return (
+    <div className="flex flex-col items-center rounded-xl border border-ink-200 bg-white p-3 text-center dark:border-ink-700 dark:bg-ink-800">
+      <div className={`relative mb-2 h-9 w-9 ${moodClass}`}>
+        <span className="mood-glyph" style={{ fontSize: 18 }}>{glyph}</span>
+      </div>
+      <div className="text-sm font-semibold">{title}</div>
+      <div className="mt-0.5 text-[11px] leading-snug text-ink-500">{desc}</div>
     </div>
   );
 }

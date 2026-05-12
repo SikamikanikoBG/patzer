@@ -253,7 +253,21 @@
     "boardWood": "Wood",
     "boardGreen": "Green",
     "boardBlue": "Blue",
-    "adminHint": "You're an admin — use the Admin section in the sidebar to manage users and system-wide settings (Ollama, Stockfish)."
+    "adminHint": "You're an admin — use the Admin section in the sidebar to manage users and system-wide settings (Ollama, Stockfish).",
+    "kidEmotions": "Living pieces",
+    "kidEmotionsDesc": "Help kids read the whole board at a glance — pieces show feelings based on what's happening.",
+    "kidEmotionsEnable": "Show piece feelings",
+    "kidEmotionsEnableHelp": "Little emoji bubbles float over your pieces while you play, so you can see who's a hero, who's scared, who's defending, and who's still asleep.",
+    "mood": {
+      "hero": "Hero",
+      "heroDesc": "Can capture a big piece, give check, or checkmate.",
+      "stressed": "Stressed",
+      "stressedDesc": "Being attacked — undefended or losing the trade.",
+      "guarding": "Guardian",
+      "guardingDesc": "Defending a friend who's under attack.",
+      "sleeping": "Sleeping",
+      "sleepingDesc": "Still on its starting square — wake it up!"
+    }
   },
   "admin": {
     "users": "Users",

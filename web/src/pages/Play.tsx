@@ -8,6 +8,7 @@ import ChessBoard from '../components/ChessBoard';
 import ClassificationBadge from '../components/ClassificationBadge';
 import CoachPanel from '../components/CoachPanel';
 import CapturedPieces from '../components/CapturedPieces';
+import PieceEmotionsOverlay from '../components/PieceEmotionsOverlay';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../state/auth';
 import { useLobby } from '../state/lobby';
@@ -481,6 +482,18 @@ export default function Play() {
                 arrows={isBrowsing ? [] : (boardArrows as never[])}
                 resetKey={boardKey}
               />
+              {/* Living pieces (kid mode) — emoji moods over each of the
+                  viewer's pieces. Gated on profile flag + audience='kid' so
+                  it only activates for accounts set up for kids. Hidden
+                  during browse mode to avoid confusing "are these the moods
+                  for past-position or current?". */}
+              {user?.profile.audience === 'kid' && user?.profile.kid_piece_emotions && !isBrowsing && (
+                <PieceEmotionsOverlay
+                  fen={displayedFen}
+                  viewerColor={userColor}
+                  orientation={userColor}
+                />
+              )}
               {/* Classification badge for the last classified user move (bot mode only).
                   Hidden while browsing past positions. */}
               {!isBrowsing && lastClassifiedMove && lastMoveDestSquare === lastClassifiedMove.uci.slice(2, 4) && (

@@ -26,6 +26,7 @@ export interface Profile {
   site_theme: SiteTheme;
   blunder_warning: number;
   sound_enabled: number;
+  kid_piece_emotions: number;
 }
 
 export interface User {

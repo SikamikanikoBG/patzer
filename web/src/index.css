@@ -165,3 +165,95 @@ cg-board square.last-move.premove-dest {
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: rgba(125, 118, 112, 0.3); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(125, 118, 112, 0.5); }
+
+/* ─── Living pieces (kid mode) ─────────────────────────────────────────
+   Floating mood bubbles over each viewer-side piece on the board. Animations
+   are kept gentle so 30+ active bubbles don't turn the board into a fairground.
+   Each mood pairs a colored circle backdrop with a piece-state-specific
+   motion: stressed wobbles, hero bobs up, guard pulses, sleep drifts. */
+.mood-glyph {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 13px;
+  line-height: 1;
+  border-radius: 9999px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+.dark .mood-glyph {
+  background: rgba(38, 36, 33, 0.85);
+}
+
+/* Bigger glyph on bigger boards — chessground squares scale with the wrap,
+   so we let the bubble follow at ~25% of square size. */
+@media (min-width: 640px) {
+  .mood-glyph { font-size: 14px; }
+}
+
+/* HERO — gold ring + gentle bob, like a piece taking a deep breath before
+   pouncing. The ring uses `box-shadow` so it does not affect layout. */
+.mood-hero .mood-glyph {
+  background: linear-gradient(135deg, #fde68a, #f59e0b);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.6), 0 0 8px rgba(245, 158, 11, 0.7);
+  animation: mood-hero-bob 1.5s ease-in-out infinite;
+}
+
+/* STRESSED — red ring + side-to-side wobble. Faster than hero so the eye
+   catches it first; this is the most action-relevant mood. */
+.mood-stressed .mood-glyph {
+  background: linear-gradient(135deg, #fecaca, #ef4444);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.7), 0 0 8px rgba(239, 68, 68, 0.7);
+  animation: mood-stressed-wobble 0.55s ease-in-out infinite;
+}
+
+/* GUARDING — blue ring + soft pulse. Calm, "I've got your back". */
+.mood-guarding .mood-glyph {
+  background: linear-gradient(135deg, #bfdbfe, #3b82f6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.6), 0 0 6px rgba(59, 130, 246, 0.55);
+  animation: mood-guard-pulse 1.8s ease-in-out infinite;
+}
+
+/* SLEEPING — purple ring + drift. Slowest of the four — "I'm not doing
+   anything useful, develop me!". */
+.mood-sleeping .mood-glyph {
+  background: linear-gradient(135deg, #ddd6fe, #8b5cf6);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.45);
+  opacity: 0.85;
+  animation: mood-sleep-drift 2.2s ease-in-out infinite;
+}
+
+@keyframes mood-hero-bob {
+  0%, 100% { transform: translateY(0)    scale(1);    }
+  50%      { transform: translateY(-3px) scale(1.08); }
+}
+
+@keyframes mood-stressed-wobble {
+  0%, 100% { transform: translateX(0)    rotate(0);    }
+  25%      { transform: translateX(-2px) rotate(-7deg); }
+  75%      { transform: translateX(2px)  rotate(7deg);  }
+}
+
+@keyframes mood-guard-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.95; }
+  50%      { transform: scale(1.12); opacity: 1;    }
+}
+
+@keyframes mood-sleep-drift {
+  0%, 100% { transform: translateY(0)    rotate(-6deg); opacity: 0.75; }
+  50%      { transform: translateY(-2px) rotate(6deg);  opacity: 0.95; }
+}
+
+/* Respect users who prefer reduced motion — kill the loops but keep the
+   colored rings so the information stays available. */
+@media (prefers-reduced-motion: reduce) {
+  .mood-hero .mood-glyph,
+  .mood-stressed .mood-glyph,
+  .mood-guarding .mood-glyph,
+  .mood-sleeping .mood-glyph {
+    animation: none;
+  }
+}

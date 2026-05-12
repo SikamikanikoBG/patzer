@@ -4,6 +4,84 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.5.0] — 2026-05-12
+
+### Added — Living Pieces (kid mode)
+
+A new opt-in feature for the **kid** audience that turns the board into an
+emotional reading exercise. The goal is to teach 7-10 year olds to read the
+*whole* board at a glance — instead of looking at each square individually,
+they see who's a hero, who's scared, who's defending, and who's still
+asleep, all updated in real time as the position changes.
+
+**User stories**
+
+- _"As a kid playing, I want to instantly see which of my pieces are in
+  danger, so I can react before losing material."_ → pieces under attack and
+  either undefended or losing the exchange wobble with a red **😱** bubble.
+- _"As a kid, I want to know when I have a heroic move, so I learn to spot
+  tactics."_ → any piece that can capture a more valuable enemy piece, give
+  check, or deliver mate bobs gently with a gold **🦸** bubble.
+- _"As a kid, I want to understand defense, so I learn what 'guarding' is."_
+  → any piece that is currently defending a friendly piece *that is itself
+  under attack* pulses with a blue **🛡️** bubble. (Plain "defends a piece
+  that isn't in danger" doesn't qualify — would otherwise flag every
+  back-rank rook in the opening as a guardian.)
+- _"As a kid, I want to be encouraged to develop my pieces, so I stop
+  shuffling the same knight."_ → minor pieces and rooks still on their home
+  squares from move 3 onwards drift with a purple **💤** bubble.
+- _"As a parent, I want to enable/disable this for my kid specifically, so
+  it doesn't show up on the adult accounts on the same server."_ → toggle in
+  Settings, visible only when audience is set to "kid".
+
+**Emotional states (priority high → low)**
+
+| Mood | Trigger | Animation | Why kids care |
+|------|---------|-----------|---------------|
+| 🦸 Hero | Can capture a higher-value piece, give check, or deliver mate. | Gold ring, gentle bob up/down. | Spot tactics. |
+| 😱 Stressed | Attacked AND (undefended OR cheaper attacker = losing trade). King: in check. | Red ring, wobble side-to-side. | Stop hanging pieces. |
+| 🛡️ Guarding | Defends ≥1 friendly piece that's currently under attack. | Blue ring, soft pulse. | Learn defense. |
+| 💤 Sleeping | Minor/rook on its starting square, fullmove ≥ 3, no enemy attacks. | Purple ring, slow drift. | Develop your pieces. |
+| (calm) | None of the above. | No overlay (avoid clutter). | — |
+
+**UI**
+
+- Mood bubbles sit at the **top-left** corner of each affected square, so
+  they never collide with the existing top-right ClassificationBadge.
+- All animations are CSS-only, capped at one per piece per frame; on a 32-
+  piece position the cost is negligible.
+- `prefers-reduced-motion` kills the animations but keeps the colored rings,
+  so the *information* is still available to motion-sensitive kids.
+- Only the **viewer's own pieces** get moods — kid focus is "how are MY
+  pieces doing", not the opponent's.
+- Disabled during browse-past-position mode in Play, to avoid confusion
+  between "moods of the live position" and "moods of an earlier position".
+
+**Settings**
+
+A new section appears in Settings → only for accounts whose audience is
+`kid`. It contains:
+- A single toggle: "Show piece feelings" (off by default).
+- A 2×4 preview grid showing each of the four moods animating live, with a
+  one-line description.
+
+**Storage**
+
+- New profile column `kid_piece_emotions INTEGER NOT NULL DEFAULT 0`.
+- Idempotent via `ensureColumn` — existing installs upgrade silently.
+- The flag is part of the same PATCH `/api/settings/profile` payload as the
+  other toggles, so the save path didn't grow a new endpoint.
+
+**Files**
+
+- `web/src/lib/pieceMoods.ts` — chess.js-based mood detector.
+- `web/src/components/PieceEmotionsOverlay.tsx` — absolute-positioned bubble
+  layer above the chessground board.
+- `web/src/index.css` — keyframes + `.mood-*` classes.
+- `web/src/pages/Settings.tsx` — new section + `MoodPreview` helper.
+- `web/src/pages/Play.tsx` — overlay wired in, gated on profile + audience.
+- `server/src/db.ts`, `server/src/routes/settings.ts` — schema + zod.
+
 ## [7.4.2] — 2026-05-11
 
 ### Fixed
