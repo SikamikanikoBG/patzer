@@ -138,7 +138,7 @@ export default function CommandPalette({ open, onClose }: Props) {
             placeholder={t('palette.placeholder', { defaultValue: 'Type to search nav, actions, games…' })}
             className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-chesscom-400"
           />
-          <kbd className="hidden rounded border border-chesscom-200 px-1.5 py-0.5 text-[10px] text-chesscom-400 sm:inline dark:border-chesscom-700">esc</kbd>
+          <kbd className="hidden rounded border border-chesscom-200 px-1.5 py-0.5 text-[11px] text-chesscom-400 sm:inline dark:border-chesscom-700">esc</kbd>
         </div>
         <div ref={listRef} className="max-h-[60vh] overflow-y-auto py-1">
           {filtered.length === 0 ? (
@@ -149,7 +149,7 @@ export default function CommandPalette({ open, onClose }: Props) {
             <PaletteSection items={filtered} active={active} setActive={setActive} />
           )}
         </div>
-        <div className="flex items-center justify-between border-t border-chesscom-200 bg-chesscom-50/50 px-3 py-1.5 text-[10px] text-chesscom-500 dark:border-chesscom-700 dark:bg-chesscom-900/40">
+        <div className="flex items-center justify-between border-t border-chesscom-200 bg-chesscom-50/50 px-3 py-1.5 text-[11px] text-chesscom-500 dark:border-chesscom-700 dark:bg-chesscom-900/40">
           <div className="flex items-center gap-3">
             <span><kbd className="rounded border border-chesscom-200 px-1 dark:border-chesscom-700">↑</kbd> <kbd className="rounded border border-chesscom-200 px-1 dark:border-chesscom-700">↓</kbd> {t('palette.navigate', { defaultValue: 'navigate' })}</span>
             <span><kbd className="rounded border border-chesscom-200 px-1 dark:border-chesscom-700">↵</kbd> {t('palette.select', { defaultValue: 'select' })}</span>
@@ -173,7 +173,7 @@ function PaletteSection({ items, active, setActive }: { items: Action[]; active:
         if (list.length === 0) return null;
         return (
           <div key={key} className="mb-1">
-            <div className="px-3 pb-0.5 pt-2 text-[10px] uppercase tracking-wide text-chesscom-400">{labels[key]}</div>
+            <div className="px-3 pb-0.5 pt-2 text-[11px] uppercase tracking-wide text-chesscom-400">{labels[key]}</div>
             {list.map((a) => {
               const i = runningIndex++;
               const isActive = i === active;
@@ -190,7 +190,7 @@ function PaletteSection({ items, active, setActive }: { items: Action[]; active:
                 >
                   <a.icon className="h-4 w-4 shrink-0 text-chesscom-500" />
                   <span className="flex-1 truncate">{a.label}</span>
-                  {a.hint && <span className="truncate text-[11px] text-chesscom-400">{a.hint}</span>}
+                  {a.hint && <span className="truncate text-xs text-chesscom-400">{a.hint}</span>}
                 </button>
               );
             })}

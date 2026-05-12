@@ -175,13 +175,13 @@ export default function GameReportPanel({ gameId, initial, onMomentJump, onGener
       </div>
       {review.key_moments.length > 0 && (
         <div className="space-y-1.5">
-          <div className="text-[10px] uppercase tracking-wide text-chesscom-500">Key Moments</div>
+          <div className="text-[11px] uppercase tracking-wide text-chesscom-500">Key Moments</div>
           {review.key_moments.map((m) => (
             <button key={m.ply}
               onClick={() => onMomentJump?.(m.ply)}
               className="block w-full rounded-lg border border-chesscom-200 bg-white px-3 py-2 text-left text-xs hover:border-gold-500/40 hover:bg-gold-50/40 dark:border-chesscom-700 dark:bg-chesscom-800 dark:hover:bg-chesscom-900/40">
               <div className="flex items-baseline gap-2">
-                <span className="font-mono text-[10px] tabular-nums text-chesscom-500">#{Math.ceil(m.ply / 2)}{m.side === 'black' ? '…' : '.'}</span>
+                <span className="font-mono text-[11px] tabular-nums text-chesscom-500">#{Math.ceil(m.ply / 2)}{m.side === 'black' ? '…' : '.'}</span>
                 <span className="font-semibold">{m.title}</span>
               </div>
               <div className="mt-0.5 text-chesscom-700 dark:text-chesscom-200">{m.prose}</div>

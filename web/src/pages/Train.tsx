@@ -128,7 +128,7 @@ export default function Train() {
             <span className="font-medium text-chesscom-700 dark:text-chesscom-200">
               {puzzle.side_to_move === 'white' ? t('train.whiteToMove', { defaultValue: 'White to move' }) : t('train.blackToMove', { defaultValue: 'Black to move' })}
             </span>
-            <span className="font-mono text-[11px] tabular-nums text-chesscom-500">
+            <span className="font-mono text-xs tabular-nums text-chesscom-500">
               {t('train.fromYourGame', { defaultValue: 'From your game · {{w}} vs {{b}}', w: puzzle.white, b: puzzle.black })}
             </span>
           </div>
@@ -145,11 +145,11 @@ export default function Train() {
 
         <aside className="lg:w-[340px] space-y-3">
           <div className="card p-4">
-            <div className="text-[10px] uppercase tracking-wider text-chesscom-500">{t('train.taskTitle', { defaultValue: "Find the move you missed" })}</div>
+            <div className="text-[11px] uppercase tracking-wider text-chesscom-500">{t('train.taskTitle', { defaultValue: "Find the move you missed" })}</div>
             <div className="mt-1 text-sm text-chesscom-700 dark:text-chesscom-200">
               {t('train.taskBody', { defaultValue: 'In the actual game you played {{played}}. Find a stronger move.', played: puzzle.played_san })}
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-chesscom-500">
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-chesscom-500">
               <span className={`badge ${tagTone(puzzle.classification)}`}>{puzzle.classification}</span>
               {puzzle.centipawn_loss > 0 && <span>−{(puzzle.centipawn_loss / 100).toFixed(1)} pawn equivalent</span>}
             </div>
@@ -173,7 +173,7 @@ export default function Train() {
                 }
               </div>
               {outcome.explanation_pv.length > 0 && (
-                <div className="mt-2 text-[11px] text-chesscom-500">
+                <div className="mt-2 text-xs text-chesscom-500">
                   PV: <span className="font-mono">{outcome.explanation_pv.slice(0, 5).join(' ')}</span>
                 </div>
               )}
@@ -203,7 +203,7 @@ export default function Train() {
 function Stat({ label, value, tone }: { label: string; value: string | number; tone?: string }) {
   return (
     <div className="flex flex-col items-end leading-tight">
-      <span className="text-[9px] uppercase tracking-wide text-chesscom-400">{label}</span>
+      <span className="text-[10px] uppercase tracking-wide text-chesscom-400">{label}</span>
       <span className={`font-mono text-sm font-semibold tabular-nums ${tone ?? 'text-chesscom-700 dark:text-chesscom-200'}`}>{value}</span>
     </div>
   );

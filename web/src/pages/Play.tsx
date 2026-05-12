@@ -559,7 +559,7 @@ export default function Play() {
           )}
 
           <div className="card max-h-72 overflow-auto p-4">
-            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-chesscom-500">{t('review.moves')}</h3>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-chesscom-500">{t('review.moves')}</h3>
             <MovesList moves={moves} />
           </div>
 
@@ -875,5 +875,5 @@ function ClsGlyph({ c }: { c: Classification }) {
     forced: 'text-move-forced', inaccuracy: 'text-move-inaccuracy',
     mistake: 'text-move-mistake', blunder: 'text-move-blunder', miss: 'text-move-miss',
   };
-  return <span className={`ml-1 text-[10px] font-bold ${color[c]}`}>{map[c]}</span>;
+  return <span className={`ml-1 text-[11px] font-bold ${color[c]}`}>{map[c]}</span>;
 }

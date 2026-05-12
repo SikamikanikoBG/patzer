@@ -39,7 +39,7 @@ export default function GameReportCard({
         <PlayerColumn name={blackName} accuracy={accuracyB} elo={eloB} perf={perfB} side="black" highlighted={userColor === 'black'} />
       </div>
 
-      <div className="grid grid-cols-[1fr_3rem_3rem] items-center gap-2 border-t border-chesscom-200 bg-chesscom-50 px-4 py-2 text-[10px] font-semibold uppercase tracking-wide text-chesscom-500 dark:border-chesscom-700 dark:bg-chesscom-900/50">
+      <div className="grid grid-cols-[1fr_3rem_3rem] items-center gap-2 border-t border-chesscom-200 bg-chesscom-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-chesscom-500 dark:border-chesscom-700 dark:bg-chesscom-900/50">
         <span>{t('review.moves', { defaultValue: 'Move' })}</span>
         <span className="text-center">W</span>
         <span className="text-center">B</span>
@@ -65,7 +65,7 @@ export default function GameReportCard({
 
       {phaseSplit && (phaseSplit.opening || phaseSplit.middlegame || phaseSplit.endgame) && (
         <div className="border-t border-chesscom-200 bg-chesscom-50 px-4 py-3 text-xs dark:border-chesscom-700 dark:bg-chesscom-900/40">
-          <div className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-chesscom-500">{t('review.phases', { defaultValue: 'Phases' })}</div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-chesscom-500">{t('review.phases', { defaultValue: 'Phases' })}</div>
           <div className="grid grid-cols-3 gap-2">
             <PhaseTile label={t('review.opening', { defaultValue: 'Opening' })} phase={phaseSplit.opening} userColor={userColor} />
             <PhaseTile label={t('review.middlegame', { defaultValue: 'Middlegame' })} phase={phaseSplit.middlegame} userColor={userColor} />
@@ -84,12 +84,12 @@ function PlayerColumn({ name, accuracy, elo, perf, side, highlighted }: { name: 
     <div className={`rounded-md border bg-white p-3 dark:bg-chesscom-800 ${highlighted ? 'border-l-4 border-gold-500 border-y-chesscom-200 border-r-chesscom-200 dark:border-y-chesscom-700 dark:border-r-chesscom-700' : 'border-chesscom-200 dark:border-chesscom-700'}`}>
       <div className="flex items-center gap-2">
         <span className={`h-3 w-3 rounded-full ${sideDot}`} />
-        <span className="truncate text-[11px] font-semibold uppercase tracking-wide text-chesscom-500">{side === 'white' ? 'White' : 'Black'}</span>
+        <span className="truncate text-xs font-semibold uppercase tracking-wide text-chesscom-500">{side === 'white' ? 'White' : 'Black'}</span>
       </div>
       <div className="mt-1 truncate text-sm font-semibold">{name}</div>
       <div className="mt-3 flex items-center gap-3">
         <AccuracyDonut value={accuracy} size={96} showBand />
-        <div className="flex flex-col gap-1 text-[11px]">
+        <div className="flex flex-col gap-1 text-xs">
           {elo != null && (
             <div className="flex items-center gap-1 text-chesscom-500">
               <Trophy className="h-3 w-3" />
@@ -113,7 +113,7 @@ function PhaseTile({ label, phase, userColor }: { label: string; phase: PhaseSpl
   if (!phase) {
     return (
       <div className="rounded-md bg-chesscom-100/50 p-2 text-center dark:bg-chesscom-800/50">
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-chesscom-500">{label}</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-chesscom-500">{label}</div>
         <div className="mt-1 font-mono text-sm text-chesscom-400">—</div>
       </div>
     );
@@ -122,9 +122,9 @@ function PhaseTile({ label, phase, userColor }: { label: string; phase: PhaseSpl
   const accOther = userColor === 'black' ? phase.accuracy_white : phase.accuracy_black;
   return (
     <div className="rounded-md bg-white p-2 text-center shadow-soft dark:bg-chesscom-800">
-      <div className="text-[10px] font-semibold uppercase tracking-wide text-chesscom-500">{label}</div>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-chesscom-500">{label}</div>
       <div className="mt-1 font-mono text-lg font-bold tabular-nums">{accUser.toFixed(1)}<span className="text-xs text-chesscom-400">%</span></div>
-      <div className="text-[10px] text-chesscom-400">vs {accOther.toFixed(1)}%</div>
+      <div className="text-[11px] text-chesscom-400">vs {accOther.toFixed(1)}%</div>
     </div>
   );
 }

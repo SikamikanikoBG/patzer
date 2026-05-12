@@ -20,7 +20,7 @@ export default function OpeningBanner({ eco, name, prose }: Props) {
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-2">
           <div className="text-sm font-semibold">{name ?? '—'}</div>
-          {eco && <div className="rounded-md bg-chesscom-100 px-1.5 py-0.5 font-mono text-[10px] tabular-nums text-chesscom-700 dark:bg-chesscom-700 dark:text-chesscom-200">{eco}</div>}
+          {eco && <div className="rounded-md bg-chesscom-100 px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-chesscom-700 dark:bg-chesscom-700 dark:text-chesscom-200">{eco}</div>}
         </div>
         {prose && <div className="mt-1 text-xs text-chesscom-500 dark:text-chesscom-300">{prose}</div>}
       </div>

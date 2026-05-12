@@ -123,7 +123,7 @@ export default function AdminSystem() {
           {allResults && (
             <div className="overflow-hidden rounded-xl border border-ink-200 dark:border-ink-700">
               <table className="w-full text-xs">
-                <thead className="bg-ink-50 text-[10px] uppercase tracking-wider text-ink-500 dark:bg-ink-900">
+                <thead className="bg-ink-50 text-[11px] uppercase tracking-wider text-ink-500 dark:bg-ink-900">
                   <tr>
                     <th className="px-3 py-2 text-left">Model</th>
                     <th className="px-3 py-2 text-left">Status</th>

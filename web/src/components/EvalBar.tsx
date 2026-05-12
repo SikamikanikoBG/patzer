@@ -55,14 +55,14 @@ export default function EvalBar({ cp, mate, orientation = 'white', height }: Pro
         className={`relative flex h-full w-full flex-col overflow-hidden rounded-l-md border border-chesscom-300 bg-chesscom-200 shadow-soft dark:border-chesscom-700 ${isMate ? 'shadow-glow' : ''}`}
       >
         <motion.div
-          className={`flex items-start justify-center text-[9px] font-semibold tabular-nums text-white/90 ${
+          className={`flex items-start justify-center text-[10px] font-semibold tabular-nums text-white/90 ${
             isMate && !whiteAdvantage ? 'bg-bad' : 'bg-chesscom-900'
           }`}
           animate={{ height: `${flip ? whitePct : blackPct}%` }}
           transition={{ type: 'tween', duration: 0.28, ease }}
         />
         <motion.div
-          className={`flex items-end justify-center text-[9px] font-semibold tabular-nums text-chesscom-900 ${
+          className={`flex items-end justify-center text-[10px] font-semibold tabular-nums text-chesscom-900 ${
             isMate && whiteAdvantage ? 'bg-warn' : 'bg-white'
           }`}
           animate={{ height: `${flip ? blackPct : whitePct}%` }}
@@ -76,7 +76,7 @@ export default function EvalBar({ cp, mate, orientation = 'white', height }: Pro
       </div>
       {/* Floating score chip on the advantaged side, outside the bar. */}
       <div
-        className={`pointer-events-none absolute left-1/2 -translate-x-1/2 rounded-sm px-1 py-0.5 text-[10px] font-bold tabular-nums shadow-soft ${
+        className={`pointer-events-none absolute left-1/2 -translate-x-1/2 rounded-sm px-1 py-0.5 text-[11px] font-bold tabular-nums shadow-soft ${
           whiteAdvantage
             ? 'bg-white text-chesscom-900 ring-1 ring-chesscom-200'
             : 'bg-chesscom-900 text-white ring-1 ring-chesscom-700'

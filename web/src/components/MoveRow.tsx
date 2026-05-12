@@ -56,7 +56,7 @@ export default function MoveRow({ num, white, black, current, onSelect }: Props)
         tint,
       )}
     >
-      <div className="flex items-center justify-end pr-2 text-[11px] tabular-nums text-chesscom-400">{num}.</div>
+      <div className="flex items-center justify-end pr-2 text-xs tabular-nums text-chesscom-400">{num}.</div>
       <Half move={white} current={wCur} onSelect={onSelect} t={t} />
       <Half move={black} current={bCur} onSelect={onSelect} t={t} />
     </div>
@@ -83,12 +83,12 @@ function Half({
       {style && (
         <span
           className={cn(
-            'flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-white',
+            'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white',
             style.bgClass,
             current && 'ring-1 ring-white/60',
           )}
         >
-          <svg viewBox="0 0 24 24" width={11} height={11} aria-hidden="true">
+          <svg viewBox="0 0 24 24" width={14} height={14} aria-hidden="true">
             {GLYPH_SVG[style.glyph]}
           </svg>
         </span>

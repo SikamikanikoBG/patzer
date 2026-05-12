@@ -64,7 +64,7 @@ export default function CapturedPieces({ fen, side, size = 'sm' }: Props) {
         ))}
       </div>
       {mat > 0 && (
-        <span className="ml-1 rounded bg-accent-500/15 px-1.5 py-0.5 text-[10px] font-mono font-bold text-accent-700 dark:text-accent-300">
+        <span className="ml-1 rounded bg-accent-500/15 px-1.5 py-0.5 text-[11px] font-mono font-bold text-accent-700 dark:text-accent-300">
           +{mat}
         </span>
       )}

@@ -29,6 +29,17 @@ export default function ChessBoard({
   const apiRef = useRef<CgApi | null>(null);
   const [promotion, setPromotion] = useState<{ from: string; to: string; color: 'white' | 'black' } | null>(null);
 
+  // chessground's events.after closure is fixed at mount, so without these
+  // refs `needsPromotion` would see the start FEN every move — a pawn pushing
+  // to the 8th rank then looks like a non-promotion move, gets sent as a bare
+  // 4-char UCI, and the server rejects it as illegal.
+  const fenRef = useRef(fen);
+  const onMoveRef = useRef(onMove);
+  const turnColorRef = useRef(turnColor);
+  fenRef.current = fen;
+  onMoveRef.current = onMove;
+  turnColorRef.current = turnColor;
+
   // Mount chessground once
   useEffect(() => {
     if (!ref.current) return;
@@ -47,13 +58,13 @@ export default function ChessBoard({
             showDests: true,
             events: {
               after: (orig, dest) => {
-                if (needsPromotion(fen, orig, dest)) {
+                if (needsPromotion(fenRef.current, orig, dest)) {
                   // Show our picker instead of auto-promoting
-                  setPromotion({ from: orig, to: dest, color: turnColor ?? 'white' });
+                  setPromotion({ from: orig, to: dest, color: turnColorRef.current ?? 'white' });
                   // Don't call onMove yet — wait for piece pick
                   return;
                 }
-                onMove?.(orig + dest);
+                onMoveRef.current?.(orig + dest);
               },
             },
           }
@@ -130,9 +141,14 @@ function PromotionPicker({ color, square, orientation, onPick, onCancel }:
   const rank = parseInt(square[1]!, 10) - 1;
   const flip = orientation === 'black';
   const colPct = (flip ? 7 - file : file) * 12.5;
+  // rowPct = % from the board's top edge to the destination square's top edge.
   const rowPct = (flip ? rank : 7 - rank) * 12.5;
-  // Position picker just below the destination square if at top of board, else above
-  const placeAbove = (flip ? rank > 4 : rank < 4);
+  // Place below when the destination is in the top half of the displayed board,
+  // above when in the bottom half — keeps the picker on-screen either way.
+  const placeAbove = rowPct >= 50;
+  const posStyle: React.CSSProperties = placeAbove
+    ? { bottom: `calc(${100 - rowPct}% + 6px)` }
+    : { top: `calc(${rowPct + 12.5}% + 6px)` };
   const pieces: PieceLetter[] = ['q', 'r', 'b', 'n'];
   const symbols: Record<PieceLetter, Record<'white' | 'black', string>> = {
     q: { white: '♕', black: '♛' },
@@ -146,10 +162,7 @@ function PromotionPicker({ color, square, orientation, onPick, onCancel }:
       <div className="absolute inset-0 z-30 cursor-pointer" onClick={onCancel} />
       <div
         className="absolute z-40 flex gap-1 rounded-xl border border-ink-300 bg-white p-1 shadow-lift dark:border-ink-700 dark:bg-ink-800"
-        style={{
-          left: `calc(${colPct}% - 8px)`,
-          [placeAbove ? 'bottom' : 'top']: `calc(${100 - rowPct - 12.5}% + 6px)`,
-        }}
+        style={{ left: `calc(${colPct}% - 8px)`, ...posStyle }}
       >
         {pieces.map((p) => (
           <button key={p} onClick={(e) => { e.stopPropagation(); onPick(p); }}

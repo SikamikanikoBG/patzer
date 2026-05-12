@@ -4,6 +4,41 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.6.0] — 2026-05-12
+
+### Fixed — pawn promotion was silently rejected
+
+`ChessBoard`'s chessground `events.after` callback was bound inside a
+mount-only effect, so it kept reading the start-position FEN forever. Every
+time a pawn reached the last rank, `needsPromotion(staleFen, …)` returned
+false, the move was sent as a bare 4-char UCI without a promotion piece,
+and the server rejected it as illegal — the picker never appeared. The
+callback now reads live `fen` / `onMove` / `turnColor` from refs, and the
+promotion picker's position formula is corrected (it used to render at the
+opposite end of the board).
+
+### Changed — more legible UI
+
+- Small text bumped +1px across the app: `text-[9px]→[10px]`,
+  `text-[10px]→[11px]`, `text-[11px]→text-xs`. The `.label` utility class
+  follows the same bump.
+- Classification icons in the move list and the review summary now use the
+  same circle size (`h-6 w-6`, 14px glyph) so the legend and the moves it
+  describes match visually.
+- Kid-mode mood bubbles roughly 1.5× larger (18→28px container, 13/14→20/22
+  font) — readable at glance even on a small board.
+
+### Changed — modern sound design
+
+`web/src/lib/sounds.ts` was rewritten from bare oscillator beeps to a
+proper synthesized chain: master compressor + parallel convolution reverb
+(decaying-noise impulse), wood-knock voicing for moves/captures/castles
+(transient noise click + low body sine with quick pitch droop), and
+inharmonic-bell additive synthesis for check / promotion / game end
+(partials 1.0, 2.01, 2.99, 4.07, 5.42 ≈ a small handbell). Sequences are
+scheduled sample-accurately via `osc.start(at)` instead of `setTimeout`.
+Still 100% synthesis — no external audio assets.
+
 ## [7.5.0] — 2026-05-12
 
 ### Added — Living Pieces (kid mode)

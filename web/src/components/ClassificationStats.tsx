@@ -25,7 +25,7 @@ export default function ClassificationStats({ moves, whiteName, blackName, onCli
 
   return (
     <div className="card overflow-hidden">
-      <div className="grid grid-cols-[1fr_3rem_3rem] items-center border-b border-ink-100 bg-ink-50/60 px-3 py-1.5 text-[10px] uppercase tracking-wide text-ink-500 dark:border-ink-700 dark:bg-ink-900/40">
+      <div className="grid grid-cols-[1fr_3rem_3rem] items-center border-b border-ink-100 bg-ink-50/60 px-3 py-1.5 text-[11px] uppercase tracking-wide text-ink-500 dark:border-ink-700 dark:bg-ink-900/40">
         <span>{t('review.moves')}</span>
         <span className="text-center" title={whiteName}>W</span>
         <span className="text-center" title={blackName}>B</span>
@@ -37,8 +37,8 @@ export default function ClassificationStats({ moves, whiteName, blackName, onCli
         return (
           <div key={c} className="grid grid-cols-[1fr_3rem_3rem] items-center border-b border-ink-100 last:border-0 dark:border-ink-800">
             <div className="flex items-center gap-2 px-3 py-1.5">
-              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-white ${s.bgClass}`}>
-                <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">{GLYPH_SVG[s.glyph]}</svg>
+              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-white ${s.bgClass}`}>
+                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">{GLYPH_SVG[s.glyph]}</svg>
               </span>
               <span className="text-sm">{t(`classification.${s.labelKey}`)}</span>
             </div>

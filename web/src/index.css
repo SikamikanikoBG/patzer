@@ -130,7 +130,7 @@ cg-board square.last-move.premove-dest {
     @apply block w-full rounded-md border border-chesscom-200 bg-white px-3 py-2 text-sm text-chesscom-900 placeholder:text-chesscom-300 transition-colors focus:border-gold-500 focus:ring-2 focus:ring-gold-500/20 focus:outline-none dark:bg-chesscom-900 dark:border-chesscom-700 dark:text-chesscom-100 dark:placeholder:text-chesscom-400;
   }
 
-  .label { @apply text-[11px] font-semibold uppercase tracking-wide text-chesscom-500 dark:text-chesscom-300; }
+  .label { @apply text-xs font-semibold uppercase tracking-wide text-chesscom-500 dark:text-chesscom-300; }
 
   .badge { @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium; }
 
@@ -177,7 +177,7 @@ cg-board square.last-move.premove-dest {
   justify-content: center;
   width: 100%;
   height: 100%;
-  font-size: 13px;
+  font-size: 20px;
   line-height: 1;
   border-radius: 9999px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
@@ -191,7 +191,7 @@ cg-board square.last-move.premove-dest {
 /* Bigger glyph on bigger boards — chessground squares scale with the wrap,
    so we let the bubble follow at ~25% of square size. */
 @media (min-width: 640px) {
-  .mood-glyph { font-size: 14px; }
+  .mood-glyph { font-size: 22px; }
 }
 
 /* HERO — gold ring + gentle bob, like a piece taking a deep breath before

@@ -192,9 +192,9 @@ export default function CoachPanel({ systemConfigured, request, autoPlay, trigge
       )}
       {!muted && error && <div className="rounded-lg border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-bad">{error}</div>}
       {showContext && lastBody && (
-        <details open className="mt-3 rounded-lg border border-ink-200 bg-ink-50 p-2 text-[11px] dark:border-ink-700 dark:bg-ink-900/40">
+        <details open className="mt-3 rounded-lg border border-ink-200 bg-ink-50 p-2 text-xs dark:border-ink-700 dark:bg-ink-900/40">
           <summary className="cursor-pointer text-ink-500">Context sent to the model</summary>
-          <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all font-mono text-[10px] leading-snug text-ink-600 dark:text-ink-300">
+          <pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] leading-snug text-ink-600 dark:text-ink-300">
             {JSON.stringify(lastBody, null, 2)}
           </pre>
         </details>

@@ -138,7 +138,7 @@ export default function EvalGraph({ evals, current, onClick, markers = [], heigh
       {/* Hover eval chip — top-right of cursor */}
       {hoverPoint && (
         <div
-          className="pointer-events-none absolute top-1 rounded-sm bg-chesscom-900/90 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-white shadow-soft"
+          className="pointer-events-none absolute top-1 rounded-sm bg-chesscom-900/90 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white shadow-soft"
           style={{
             left: `calc(${hoverPoint.x}% + 4px)`,
             transform: hoverPoint.x > 80 ? 'translateX(-100%)' : undefined,
@@ -149,7 +149,7 @@ export default function EvalGraph({ evals, current, onClick, markers = [], heigh
       )}
       {/* Current eval pill — top-right corner, always dark */}
       {current !== undefined && points[current - 1] && (
-        <div className="pointer-events-none absolute right-2 top-2 rounded-sm bg-chesscom-900/85 px-1.5 py-0.5 text-[10px] font-bold tabular-nums text-white backdrop-blur-sm">
+        <div className="pointer-events-none absolute right-2 top-2 rounded-sm bg-chesscom-900/85 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white backdrop-blur-sm">
           {fmtCp(points[current - 1]!.cp)}
         </div>
       )}

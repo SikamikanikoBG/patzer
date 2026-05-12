@@ -109,7 +109,7 @@ export default function Review() {
           <Star className={cn('h-3.5 w-3.5', bookmarkedOnly && 'fill-gold-500')} />
           {bookmarkedOnly ? t('review.starredFilterOn', { defaultValue: 'Starred only' }) : t('review.starredFilterOff', { defaultValue: 'All games' })}
         </button>
-        <span className="text-[11px] text-chesscom-400">
+        <span className="text-xs text-chesscom-400">
           {counts.total} {t('review.games', { defaultValue: 'games' })}{counts.starred > 0 && ` · ${counts.starred} ★`}
         </span>
       </div>
@@ -179,10 +179,10 @@ function GameCard({ g }: { g: GameRow }) {
             <span className={cn('truncate font-semibold', g.user_color === 'white' ? 'text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-700 dark:text-chesscom-200')}>{g.white}</span>
             <span className="text-chesscom-400">vs</span>
             <span className={cn('truncate font-semibold', g.user_color === 'black' ? 'text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-700 dark:text-chesscom-200')}>{g.black}</span>
-            <span className="text-[11px] text-chesscom-400">· {g.time_control}</span>
-            {g.opening_name && <span className="hidden truncate text-[11px] text-chesscom-400 sm:inline">· {g.opening_name}</span>}
+            <span className="text-xs text-chesscom-400">· {g.time_control}</span>
+            {g.opening_name && <span className="hidden truncate text-xs text-chesscom-400 sm:inline">· {g.opening_name}</span>}
           </div>
-          <div className="mt-0.5 flex items-center gap-2 text-[11px] text-chesscom-500">
+          <div className="mt-0.5 flex items-center gap-2 text-xs text-chesscom-500">
             <span>{new Date(g.end_time).toLocaleDateString()}</span>
             <span>·</span>
             <span className="capitalize">{g.source}</span>
@@ -191,7 +191,7 @@ function GameCard({ g }: { g: GameRow }) {
         </div>
         {g.analyzed ? (
           <div className="text-right text-xs">
-            <div className="text-[10px] uppercase tracking-wider text-chesscom-400">accuracy</div>
+            <div className="text-[11px] uppercase tracking-wider text-chesscom-400">accuracy</div>
             <div className="font-mono text-sm font-semibold tabular-nums">
               <span className="text-chesscom-700 dark:text-chesscom-200">{fmtAccuracy(g.accuracy_white)}</span>
               <span className="mx-1 text-chesscom-400">/</span>

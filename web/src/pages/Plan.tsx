@@ -163,7 +163,7 @@ function SectionHeader({ label, count, tone = 'chesscom-500' }: { label: string;
   return (
     <div className="flex items-baseline gap-2">
       <h2 className={`text-xs font-semibold uppercase tracking-wider text-${tone}`}>{label}</h2>
-      <span className="text-[10px] text-chesscom-400">{count}</span>
+      <span className="text-[11px] text-chesscom-400">{count}</span>
     </div>
   );
 }
@@ -214,7 +214,7 @@ function GoalCard({ goal }: { goal: PlanGoal }) {
       </div>
 
       <div className="mt-3 space-y-1.5">
-        <div className="flex items-baseline justify-between text-[11px]">
+        <div className="flex items-baseline justify-between text-xs">
           <span className="text-chesscom-500">
             {t('plan.progress', { defaultValue: 'Progress' })}
           </span>
@@ -230,7 +230,7 @@ function GoalCard({ goal }: { goal: PlanGoal }) {
             style={{ width: `${Math.min(100, pct)}%` }}
           />
         </div>
-        <div className="flex items-center justify-between text-[10px] text-chesscom-400">
+        <div className="flex items-center justify-between text-[11px] text-chesscom-400">
           <span>
             {expired
               ? t('plan.expired', { defaultValue: 'Expired' })

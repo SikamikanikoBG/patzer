@@ -56,12 +56,12 @@ export default function ShortcutsModal({ open, onClose }: Props) {
         <div className="max-h-[70vh] overflow-y-auto p-4 space-y-5">
           {groups.map((g) => (
             <section key={g.title}>
-              <div className="mb-2 text-[10px] uppercase tracking-wider text-chesscom-500">{g.title}</div>
+              <div className="mb-2 text-[11px] uppercase tracking-wider text-chesscom-500">{g.title}</div>
               <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                 {g.rows.map(([k, v]) => (
                   <div key={k} className="flex items-center justify-between gap-3 rounded-md bg-chesscom-50/70 px-3 py-1.5 text-xs dark:bg-chesscom-900/40">
                     <span className="text-chesscom-600 dark:text-chesscom-200">{v}</span>
-                    <kbd className="font-mono text-[11px] text-chesscom-700 dark:text-chesscom-200">{k}</kbd>
+                    <kbd className="font-mono text-xs text-chesscom-700 dark:text-chesscom-200">{k}</kbd>
                   </div>
                 ))}
               </div>

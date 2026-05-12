@@ -130,7 +130,7 @@ function PhaseStat({ label, value }: { label: string; value: number }) {
   const tone = value >= 80 ? 'text-board-dark' : value >= 60 ? 'text-gold-600' : 'text-mistake';
   return (
     <div className="rounded-md bg-chesscom-50/70 px-3 py-3 text-center dark:bg-chesscom-900/40">
-      <div className="text-[10px] uppercase tracking-wide text-chesscom-500">{label}</div>
+      <div className="text-[11px] uppercase tracking-wide text-chesscom-500">{label}</div>
       <div className={`mt-0.5 font-mono text-2xl font-bold tabular-nums ${tone}`}>{value.toFixed(1)}<span className="text-xs opacity-70">%</span></div>
     </div>
   );
@@ -238,7 +238,7 @@ function ActivityHeatmap({ data }: { data: InsightsV2['activity_heatmap'] }) {
           <Flame className="h-4 w-4 text-mistake" />
           <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">{t('insights.activity', { defaultValue: 'Activity' })}</h2>
         </div>
-        <div className="text-[11px] text-chesscom-500">
+        <div className="text-xs text-chesscom-500">
           {t('insights.activityFooter', { defaultValue: '{{games}} games · {{wins}} wins in last 12 months', games: totalGames, wins: totalWins })}
         </div>
       </div>
@@ -265,7 +265,7 @@ function ActivityHeatmap({ data }: { data: InsightsV2['activity_heatmap'] }) {
           })}
         </svg>
       </div>
-      <div className="mt-2 flex items-center justify-end gap-1.5 text-[10px] text-chesscom-400">
+      <div className="mt-2 flex items-center justify-end gap-1.5 text-[11px] text-chesscom-400">
         <span>{t('insights.less', { defaultValue: 'Less' })}</span>
         <span className="h-2.5 w-2.5 rounded-sm bg-chesscom-100 dark:bg-chesscom-900" />
         <span className="h-2.5 w-2.5 rounded-sm bg-board-dark/30" />
@@ -324,7 +324,7 @@ function RatingTrajectoryCard({ data }: { data: InsightsV2['rating_trajectory'] 
           <TrendingUp className="h-4 w-4 text-board-dark" />
           <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">{t('insights.ratingTrend', { defaultValue: 'Rating trajectory' })}</h2>
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-chesscom-500">
+        <div className="flex items-center gap-2 text-[11px] text-chesscom-500">
           {series.map((s) => (
             <span key={s.key} className="inline-flex items-center gap-1">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colors[s.key] }} />
@@ -430,7 +430,7 @@ function MistakeTaxonomyCard({ data }: { data: InsightsV2['mistake_taxonomy'] })
           <AlertTriangle className="h-4 w-4 text-mistake" />
           <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">{t('insights.taxonomy', { defaultValue: 'Mistake taxonomy' })}</h2>
         </div>
-        <Link to="/train" className="text-[11px] font-medium text-board-dark hover:underline">{t('insights.trainCta', { defaultValue: 'Train these →' })}</Link>
+        <Link to="/train" className="text-xs font-medium text-board-dark hover:underline">{t('insights.trainCta', { defaultValue: 'Train these →' })}</Link>
       </div>
       <div className="space-y-1.5">
         {buckets.sort((a, b) => data[b.key] - data[a.key]).map((b) => {
@@ -446,7 +446,7 @@ function MistakeTaxonomyCard({ data }: { data: InsightsV2['mistake_taxonomy'] })
                 <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-chesscom-100 dark:bg-chesscom-900">
                   <div className="h-full bg-mistake/70" style={{ width: `${pct}%` }} />
                 </div>
-                <div className="mt-0.5 truncate text-[10px] text-chesscom-400">{b.desc}</div>
+                <div className="mt-0.5 truncate text-[11px] text-chesscom-400">{b.desc}</div>
               </div>
             </div>
           );
@@ -478,7 +478,7 @@ function OpeningRepertoireCard({ data }: { data: OpeningRow[] }) {
       </div>
       <div className="overflow-x-auto">
       <table className="w-full min-w-[28rem] text-xs">
-        <thead className="bg-chesscom-50/50 text-[10px] uppercase tracking-wide text-chesscom-500 dark:bg-chesscom-900/40">
+        <thead className="bg-chesscom-50/50 text-[11px] uppercase tracking-wide text-chesscom-500 dark:bg-chesscom-900/40">
           <tr>
             <th className="px-3 py-1.5 text-left">{t('insights.opening', { defaultValue: 'Opening' })}</th>
             <th className="whitespace-nowrap px-2 py-1.5 text-center" title="As white / as black"><span className="sr-only">side</span>♔/♚</th>
@@ -496,7 +496,7 @@ function OpeningRepertoireCard({ data }: { data: OpeningRow[] }) {
               <tr key={`${o.color}|${o.eco}`} className="border-t border-chesscom-100 dark:border-chesscom-700/60">
                 <td className="px-3 py-1.5">
                   <div className="flex items-center gap-1.5 truncate">
-                    <span className="rounded bg-chesscom-100 px-1 py-px text-[10px] font-mono text-chesscom-600 dark:bg-chesscom-900/60 dark:text-chesscom-300">{o.eco}</span>
+                    <span className="rounded bg-chesscom-100 px-1 py-px text-[11px] font-mono text-chesscom-600 dark:bg-chesscom-900/60 dark:text-chesscom-300">{o.eco}</span>
                     <span className="truncate font-medium text-chesscom-800 dark:text-chesscom-100">{o.name}</span>
                   </div>
                 </td>
@@ -504,7 +504,7 @@ function OpeningRepertoireCard({ data }: { data: OpeningRow[] }) {
                 <td className="px-2 py-1.5 text-right font-mono tabular-nums">{o.played}</td>
                 <td className="px-2 py-1.5 text-right">
                   <span className={`font-mono tabular-nums ${tone}`}>{(score * 100).toFixed(0)}%</span>
-                  <span className="ml-1 text-[10px] text-chesscom-400">{o.wins}/{o.draws}/{o.losses}</span>
+                  <span className="ml-1 text-[11px] text-chesscom-400">{o.wins}/{o.draws}/{o.losses}</span>
                 </td>
                 <td className="whitespace-nowrap px-2 py-1.5 text-right font-mono tabular-nums">{o.avg_accuracy != null ? `${o.avg_accuracy.toFixed(1)}` : '—'}</td>
               </tr>
@@ -537,7 +537,7 @@ const AchievementsSection = ({ achievements, sectionRef }: { achievements: Achie
           <Award className="h-4 w-4 text-gold-500" />
           <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">{t('insights.achievements', { defaultValue: 'Achievements' })}</h2>
         </div>
-        <span className="font-mono text-[10px] tabular-nums text-chesscom-500">
+        <span className="font-mono text-[11px] tabular-nums text-chesscom-500">
           {unlocked}/{list.length || '—'} {t('insights.achUnlocked', { defaultValue: 'unlocked' })}
         </span>
       </div>
@@ -549,7 +549,7 @@ const AchievementsSection = ({ achievements, sectionRef }: { achievements: Achie
         <div className="space-y-4">
           {grouped.map((g) => (
             <div key={g.key}>
-              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-chesscom-500">{g.label}</div>
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-chesscom-500">{g.label}</div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                 {g.items.map((a) => <AchievementBadge key={a.id} a={a} />)}
               </div>
@@ -578,17 +578,17 @@ function AchievementBadge({ a }: { a: Achievement }) {
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-xs font-semibold">{a.title}</div>
-          <div className="mt-0.5 line-clamp-2 text-[10px] text-chesscom-500">{a.description}</div>
+          <div className="mt-0.5 line-clamp-2 text-[11px] text-chesscom-500">{a.description}</div>
         </div>
       </div>
       <div className="mt-2 flex items-center gap-2">
         <div className="h-1 flex-1 overflow-hidden rounded-full bg-chesscom-100 dark:bg-chesscom-900">
           <div className={`h-full ${a.unlocked ? 'bg-gold-500' : 'bg-board-dark/50'}`} style={{ width: `${pct}%` }} />
         </div>
-        <span className="font-mono text-[10px] tabular-nums text-chesscom-500">{a.progress}/{a.target}</span>
+        <span className="font-mono text-[11px] tabular-nums text-chesscom-500">{a.progress}/{a.target}</span>
       </div>
       {a.unlocked && a.unlocked_at && (
-        <div className="mt-1 text-[10px] text-chesscom-400">{new Date(a.unlocked_at).toLocaleDateString()}</div>
+        <div className="mt-1 text-[11px] text-chesscom-400">{new Date(a.unlocked_at).toLocaleDateString()}</div>
       )}
     </div>
   );

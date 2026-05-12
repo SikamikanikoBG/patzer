@@ -227,7 +227,7 @@ function TreeRow({
               {moveNumberPrefix(node.ply)}{node.san}
             </span>
             {node.eco && (
-              <span className="rounded bg-chesscom-100 px-1 py-px font-mono text-[10px] text-chesscom-600 dark:bg-chesscom-900/60 dark:text-chesscom-300">
+              <span className="rounded bg-chesscom-100 px-1 py-px font-mono text-[11px] text-chesscom-600 dark:bg-chesscom-900/60 dark:text-chesscom-300">
                 {node.eco}
               </span>
             )}
@@ -238,8 +238,8 @@ function TreeRow({
         )}
 
         <span className="ml-auto flex shrink-0 items-center gap-2">
-          <span className="font-mono text-[11px] tabular-nums text-chesscom-500">{node.played}g</span>
-          <span className={`rounded px-1.5 py-0.5 font-mono text-[10px] tabular-nums ${scoreTone}`}>
+          <span className="font-mono text-xs tabular-nums text-chesscom-500">{node.played}g</span>
+          <span className={`rounded px-1.5 py-0.5 font-mono text-[11px] tabular-nums ${scoreTone}`}>
             {Math.round(score * 100)}%
           </span>
         </span>
@@ -265,7 +265,7 @@ function TreeRow({
           })}
           {prunedHint && (
             <div
-              className="text-[11px] italic text-chesscom-400"
+              className="text-xs italic text-chesscom-400"
               style={{ paddingLeft: `${8 + (depth + 1) * 14 + 18}px` }}
             >
               {t('openings.moreBranches', { defaultValue: '+ more branches (rare lines hidden)' })}
@@ -306,7 +306,7 @@ function DetailCard({ node }: { node: TreeNode | null }) {
       <div>
         <div className="flex items-center gap-2">
           {node.eco && (
-            <span className="rounded bg-chesscom-100 px-1.5 py-0.5 font-mono text-[10px] text-chesscom-600 dark:bg-chesscom-900/60 dark:text-chesscom-300">
+            <span className="rounded bg-chesscom-100 px-1.5 py-0.5 font-mono text-[11px] text-chesscom-600 dark:bg-chesscom-900/60 dark:text-chesscom-300">
               {node.eco}
             </span>
           )}
@@ -315,7 +315,7 @@ function DetailCard({ node }: { node: TreeNode | null }) {
           </div>
         </div>
         {node.ply > 0 && (
-          <div className="mt-1 font-mono text-[11px] tabular-nums text-chesscom-500">
+          <div className="mt-1 font-mono text-xs tabular-nums text-chesscom-500">
             {t('openings.afterMove', { defaultValue: 'after {{san}}', san: `${moveNumberPrefix(node.ply)}${node.san}` })}
           </div>
         )}
@@ -323,15 +323,15 @@ function DetailCard({ node }: { node: TreeNode | null }) {
 
       <div className="grid grid-cols-3 gap-2 text-center text-xs">
         <div className="rounded-md bg-board-dark/10 px-2 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-chesscom-500">{t('openings.wins', { defaultValue: 'Wins' })}</div>
+          <div className="text-[11px] uppercase tracking-wide text-chesscom-500">{t('openings.wins', { defaultValue: 'Wins' })}</div>
           <div className="font-mono text-lg font-bold tabular-nums text-board-dark">{node.wins}</div>
         </div>
         <div className="rounded-md bg-chesscom-100/60 px-2 py-2 dark:bg-chesscom-700/40">
-          <div className="text-[10px] uppercase tracking-wide text-chesscom-500">{t('openings.draws', { defaultValue: 'Draws' })}</div>
+          <div className="text-[11px] uppercase tracking-wide text-chesscom-500">{t('openings.draws', { defaultValue: 'Draws' })}</div>
           <div className="font-mono text-lg font-bold tabular-nums text-chesscom-700 dark:text-chesscom-200">{node.draws}</div>
         </div>
         <div className="rounded-md bg-mistake/10 px-2 py-2">
-          <div className="text-[10px] uppercase tracking-wide text-chesscom-500">{t('openings.losses', { defaultValue: 'Losses' })}</div>
+          <div className="text-[11px] uppercase tracking-wide text-chesscom-500">{t('openings.losses', { defaultValue: 'Losses' })}</div>
           <div className="font-mono text-lg font-bold tabular-nums text-mistake">{node.losses}</div>
         </div>
       </div>

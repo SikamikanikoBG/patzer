@@ -71,10 +71,10 @@ function MoodBubble({ mood, flip }: { mood: PieceMood; flip: boolean }) {
     <div
       className={`absolute select-none ${MOOD_ANIM_CLASS[mood.mood]}`}
       style={{
-        left: `calc(${colPct}% - 4px)`,
-        top: `calc(${rowPct}% - 4px)`,
-        width: 18,
-        height: 18,
+        left: `calc(${colPct}% - 6px)`,
+        top: `calc(${rowPct}% - 6px)`,
+        width: 28,
+        height: 28,
       }}
       title={MOOD_EMOJI[mood.mood]}
     >

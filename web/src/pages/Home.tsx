@@ -144,7 +144,7 @@ function Hero({ displayName, avatar, stats, tagline }: {
               {avatar}
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-white/55">{greeting}</div>
+              <div className="text-xs uppercase tracking-[0.18em] text-white/55">{greeting}</div>
               <h1 className="truncate text-2xl font-bold tracking-tight sm:text-3xl">{displayName}</h1>
             </div>
           </div>
@@ -197,7 +197,7 @@ function StatInline({ value, label, glow }: { value: string; label: string; glow
       <span className={`font-mono text-xl font-semibold tabular-nums ${glow ? 'text-gold-300' : 'text-white'}`}>
         {value}
       </span>
-      <span className="text-[11px] uppercase tracking-wider text-white/55">{label}</span>
+      <span className="text-xs uppercase tracking-wider text-white/55">{label}</span>
     </span>
   );
 }
@@ -296,7 +296,7 @@ function PlanTile({ goals }: { goals: PlanGoal[] | null }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
           <Kicker>{t('home.planLabel', { defaultValue: "This week's plan" })}</Kicker>
-          <span className="font-mono text-[10px] tabular-nums text-chesscom-500">
+          <span className="font-mono text-[11px] tabular-nums text-chesscom-500">
             {active.length} {t('home.planActive', { defaultValue: 'active' })}
           </span>
         </div>
@@ -312,7 +312,7 @@ function PlanTile({ goals }: { goals: PlanGoal[] | null }) {
                   className="h-full bg-board-dark"
                 />
               </div>
-              <span className="font-mono text-[10px] tabular-nums text-chesscom-500">
+              <span className="font-mono text-[11px] tabular-nums text-chesscom-500">
                 {imminent.progress}/{imminent.target}
               </span>
             </div>
@@ -338,7 +338,7 @@ function AchievementsTile({ achievements }: { achievements: Achievement[] | null
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
           <Kicker>{t('home.achievementsLabel', { defaultValue: 'Achievements' })}</Kicker>
-          <span className="font-mono text-[10px] tabular-nums text-chesscom-500">
+          <span className="font-mono text-[11px] tabular-nums text-chesscom-500">
             {unlocked.length}/{list.length || '—'}
           </span>
         </div>
@@ -359,7 +359,7 @@ function AchievementsTile({ achievements }: { achievements: Achievement[] | null
                 );
               })}
               {unlocked.length > 3 && (
-                <span className="text-[10px] text-chesscom-500">+{unlocked.length - 3}</span>
+                <span className="text-[11px] text-chesscom-500">+{unlocked.length - 3}</span>
               )}
             </div>
           </>
@@ -431,7 +431,7 @@ function RecentGames({ games }: { games: GameRow[] }) {
                     </>
                   )}
                 </div>
-                <div className="text-[11px] text-chesscom-500">
+                <div className="text-xs text-chesscom-500">
                   <span>{new Date(g.end_time).toLocaleDateString()}</span>
                   <span className="mx-1.5 text-chesscom-400">·</span>
                   <span>{g.time_control}</span>
@@ -445,7 +445,7 @@ function RecentGames({ games }: { games: GameRow[] }) {
               </div>
               <div className="shrink-0 text-right">
                 {g.analyzed ? (
-                  <div className="font-mono text-[11px] tabular-nums">
+                  <div className="font-mono text-xs tabular-nums">
                     <span className={g.user_color === 'white' ? 'font-semibold text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500'}>
                       {fmtAccuracy(g.accuracy_white)}
                     </span>
@@ -455,7 +455,7 @@ function RecentGames({ games }: { games: GameRow[] }) {
                     </span>
                   </div>
                 ) : (
-                  <span className="text-[10px] uppercase tracking-wider text-chesscom-400">
+                  <span className="text-[11px] uppercase tracking-wider text-chesscom-400">
                     {t('home.unreviewed', { defaultValue: 'unreviewed' })}
                   </span>
                 )}
@@ -472,7 +472,7 @@ function RecentGames({ games }: { games: GameRow[] }) {
 
 function Kicker({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-chesscom-500">{children}</div>
+    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-chesscom-500">{children}</div>
   );
 }
 
@@ -484,7 +484,7 @@ function Title({ children }: { children: React.ReactNode }) {
 
 function Sub({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-1 line-clamp-2 text-[11px] text-chesscom-500">{children}</div>
+    <div className="mt-1 line-clamp-2 text-xs text-chesscom-500">{children}</div>
   );
 }
 
@@ -509,20 +509,20 @@ function Pill({ Icon, tone }: { Icon: React.ElementType; tone: 'gold' | 'board' 
 function ResultGlyph({ r }: { r: string }) {
   if (r === 'win') {
     return (
-      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-green-500/15 text-[11px] font-bold text-green-500">
+      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-green-500/15 text-xs font-bold text-green-500">
         W
       </span>
     );
   }
   if (r === 'loss') {
     return (
-      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-bad/15 text-[11px] font-bold text-bad">
+      <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-bad/15 text-xs font-bold text-bad">
         L
       </span>
     );
   }
   return (
-    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-chesscom-100 text-[11px] font-bold text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300">
+    <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-chesscom-100 text-xs font-bold text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300">
       D
     </span>
   );

@@ -29,7 +29,7 @@ export default function KeyMomentsList({ items, current, onSelect }: Props) {
   }
   return (
     <div className="card overflow-hidden">
-      <div className="border-b border-chesscom-100 bg-chesscom-50/60 px-4 py-2 text-[10px] uppercase tracking-wide text-chesscom-500 dark:border-chesscom-700 dark:bg-chesscom-900/40">
+      <div className="border-b border-chesscom-100 bg-chesscom-50/60 px-4 py-2 text-[11px] uppercase tracking-wide text-chesscom-500 dark:border-chesscom-700 dark:bg-chesscom-900/40">
         Key Moments
       </div>
       <div className="divide-y divide-chesscom-100 dark:divide-chesscom-700">
@@ -55,7 +55,7 @@ export default function KeyMomentsList({ items, current, onSelect }: Props) {
                 </div>
                 <div className="mt-0.5 truncate text-xs">
                   {m.title ? <span className="font-medium text-chesscom-800 dark:text-chesscom-100">{m.title}</span> : <span className={`font-medium ${s.textClass}`}>{m.classification}</span>}
-                  <span className="ml-2 font-mono text-[11px] tabular-nums text-chesscom-500">−{m.cp_loss}cp · {m.win_pct_delta.toFixed(0)}wp</span>
+                  <span className="ml-2 font-mono text-xs tabular-nums text-chesscom-500">−{m.cp_loss}cp · {m.win_pct_delta.toFixed(0)}wp</span>
                 </div>
                 {m.prose && (
                   <div className="mt-1 line-clamp-2 text-[12px] text-chesscom-600 dark:text-chesscom-300">{m.prose}</div>

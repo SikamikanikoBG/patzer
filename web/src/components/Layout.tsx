@@ -123,7 +123,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
               >
                 <Search className="h-3.5 w-3.5" />
                 <span className="hidden lg:inline">{t('palette.search', { defaultValue: 'Search' })}</span>
-                <kbd className="hidden rounded border border-chesscom-700 px-1 font-mono text-[10px] text-chesscom-300 lg:inline">⌘K</kbd>
+                <kbd className="hidden rounded border border-chesscom-700 px-1 font-mono text-[11px] text-chesscom-300 lg:inline">⌘K</kbd>
               </button>
             )}
             {onOpenShortcuts && (
@@ -152,7 +152,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
               <span className="text-lg leading-none">{user?.profile.avatar_emoji ?? '♟'}</span>
               <div className="text-right text-xs leading-tight">
                 <div className="font-medium">{user?.profile.display_name}</div>
-                <div className="text-[10px] text-chesscom-400">@{user?.username}</div>
+                <div className="text-[11px] text-chesscom-400">@{user?.username}</div>
               </div>
             </NavLink>
 
@@ -202,7 +202,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
                 <span className="text-xl leading-none">{user.profile.avatar_emoji ?? '♟'}</span>
                 <div className="min-w-0 flex-1 leading-tight">
                   <div className="truncate text-sm font-medium">{user.profile.display_name}</div>
-                  <div className="truncate text-[11px] text-chesscom-400">@{user.username}</div>
+                  <div className="truncate text-xs text-chesscom-400">@{user.username}</div>
                 </div>
               </NavLink>
             )}
@@ -218,7 +218,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
               <MobileNavItem to="/settings" icon={SettingsIcon} label={t('common.settings')} />
               {user?.role === 'admin' && (
                 <>
-                  <div className="px-3 pt-4 pb-1 text-[10px] uppercase tracking-wide text-chesscom-400">{t('common.admin')}</div>
+                  <div className="px-3 pt-4 pb-1 text-[11px] uppercase tracking-wide text-chesscom-400">{t('common.admin')}</div>
                   <MobileNavItem to="/admin/users" icon={Users} label={t('admin.users')} />
                   <MobileNavItem to="/admin/system" icon={Server} label={t('admin.system')} />
                 </>
@@ -246,7 +246,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
       </main>
 
       {/* Footer with version chip */}
-      <footer className="border-t border-chesscom-200 bg-white px-3 py-2 text-center text-[11px] text-chesscom-400 dark:border-chesscom-800 dark:bg-chesscom-900">
+      <footer className="border-t border-chesscom-200 bg-white px-3 py-2 text-center text-xs text-chesscom-400 dark:border-chesscom-800 dark:bg-chesscom-900">
         {version && (
           <button
             onClick={() => setShowChangelog(true)}

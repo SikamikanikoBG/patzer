@@ -83,9 +83,9 @@ export default function AccuracyDonut({ value, size = 96, label, showBand, strok
           </text>
         )}
       </svg>
-      {label && <div className="mt-1 text-[10px] uppercase tracking-wide text-chesscom-500">{label}</div>}
+      {label && <div className="mt-1 text-[11px] uppercase tracking-wide text-chesscom-500">{label}</div>}
       {showBand && v != null && (
-        <div className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide" style={{ color: band.color }}>
+        <div className="mt-0.5 text-xs font-semibold uppercase tracking-wide" style={{ color: band.color }}>
           {band.nameEn}
         </div>
       )}

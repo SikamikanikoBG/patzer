@@ -193,7 +193,7 @@ export default function Lab() {
                 <FlipVertical2 className="h-4 w-4" />
                 {t('lab.flip', { defaultValue: 'Flip board' })}
               </button>
-              <div className="ml-auto font-mono text-[10px] tabular-nums text-chesscom-400">
+              <div className="ml-auto font-mono text-[11px] tabular-nums text-chesscom-400">
                 {fen}
               </div>
             </div>
@@ -247,7 +247,7 @@ export default function Lab() {
               {result.lines.map((line, i) => (
                 <LineRow key={i} line={line} rank={i + 1} onPlay={playLineMove} />
               ))}
-              <div className="px-3 py-1.5 text-right text-[10px] text-chesscom-400">
+              <div className="px-3 py-1.5 text-right text-[11px] text-chesscom-400">
                 {t('lab.depthLabel', { defaultValue: 'depth' })} {result.depth}
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function Lab() {
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">
                   {t('lab.moves', { defaultValue: 'Moves' })}
                 </h2>
-                <span className="text-[10px] text-chesscom-400">{history.length}</span>
+                <span className="text-[11px] text-chesscom-400">{history.length}</span>
               </div>
               <div className="max-h-60 overflow-y-auto p-2">
                 <button
@@ -325,7 +325,7 @@ function LineRow({ line, rank, onPlay }: { line: AnalyzeLine; rank: number; onPl
 
   return (
     <div className="flex items-start gap-2 px-3 py-2 text-xs">
-      <span className="mt-0.5 font-mono text-[10px] tabular-nums text-chesscom-400">{rank}.</span>
+      <span className="mt-0.5 font-mono text-[11px] tabular-nums text-chesscom-400">{rank}.</span>
       <span className={`mt-0.5 w-12 shrink-0 font-mono text-xs tabular-nums ${evalTone}`}>
         {evalLabel}
       </span>
@@ -338,7 +338,7 @@ function LineRow({ line, rank, onPlay }: { line: AnalyzeLine; rank: number; onPl
           {line.san}
         </button>
         {tail.length > 0 && (
-          <span className="ml-2 font-mono text-[11px] tabular-nums text-chesscom-500">
+          <span className="ml-2 font-mono text-xs tabular-nums text-chesscom-500">
             {tail.join(' ')}
           </span>
         )}
@@ -352,7 +352,7 @@ function Slider({ label, value, min, max, onChange }: {
 }) {
   return (
     <div>
-      <div className="mb-1 flex items-baseline justify-between text-[11px]">
+      <div className="mb-1 flex items-baseline justify-between text-xs">
         <span className="text-chesscom-500">{label}</span>
         <span className="font-mono tabular-nums text-chesscom-700 dark:text-chesscom-200">{value}</span>
       </div>

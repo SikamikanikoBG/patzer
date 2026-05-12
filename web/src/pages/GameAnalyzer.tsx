@@ -400,7 +400,7 @@ export default function GameAnalyzer() {
                     onChange={(e) => setRequestedDepth(Number(e.target.value))}
                     className="w-full"
                   />
-                  <div className="mt-1 flex justify-between text-[10px] text-chesscom-400">
+                  <div className="mt-1 flex justify-between text-[11px] text-chesscom-400">
                     <span>fast (8)</span>
                     <span>quality (16)</span>
                     <span>deep (22)</span>
@@ -577,7 +577,7 @@ function GameMetaToolbar({ gameId, bookmarked, notes, onFlip, onShare, linkCopie
             placeholder={t('review.notesPlaceholder', { defaultValue: 'Your private notes on this game…' })}
             className="input min-h-[88px] w-full resize-y text-sm"
           />
-          <div className="mt-1 flex items-center justify-between text-[10px] text-chesscom-400">
+          <div className="mt-1 flex items-center justify-between text-[11px] text-chesscom-400">
             <span>{t('review.notesPrivate', { defaultValue: 'Only you can see this.' })}</span>
             <span>{savedAt ? t('common.saved', { defaultValue: 'Saved' }) : (draft !== notes ? t('review.notesUnsaved', { defaultValue: 'Click outside to save' }) : '')}</span>
           </div>
@@ -721,20 +721,20 @@ function LinesPanel({ enabled, onToggle, lines, loading, error, playedUci, onAdv
                     : 'cursor-default hover:bg-chesscom-50 dark:hover:bg-chesscom-900/40'
                 }`}
               >
-                <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
                   l.multipv === 1 ? 'bg-gold-500/20 text-gold-600' : 'bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-800'
                 }`}>{l.multipv}</span>
                 <span className="w-12 shrink-0 font-mono text-xs font-semibold tabular-nums">
                   {l.mate != null ? (l.mate > 0 ? `#${l.mate}` : `-#${Math.abs(l.mate)}`) : fmtCp(l.cp)}
                 </span>
                 <span className="w-12 shrink-0 truncate font-mono font-semibold text-chesscom-900 dark:text-chesscom-100">{l.san}</span>
-                <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-chesscom-500">{pv}</span>
-                {isPlayed && <span className="shrink-0 text-[9px] uppercase text-board-dark">{t('review.linesPlayed', { defaultValue: 'played' })}</span>}
+                <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-chesscom-500">{pv}</span>
+                {isPlayed && <span className="shrink-0 text-[10px] uppercase text-board-dark">{t('review.linesPlayed', { defaultValue: 'played' })}</span>}
               </button>
             );
           })}
           {loading && lines.length > 0 && (
-            <div className="flex items-center gap-2 px-2 pt-1 text-[10px] text-chesscom-400">
+            <div className="flex items-center gap-2 px-2 pt-1 text-[11px] text-chesscom-400">
               <Loader2 className="h-3 w-3 animate-spin" /> {t('review.linesRefreshing', { defaultValue: 'refreshing…' })}
             </div>
           )}

@@ -321,7 +321,7 @@ function MoodPreview({ moodClass, glyph, title, desc }: { moodClass: string; gly
         <span className="mood-glyph" style={{ fontSize: 18 }}>{glyph}</span>
       </div>
       <div className="text-sm font-semibold">{title}</div>
-      <div className="mt-0.5 text-[11px] leading-snug text-ink-500">{desc}</div>
+      <div className="mt-0.5 text-xs leading-snug text-ink-500">{desc}</div>
     </div>
   );
 }
