@@ -1432,9 +1432,9 @@ This is a maturity release: every move on the board is rigorously validated by c
 - **Multi-user with admin role** — first-run setup wizard creates the admin account; the admin console manages users, system settings (Ollama URL, Stockfish path), and connection health.
 - **Single-container deploy** — Dockerfile + docker-compose.yml with persistent SQLite volume; one-shot `deploy.ps1` for SSH-based home-server deployments.
 
-[2.0.0]: https://github.com/SikamikanikoBG/chess/releases/tag/v2.0.0
-[1.4.0]: https://github.com/SikamikanikoBG/chess/releases/tag/v1.4.0
-[1.3.0]: https://github.com/SikamikanikoBG/chess/releases/tag/v1.3.0
-[1.2.0]: https://github.com/SikamikanikoBG/chess/releases/tag/v1.2.0
-[1.1.0]: https://github.com/SikamikanikoBG/chess/releases/tag/v1.1.0
-[1.0.0]: https://github.com/SikamikanikoBG/chess/releases/tag/v1.0.0
+[2.0.0]: https://github.com/SikamikanikoBG/patzer/releases/tag/v2.0.0
+[1.4.0]: https://github.com/SikamikanikoBG/patzer/releases/tag/v1.4.0
+[1.3.0]: https://github.com/SikamikanikoBG/patzer/releases/tag/v1.3.0
+[1.2.0]: https://github.com/SikamikanikoBG/patzer/releases/tag/v1.2.0
+[1.1.0]: https://github.com/SikamikanikoBG/patzer/releases/tag/v1.1.0
+[1.0.0]: https://github.com/SikamikanikoBG/patzer/releases/tag/v1.0.0
