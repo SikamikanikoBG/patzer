@@ -1,6 +1,6 @@
 {
   "name": "@patzer/web",
-  "version": "7.6.2",
+  "version": "7.6.3",
   "private": true,
   "type": "module",
   "scripts": {

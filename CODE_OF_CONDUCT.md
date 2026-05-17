@@ -11,7 +11,7 @@ We follow the [Contributor Covenant 2.1](https://www.contributor-covenant.org/ve
 
 ## Reporting
 
-Report unacceptable behavior to **arsen.apostolov@gmail.com**. Reports are handled in confidence.
+Report unacceptable behavior by opening a [private security advisory](https://github.com/SikamikanikoBG/patzer/security/advisories/new) (works for any private maintainer-only message, not just security) or by emailing the address on the [maintainer's GitHub profile](https://github.com/SikamikanikoBG). Reports are handled in confidence.
 
 ## Enforcement
 

@@ -4,6 +4,45 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.6.3] — 2026-05-17
+
+### Docs — popularization-prep pass
+
+A full pre-promotion audit of the public surface. No app-code changes; this
+release is the audit findings turned into shipped files.
+
+- **README hero GIF placeholder removed** (was a `<em>(hero GIF — see... after
+  recording)</em>` TODO masquerading as content; first impression killer).
+- **README clarifies the BYO-Ollama vs out-of-the-box split.** "Play vs
+  Stockfish, play vs friend, classify, accuracy %, eval graph" all work
+  without Ollama and without a Chess.com account — only the AI Coach narrator
+  and game-import need them. Previously implied as "required".
+- **README "clone of Chess.com" → "take on the Chess.com / Lichess
+  workflow"** (`README.md`, `CONTRIBUTING.md`). "Clone" overpromises features
+  (matchmaking, ratings ecosystem) Patzer doesn't ship, and "Chess.com" is a
+  trademark we don't want to use as our product-category label. The README
+  hero "Your private Chess.com" stays — that's metaphor, not categorization.
+- **GitHub Private Vulnerability Reporting enabled** and `SECURITY.md` /
+  `CODE_OF_CONDUCT.md` updated to route through PVR instead of a public
+  personal email.
+- **`docs/FAQ.md` added** to pre-answer the questions every HN/Reddit thread
+  about a self-hosted chess tool gets: is the Chess.com API legal, is Ollama
+  required, NAT/proxy notes, backup/restore, lost admin password, "why
+  Patzer", and how this differs from Lichess Studio / Aimchess.
+- **`deploy.sh` added** as the Linux/macOS twin of `deploy.ps1` (same
+  `.env.deploy` contract, same `--no-build` / `--logs` flags). README's
+  deploy section now documents both.
+- **GitHub releases backfilled.** Tags + releases for every version commit
+  from v3.2.0 through v7.6.1 (11 versions) — the Releases page previously
+  showed v6.0.0 as latest, making the project look abandoned despite weekly
+  work. Now matches reality.
+- **Repo renamed** `SikamikanikoBG/chess` → `SikamikanikoBG/patzer` to match
+  the package name and the link in every doc. GitHub auto-redirects the old
+  URL; CHANGELOG reference-links updated.
+
+No code under `server/src/` or `web/src/` changed in this release. The Docker
+container on a self-hosted deploy does not need to redeploy for 7.6.3.
+
 ## [7.6.2] — 2026-05-17
 
 ### Docs

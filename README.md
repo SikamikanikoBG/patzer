@@ -17,10 +17,6 @@
   <a href="https://github.com/SikamikanikoBG/patzer/stargazers"><img src="https://img.shields.io/github/stars/SikamikanikoBG/patzer?style=flat-square" alt="stars"/></a>
 </p>
 
-<p align="center">
-  <em>(hero GIF — see <a href="docs/assets/hero.gif">docs/assets/hero.gif</a> after recording, optional)</em>
-</p>
-
 ## Why Patzer
 
 - **Your games stay home.** Single Docker container on a Pi / NAS / old laptop. No cloud, no telemetry, no upsell.
@@ -29,7 +25,7 @@
 
 ## What it is
 
-Patzer is a tiny, self-hosted clone of the Chess.com / Lichess workflow you actually use:
+Patzer is a tiny, self-hosted take on the Chess.com / Lichess workflow you actually use:
 
 - **Game Review** — pull your public Chess.com games, analyze with bundled Stockfish, get Lichess-style classifications (Best / Excellent / Good / Inaccuracy / Mistake / Blunder / Brilliant / Miss), accuracy %, eval graph, mistake markers.
 - **Play vs Bot** — full games against Stockfish at seven named tiers (Kid → Stockfish max), all standard time controls, premoves enabled, kid-mode blunder warnings.
@@ -69,10 +65,20 @@ volumes:
   patzer-data:
 ```
 
-You'll want:
+> **What works without any extras:** play vs Stockfish, play vs friend on the same server,
+> move classification, accuracy %, eval graph, opening detection. The setup wizard takes you
+> straight to a working board.
+>
+> **What needs Ollama:** the AI Coach commentary voice. Until you point Patzer at an Ollama
+> host, the *Coach* panel just shows the engine facts in plain text.
+>
+> **What needs a Chess.com username:** importing your public games for review. Without it
+> you can still load PGNs by paste or play live and review from the move list.
 
-- An [Ollama](https://ollama.com) server reachable from the Patzer container (for the AI Coach). The wizard validates the URL and lists available models for you. Patzer accepts loopback / RFC1918 / `*.local` Ollama hosts only — public-Internet model proxies aren't supported here.
-- A Chess.com username (entered later in *Settings*) if you want to import games for review. Optional.
+You'll want, optionally:
+
+- **For the AI Coach:** an [Ollama](https://ollama.com) server reachable from the Patzer container. The wizard validates the URL and lists available models for you. Patzer accepts loopback / RFC1918 / `*.local` Ollama hosts only — public-Internet model proxies aren't supported here.
+- **For Game Review on your own games:** a Chess.com username (entered later in *Settings*).
 
 To use a different host port, run with `-p 9000:8800` (or set `HOST_PORT=9000` if you're using `docker compose`).
 
@@ -144,24 +150,34 @@ npm run build       # production build of both workspaces
 
 ## Deploying to a home server
 
-A simple `deploy.ps1` is included. Create `.env.deploy` (gitignored):
+Two equivalent scripts are bundled — `deploy.ps1` for Windows hosts,
+`deploy.sh` for Linux / macOS hosts. Both tar the source, scp it to the
+target, then run `docker compose build && up -d` over SSH.
+
+Create `.env.deploy` (gitignored) on the workstation you're deploying *from*:
 
 ```
 HOST=user@192.168.x.x
 REMOTE_DIR=/home/user/patzer
-SUDO_PASS=... # only if your user is not in the docker group
+SUDO_PASS=... # only if your user is not in the docker group on the target
 HOST_PORT=8800
 ```
 
 Then:
 
 ```powershell
-.\deploy.ps1            # tars source → ssh, builds & starts
+# Windows
+.\deploy.ps1            # tar source → ssh, build & start
 .\deploy.ps1 -NoBuild   # restart without rebuilding
 .\deploy.ps1 -Logs      # tail logs after deploy
 ```
 
-A `deploy.sh` for Linux/macOS hosts is on the [roadmap](ROADMAP.md).
+```bash
+# Linux / macOS
+./deploy.sh             # tar source → ssh, build & start
+./deploy.sh --no-build  # restart without rebuilding
+./deploy.sh --logs      # tail logs after deploy
+```
 
 ## Configuration
 
@@ -213,13 +229,19 @@ Estimated Elo is calibrated against published Lichess/Chess.com ACPL-vs-rating d
 - **Cookies dropped behind a reverse proxy** — see `COOKIE_SECURE=true` above. The cookie also requires the same hostname for both the page and the API.
 - **PvP refresh ate my clock** — fixed in 3.1.0 (clocks + last-move timestamp now persist on every move). Earlier versions reset the time control on rehydration.
 
+## More
+
+- **[FAQ](docs/FAQ.md)** — what Patzer is and isn't, Chess.com API legality, NAT/proxy notes, backup, "I lost my admin password", language additions.
+- **[Roadmap](ROADMAP.md)** — what's queued and what's deliberately out of scope.
+- **[Changelog](CHANGELOG.md)** — every release, with why-not-just-what entries.
+
 ## Contributing
 
 PRs welcome — please read [CONTRIBUTING.md](CONTRIBUTING.md) first. Translations especially encouraged.
 
 ## Security
 
-See [SECURITY.md](SECURITY.md). For vulnerabilities, **don't** open a public issue — email the address listed there.
+See [SECURITY.md](SECURITY.md). For vulnerabilities, **don't** open a public issue — use [GitHub's private vulnerability reporting](https://github.com/SikamikanikoBG/patzer/security/advisories/new).
 
 ## License
 

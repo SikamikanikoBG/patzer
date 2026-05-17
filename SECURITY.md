@@ -11,13 +11,15 @@
 
 Please **do not** file a public GitHub issue for security problems.
 
-Email **arsen.apostolov@gmail.com** with:
+**Preferred:** use [GitHub's private vulnerability reporting](https://github.com/SikamikanikoBG/patzer/security/advisories/new) — you'll get a private, encrypted thread with the maintainer; nothing is public until a fix is published.
+
+**Alternative:** email the address on the [maintainer's GitHub profile](https://github.com/SikamikanikoBG).
+
+Whichever path you pick, please include:
 
 - A description of the issue and what it lets an attacker do.
 - A minimal reproducer (proof-of-concept) if you have one.
 - Whether the issue is already public anywhere.
-
-You can encrypt to the maintainer's GitHub-published GPG key if you'd prefer.
 
 We aim to acknowledge reports within 7 days, ship a fix within 30 days for high-severity issues, and credit you in the release notes (unless you'd rather stay anonymous).
 
