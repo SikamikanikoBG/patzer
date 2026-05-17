@@ -4,7 +4,28 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.6.2] — 2026-05-17
+
+### Docs
+
+- Backfill the 7.6.1 changelog with three UI-polish bullets that shipped
+  in `bbea1e6` but were never written down (review-table glyph match,
+  larger on-board badges, visible laptop logout button).
+
 ## [7.6.1] — 2026-05-12
+
+### Changed — review tables, on-board badges, logout button
+
+- `GameReportCard.tsx`: the move-breakdown row was a 10px solid color dot
+  with no glyph (different code path from `ClassificationStats.tsx`, which
+  already had the right icon). Now uses the same `h-6 w-6` circle with the
+  classification's SVG glyph — what users see in the breakdown matches
+  what they see in the per-move list and the legend.
+- `ClassificationBadge.tsx`: on-board badges 2.4 / 3.0 % of board → 3.2 /
+  4.4 %. ~1.4× larger so the glyph reads at a glance on a laptop board.
+- `Layout.tsx`: laptop logout button was an icon-only ghost button in
+  near-bg color, easy to miss. Now a bordered pill with "Logout" label on
+  `lg+`, red on hover.
 
 ### Fixed — coach hallucinating + reasoning models returned empty
 

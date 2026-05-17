@@ -1,6 +1,6 @@
 {
   "name": "patzer",
-  "version": "7.6.1",
+  "version": "7.6.2",
   "private": true,
   "description": "Patzer — your private Chess.com. Self-hosted, AI-coached, family-friendly. Stockfish + your own LLM in one Docker container.",
   "license": "MIT",
