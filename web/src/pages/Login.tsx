@@ -1,30 +1,42 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
+import { useAuthConfig } from '../lib/useAuthConfig';
+import { humanizeError } from '../lib/errors';
 import { LogoMark } from '../components/Logo';
 
 export default function Login() {
   const { t, i18n } = useTranslation();
   const { refresh } = useAuth();
+  const { config } = useAuthConfig();
   const nav = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [unverified, setUnverified] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true); setError('');
+    setBusy(true); setError(''); setUnverified(false);
     try {
       await api.post('/api/auth/login', { username, password });
       await refresh();
       nav('/');
-    } catch {
-      setError(t('login.invalid'));
+    } catch (err) {
+      const code = (err as { data?: { error?: string } })?.data?.error;
+      if (code === 'email_unverified') {
+        setUnverified(true);
+        setError(t('auth.errEmailUnverified'));
+      } else if (code && code !== 'invalid_credentials') {
+        setError(humanizeError(err, t));
+      } else {
+        setError(t('login.invalid'));
+      }
     } finally {
       setBusy(false);
     }
@@ -59,12 +71,26 @@ export default function Login() {
           {error && (
             <div role="alert" aria-live="assertive" className="rounded-lg border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-bad">
               {error}
+              {unverified && (
+                <Link to="/verify-email" className="mt-1 block font-medium underline">{t('auth.resendVerification')}</Link>
+              )}
             </div>
           )}
           <button type="submit" disabled={busy || !username || !password} className="btn-primary w-full">
             <LogIn className="h-4 w-4" />
             {busy ? t('login.submitting') : t('login.submit')}
           </button>
+
+          {(config.signup_enabled || config.email_enabled) && (
+            <div className="flex items-center justify-between pt-1 text-sm">
+              {config.signup_enabled
+                ? <Link to="/signup" className="font-medium text-accent-600 hover:underline">{t('auth.createAccount')}</Link>
+                : <span />}
+              {config.email_enabled && (
+                <Link to="/forgot-password" className="text-ink-500 hover:underline">{t('auth.forgotPassword')}</Link>
+              )}
+            </div>
+          )}
         </form>
 
         <div className="mt-6 flex justify-center gap-3 text-xs text-ink-400">

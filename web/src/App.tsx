@@ -7,6 +7,10 @@ import { setSoundEnabled, unlockAudio } from './lib/sounds';
 import Layout from './components/Layout';
 import Setup from './pages/Setup';
 import Login from './pages/Login';
+import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import Home from './pages/Home';
 import SettingsPage from './pages/Settings';
 import Play from './pages/Play';
@@ -155,6 +159,11 @@ export default function App() {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        {/* Reached from emailed links — must work without an authenticated session. */}
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
@@ -163,6 +172,9 @@ export default function App() {
   return (
     <>
       <Routes>
+        {/* Email links still resolve even if the user happens to be logged in. */}
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route element={<Layout onOpenPalette={() => setPaletteOpen(true)} onOpenShortcuts={() => setShortcutsOpen(true)} />}>
           <Route path="/" element={<Home />} />
           <Route path="/play" element={<Play />} />

@@ -4,6 +4,46 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.7.0] — 2026-06-23
+
+### Self-service signup + email (SMTP) + a user-creation fix
+
+The admin "New user" form could bounce with a bare `invalid_input` and no
+explanation; visitors had no way to make their own account; and there was no
+email capability at all. This release fixes the first and adds the other two.
+
+- **Fixed: admin "New user" failing with `invalid_input`.** The modal let you
+  submit a 6–9 character password while the server requires **≥ 10** — the
+  mismatch surfaced only as an opaque code. The client now mirrors the server
+  rules (username ≥ 2, password ≥ 10, display name required), shows an inline
+  password hint, and renders the server's field-level validation details
+  instead of a raw error string (`web/src/pages/admin/Users.tsx`,
+  `web/src/lib/errors.ts`).
+- **Self-service signup.** A public `POST /api/auth/register` plus a `/signup`
+  page and a "Create account" link on the login screen. Gated by a new
+  **Allow self-registration** admin toggle (on by default). Self-signups are
+  always created as `user` (never `admin`), rate-limited like login, and
+  default to the friendly `beginner` profile.
+- **SMTP email.** A nodemailer-based mailer configurable from **Admin → System
+  → Email (SMTP)** or via `SMTP_*` environment variables (env wins). The stored
+  password is never returned to the browser. Includes a **Send test email**
+  button that verifies the connection first.
+- **Email verification.** Optional **Require email verification** toggle. When
+  on *and* SMTP is configured, new signups must confirm their address before
+  signing in; `/verify-email` confirms the token and doubles as a resend form.
+  Fails open when SMTP isn't configured so it can never lock anyone out.
+- **Password reset.** "Forgot password?" → emailed, single-use, 1-hour link →
+  `/reset-password`. Completing a reset clears every existing session for that
+  account (evicts an attacker) and marks the email verified. Account-enumeration
+  safe: the forgot/resend endpoints always return the same generic response.
+- **Admin notifications.** Admins with an email get a heads-up when someone
+  self-registers (toggle: **Notify admins of new sign-ups**).
+- **Data model.** Idempotent migrations add `users.email` (case-insensitively
+  unique when present) + `users.email_verified` (defaults to `1`, so existing
+  accounts are never stranded) and a hashed, single-use `auth_tokens` table.
+- **Docs.** `.env.example` documents `SMTP_*`, `PUBLIC_BASE_URL`, and the
+  signup/verification settings.
+
 ## [7.6.3] — 2026-05-17
 
 ### Docs — popularization-prep pass

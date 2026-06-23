@@ -217,6 +217,41 @@ db.exec(`CREATE TABLE IF NOT EXISTS achievements_unlocked (
   PRIMARY KEY (user_id, achievement_id)
 )`);
 
+// v7.7.0 — self-service signup + email (verification / password reset).
+// `email` is nullable: admin-created and pre-7.7.0 accounts may have none.
+// `email_verified` defaults to 1 so every existing account (and any account
+// without an email, which has nothing to verify) is treated as verified —
+// turning on "require email verification" must never lock out accounts that
+// predate the feature. Self-signups that supply an email are inserted with 0.
+ensureColumn('users', 'email', `TEXT`);
+ensureColumn('users', 'email_verified', `INTEGER NOT NULL DEFAULT 1`);
+// Case-insensitive uniqueness for emails that are present. Partial index so the
+// many NULLs (admin-created accounts) don't collide with each other.
+db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email
+         ON users(lower(email)) WHERE email IS NOT NULL`);
+
+// Single-use, hashed, expiring tokens for email verification and password
+// reset. We store only sha256(token) — a stolen DB never yields a live link.
+// kind ∈ ('verify','reset'). used_at latches single-use; expired/used rows are
+// swept on startup below.
+db.exec(`CREATE TABLE IF NOT EXISTS auth_tokens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL CHECK(kind IN ('verify','reset')),
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TEXT NOT NULL,
+  used_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_auth_tokens_user ON auth_tokens(user_id, kind)`);
+// Drop tokens that are spent or long expired so the table can't grow unbounded.
+db.prepare(`DELETE FROM auth_tokens WHERE used_at IS NOT NULL OR expires_at < datetime('now')`).run();
+
+// Open signup defaults ON — the operator explicitly wants family members to
+// self-register. Admins can flip it off from the Admin → System console. Seeded
+// only when absent so a deliberate later 'off' survives restarts.
+if (getSetting('allow_signup') === null) setSetting('allow_signup', '1');
+
 // Auto-expire any active goal whose week elapsed while the server was down.
 db.prepare(`UPDATE goals SET status='expired' WHERE status='active' AND completes_at < datetime('now')`).run();
 

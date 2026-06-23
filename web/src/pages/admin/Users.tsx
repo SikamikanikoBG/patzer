@@ -4,10 +4,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, Pencil, X } from 'lucide-react';
 import { api } from '../../api';
 import { useAuth } from '../../state/auth';
+import { humanizeError } from '../../lib/errors';
 
 interface UserRow {
   id: number; username: string; role: 'admin' | 'user'; created_at: string;
   display_name: string; avatar_emoji: string; language: 'en' | 'bg'; audience: string;
+  email: string | null; email_verified: number;
 }
 
 export default function AdminUsers() {
@@ -55,6 +57,12 @@ export default function AdminUsers() {
                     <div>
                       <div className="font-medium">{u.display_name}</div>
                       <div className="text-xs text-ink-500">@{u.username}</div>
+                      {u.email && (
+                        <div className="text-xs text-ink-400">
+                          {u.email}
+                          {!u.email_verified && <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t('admin.unverified')}</span>}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -86,7 +94,7 @@ export default function AdminUsers() {
 function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const { t } = useTranslation();
   const [form, setForm] = useState({
-    username: '', password: '', display_name: '',
+    username: '', password: '', display_name: '', email: '',
     role: 'user' as 'user' | 'admin',
     language: 'en' as 'en' | 'bg',
     audience: 'beginner' as 'kid' | 'beginner' | 'intermediate' | 'advanced',
@@ -96,12 +104,22 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
+  // Mirror the server schema (admin.ts createUserSchema) so the form can't
+  // submit a payload that will only bounce as `invalid_input`. The previous
+  // gate allowed 6-char passwords while the server demanded 10 — that exact
+  // mismatch was the "invalid_input but which idk" bug.
+  const usernameOk = form.username.trim().length >= 2;
+  const passwordOk = form.password.length >= 10;
+  const displayOk = form.display_name.trim().length >= 1;
+  const canSubmit = usernameOk && passwordOk && displayOk && !busy;
+
   async function submit() {
+    if (!canSubmit) return;
     setBusy(true); setErr('');
     try {
       await api.post('/api/admin/users', form);
       onCreated(); onClose();
-    } catch (e) { setErr((e as Error).message); }
+    } catch (e) { setErr(humanizeError(e, t)); }
     finally { setBusy(false); }
   }
 
@@ -114,8 +132,12 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
         </div>
         <div className="grid gap-3">
           <input className="input" placeholder={t('common.username')} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
-          <input className="input" type="password" placeholder={t('common.password')} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <div>
+            <input className="input" type="password" placeholder={t('common.password')} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            <p className={`mt-1 text-xs ${form.password.length > 0 && !passwordOk ? 'text-bad' : 'text-ink-400'}`}>{t('auth.passwordHint')}</p>
+          </div>
           <input className="input" placeholder={t('common.displayName')} value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
+          <input className="input" type="email" placeholder={`${t('common.email')} ${t('common.optional')}`} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <select className="input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as never })}>
               <option value="user">{t('admin.roleUser')}</option>
@@ -144,7 +166,7 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
           {err && <div className="text-sm text-bad">{err}</div>}
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={onClose} className="btn-ghost">{t('common.cancel')}</button>
-            <button onClick={submit} disabled={busy || !form.username || form.password.length < 6} className="btn-primary">
+            <button onClick={submit} disabled={!canSubmit} className="btn-primary">
               {t('admin.createUser')}
             </button>
           </div>
