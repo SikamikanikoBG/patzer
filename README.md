@@ -23,6 +23,12 @@
   <a href="https://github.com/SikamikanikoBG/patzer/stargazers"><img src="https://img.shields.io/github/stars/SikamikanikoBG/patzer?style=flat-square" alt="stars"/></a>
 </p>
 
+<p align="center">
+  <img src="docs/screenshots/players.png" width="880" alt="Patzer players directory — rating leaderboard, live presence and missed invitations"/>
+  <br/>
+  <sub><b>Players directory</b> — browse everyone on your server, sorted by rating, with live presence and missed invitations. <i>All accounts shown are demo data.</i></sub>
+</p>
+
 ## Why Patzer
 
 - **Your games stay home.** Single Docker container on a Pi / NAS / old laptop. No cloud, no telemetry, no upsell.
@@ -36,10 +42,47 @@ Patzer is a tiny, self-hosted take on the Chess.com / Lichess workflow you actua
 - **Game Review** — pull your public Chess.com games, analyze with bundled Stockfish, get Lichess-style classifications (Best / Excellent / Good / Inaccuracy / Mistake / Blunder / Brilliant / Miss), accuracy %, eval graph, mistake markers.
 - **Play vs Bot** — full games against Stockfish at seven named tiers (Kid → Stockfish max), all standard time controls, premoves enabled, kid-mode blunder warnings.
 - **Play vs Friend** — real-time PvP between profiles on the same server over WebSocket.
+- **Players & profiles** — a directory of everyone on your server with a rating leaderboard, live presence and public profiles (record, per-time-class ratings, your head-to-head), challenge-from-profile, and a "missed invitations" rail.
 - **AI Coach (your LLM)** — point at any [Ollama](https://ollama.com) host. Audience-tuned voices for Kid / Beginner / Intermediate / Advanced. Anti-hallucination by design — chess facts are computed server-side; the LLM only renders them.
 - **Family-ready** — multi-user with admin console, per-profile language, kid-mode blunder warnings, "horsey" piece names for the youngest profiles.
 - **Multilingual** — EN + BG out of the box, UI *and* coach prompts. PRs for more languages welcome.
 - **Self-hosted, single container** — runs on a Pi, a NAS, an old laptop. Your games never leave home.
+
+## Screenshots
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img width="100%" src="docs/screenshots/profile.png" alt="Player profile — record, ratings, head-to-head and challenge box"/>
+<br/><sub><b>Player profile</b> — lifetime record, per-time-class ratings, your head-to-head, and a one-click challenge.</sub>
+</td>
+<td width="50%" valign="top">
+<img width="100%" src="docs/screenshots/home.png" alt="Home dashboard"/>
+<br/><sub><b>Home</b> — your stats, today's puzzle, this week's plan, achievements and recent games.</sub>
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<img width="100%" src="docs/screenshots/review.png" alt="Game Review list"/>
+<br/><sub><b>Game Review</b> — every game, searchable, one tap to the Stockfish analyzer.</sub>
+</td>
+<td width="50%" valign="top">
+<img width="100%" src="docs/screenshots/play.png" alt="Play vs Bot or Friend"/>
+<br/><sub><b>Play</b> — seven Stockfish tiers, all time controls, or a live challenge to a friend.</sub>
+</td>
+</tr>
+</table>
+
+Dark mode is built in (auto / light / dark, per profile):
+
+<table>
+<tr>
+<td width="50%" valign="top"><img width="100%" src="docs/screenshots/players-dark.png" alt="Players directory in dark mode"/></td>
+<td width="50%" valign="top"><img width="100%" src="docs/screenshots/profile-dark.png" alt="Player profile in dark mode"/></td>
+</tr>
+</table>
+
+<sub>All screenshots use anonymized demo data — no real accounts or hostnames.</sub>
 
 ## First run in five minutes
 
