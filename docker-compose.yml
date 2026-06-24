@@ -1,7 +1,10 @@
 services:
   patzer:
-    build: .
-    image: patzer:latest
+    # Pulls the published image from Docker Hub by default (rebuilt on every
+    # push to main by .github/workflows/docker-publish.yml). To build from
+    # local source instead, uncomment `build: .` and run `docker compose build`.
+    image: sikamikaniko123/patzer:latest
+    # build: .
     container_name: patzer
     restart: unless-stopped
     ports:
@@ -11,6 +14,11 @@ services:
     environment:
       - NODE_ENV=production
       # PORT/HOST/DB_PATH/STOCKFISH_PATH have sensible defaults baked into the image.
+    labels:
+      # Opt this container in to the (label-enabled) Watchtower on the host, so
+      # a new `:latest` on Docker Hub is pulled and the container recreated
+      # automatically. The named volume below keeps the SQLite DB across that.
+      - "com.centurylinklabs.watchtower.enable=true"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://localhost:8800/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s

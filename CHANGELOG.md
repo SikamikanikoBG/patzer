@@ -4,6 +4,39 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.8.0] — 2026-06-24
+
+### Players — browse the people you play
+
+Patzer gains a social surface. Until now you could challenge other accounts
+from the Play tab, but you couldn't *see* anyone — no record, no ratings, no
+sense of who's who. This release adds a proper players directory and public
+profiles, so a family/club instance feels like the small social network it is.
+
+- **New "Players" page (`/players`).** A directory of everyone on the instance:
+  avatar, online dot, lifetime games, win-rate and best rating at a glance.
+  Search by name/username, sort by Rating / Win % / Games / Name, online
+  players always float to the top, and the top three on the rating board get a
+  crown. You appear in the list too, badged "You".
+- **Public player profiles (`/players/:id`).** Full record for any player —
+  W/L/D, win-rate, average accuracy, current streak, per-time-class ratings
+  (bullet/blitz/rapid/daily, provisional-aware), and their last ten games.
+- **Your head-to-head.** Each profile shows your personal score against that
+  player (wins / draws / losses), computed from your own game rows.
+- **Challenge from the profile.** Pick a colour and time control and send a
+  live invitation without leaving the page; a pending challenge shows a
+  "waiting…" state you can cancel.
+- **Missed invitations.** The Players page surfaces challenges that expired
+  before you answered them, with a one-tap "Challenge back".
+- **Wired into the chrome.** New nav pill (desktop + mobile), command-palette
+  entry, and a `g u` keyboard jump. Full EN/BG localization.
+- **New API:** `GET /api/players` (directory) and `GET /api/players/:id`
+  (profile), plus `GET /api/challenges/history` for invitation activity. All
+  read-only and auth-scoped; no schema changes — built on existing tables.
+- **Delivery:** images now also publish to **Docker Hub**
+  (`sikamikaniko123/patzer`) on every push to `main`, and the ardi deployment
+  tracks that image via Watchtower for hands-off redeploys.
+
 ## [7.7.0] — 2026-06-23
 
 ### Self-service signup + email (SMTP) + a user-creation fix

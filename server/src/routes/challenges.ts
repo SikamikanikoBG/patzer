@@ -122,6 +122,34 @@ router.get('/outgoing', (c) => {
   return c.json({ challenges: rows.map(shapeChallenge) });
 });
 
+// Recent challenge activity involving me, both directions, excluding the
+// still-pending ones (those live in /incoming and /outgoing). The Players page
+// uses this to surface "missed invitations" — incoming challenges that expired
+// before I answered — plus a general sent/received history.
+router.get('/history', (c) => {
+  const me = c.get('user');
+  expireStaleChallenges();
+  const limit = Math.min(Number(c.req.query('limit') ?? 50), 200);
+  const rows = db.prepare(`
+    SELECT c.*,
+      uf.username AS from_username, pf.display_name AS from_display_name, pf.avatar_emoji AS from_avatar,
+      ut.username AS to_username,   pt.display_name AS to_display_name,   pt.avatar_emoji AS to_avatar
+    FROM challenges c
+    JOIN users uf ON uf.id = c.from_user_id JOIN profiles pf ON pf.user_id = uf.id
+    JOIN users ut ON ut.id = c.to_user_id   JOIN profiles pt ON pt.user_id = ut.id
+    WHERE (c.from_user_id = ? OR c.to_user_id = ?) AND c.status != 'pending'
+    ORDER BY c.created_at DESC
+    LIMIT ?
+  `).all(me.id, me.id, limit) as ChallengeRow[];
+  // `missed` = an invitation sent TO me that I never answered in time.
+  const challenges = rows.map((r) => ({
+    ...shapeChallenge(r),
+    direction: r.to_user_id === me.id ? 'incoming' as const : 'outgoing' as const,
+    missed: r.to_user_id === me.id && r.status === 'expired',
+  }));
+  return c.json({ challenges });
+});
+
 router.post('/:id/accept', (c) => {
   const me = c.get('user');
   const id = Number(c.req.param('id'));

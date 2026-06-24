@@ -103,6 +103,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             <NavPill to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
             <NavPill to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />
             <NavPill to="/plan" icon={ListChecks} label={t('plan.nav', { defaultValue: 'Plan' })} />
+            <NavPill to="/players" icon={Users} label={t('players.nav', { defaultValue: 'Players' })} />
             <NavPill to="/lab" icon={Microscope} label={t('lab.nav', { defaultValue: 'Lab' })} />
             {user?.role === 'admin' && (
               <>
@@ -215,6 +216,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
               <MobileNavItem to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
               <MobileNavItem to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />
               <MobileNavItem to="/plan" icon={ListChecks} label={t('plan.nav', { defaultValue: 'Plan' })} />
+              <MobileNavItem to="/players" icon={Users} label={t('players.nav', { defaultValue: 'Players' })} />
               <MobileNavItem to="/lab" icon={Microscope} label={t('lab.nav', { defaultValue: 'Lab' })} />
               <MobileNavItem to="/settings" icon={SettingsIcon} label={t('common.settings')} />
               {user?.role === 'admin' && (

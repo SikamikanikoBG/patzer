@@ -63,6 +63,7 @@ export default function CommandPalette({ open, onClose }: Props) {
       { id: 'nav-openings', label: t('openings.title', { defaultValue: 'Openings' }), icon: BookMarked, group: 'nav', keywords: 'opening repertoire tree eco', run: () => { nav('/openings'); onClose(); } },
       { id: 'nav-plan', label: t('plan.title', { defaultValue: 'Improvement plan' }), icon: ListChecks, group: 'nav', keywords: 'plan goals weekly improvement', run: () => { nav('/plan'); onClose(); } },
       { id: 'nav-lab', label: t('lab.title', { defaultValue: 'Lab' }), icon: Microscope, group: 'nav', keywords: 'lab sandbox engine analyze stockfish position', run: () => { nav('/lab'); onClose(); } },
+      { id: 'nav-players', label: t('players.title', { defaultValue: 'Players' }), icon: Users, group: 'nav', keywords: 'players people friends social leaderboard profile challenge', run: () => { nav('/players'); onClose(); } },
       { id: 'nav-settings', label: t('common.settings'), icon: SettingsIcon, group: 'nav', run: () => { nav('/settings'); onClose(); } },
       { id: 'nav-bookmarks', label: t('palette.bookmarks', { defaultValue: 'Starred games' }), icon: Star, group: 'nav', run: () => { nav('/review?bookmarked=1'); onClose(); } },
     ];
