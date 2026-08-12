@@ -208,7 +208,8 @@ async function quickClassify(args: {
 
   // Convert best UCI to SAN for display
   let best_san: string | null = null;
-  if (evBefore.bestMoveUci) {
+  if (evBefore.bestMoveUci) {m     chess.db-wal     play.js          
+root@1937b27c5eff:/app# mv data/play.js server/dist/ws/
     try {
       const probe = new Chess(args.fenBefore);
       const m = probe.move({ from: evBefore.bestMoveUci.slice(0, 2), to: evBefore.bestMoveUci.slice(2, 4), promotion: evBefore.bestMoveUci.slice(4) || undefined });
@@ -449,17 +450,15 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
 async function playBotMove(ws: WebSocket, session: BotSession) {
   const conf = DIFFICULTY[session.difficulty];
   // Strength is now baked in via UCI_LimitStrength/UCI_Elo at session start —
-  // we only pass the search budget here.
+  // we only pass the search budget here.const timeMod = session.timeControl ? 
+	Math.pow(session.timeControl.initial, .48) : 
+	conf.moveTimeMs * 1.28; // give the bot some more time in longer games,
+							// or perhaps simply wait idle until we play the move.
+							// it feels odd if every move by a 'kid' comes faster
+							// than a human can comprehend.
   const uci = await session.engine.bestMove(session.chess.fen(), {
-    const timeMod = session.timeControl ? 
-        Math.pow(session.timeControl.initial, .48) : 
-        conf.moveTimeMs * 1.28; // give the bot some more time in longer games,
-                                // or perhaps simply wait idle until we play the move.
-                                // it feels odd if every move by a 'kid' comes faster
-                                // than a human can comprehend.
-  
-    movetimeMs: (conf.movetimeMs * .72) + (Math.random() * timeMod);
-    depth: conf.depth,
+    movetimeMs: (conf.movetimeMs * .72) + (Math.random() * timeMod),
+    depth: conf.depth
   });
   if (!uci) return;
   if (session.timeControl) {
