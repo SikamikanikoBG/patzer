@@ -19,6 +19,7 @@ import { notifyUser } from './lobby.js';
 // through `UCI_LimitStrength` + `UCI_Elo`, which Stockfish supports natively
 // (range ~1320..3190) and which targets a real rating rather than a search
 // shape. The top two tiers turn the limiter off so they play full strength.
+
 interface DifficultyConfig {
   /** When set, enables UCI_LimitStrength + UCI_Elo at this rating. */
   uciElo: number | null;
@@ -300,13 +301,19 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
           saved: false,
         };
 
+	// !Hotfix! 
+        // we let the bot take their first move before we send out game_started,
+        // this way, the client doesn't get confused and we're able to play as black.
+        // ~qrakhen, 2026-08-13
+        if (userColor === 'black') 
+          await playBotMove(ws, session);
+
         send(ws, 'game_started', {
           fen: session.chess.fen(), turn: session.chess.turn(),
           difficulty, userColor, time_control: tcKey,
           whiteTimeMs: session.whiteTimeMs, blackTimeMs: session.blackTimeMs,
         });
 
-        if (userColor === 'black') await playBotMove(ws, session);
       } else if (type === 'move' && session) {
         const uci = msg.uci as string;
         if (!uci || uci.length < 4) return;
@@ -391,7 +398,9 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
           }
         });
 
-        if (await checkBotGameOver(ws, session)) return;
+        if (await checkBotGameOver(ws, session)) 
+          return;
+        
         await playBotMove(ws, session);
       } else if (type === 'preview_move' && session) {
         // Used by kid mode — pre-evaluate before committing
