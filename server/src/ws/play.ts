@@ -19,7 +19,6 @@ import { notifyUser } from './lobby.js';
 // through `UCI_LimitStrength` + `UCI_Elo`, which Stockfish supports natively
 // (range ~1320..3190) and which targets a real rating rather than a search
 // shape. The top two tiers turn the limiter off so they play full strength.
-
 interface DifficultyConfig {
   /** When set, enables UCI_LimitStrength + UCI_Elo at this rating. */
   uciElo: number | null;
@@ -301,7 +300,7 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
           saved: false,
         };
 
-	// !Hotfix! 
+	    // !Hotfix! 
         // we let the bot take their first move before we send out game_started,
         // this way, the client doesn't get confused and we're able to play as black.
         // ~qrakhen, 2026-08-13
