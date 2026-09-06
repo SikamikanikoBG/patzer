@@ -5,7 +5,7 @@ import { db, userCount, setSetting } from '../db.js';
 import { config } from '../config.js';
 import { hashPassword } from '../auth/passwords.js';
 import { createSession, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from '../auth/sessions.js';
-import { testOllama } from '../coach/ollama.js';
+import { testConnection } from '../coach/llm.js';
 
 const router = new Hono();
 
@@ -54,7 +54,7 @@ router.post('/test-ollama', async (c) => {
   const url = body?.url;
   if (!url) return c.json({ ok: false, error: 'no_url' });
   if (!isPrivateOllamaUrl(url)) return c.json({ ok: false, error: 'invalid_url' });
-  const result = await testOllama(url);
+  const result = await testConnection(url, 'ollama');
   if (result.ok) return c.json({ ok: true, models: result.models });
   return c.json({ ok: false, error: 'unreachable' });
 });

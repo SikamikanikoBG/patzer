@@ -26,7 +26,7 @@
 // Output is cached in `analyses.prose_json`, keyed by (scoring_version,
 // prose_version, language, audience). Re-runs only when one of those changes.
 
-import { chatJsonRetry } from './ollama.js';
+import { chatJsonRetry } from './llm.js';
 import { systemPrompt, sanToNatural, pvToNaturalSan, verdictPhrase, boardPiecesNatural } from './prompts.js';
 import type { AnalysisResult, AnalyzedMove, Audience, Classification, GamePhase, KeyMomentSummary, Language } from '../types.js';
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db, getSetting, setSetting } from '../db.js';
 import { requireAdmin } from '../auth/middleware.js';
 import { hashPassword } from '../auth/passwords.js';
-import { testOllama, testModel, ollamaUrl, ollamaModel, ollamaStats } from '../coach/ollama.js';
+import { testConnection, testModel, llmUrl, llmStats, type LlmProvider } from '../coach/llm.js';
 import { StockfishEngine } from '../chess/stockfish.js';
 import { isMailerConfigured, sendMail, verifyConnection, welcomeTemplate } from '../email/mailer.js';
 import type { Profile, Role } from '../types.js';
@@ -143,10 +143,13 @@ router.delete('/users/:id', (c) => {
 // ---- System settings ----
 
 router.get('/system', async (c) => {
-  const stats = ollamaStats();
+  const stats = llmStats();
   return c.json({
+    llm_provider: getSetting('llm_provider') === 'vllm' ? 'vllm' : 'ollama',
     ollama_url: getSetting('ollama_url'),
     ollama_model: getSetting('ollama_model'),
+    vllm_url: getSetting('vllm_url'),
+    vllm_model: getSetting('vllm_model'),
     stockfish_path: getSetting('stockfish_path'),
     // Live runtime stats so admins can confirm which model the coach is
     // actually calling (the saved setting vs. what runtime resolved to may
@@ -176,8 +179,11 @@ router.get('/system', async (c) => {
 });
 
 const systemSchema = z.object({
+  llm_provider: z.enum(['ollama', 'vllm']).optional(),
   ollama_url: z.string().url().or(z.literal('')).optional(),
   ollama_model: z.string().optional(),
+  vllm_url: z.string().url().or(z.literal('')).optional(),
+  vllm_model: z.string().optional(),
   stockfish_path: z.string().optional(),
   // Signup + email config
   allow_signup: z.boolean().optional(),
@@ -205,8 +211,11 @@ router.patch('/system', async (c) => {
   const setStr = (k: string, v: string | undefined) => { if (v !== undefined) setSetting(k, v); };
   const setBool = (k: string, v: boolean | undefined) => { if (v !== undefined) setSetting(k, v ? '1' : '0'); };
 
+  setStr('llm_provider', d.llm_provider);
   setStr('ollama_url', d.ollama_url);
   setStr('ollama_model', d.ollama_model);
+  setStr('vllm_url', d.vllm_url);
+  setStr('vllm_model', d.vllm_model);
   setStr('stockfish_path', d.stockfish_path);
 
   setBool('allow_signup', d.allow_signup);
@@ -247,27 +256,33 @@ router.post('/test/email', async (c) => {
 
 // ---- Health checks ----
 
+function bodyProvider(body: unknown): LlmProvider {
+  const p = body && typeof body === 'object' && 'provider' in body ? (body as { provider?: unknown }).provider : undefined;
+  return p === 'vllm' ? 'vllm' : p === 'ollama' ? 'ollama' : (getSetting('llm_provider') === 'vllm' ? 'vllm' : 'ollama');
+}
+
 router.post('/test/ollama', async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const url = (body && typeof body === 'object' && 'url' in body && typeof body.url === 'string')
     ? body.url
-    : ollamaUrl();
+    : llmUrl();
   if (!url) return c.json({ ok: false, error: 'no_url_configured' });
-  return c.json(await testOllama(url));
+  return c.json(await testConnection(url, bodyProvider(body)));
 });
 
 router.post('/test/ollama-models', async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const url = (body && typeof body === 'object' && 'url' in body && typeof body.url === 'string')
     ? body.url
-    : ollamaUrl();
+    : llmUrl();
   if (!url) return c.json({ ok: false, error: 'no_url_configured' }, 400);
-  const tags = await testOllama(url);
+  const provider = bodyProvider(body);
+  const tags = await testConnection(url, provider);
   if (!tags.ok) return c.json({ ok: false, error: tags.error });
   // Test each model serially with a 30s budget per model.
   const results: Array<{ model: string; ok: boolean; latencyMs: number; sample?: string; error?: string }> = [];
   for (const m of tags.models) {
-    const r = await testModel(url, m.name, 30_000);
+    const r = await testModel(url, m.name, 30_000, provider);
     results.push({ model: m.name, ...r });
   }
   return c.json({ ok: true, results });
