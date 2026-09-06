@@ -40,6 +40,16 @@ export default function ChessBoard({
   onMoveRef.current = onMove;
   turnColorRef.current = turnColor;
 
+  function handleAfter(orig: Key, dest: Key) {
+    if (needsPromotion(fenRef.current, orig, dest)) {
+      // Show our picker instead of auto-promoting
+      setPromotion({ from: orig, to: dest, color: turnColorRef.current ?? 'white' });
+      // Don't call onMove yet — wait for piece pick
+      return;
+    }
+    onMoveRef.current?.(orig + dest);
+  }
+
   // Mount chessground once
   useEffect(() => {
     if (!ref.current) return;
@@ -50,25 +60,19 @@ export default function ChessBoard({
       coordinates: true,
       animation: { enabled: true, duration: 200 },
       highlight: { lastMove: true, check: true },
-      movable: movable
-        ? {
-            color: turnColor,
-            free: false,
-            dests: legalDests(fen),
-            showDests: true,
-            events: {
-              after: (orig, dest) => {
-                if (needsPromotion(fenRef.current, orig, dest)) {
-                  // Show our picker instead of auto-promoting
-                  setPromotion({ from: orig, to: dest, color: turnColorRef.current ?? 'white' });
-                  // Don't call onMove yet — wait for piece pick
-                  return;
-                }
-                onMoveRef.current?.(orig + dest);
-              },
-            },
-          }
-        : { free: false },
+      movable: {
+        ...(movable
+          ? { color: turnColor, free: false, dests: legalDests(fen), showDests: true }
+          : { free: false }),
+        // Must be installed regardless of `movable` at mount time — chessground
+        // deep-merges `set()` calls, so if the board first mounts while it
+        // isn't the player's turn (e.g. playing Black), `events` would
+        // otherwise stay `{}` for the life of the board and every drop would
+        // be silently swallowed (#3). Harmless when it isn't your turn:
+        // chessground only fires `after` for moves it already permitted via
+        // `movable.dests`/`movable.color`.
+        events: { after: handleAfter },
+      },
       // Premoves: chessground queues a move while it's the opponent's turn and
       // auto-plays it (firing `movable.events.after`) when the opponent's move
       // arrives via the next `set()`. Free win for blitz/bullet — the CSS
@@ -92,9 +96,12 @@ export default function ChessBoard({
       orientation,
       turnColor,
       lastMove,
-      movable: movable
-        ? { color: turnColor, free: false, dests: legalDests(fen), showDests: true }
-        : { free: false },
+      movable: {
+        ...(movable
+          ? { color: turnColor, free: false, dests: legalDests(fen), showDests: true }
+          : { free: false }),
+        events: { after: handleAfter },
+      },
     });
     if (arrows && arrows.length) {
       apiRef.current.setShapes(arrows.map((a) => ({ orig: a.orig, dest: a.dest, brush: a.brush ?? 'green' })));
