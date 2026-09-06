@@ -187,17 +187,26 @@ router.post('/:id/accept', (c) => {
   const blackName = challengerColor === 'white' ? row.to_display_name! : row.from_display_name!;
 
   const rated = tcClass ? 1 : 0; // untimed games are unrated
-  const r1 = insertGame.run(whitePlayerId, externalId, startingPgn, whiteName, blackName, tcString, 'white', blackPlayerId, rated, tcClass);
-  insertGame.run(blackPlayerId, externalId, startingPgn, whiteName, blackName, tcString, 'black', whitePlayerId, rated, tcClass);
-  const gameId = Number(r1.lastInsertRowid);
+  const rWhite = insertGame.run(whitePlayerId, externalId, startingPgn, whiteName, blackName, tcString, 'white', blackPlayerId, rated, tcClass);
+  const rBlack = insertGame.run(blackPlayerId, externalId, startingPgn, whiteName, blackName, tcString, 'black', whitePlayerId, rated, tcClass);
+  // Each player has their own `games` row (own id, own `user_id`) — the WS
+  // handler looks a game up by `WHERE id = ? AND user_id = ?`, so each side
+  // must be handed *their own* row id, not a shared one. Previously both
+  // sides received the White row's id, so whichever player was Black got
+  // routed to a game_id that belonged to the other player and could never
+  // connect (#2 — stuck on "Connecting to game…").
+  const whiteGameId = Number(rWhite.lastInsertRowid);
+  const blackGameId = Number(rBlack.lastInsertRowid);
+  const challengerGameId = challengerColor === 'white' ? whiteGameId : blackGameId;
+  const acceptorGameId = finalColor === 'white' ? whiteGameId : blackGameId;
 
-  db.prepare(`UPDATE challenges SET status = 'accepted', game_id = ? WHERE id = ?`).run(gameId, id);
+  db.prepare(`UPDATE challenges SET status = 'accepted', game_id = ? WHERE id = ?`).run(acceptorGameId, id);
 
-  // Notify challenger so they navigate into the game
+  // Notify challenger so they navigate into the game, using their own row id
   notifyUser(row.from_user_id, {
     type: 'challenge_accepted',
     challenge_id: id,
-    game_id: gameId,
+    game_id: challengerGameId,
     external_id: externalId,
     your_color: challengerColor,
     time_control: row.time_control,
@@ -205,7 +214,7 @@ router.post('/:id/accept', (c) => {
 
   return c.json({
     challenge_id: id,
-    game_id: gameId,
+    game_id: acceptorGameId,
     external_id: externalId,
     your_color: finalColor,
     time_control: row.time_control,
