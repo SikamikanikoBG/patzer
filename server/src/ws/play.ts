@@ -29,13 +29,16 @@ interface DifficultyConfig {
 }
 
 const DIFFICULTY: Record<Difficulty, DifficultyConfig> = {
-  kid:        { uciElo: 1320, depth: 1,  movetimeMs: 100 },  // Stockfish floor + depth 1 = many hung pieces, deliberately
-  beginner:   { uciElo: 1500, depth: 6,  movetimeMs: 250 },
-  easy:       { uciElo: 1700, depth: 8,  movetimeMs: 350 },
-  medium:     { uciElo: 1900, depth: 12, movetimeMs: 500 },
-  hard:       { uciElo: 2200, depth: 16, movetimeMs: 900 },
-  master:     { uciElo: 2500, depth: 18, movetimeMs: 1500 },
-  stockfish:  { uciElo: null, depth: 22, movetimeMs: 3000 },
+  kid:        { uciElo:  196, depth: 2,  movetimeMs: 192 },  // Stockfish floor + depth 1 = many hung pieces, deliberately
+  beginner:   { uciElo:  428, depth: 3,  movetimeMs: 294 },  
+  easy:       { uciElo:  724, depth: 5,  movetimeMs: 348 },
+  medium:     { uciElo: 1240, depth: 8,  movetimeMs: 412 },
+  hard:       { uciElo: 1720, depth: 12, movetimeMs: 648 },
+  master:     { uciElo: 2480, depth: 16, movetimeMs: 924 },
+  stockfish:  { uciElo: null, depth: 22, movetimeMs: 1280 }, // adapt elos to be more realistic,
+                                                             // depth 1 also leads to super weird moves.
+                                                             // moveTimeMs will depend on session.timeControls as well,
+                                                             // as seen further down. ~qrakhen 2026-08-12
 };
 
 async function applyDifficulty(engine: StockfishEngine, conf: DifficultyConfig): Promise<void> {
@@ -447,9 +450,15 @@ async function playBotMove(ws: WebSocket, session: BotSession) {
   const conf = DIFFICULTY[session.difficulty];
   // Strength is now baked in via UCI_LimitStrength/UCI_Elo at session start —
   // we only pass the search budget here.
+  const timeMod = session.timeControl ? 
+	Math.pow(session.timeControl.initial, .48) : 
+	conf.movetimeMs * 1.28; // give the bot some more time in longer games,
+				// or perhaps simply wait idle until we play the move.
+				// it feels odd if every move by a 'kid' comes faster
+				// than a human can comprehend.
   const uci = await session.engine.bestMove(session.chess.fen(), {
-    movetimeMs: conf.movetimeMs,
-    depth: conf.depth,
+    movetimeMs: (conf.movetimeMs * .72) + (Math.random() * timeMod),
+    depth: conf.depth
   });
   if (!uci) return;
   if (session.timeControl) {
