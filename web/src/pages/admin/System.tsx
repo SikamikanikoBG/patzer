@@ -4,8 +4,11 @@ import { CheckCircle2, AlertCircle, Save, Sparkles, Cpu, Loader2, FlaskConical, 
 import { api } from '../../api';
 
 interface SysSettings {
+  llm_provider?: 'ollama' | 'vllm';
   ollama_url: string | null;
   ollama_model: string | null;
+  vllm_url?: string | null;
+  vllm_model?: string | null;
   stockfish_path: string | null;
   last_model_used?: string | null;
   last_error?: string | null;
@@ -40,7 +43,7 @@ interface MailState {
 
 export default function AdminSystem() {
   const { t } = useTranslation();
-  const [s, setS] = useState<SysSettings>({ ollama_url: '', ollama_model: '', stockfish_path: '' });
+  const [s, setS] = useState<SysSettings>({ llm_provider: 'ollama', ollama_url: '', ollama_model: '', vllm_url: '', vllm_model: '', stockfish_path: '' });
   const [runtime, setRuntime] = useState<{ last_model_used: string | null; last_error: string | null; p95_ms: number | null; call_count: number } | null>(null);
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
@@ -68,7 +71,12 @@ export default function AdminSystem() {
 
   function loadSettings() {
     return api.get<SysSettings>('/api/admin/system').then((d) => {
-      setS({ ollama_url: d.ollama_url ?? '', ollama_model: d.ollama_model ?? '', stockfish_path: d.stockfish_path ?? '' });
+      setS({
+        llm_provider: d.llm_provider === 'vllm' ? 'vllm' : 'ollama',
+        ollama_url: d.ollama_url ?? '', ollama_model: d.ollama_model ?? '',
+        vllm_url: d.vllm_url ?? '', vllm_model: d.vllm_model ?? '',
+        stockfish_path: d.stockfish_path ?? '',
+      });
       setRuntime({
         last_model_used: d.last_model_used ?? null,
         last_error: d.last_error ?? null,
@@ -126,26 +134,38 @@ export default function AdminSystem() {
     } finally { setTesting(false); }
   }
 
+  const provider = s.llm_provider ?? 'ollama';
+  const activeUrl = provider === 'vllm' ? (s.vllm_url ?? '') : (s.ollama_url ?? '');
+  const activeModel = provider === 'vllm' ? (s.vllm_model ?? '') : (s.ollama_model ?? '');
+  function setActiveUrl(v: string) {
+    setS((cur) => provider === 'vllm' ? { ...cur, vllm_url: v } : { ...cur, ollama_url: v });
+  }
+  function setActiveModel(v: string) {
+    setS((cur) => provider === 'vllm' ? { ...cur, vllm_model: v } : { ...cur, ollama_model: v });
+  }
+
   useEffect(() => { void loadSettings(); }, []);
 
-  // Auto-load models on first load (and whenever the user pastes a different URL).
+  // Auto-load models on first load, provider switch, and whenever the user
+  // pastes a different URL for the currently-selected provider.
   useEffect(() => {
     if (!hydrated) return;
-    if (s.ollama_url) void fetchModels(s.ollama_url, /* silent */ true);
+    setModels([]); setOllamaStatus(null); setAllResults(null);
+    if (activeUrl) void fetchModels(activeUrl, /* silent */ true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, s.ollama_url]);
+  }, [hydrated, provider, activeUrl]);
 
   async function fetchModels(url: string, silent = false) {
     if (!url) return;
     setLoadingModels(true);
     if (!silent) setOllamaStatus(null);
     try {
-      const r = await api.post<{ ok: boolean; models?: { name: string }[]; error?: string }>('/api/admin/test/ollama', { url });
+      const r = await api.post<{ ok: boolean; models?: { name: string }[]; error?: string }>('/api/admin/test/ollama', { url, provider });
       if (r.ok) {
         const ns = (r.models ?? []).map((m) => m.name).sort();
         setModels(ns);
         setOllamaStatus({ ok: true, msg: `${ns.length} model${ns.length === 1 ? '' : 's'} found` });
-        if (!s.ollama_model && ns[0]) setS((cur) => ({ ...cur, ollama_model: ns[0]! }));
+        if (!activeModel && ns[0]) setActiveModel(ns[0]!);
       } else {
         setModels([]);
         setOllamaStatus({ ok: false, msg: r.error ?? 'connection failed' });
@@ -170,11 +190,11 @@ export default function AdminSystem() {
   }
 
   async function testAllModels() {
-    if (!s.ollama_url) return;
+    if (!activeUrl) return;
     setAllTesting(true); setAllResults(null);
     try {
       const r = await api.post<{ ok: boolean; results?: Array<{ model: string; ok: boolean; latencyMs: number; sample?: string; error?: string }>; error?: string }>(
-        '/api/admin/test/ollama-models', { url: s.ollama_url }
+        '/api/admin/test/ollama-models', { url: activeUrl, provider }
       );
       if (r.ok && r.results) setAllResults(r.results);
       else setAllResults([{ model: 'all', ok: false, latencyMs: 0, error: r.error ?? 'failed' }]);
@@ -195,15 +215,28 @@ export default function AdminSystem() {
           </div>
           <div>
             <h2 className="font-semibold">{t('admin.ollamaConfig')}</h2>
-            <p className="text-xs text-ink-500">Local LLM for the AI Coach. Models are auto-discovered from /api/tags.</p>
+            <p className="text-xs text-ink-500">Local LLM for the AI Coach — Ollama or an OpenAI-compatible vLLM server. Each is configured independently, so switching providers doesn't lose the other's settings.</p>
           </div>
         </div>
         <div className="space-y-4 p-5">
+          <div className="inline-flex rounded-xl border border-ink-200 p-1 dark:border-ink-700">
+            {(['ollama', 'vllm'] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => setS({ ...s, llm_provider: p })}
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  provider === p ? 'bg-accent-500 text-white' : 'text-ink-500 hover:text-ink-700 dark:hover:text-ink-200'
+                }`}
+              >
+                {p === 'ollama' ? 'Ollama' : 'vLLM'}
+              </button>
+            ))}
+          </div>
           <div>
-            <label className="label mb-1 block">{t('admin.ollamaUrl')}</label>
+            <label className="label mb-1 block">{provider === 'vllm' ? 'vLLM URL' : t('admin.ollamaUrl')}</label>
             <div className="flex gap-2">
-              <input className="input" value={s.ollama_url ?? ''} onChange={(e) => setS({ ...s, ollama_url: e.target.value })} placeholder="http://localhost:11434" />
-              <button onClick={() => fetchModels(s.ollama_url ?? '')} className="btn-secondary text-sm" disabled={!s.ollama_url || loadingModels}>
+              <input className="input" value={activeUrl} onChange={(e) => setActiveUrl(e.target.value)} placeholder={provider === 'vllm' ? 'http://localhost:8000' : 'http://localhost:11434'} />
+              <button onClick={() => fetchModels(activeUrl)} className="btn-secondary text-sm" disabled={!activeUrl || loadingModels}>
                 {loadingModels ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Test'}
               </button>
             </div>
@@ -215,8 +248,8 @@ export default function AdminSystem() {
             )}
           </div>
           <div>
-            <label className="label mb-1 block">{t('admin.ollamaModel')}</label>
-            <button onClick={testAllModels} disabled={!s.ollama_url || allTesting} className="btn-secondary text-xs">
+            <label className="label mb-1 block">{provider === 'vllm' ? 'vLLM model' : t('admin.ollamaModel')}</label>
+            <button onClick={testAllModels} disabled={!activeUrl || allTesting} className="btn-secondary text-xs">
             {allTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FlaskConical className="h-3.5 w-3.5" />}
             Test ALL models
           </button>
@@ -249,15 +282,15 @@ export default function AdminSystem() {
           )}
           {loadingModels ? (
               <div className="flex h-10 items-center gap-2 rounded-xl bg-ink-100 px-3 text-sm text-ink-500 dark:bg-ink-800">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading models from Ollama…
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading models from {provider === 'vllm' ? 'vLLM' : 'Ollama'}…
               </div>
             ) : models.length > 0 ? (
-              <select className="input" value={s.ollama_model ?? ''} onChange={(e) => setS({ ...s, ollama_model: e.target.value })}>
+              <select className="input" value={activeModel} onChange={(e) => setActiveModel(e.target.value)}>
                 {models.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             ) : (
               <div className="space-y-1">
-                <input className="input" value={s.ollama_model ?? ''} onChange={(e) => setS({ ...s, ollama_model: e.target.value })} placeholder="gemma3:27b" />
+                <input className="input" value={activeModel} onChange={(e) => setActiveModel(e.target.value)} placeholder={provider === 'vllm' ? 'Qwen3.8-27B' : 'gemma3:27b'} />
                 <p className="text-xs text-ink-400">No models loaded — set the URL above and click Test, or type a model name manually.</p>
               </div>
             )}

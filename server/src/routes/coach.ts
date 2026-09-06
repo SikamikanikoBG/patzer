@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { streamSSE } from 'hono/streaming';
 import { requireAuth } from '../auth/middleware.js';
-import { chatStream, ollamaUrl } from '../coach/ollama.js';
+import { chatStream, llmUrl } from '../coach/llm.js';
 import { systemPrompt, explainMovePrompt, hintPrompt } from '../coach/prompts.js';
 import type { Audience, Classification, Language } from '../types.js';
 
@@ -10,7 +10,7 @@ const router = new Hono();
 router.use('*', requireAuth);
 
 router.get('/status', (c) => {
-  return c.json({ configured: ollamaUrl() !== null });
+  return c.json({ configured: llmUrl() !== null });
 });
 
 const explainSchema = z.object({

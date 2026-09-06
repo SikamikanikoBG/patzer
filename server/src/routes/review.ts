@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
-import { ollamaUrl } from '../coach/ollama.js';
+import { llmUrl } from '../coach/llm.js';
 import { buildGameReview, reviewCacheKey, type GameReview, REVIEW_PROSE_VERSION } from '../coach/review.js';
 import type { AnalysisResult, AnalyzedMove, KeyMomentSummary, PhaseSplit } from '../types.js';
 
@@ -80,7 +80,7 @@ router.post('/:id/review', async (c) => {
     prose_json, prose_version, prose_lang, prose_audience
     FROM analyses WHERE game_id = ?`).get(id) as AnalysisRow | undefined;
   if (!row) return c.json({ error: 'analysis_required' }, 409);
-  if (!ollamaUrl()) return c.json({ error: 'ollama_not_configured' }, 503);
+  if (!llmUrl()) return c.json({ error: 'llm_not_configured' }, 503);
 
   const analysis = rowToAnalysis(row);
   const userColor = game.user_color ?? 'white';

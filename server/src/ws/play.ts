@@ -8,7 +8,7 @@ import { analyzePgn, analyzePgnFull } from '../routes/analyze.js';
 import { classifyByWpDrop, refineClassification, normalizeEval, cpToWinPct, SCORING_VERSION } from '../chess/classifier.js';
 import { classifyTimeControl, type TimeClass } from '../chess/timeClass.js';
 import { GLICKO_DEFAULTS, inflateRd, updatePair } from '../chess/glicko.js';
-import { chatStream, ollamaUrl } from '../coach/ollama.js';
+import { chatStream, llmUrl } from '../coach/llm.js';
 import { systemPrompt, explainMovePrompt } from '../coach/prompts.js';
 import type { AuthedUser, Difficulty, Classification } from '../types.js';
 import { notifyUser } from './lobby.js';
@@ -359,11 +359,11 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
             });
             // Auto-pedagogical coach: when the user's coach_behavior is
             // `always_on_pedagogical` AND the move was a blunder/mistake,
-            // fire a 2-sentence "what went wrong" stream. Gated by Ollama
-            // configured + user setting; never fires for routine moves.
+            // fire a 2-sentence "what went wrong" stream. Gated by the coach
+            // LLM being configured + user setting; never fires for routine moves.
             if (
               user.profile.coach_behavior === 'always_on_pedagogical' &&
-              ollamaUrl() !== null &&
+              llmUrl() !== null &&
               (result.classification === 'blunder' || result.classification === 'mistake')
             ) {
               try {
