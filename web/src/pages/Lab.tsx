@@ -37,8 +37,6 @@ export default function Lab() {
   const { t } = useTranslation();
   const { user } = useAuth();
 
-  console.log(decodeURI(window.location.hash));
-
   // Get the FEN from the hash location inside the current URI.
   // Hashes are client-only, therefore we're not scrambling anything up on the server side.
   const initialFen = decodeURI(window.location.hash.slice(1)) ?? '';
@@ -47,7 +45,6 @@ export default function Lab() {
   // as this often used to just manipulate a position, anarchy-chess style.
   const chess = initialFen ? new Chess(initialFen, {skipValidation: true}) : new Chess();
 
-  console.log(chess);
   // Authoritative game state lives in a ref to avoid stale closures.
   const chessRef = useRef<Chess>(chess);
 
