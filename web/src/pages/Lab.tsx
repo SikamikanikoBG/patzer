@@ -37,21 +37,33 @@ export default function Lab() {
   const { t } = useTranslation();
   const { user } = useAuth();
 
+  console.log(decodeURI(window.location.hash));
+
+  // Get the FEN from the hash location inside the current URI.
+  // Hashes are client-only, therefore we're not scrambling anything up on the server side.
+  const initialFen = decodeURI(window.location.hash.slice(1)) ?? '';
+
+  // instantiate a proper chess object to be referenced later, we skip validation for preloaded FENs
+  // as this often used to just manipulate a position, anarchy-chess style.
+  const chess = initialFen ? new Chess(initialFen, {skipValidation: true}) : new Chess();
+
+  console.log(chess);
   // Authoritative game state lives in a ref to avoid stale closures.
-  const chessRef = useRef<Chess>(new Chess());
+  const chessRef = useRef<Chess>(chess);
+
   // Counter forces re-renders / ChessBoard re-sync since chess.js mutates.
   const [tick, setTick] = useState(0);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [historyIndex, setHistoryIndex] = useState(0); // 0 = start; N = after Nth move
 
   const [orientation, setOrientation] = useState<'white' | 'black'>('white');
-  const [fenInput, setFenInput] = useState('');
+  const [fenInput, setFenInput] = useState(initialFen);
   const [fenError, setFenError] = useState<string | null>(null);
 
-  const [depth, setDepth] = useState(16);
-  const [lines, setLines] = useState(3);
+  const [depth, setDepth] = useState(12);
+  const [lines, setLines] = useState(5);
 
-  const fen = chessRef.current.fen();
+  const fen = initialFen ? initialFen : chessRef.current.fen();
   const turn = chessRef.current.turn() === 'w' ? 'white' : 'black';
 
   const analyze = useMutation({
