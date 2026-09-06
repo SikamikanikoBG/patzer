@@ -4,6 +4,51 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.9.0] — 2026-09-06
+
+### vLLM support, three bug fixes, and a security pass
+
+A community-driven release — every change here started from a GitHub issue
+or pull request. Thanks to **@qrakhen**, **@souorosco**, **@ryanchristle**
+and **@bashir-abdelwahed** for the reports and the diagnosis work.
+
+- **New: vLLM as an AI-coach backend.** The coach can now talk to an
+  OpenAI-compatible vLLM server as an alternative to Ollama, picked with a
+  provider toggle in **Admin → System**. Ollama and vLLM keep independent
+  URL + model settings, so switching the toggle never clobbers the other's
+  config — point one at a small local model and the other at a bigger box,
+  and flip between them freely. Reasoning models served via vLLM (Qwen3 and
+  friends) have their chain-of-thought suppressed the same way Ollama's do,
+  so a tight response budget doesn't get eaten by thinking tokens before the
+  model ever answers. Existing deployments need no migration — the provider
+  defaults to Ollama. (#1)
+- **Fixed: board frozen when playing Black.** Starting a bot game (or
+  joining a PvP game) as Black could leave the board permanently unplayable
+  — pieces would visually move but no move ever reached the server, with no
+  error shown. Root cause: the board's drop handler was only wired up when
+  it mounted on your turn; mounting on the opponent's turn (always the case
+  for Black at game start) left it disconnected for the rest of the game.
+  Premoves had the same gap. (#3, reported and diagnosed by @souorosco)
+- **Fixed: PvP games failing to connect for one side.** Accepting a
+  challenge could leave one player stuck on "Connecting to game…" forever
+  while the other saw a permanent "opponent disconnected" — every game
+  needed two database rows (one per player), but only one of them was ever
+  handed out as the game to join, so whichever player got the other row
+  could never connect. (#2, reported by @ryanchristle)
+- **Fixed: bot difficulty tiers playing at nearly the same strength.** Every
+  difficulty from "kid" to "stockfish" shared Stockfish's effective rating
+  floor, so a weak setting still played like a strong club player — just
+  with less thinking time. Rebalanced the depth/time/rating curve per tier
+  and added slight per-move timing variance so the bot feels less
+  metronomic. (#4, reported and fixed by @qrakhen in #6)
+- **Security:** updated dependencies flagged by `npm audit` (several
+  severe/critical advisories, mostly in the optional SMTP mailer path) and
+  resolved the one remaining non-breaking finding (`postcss-selector-parser`
+  DoS). Three moderate/high findings remain that require major-version
+  bumps (nodemailer, react-router, vite/esbuild) and real regression
+  testing — tracked for a future release rather than forced through here.
+  (#6, contributed by @qrakhen)
+
 ## [7.8.0] — 2026-06-24
 
 ### Players — browse the people you play
