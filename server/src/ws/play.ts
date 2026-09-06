@@ -452,7 +452,7 @@ async function playBotMove(ws: WebSocket, session: BotSession) {
   // we only pass the search budget here.
   const timeMod = session.timeControl ? 
 	Math.pow(session.timeControl.initial, .48) : 
-	conf.moveTimeMs * 1.28; // give the bot some more time in longer games,
+	conf.movetimeMs * 1.28; // give the bot some more time in longer games,
 				// or perhaps simply wait idle until we play the move.
 				// it feels odd if every move by a 'kid' comes faster
 				// than a human can comprehend.
