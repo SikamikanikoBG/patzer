@@ -4,21 +4,24 @@ A loose, opinionated list of where Patzer is headed. Items aren't promises — t
 
 ## Now (3.x)
 
-- **Opening explorer.** ECO + book classification + Lichess opening-database lookup so the analyzer shows "Master games here: 47% white, 14% draw" at every position.
-- **Tactic puzzles from your blunders.** Every `blunder` ply already has FEN + best move + played move stored. Replay them as puzzles, link back to the original game.
-- **PvP draw / takeback / rematch.** The PvP lobby exists; the protocol is missing offer-draw, takeback-request, and one-click rematch.
-- **Mobile play layout.** Sticky bottom action bar, swipe-up sheet for the moves panel, safe-area padding.
-- **MultiPV in analyzer.** "Engine likes A, but B and C are also fine" plus a real `great`/`forced` move tier.
-- **Stockfish strength tuning.** Use `UCI_LimitStrength` + `UCI_Elo` for kid/beginner/easy tiers instead of just `Skill Level`.
+- **Opening explorer.** Live master-game stats from Lichess ("Master games here: 47% white, 14% draw") layered on top of the local ECO/name lookup that already exists. → [#11](https://github.com/SikamikanikoBG/patzer/issues/11)
+- **PvP draw / takeback / rematch.** The PvP lobby and live connection both work now; the protocol is still missing offer-draw, takeback-request, and one-click rematch. → [#10](https://github.com/SikamikanikoBG/patzer/issues/10)
+- **Mobile play layout.** Sticky bottom action bar, swipe-up sheet for the moves panel, safe-area padding. → [#13](https://github.com/SikamikanikoBG/patzer/issues/13)
 
 ## Soon
 
-- **Threats display.** "What's the opponent threatening here?" toggle in Game Review.
-- **Mate-in-N display.** Show `M5` instead of `#` when the eval is mate.
-- **Cross-platform setup.** `setup.sh` mirroring `setup.ps1`, or `npm run setup` that's OS-agnostic.
-- **Test suite.** vitest with coverage on the classifier, ELO calibration, and PGN restore.
-- **More languages.** Spanish and Russian are likely first wins.
-- **Repertoire view.** Per-user opening tree — "you played the Najdorf 14× as Black, scored 64% accuracy".
+- **Threats display.** "What's the opponent threatening here?" toggle in Game Review. → [#12](https://github.com/SikamikanikoBG/patzer/issues/12)
+- **Cross-platform setup.** `setup.sh` mirroring `setup.ps1`. → [#16](https://github.com/SikamikanikoBG/patzer/issues/16)
+- **Test suite.** vitest with coverage on the classifier and Glicko rating math. → [#15](https://github.com/SikamikanikoBG/patzer/issues/15)
+- **More languages.** A third locale alongside English/Bulgarian — Spanish is the likely first win, but any language a contributor actually speaks is welcome. → [#14](https://github.com/SikamikanikoBG/patzer/issues/14)
+
+## Shipped since this was last updated
+
+- **Tactic puzzles from your blunders** — `/train`, personalized from your own analyzed games.
+- **MultiPV in the analyzer** — multiple candidate lines in Lab/Game Review, plus the full `brilliant`→`miss` classification tier.
+- **Stockfish strength tuning** — `UCI_LimitStrength` + `UCI_Elo` per difficulty tier.
+- **Mate-in-N display** — `#N` shown wherever an eval is mate.
+- **Repertoire view** — per-user opening tree at the Players/profile level, scored by win-rate per line.
 
 ## Maybe / later
 
