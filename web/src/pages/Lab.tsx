@@ -60,7 +60,7 @@ export default function Lab() {
   const [depth, setDepth] = useState(12);
   const [lines, setLines] = useState(5);
 
-  const fen = initialFen ? initialFen : chessRef.current.fen();
+  const fen = chessRef.current.fen();
   const turn = chessRef.current.turn() === 'w' ? 'white' : 'black';
 
   const analyze = useMutation({
