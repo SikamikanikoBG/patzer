@@ -195,7 +195,7 @@ const registerSchema = z.object({
   // Optional, but if present must be a real address. Empty string is coerced to
   // "absent" so the front-end can always send the field.
   email: z.union([z.string().trim().email().max(200), z.literal('')]).optional(),
-  language: z.enum(['en', 'bg']).default('en'),
+  language: z.enum(['en', 'bg', 'es']).default('en'),
 });
 
 router.post('/register', async (c) => {

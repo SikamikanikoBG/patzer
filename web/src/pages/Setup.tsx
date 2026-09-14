@@ -16,7 +16,9 @@ export default function Setup() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [language, setLanguage] = useState<'en' | 'bg'>(i18n.language === 'bg' ? 'bg' : 'en');
+ const [language, setLanguage] = useState<'en' | 'bg' | 'es'>(
+  i18n.language === 'bg' ? 'bg' : i18n.language.startsWith('es') ? 'es' : 'en'
+);
   const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434');
   const [ollamaModel, setOllamaModel] = useState('');
   const [models, setModels] = useState<string[]>([]);
@@ -95,7 +97,9 @@ export default function Setup() {
                   <div className="flex gap-2">
                     <LangBtn current={language} value="en" onClick={() => { setLanguage('en'); void i18n.changeLanguage('en'); }}>{t('common.english')}</LangBtn>
                     <LangBtn current={language} value="bg" onClick={() => { setLanguage('bg'); void i18n.changeLanguage('bg'); }}>{t('common.bulgarian')}</LangBtn>
+                    <LangBtn current={language} value="es" onClick={() => { setLanguage('es'); void i18n.changeLanguage('es'); }}>{t('common.spanish')}</LangBtn>
                   </div>
+
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>

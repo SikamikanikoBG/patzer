@@ -103,6 +103,7 @@ export default function Settings() {
             <select className="input" value={form.language} onChange={(e) => set('language', e.target.value as 'en' | 'bg')}>
               <option value="en">{t('common.english')}</option>
               <option value="bg">{t('common.bulgarian')}</option>
+             <option value="es">{t('common.spanish')}</option> 
             </select>
           </div>
           <div>
