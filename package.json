@@ -18,7 +18,7 @@
     "build": "npm run build -w server && npm run build -w web",
     "start": "npm run start -w server",
     "typecheck": "tsc -b server web --noEmit",
-    "setup": "powershell -ExecutionPolicy Bypass -File ./setup.ps1"
+    "setup": "node scripts/setup.js"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",

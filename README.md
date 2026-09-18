@@ -185,16 +185,17 @@ Requirements: Node.js ≥ 20.11.
 git clone https://github.com/SikamikanikoBG/patzer.git
 cd patzer
 npm install
-# Windows: download Stockfish into ./bin/
-npm run setup
-# Linux/macOS: install Stockfish via your package manager
-#   apt install stockfish    /    brew install stockfish
-
+npm run setup   # downloads Stockfish 17 into ./bin/ (Windows, Linux, macOS)
 npm run dev
 ```
 
 - Server: <http://localhost:8800>
 - Vite dev server (HMR): <http://localhost:5173> — proxies `/api` and `/ws` to the server.
+
+`npm run setup` dispatches to `setup.ps1` (Windows) or `setup.sh` (Linux/macOS) and picks the official
+build for your CPU; on an older x86 CPU without AVX2 run `STOCKFISH_ASSET=stockfish-ubuntu-x86-64-sse41-popcnt npm run setup`.
+A package-manager Stockfish (`apt install stockfish` / `brew install stockfish`) works too — the server
+also looks in `/usr/bin`, `/usr/local/bin`, `/opt/homebrew/bin` and `/usr/games`.
 
 Useful scripts:
 
