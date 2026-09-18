@@ -34,7 +34,8 @@
     "copied": "Copiado",
     "download": "Descargar",
     "saved": "Guardado",
-    "email": "Correo electrónico"
+    "email": "Correo electrónico",
+    "close": "Cerrar"
   },
   "setup": {
     "title": "Bienvenido a Patzer",
@@ -135,7 +136,8 @@
     "browsingPast": "Viendo posición anterior",
     "overPrompt": "¿Qué quieres hacer ahora?",
     "keepLooking": "Solo explorar el tablero",
-    "showResult": "Toca para ver"
+    "showResult": "Toca para ver",
+    "flip": "Girar tablero"
   },
   "review": {
     "title": "Análisis de partida",

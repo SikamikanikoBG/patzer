@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Flag, Lightbulb, Swords, Bot, Users as UsersIcon, Check, X, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Radio, Sparkles } from 'lucide-react';
+import { Flag, Lightbulb, Swords, Bot, Users as UsersIcon, Check, X, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Radio, Sparkles, FlipVertical2, ListOrdered } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Chess } from 'chess.js';
 import ChessBoard from '../components/ChessBoard';
@@ -80,6 +80,10 @@ export default function Play() {
   // null = at the live position; otherwise an index into `positions` (read-only browse mode).
   const [browseIndex, setBrowseIndex] = useState<number | null>(null);
   const [userColor, setUserColor] = useState<'white' | 'black'>('white');
+  // Board flip + the phone-only moves sheet (see the sticky bottom bar).
+  const [flipped, setFlipped] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const orientation: 'white' | 'black' = flipped ? (userColor === 'white' ? 'black' : 'white') : userColor;
   const [whiteMs, setWhiteMs] = useState(0);
   const [blackMs, setBlackMs] = useState(0);
   const [result, setResult] = useState<{ result: string; reason: string; gameId?: number } | null>(null);
@@ -445,8 +449,13 @@ export default function Play() {
   const isPvP = !!pvpGameId;
   const oppDisconnected = isPvP && opponent && !opponent.online;
 
+  const statusNode = isBrowsing ? <span className="font-medium text-amber-600">{t('play.browsingPast')}</span>
+    : previewing ? <Spinner inline label={t('play.checking')} />
+    : turn === userColor ? <span className="font-medium text-accent-600">{t('play.yourTurn')}</span>
+    : <span className="text-ink-500">{t('play.thinking')}</span>;
+
   return (
-    <div className="mx-auto max-w-7xl">
+    <div className="mx-auto max-w-7xl pb-24 lg:pb-0">
       <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
         {/* BOARD COLUMN — full width on lg+ (max 760px). The BOARD ELEMENT
             below uses aspect-square + a viewport-height-aware max-width so the
@@ -474,7 +483,7 @@ export default function Play() {
             >
               <ChessBoard
                 fen={displayedFen}
-                orientation={userColor}
+                orientation={orientation}
                 movable={movable}
                 turnColor={turn}
                 onMove={attemptMove}
@@ -491,13 +500,13 @@ export default function Play() {
                 <PieceEmotionsOverlay
                   fen={displayedFen}
                   viewerColor={userColor}
-                  orientation={userColor}
+                  orientation={orientation}
                 />
               )}
               {/* Classification badge for the last classified user move (bot mode only).
                   Hidden while browsing past positions. */}
               {!isBrowsing && lastClassifiedMove && lastMoveDestSquare === lastClassifiedMove.uci.slice(2, 4) && (
-                <ClassificationBadge classification={lastClassifiedMove.classification} square={lastClassifiedMove.uci.slice(2, 4)} orientation={userColor} />
+                <ClassificationBadge classification={lastClassifiedMove.classification} square={lastClassifiedMove.uci.slice(2, 4)} orientation={orientation} />
               )}
               {/* Subtle "browsing past position" overlay tag */}
               {isBrowsing && (
@@ -514,7 +523,7 @@ export default function Play() {
 
           {/* Rewind nav — visible once at least one move has been played */}
           {phase !== 'setup' && positions.length > 1 && (
-            <div className="mt-3 flex items-center justify-center gap-1.5 sm:gap-2">
+            <div className="mt-3 hidden items-center justify-center gap-1.5 sm:gap-2 lg:flex">
               <button onClick={() => setBrowseIndex(0)} disabled={(browseIndex ?? liveIndex) === 0} className="btn-secondary h-10 w-10 p-0 sm:h-11 sm:w-11" title={t('play.rewindFirst')}><ChevronsLeft className="h-5 w-5" /></button>
               <button onClick={stepBack} disabled={(browseIndex ?? liveIndex) === 0} className="btn-secondary h-10 w-10 p-0 sm:h-11 sm:w-11" title={t('play.rewindPrev')}><ChevronLeft className="h-5 w-5" /></button>
               <div className="flex h-10 min-w-[5rem] items-center justify-center rounded-xl bg-ink-100 px-3 font-mono text-sm tabular-nums dark:bg-ink-800 sm:h-11 sm:min-w-[5.5rem]">
@@ -528,14 +537,12 @@ export default function Play() {
           )}
 
           {phase === 'playing' && (
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="text-sm">
-                {isBrowsing ? <span className="font-medium text-amber-600">{t('play.browsingPast')}</span>
-                  : previewing ? <Spinner inline label={t('play.checking')} />
-                  : turn === userColor ? <span className="font-medium text-accent-600">{t('play.yourTurn')}</span>
-                  : <span className="text-ink-500">{t('play.thinking')}</span>}
-              </div>
+            <div className="mt-3 hidden flex-wrap items-center justify-between gap-2 lg:flex">
+              <div className="text-sm">{statusNode}</div>
               <div className="flex flex-wrap gap-2">
+                <button onClick={() => setFlipped((f) => !f)} className="btn-secondary h-11 px-3 text-sm sm:px-4" title={t('play.flip', { defaultValue: 'Flip board' })}>
+                  <FlipVertical2 className="h-4 w-4" />
+                </button>
                 <button onClick={requestHint} disabled={hintLoading || isBrowsing} className="btn-secondary h-11 px-3 text-sm sm:px-4">
                   {hintLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lightbulb className="h-4 w-4" />}
                   {t('play.hint')}
@@ -544,9 +551,12 @@ export default function Play() {
               </div>
             </div>
           )}
+          {/* Phone: one-line status under the board; everything else lives in the sticky bar. */}
+          {phase === 'playing' && <div className="mt-2 text-center text-sm lg:hidden">{statusNode}</div>}
         </div>
 
-        {/* SIDE PANEL */}
+        {/* SIDE PANEL — on phones the move list moves into the bottom sheet;
+            the coach and the post-game pill stay in the flow. */}
         <div className="flex-1 space-y-3 lg:w-[360px] lg:flex-initial lg:max-w-md">
           {showAlwaysCoach && coachReq && (
             <CoachPanel
@@ -558,7 +568,7 @@ export default function Play() {
             />
           )}
 
-          <div className="card max-h-72 overflow-auto p-4">
+          <div className="card hidden max-h-72 overflow-auto p-4 lg:block">
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-chesscom-500">{t('review.moves')}</h3>
             <MovesList moves={moves} />
           </div>
@@ -585,6 +595,58 @@ export default function Play() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* PHONE ACTION BAR — sticky, safe-area aware. Holds everything a
+          thumb needs mid-game so the board can take the full width above. */}
+      {phase !== 'setup' && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-200 bg-white/95 backdrop-blur dark:border-ink-700 dark:bg-ink-900/95 lg:hidden"
+             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="mx-auto flex max-w-7xl items-center gap-1.5 px-2 py-2">
+            <button onClick={stepBack} disabled={(browseIndex ?? liveIndex) === 0} className="btn-secondary h-11 w-11 shrink-0 p-0" title={t('play.rewindPrev')}><ChevronLeft className="h-5 w-5" /></button>
+            <button onClick={isBrowsing ? stepForward : goToLive} disabled={!isBrowsing} className={`h-11 w-11 shrink-0 p-0 ${isBrowsing ? 'btn-primary' : 'btn-secondary'}`} title={isBrowsing ? t('play.rewindNext') : t('play.rewindLive')}>
+              {isBrowsing ? <ChevronRight className="h-5 w-5" /> : <Radio className="h-4 w-4" />}
+            </button>
+            <button onClick={() => setSheetOpen(true)} className="btn-secondary h-11 min-w-0 flex-1 px-2 text-sm">
+              <ListOrdered className="h-4 w-4 shrink-0" />
+              <span className="truncate">{t('review.moves')}</span>
+              <span className="ml-1 rounded-full bg-ink-100 px-1.5 text-[11px] tabular-nums dark:bg-ink-800">{moves.length}</span>
+            </button>
+            <button onClick={() => setFlipped((f) => !f)} className="btn-secondary h-11 w-11 shrink-0 p-0" title={t('play.flip', { defaultValue: 'Flip board' })}><FlipVertical2 className="h-5 w-5" /></button>
+            {phase === 'playing' && (
+              <>
+                <button onClick={requestHint} disabled={hintLoading || isBrowsing} className="btn-secondary h-11 w-11 shrink-0 p-0" title={t('play.hint')}>
+                  {hintLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lightbulb className="h-5 w-5" />}
+                </button>
+                <button onClick={resign} className="btn-danger h-11 w-11 shrink-0 p-0" title={t('play.resign')}><Flag className="h-5 w-5" /></button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* PHONE MOVES SHEET — tap-to-expand; a drag gesture is a fine follow-up. */}
+      <AnimatePresence>
+        {sheetOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[45] bg-black/40 lg:hidden" onClick={() => setSheetOpen(false)} />
+            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 380, damping: 36 }}
+              className="fixed inset-x-0 bottom-0 z-[46] max-h-[70vh] rounded-t-2xl bg-white shadow-lift dark:bg-ink-900 lg:hidden"
+              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+              <button onClick={() => setSheetOpen(false)} className="flex w-full flex-col items-center pt-2" aria-label={t('common.close', { defaultValue: 'Close' })}>
+                <span className="h-1.5 w-10 rounded-full bg-ink-300 dark:bg-ink-600" />
+              </button>
+              <div className="flex items-center justify-between px-4 pb-2 pt-1">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-chesscom-500">{t('review.moves')}</h3>
+                <button onClick={() => setSheetOpen(false)} className="btn-ghost h-8 px-2 text-xs">{t('common.close', { defaultValue: 'Close' })}</button>
+              </div>
+              <div className="max-h-[calc(70vh-4rem)] overflow-y-auto px-4 pb-4">
+                <MovesList moves={moves} />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* BLUNDER WARNING MODAL */}
       <AnimatePresence>
