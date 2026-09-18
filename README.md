@@ -245,6 +245,7 @@ All user-facing configuration is done **through the UI** and persisted in SQLite
 | `HOST` | `0.0.0.0` | Bind address |
 | `DB_PATH` | `./data/chess.db` | SQLite database file |
 | `STOCKFISH_PATH` | (auto) | Override Stockfish binary path |
+| `LICHESS_EXPLORER_URL` | `https://explorer.lichess.ovh` | Opening-explorer upstream for the *Master games* panel (a self-hosted `lila-openingexplorer` works) |
 | `SESSION_SECRET` | (auto-generated) | Cookie signing secret. Persisted on first run. |
 | `COOKIE_SECURE`  | `false` | Set to `true` when terminating TLS at a reverse proxy so session cookies are flagged `Secure`. |
 

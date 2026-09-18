@@ -13,6 +13,7 @@ import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
 import { lookupOpeningByEpd, fenToEpd } from '../chess/openings.js';
+import { masterStats } from '../chess/explorer.js';
 import type { Color } from '../types.js';
 
 const router = new Hono();
@@ -158,6 +159,22 @@ router.get('/tree', (c) => {
     total_games: rows.length,
     root: finalize(root),
   });
+});
+
+// Master-game statistics for a position, proxied from the Lichess Opening
+// Explorer (server-side: no CORS, one cache, one rate limit). See
+// chess/explorer.ts. Returns { available: false } — never an error — when the
+// upstream is unreachable so the UI can hide the panel instead of breaking.
+router.get('/explorer', async (c) => {
+  const fen = c.req.query('fen') ?? '';
+  if (fen.length < 10 || fen.length > 120) return c.json({ error: 'invalid_fen' }, 400);
+  const result = await masterStats(fen);
+  if (!result.ok) {
+    if (result.reason === 'invalid_fen') return c.json({ error: 'invalid_fen' }, 400);
+    return c.json({ available: false, cached: result.cached });
+  }
+  c.header('Cache-Control', 'private, max-age=3600');
+  return c.json({ available: true, cached: result.cached, ...result.stats });
 });
 
 export default router;

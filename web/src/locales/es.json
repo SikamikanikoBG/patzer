@@ -659,5 +659,16 @@
       "queen": "dama",
       "king": "rey"
     }
+  },
+  "explorer": {
+    "title": "Partidas de maestros",
+    "show": "Mostrar estadísticas",
+    "unavailable": "La base de datos de maestros de Lichess no está disponible ahora mismo.",
+    "noGames": "No hay partidas de maestros desde esta posición.",
+    "games_one": "{{count}} partida de maestros",
+    "games_other": "{{count}} partidas de maestros",
+    "white": "Blancas",
+    "draw": "Tablas",
+    "black": "Negras"
   }
 }

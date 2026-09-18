@@ -16,6 +16,7 @@ import OpeningBanner from '../components/OpeningBanner';
 import ClassificationBadge from '../components/ClassificationBadge';
 import CapturedPieces from '../components/CapturedPieces';
 import ThreatPanel from '../components/ThreatPanel';
+import ExplorerPanel from '../components/ExplorerPanel';
 import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
@@ -202,6 +203,7 @@ export default function GameAnalyzer() {
   const [linesLoading, setLinesLoading] = useState(false);
   const [linesError, setLinesError] = useState(false);
   const [linesHover, setLinesHover] = useState<EngineLine | null>(null);
+  const [explorerHover, setExplorerHover] = useState<string | null>(null);
   const pos = data ? (positions[ply] ?? positions[0]) : undefined;
   const currentFen = pos?.fen ?? '';
   useEffect(() => {
@@ -251,9 +253,10 @@ export default function GameAnalyzer() {
     dest: move.best_move_uci.slice(2, 4) as never,
     brush: 'paleBlue',
   }] : [];
-  const hoverArrow = linesHover?.uci ? [{
-    orig: linesHover.uci.slice(0, 2) as never,
-    dest: linesHover.uci.slice(2, 4) as never,
+  const hoverUci = linesHover?.uci ?? explorerHover;
+  const hoverArrow = hoverUci ? [{
+    orig: hoverUci.slice(0, 2) as never,
+    dest: hoverUci.slice(2, 4) as never,
     brush: 'paleGreen',
   }] : [];
   const arrow = [...baseArrow, ...hoverArrow];
@@ -496,6 +499,8 @@ export default function GameAnalyzer() {
               />
 
               <ThreatPanel fen={currentFen} currentCpWhite={currentEvalCp} />
+
+              <ExplorerPanel fen={currentFen} onPreview={setExplorerHover} />
 
               <GameMetaToolbar
                 gameId={gameId}

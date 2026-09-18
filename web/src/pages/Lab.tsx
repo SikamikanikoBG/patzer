@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import ChessBoard from '../components/ChessBoard';
 import ThreatPanel from '../components/ThreatPanel';
+import ExplorerPanel from '../components/ExplorerPanel';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 
@@ -280,6 +281,8 @@ export default function Lab() {
               return turn === 'white' ? cp : -cp;
             })()}
           />
+
+          <ExplorerPanel fen={fen} />
 
           {history.length > 0 && (
             <div className="card overflow-hidden">

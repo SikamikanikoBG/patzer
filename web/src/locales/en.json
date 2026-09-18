@@ -659,5 +659,16 @@
       "queen": "queen",
       "king": "king"
     }
+  },
+  "explorer": {
+    "title": "Master games",
+    "show": "Show master stats",
+    "unavailable": "Lichess master database unreachable right now.",
+    "noGames": "No master games from this position.",
+    "games_one": "{{count}} master game",
+    "games_other": "{{count}} master games",
+    "white": "White",
+    "draw": "Draw",
+    "black": "Black"
   }
 }
