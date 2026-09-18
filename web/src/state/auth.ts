@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { api } from '../api';
 
 export type Role = 'admin' | 'user';
-export type Language = 'en' | 'bg';
+import type { Language } from '../lib/languages';
+export type { Language };
 export type Audience = 'kid' | 'beginner' | 'intermediate' | 'advanced';
 export type CoachBehavior = 'silent' | 'on_demand' | 'always_on_pedagogical';
 

@@ -21,7 +21,7 @@
     "language": "Език",
     "english": "Английски",
     "bulgarian": "Български",
-    "spanish": "испански",
+    "spanish": "Испански",
     "logout": "Излез",
     "settings": "Настройки",
     "admin": "Администратор",
@@ -243,8 +243,7 @@
     "ttsRate": "Скорост",
     "ttsPitch": "Височина",
     "ttsPreview": "Чуй гласа",
-    "ttsPreviewText": "Hello, I am your chess coach.",
-    "ttsPreviewTextBg": "Здрасти, аз съм твоят шах треньор.",
+    "ttsPreviewText": "Здрасти, аз съм твоят шах треньор.",
     "saved": "Запазено",
     "appearance": "Външен вид",
     "siteTheme": "Тема на сайта",
@@ -324,6 +323,7 @@
     "testEmailSent": "Тестовият имейл е изпратен."
   },
   "palette": {
+    "switchLanguage": "Превключи на",
     "search": "Търси",
     "placeholder": "Търси страница, действие, игра…",
     "empty": "Няма съвпадения.",

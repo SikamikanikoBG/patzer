@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LANGUAGES, normalizeLanguage, type Language } from '../lib/languages';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, AlertCircle, ChevronRight, ChevronLeft, Sparkles, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,9 +17,7 @@ export default function Setup() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
- const [language, setLanguage] = useState<'en' | 'bg' | 'es'>(
-  i18n.language === 'bg' ? 'bg' : i18n.language.startsWith('es') ? 'es' : 'en'
-);
+  const [language, setLanguage] = useState<Language>(normalizeLanguage(i18n.language));
   const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434');
   const [ollamaModel, setOllamaModel] = useState('');
   const [models, setModels] = useState<string[]>([]);
@@ -95,11 +94,10 @@ export default function Setup() {
                 <div>
                   <label className="label mb-1 block">{t('common.language')}</label>
                   <div className="flex gap-2">
-                    <LangBtn current={language} value="en" onClick={() => { setLanguage('en'); void i18n.changeLanguage('en'); }}>{t('common.english')}</LangBtn>
-                    <LangBtn current={language} value="bg" onClick={() => { setLanguage('bg'); void i18n.changeLanguage('bg'); }}>{t('common.bulgarian')}</LangBtn>
-                    <LangBtn current={language} value="es" onClick={() => { setLanguage('es'); void i18n.changeLanguage('es'); }}>{t('common.spanish')}</LangBtn>
+                    {LANGUAGES.map((l) => (
+                      <LangBtn key={l.code} current={language} value={l.code} onClick={() => { setLanguage(l.code); void i18n.changeLanguage(l.code); }}>{t(l.nameKey)}</LangBtn>
+                    ))}
                   </div>
-
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>

@@ -7,6 +7,7 @@ import { useAuth } from '../state/auth';
 import { useAuthConfig } from '../lib/useAuthConfig';
 import { humanizeError } from '../lib/errors';
 import AuthShell from '../components/AuthShell';
+import { normalizeLanguage } from '../lib/languages';
 
 export default function Signup() {
   const { t, i18n } = useTranslation();
@@ -34,7 +35,7 @@ export default function Signup() {
     try {
       const res = await api.post<{ user?: unknown; verification_required?: boolean }>('/api/auth/register', {
         ...form,
-        language: i18n.language === 'bg' ? 'bg' : 'en',
+        language: normalizeLanguage(i18n.language),
       });
       if (res.verification_required) {
         setDone(true);

@@ -7,6 +7,7 @@ import { useAuth } from '../state/auth';
 import { cn } from '../lib/utils';
 import ChangelogModal from './ChangelogModal';
 import { LogoMark, LogoLockup } from './Logo';
+import { LANGUAGES, normalizeLanguage } from '../lib/languages';
 
 // v4.0.0 Layout — chess.com-style horizontal top bar.
 // Replaces the v3 narrow left rail. The dark sage navbar (`bg-chesscom-900`)
@@ -21,6 +22,7 @@ interface LayoutProps {
 
 export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) {
   const { t, i18n } = useTranslation();
+  const uiLang = normalizeLanguage(i18n.language);
   const { user, refresh } = useAuth();
   const nav = useNavigate();
   const location = useLocation();
@@ -138,14 +140,13 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             )}
             {/* Language toggle */}
             <div className="hidden rounded-lg border border-chesscom-700 bg-chesscom-800 p-0.5 text-xs sm:flex">
-              <button
-                onClick={() => i18n.changeLanguage('en')}
-                className={cn('rounded-md px-2 py-1 transition-colors', i18n.language === 'en' ? 'bg-gold-500 text-chesscom-900' : 'text-chesscom-300 hover:text-white')}
-              >EN</button>
-              <button
-                onClick={() => i18n.changeLanguage('bg')}
-                className={cn('rounded-md px-2 py-1 transition-colors', i18n.language === 'bg' ? 'bg-gold-500 text-chesscom-900' : 'text-chesscom-300 hover:text-white')}
-              >BG</button>
+              {LANGUAGES.map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => i18n.changeLanguage(l.code)}
+                  className={cn('rounded-md px-2 py-1 transition-colors', uiLang === l.code ? 'bg-gold-500 text-chesscom-900' : 'text-chesscom-300 hover:text-white')}
+                >{l.short}</button>
+              ))}
             </div>
 
             {/* User chip */}
@@ -229,8 +230,9 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             </nav>
             <div className="mt-auto space-y-2 pt-6">
               <div className="flex gap-1">
-                <button onClick={() => i18n.changeLanguage('en')} className={cn('flex-1 rounded-lg px-2 py-1 text-xs', i18n.language === 'en' ? 'bg-gold-500 text-chesscom-900' : 'bg-chesscom-800 text-chesscom-200')}>EN</button>
-                <button onClick={() => i18n.changeLanguage('bg')} className={cn('flex-1 rounded-lg px-2 py-1 text-xs', i18n.language === 'bg' ? 'bg-gold-500 text-chesscom-900' : 'bg-chesscom-800 text-chesscom-200')}>BG</button>
+                {LANGUAGES.map((l) => (
+                  <button key={l.code} onClick={() => i18n.changeLanguage(l.code)} className={cn('flex-1 rounded-lg px-2 py-1 text-xs', uiLang === l.code ? 'bg-gold-500 text-chesscom-900' : 'bg-chesscom-800 text-chesscom-200')}>{l.short}</button>
+                ))}
               </div>
               <button onClick={logout} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-chesscom-200 hover:bg-chesscom-800">
                 <LogOut className="h-4 w-4" />

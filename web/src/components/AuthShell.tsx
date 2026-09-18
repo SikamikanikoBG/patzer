@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { LogoMark } from './Logo';
+import { LANGUAGES, normalizeLanguage } from '../lib/languages';
 
 // Shared visual frame for the unauthenticated pages (login / signup / forgot /
 // reset / verify) so they all read as the same product. Mirrors Login.tsx's
@@ -26,9 +27,12 @@ export default function AuthShell({ title, subtitle, children }: { title: string
           {children}
         </div>
         <div className="mt-6 flex justify-center gap-3 text-xs text-ink-400">
-          <button type="button" onClick={() => i18n.changeLanguage('en')} className={`px-2 py-1 ${i18n.language === 'en' ? 'text-ink-700 underline dark:text-ink-200' : 'hover:text-ink-700'}`}>EN</button>
-          <span>·</span>
-          <button type="button" onClick={() => i18n.changeLanguage('bg')} className={`px-2 py-1 ${i18n.language === 'bg' ? 'text-ink-700 underline dark:text-ink-200' : 'hover:text-ink-700'}`}>BG</button>
+          {LANGUAGES.map((l, i) => (
+            <Fragment key={l.code}>
+              {i > 0 && <span>·</span>}
+              <button type="button" onClick={() => i18n.changeLanguage(l.code)} className={`px-2 py-1 ${normalizeLanguage(i18n.language) === l.code ? 'text-ink-700 underline dark:text-ink-200' : 'hover:text-ink-700'}`}>{l.short}</button>
+            </Fragment>
+          ))}
         </div>
       </motion.div>
     </div>

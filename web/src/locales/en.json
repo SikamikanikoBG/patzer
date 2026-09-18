@@ -21,7 +21,7 @@
     "language": "Language",
     "english": "English",
     "bulgarian": "Bulgarian",
-    "spanish": "Espanish",
+    "spanish": "Spanish",
     "logout": "Log out",
     "settings": "Settings",
     "admin": "Admin",
@@ -244,7 +244,6 @@
     "ttsPitch": "Pitch",
     "ttsPreview": "Preview voice",
     "ttsPreviewText": "Hello, I am your chess coach.",
-    "ttsPreviewTextBg": "Здрасти, аз съм твоят шах треньор.",
     "saved": "Saved",
     "appearance": "Appearance",
     "siteTheme": "Site theme",
@@ -324,6 +323,7 @@
     "testEmailSent": "Test email sent."
   },
   "palette": {
+    "switchLanguage": "Switch to",
     "search": "Search",
     "placeholder": "Type to search nav, actions, games…",
     "empty": "No matches.",

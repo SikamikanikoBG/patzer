@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
@@ -8,6 +8,7 @@ import { useAuth } from '../state/auth';
 import { useAuthConfig } from '../lib/useAuthConfig';
 import { humanizeError } from '../lib/errors';
 import { LogoMark } from '../components/Logo';
+import { LANGUAGES, normalizeLanguage } from '../lib/languages';
 
 export default function Login() {
   const { t, i18n } = useTranslation();
@@ -94,9 +95,12 @@ export default function Login() {
         </form>
 
         <div className="mt-6 flex justify-center gap-3 text-xs text-ink-400">
-          <button type="button" onClick={() => i18n.changeLanguage('en')} className={`px-2 py-1 ${i18n.language === 'en' ? 'text-ink-700 underline dark:text-ink-200' : 'hover:text-ink-700'}`}>EN</button>
-          <span>·</span>
-          <button type="button" onClick={() => i18n.changeLanguage('bg')} className={`px-2 py-1 ${i18n.language === 'bg' ? 'text-ink-700 underline dark:text-ink-200' : 'hover:text-ink-700'}`}>BG</button>
+          {LANGUAGES.map((l, i) => (
+            <Fragment key={l.code}>
+              {i > 0 && <span>·</span>}
+              <button type="button" onClick={() => i18n.changeLanguage(l.code)} className={`px-2 py-1 ${normalizeLanguage(i18n.language) === l.code ? 'text-ink-700 underline dark:text-ink-200' : 'hover:text-ink-700'}`}>{l.short}</button>
+            </Fragment>
+          ))}
         </div>
       </motion.div>
     </div>

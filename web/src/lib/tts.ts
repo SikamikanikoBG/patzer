@@ -5,10 +5,7 @@
 
 import { stripMarkdown, stripReasoning } from './markdown';
 
-const LANG_BCP47: Record<'en' | 'bg', string> = {
-  en: 'en-US',
-  bg: 'bg-BG',
-};
+import { bcp47For, type Language } from './languages';
 
 export function getVoices(): SpeechSynthesisVoice[] {
   if (typeof speechSynthesis === 'undefined') return [];
@@ -23,12 +20,12 @@ export function onVoicesReady(cb: () => void): () => void {
   return () => speechSynthesis.removeEventListener('voiceschanged', handler);
 }
 
-export function voicesForLang(lang: 'en' | 'bg'): SpeechSynthesisVoice[] {
-  const prefix = lang === 'bg' ? 'bg' : 'en';
+export function voicesForLang(lang: Language): SpeechSynthesisVoice[] {
+  const prefix = lang;
   return getVoices().filter((v) => v.lang.toLowerCase().startsWith(prefix));
 }
 
-export interface SpeakOpts { voice?: string | null; rate?: number; pitch?: number; lang?: 'en' | 'bg' }
+export interface SpeakOpts { voice?: string | null; rate?: number; pitch?: number; lang?: Language }
 
 function pickVoice(opts: SpeakOpts): SpeechSynthesisVoice | undefined {
   const voices = getVoices();
@@ -67,7 +64,7 @@ export function speak(text: string, opts: SpeakOpts = {}): SpeechSynthesisUttera
   // ALWAYS set lang to a BCP-47 code so the OS can pick an appropriate voice
   // when our preferred one is absent. Without this, Chrome on Windows defaults
   // to en-US and reads Cyrillic text as gibberish.
-  if (opts.lang) u.lang = LANG_BCP47[opts.lang];
+  if (opts.lang) u.lang = bcp47For(opts.lang);
 
   const voice = pickVoice(opts);
   if (voice) {

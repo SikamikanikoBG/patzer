@@ -5,10 +5,11 @@ import { Plus, Trash2, Pencil, X } from 'lucide-react';
 import { api } from '../../api';
 import { useAuth } from '../../state/auth';
 import { humanizeError } from '../../lib/errors';
+import { LANGUAGES, type Language } from '../../lib/languages';
 
 interface UserRow {
   id: number; username: string; role: 'admin' | 'user'; created_at: string;
-  display_name: string; avatar_emoji: string; language: 'en' | 'bg'; audience: string;
+  display_name: string; avatar_emoji: string; language: Language; audience: string;
   email: string | null; email_verified: number;
 }
 
@@ -96,7 +97,7 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [form, setForm] = useState({
     username: '', password: '', display_name: '', email: '',
     role: 'user' as 'user' | 'admin',
-    language: 'en' as 'en' | 'bg',
+    language: 'en' as Language,
     audience: 'beginner' as 'kid' | 'beginner' | 'intermediate' | 'advanced',
     coach_behavior: 'on_demand' as 'silent' | 'on_demand' | 'always_on_pedagogical',
     avatar_emoji: '♟', tts_enabled: false,
@@ -143,9 +144,8 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
               <option value="user">{t('admin.roleUser')}</option>
               <option value="admin">{t('admin.roleAdmin')}</option>
             </select>
-            <select className="input" value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value as never })}>
-              <option value="en">{t('common.english')}</option>
-              <option value="bg">{t('common.bulgarian')}</option>
+            <select className="input" value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value as Language })}>
+              {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{t(l.nameKey)}</option>)}
             </select>
             <select className="input" value={form.audience} onChange={(e) => setForm({ ...form, audience: e.target.value as never })}>
               <option value="kid">{t('settings.audienceLevel.kid')}</option>

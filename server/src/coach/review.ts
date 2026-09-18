@@ -38,8 +38,91 @@ export const REVIEW_PROSE_VERSION = 3;
 
 // JSON-mode rule append-on. R10 in the consolidated 10-rule scheme. We use
 // "R10:" numbering to extend prompts.ts's existing rule block cleanly.
-const JSON_HARD_EN = `\n\nR10. Reply with EXACTLY ONE JSON object matching the schema in TASK. No prose outside the JSON. No markdown fences. No extra keys.`;
-const JSON_HARD_BG = `\n\nR10. Отговори с ТОЧНО ЕДИН JSON обект според схемата в TASK. Без текст извън JSON. Без markdown. Без допълнителни ключове.`;
+//
+// Every language-dependent string in this file lives in REVIEW_TEXT so adding
+// a language is one table entry (same pattern as prompts.ts).
+interface ReviewText {
+  jsonHard: string;
+  perspective: string;
+  phase: Record<GamePhase, string>;
+  keyMoment: string;
+  taskPhase: (phase: string) => string;
+  taskMoment: string;
+  taskSummary: string;
+  fallbackPhase: (phase: string, accuracy: string, plies: number) => string;
+  fallbackMoment: (ply: number, verdict: string, cpLoss: number) => string;
+  fallbackSummary: (acc: string, brilliant: number, mistakes: number, blunders: number) => string;
+  fallbackSkillNone: string;
+  fallbackSkill: (elo: number) => string;
+  fallbackOpening: (name: string) => string;
+}
+
+const REVIEW_TEXT: Record<Language, ReviewText> = {
+  en: {
+    jsonHard: `\n\nR10. Reply with EXACTLY ONE JSON object matching the schema in TASK. No prose outside the JSON. No markdown fences. No extra keys.`,
+    perspective: 'you',
+    phase: { opening: 'opening', middlegame: 'middlegame', endgame: 'endgame' },
+    keyMoment: 'Key moment',
+    taskPhase: (phase) => `TASK: Describe the player's ${phase} in 2-3 sentences. Address as "you". Schema: { "prose": string }`,
+    taskMoment: `TASK: Describe this key moment. Address as "you". Slots:
+- title: ≤6 words, no period at the end.
+- what_happened: 1 sentence — what the player did and the engine's verdict.
+- why_it_matters: 1 sentence — the cost or the principle behind it.
+- what_to_learn: 1 sentence — the takeaway.
+Schema: { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`,
+    taskSummary: `TASK: Summarize the game for the player. Address as "you". Schema: { "summary": string (3-4 sentences), "skill_assessment": string (1 sentence on skill), "opening_prose": string (≤2 sentences on the opening) }`,
+    fallbackPhase: (phase, accuracy, plies) => `Your ${phase} accuracy was ${accuracy}% across ${plies} plies.`,
+    fallbackMoment: (ply, verdict, cpLoss) => `On ply ${ply} the game turned. ${verdict}. The cost was about ${cpLoss} centipawns.`,
+    fallbackSummary: (acc, brilliant, mistakes, blunders) => `Your accuracy was ${acc}%. You had ${brilliant} brilliant moves, ${mistakes} mistakes, and ${blunders} blunders.`,
+    fallbackSkillNone: 'No skill estimate yet.',
+    fallbackSkill: (elo) => `This game played at roughly ${elo} Elo.`,
+    fallbackOpening: (name) => `You opened with ${name} — a solid choice.`,
+  },
+  bg: {
+    jsonHard: `\n\nR10. Отговори с ТОЧНО ЕДИН JSON обект според схемата в TASK. Без текст извън JSON. Без markdown. Без допълнителни ключове.`,
+    perspective: 'ти',
+    phase: { opening: 'дебют', middlegame: 'мителшпил', endgame: 'ендшпил' },
+    keyMoment: 'Ключов момент',
+    taskPhase: (phase) => `TASK: Опиши играта на играча във фазата ${phase} с 2-3 изречения. Обърни се с "ти". Схема: { "prose": string }`,
+    taskMoment: `TASK: Опиши този ключов момент. Обърни се с "ти". Слотове:
+- title: ≤6 думи, без точка в края.
+- what_happened: 1 изречение — какво направи играчът и оценката на двигателя.
+- why_it_matters: 1 изречение — каква е цената или принципът зад грешката/успеха.
+- what_to_learn: 1 изречение — какво да запомниш.
+Схема: { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`,
+    taskSummary: `TASK: Обобщи партията за играча. Обърни се с "ти". Схема: { "summary": string (3-4 изречения), "skill_assessment": string (1 изречение за нивото), "opening_prose": string (≤2 изречения за дебюта) }`,
+    fallbackPhase: (phase, accuracy, plies) => `Във фазата ${phase} точността ти беше ${accuracy}% за ${plies} полу-хода.`,
+    fallbackMoment: (ply, verdict, cpLoss) => `На полу-ход ${ply} играта се обърна. ${verdict}. Загубата беше около ${cpLoss} стотни от пешка.`,
+    fallbackSummary: (acc, brilliant, mistakes, blunders) => `Точността ти беше ${acc}%. Имаше ${brilliant} брилянтни, ${mistakes} грешки и ${blunders} блъндера.`,
+    fallbackSkillNone: 'Все още нямаме оценка на нивото.',
+    fallbackSkill: (elo) => `Партията ти изглежда на ниво около ${elo} Elo.`,
+    fallbackOpening: (name) => `Започна с ${name} — солиден избор.`,
+  },
+  es: {
+    jsonHard: `\n\nR10. Responde con EXACTAMENTE UN objeto JSON que siga el esquema de TASK. Sin texto fuera del JSON. Sin bloques markdown. Sin claves adicionales.`,
+    perspective: 'tú',
+    phase: { opening: 'apertura', middlegame: 'medio juego', endgame: 'final' },
+    keyMoment: 'Momento clave',
+    taskPhase: (phase) => `TASK: Describe la ${phase} del jugador en 2-3 frases. Trátalo de "tú". Esquema: { "prose": string }`,
+    taskMoment: `TASK: Describe este momento clave. Trata al jugador de "tú". Campos:
+- title: ≤6 palabras, sin punto final.
+- what_happened: 1 frase — qué hizo el jugador y el veredicto del motor.
+- why_it_matters: 1 frase — el coste o el principio detrás de la jugada.
+- what_to_learn: 1 frase — la lección.
+Esquema: { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`,
+    taskSummary: `TASK: Resume la partida para el jugador. Trátalo de "tú". Esquema: { "summary": string (3-4 frases), "skill_assessment": string (1 frase sobre el nivel), "opening_prose": string (≤2 frases sobre la apertura) }`,
+    fallbackPhase: (phase, accuracy, plies) => `Tu precisión en la ${phase} fue del ${accuracy}% en ${plies} medias jugadas.`,
+    fallbackMoment: (ply, verdict, cpLoss) => `En la media jugada ${ply} la partida cambió. ${verdict}. El coste fue de unos ${cpLoss} centipeones.`,
+    fallbackSummary: (acc, brilliant, mistakes, blunders) => `Tu precisión fue del ${acc}%. Tuviste ${brilliant} jugadas brillantes, ${mistakes} errores y ${blunders} errores graves.`,
+    fallbackSkillNone: 'Aún no hay una estimación de nivel.',
+    fallbackSkill: (elo) => `Esta partida se jugó a un nivel de unos ${elo} Elo.`,
+    fallbackOpening: (name) => `Abriste con ${name}: una elección sólida.`,
+  },
+};
+
+function reviewText(language: Language): ReviewText {
+  return REVIEW_TEXT[language] ?? REVIEW_TEXT.en;
+}
 
 export interface PhaseProse {
   from_ply: number;
@@ -104,9 +187,8 @@ async function callPhase(
 ): Promise<PhaseProse> {
   const userAcc = userColor === 'white' ? data.accuracy_white : data.accuracy_black;
   const userAcpl = userColor === 'white' ? data.acpl_white : data.acpl_black;
-  const phaseLabelLocal = language === 'bg'
-    ? (phase === 'opening' ? 'дебют' : phase === 'middlegame' ? 'мителшпил' : 'ендшпил')
-    : phase;
+  const text = reviewText(language);
+  const phaseLabelLocal = text.phase[phase];
   const slice = moves.filter((m) => m.ply >= data.from_ply && m.ply <= data.to_ply);
 
   // Compact list of interesting moves only (skip best/excellent/good/book/forced).
@@ -122,7 +204,7 @@ async function callPhase(
   const facts = {
     lang: language,
     audience,
-    perspective: language === 'bg' ? 'ти' : 'you',
+    perspective: text.perspective,
     phase,
     user_accuracy: userAcc,
     user_acpl: userAcpl,
@@ -130,10 +212,8 @@ async function callPhase(
     interesting_moves: interesting,
   };
 
-  const sys = systemPrompt(audience, language) + (language === 'bg' ? JSON_HARD_BG : JSON_HARD_EN);
-  const task = language === 'bg'
-    ? `FACTS:\n${JSON.stringify(facts, null, 2)}\n\nTASK: Опиши играта на играча във фазата ${phaseLabelLocal} с 2-3 изречения. Обърни се с "ти". Схема: { "prose": string }`
-    : `FACTS:\n${JSON.stringify(facts, null, 2)}\n\nTASK: Describe the player's ${phase} in 2-3 sentences. Address as "you". Schema: { "prose": string }`;
+  const sys = systemPrompt(audience, language) + text.jsonHard;
+  const task = `FACTS:\n${JSON.stringify(facts, null, 2)}\n\n${text.taskPhase(phaseLabelLocal)}`;
 
   try {
     const result = await chatJsonRetry<{ prose?: string }>([
@@ -148,10 +228,8 @@ async function callPhase(
 }
 
 function fallbackPhase(phase: GamePhase, accuracy: number, plies: number, language: Language): string {
-  if (language === 'bg') {
-    return `Във фазата ${phase === 'opening' ? 'дебют' : phase === 'middlegame' ? 'мителшпил' : 'ендшпил'} точността ти беше ${accuracy.toFixed(1)}% за ${plies} полу-хода.`;
-  }
-  return `Your ${phase} accuracy was ${accuracy.toFixed(1)}% across ${plies} plies.`;
+  const text = reviewText(language);
+  return text.fallbackPhase(text.phase[phase], accuracy.toFixed(1), plies);
 }
 
 async function callKeyMoment(
@@ -167,11 +245,12 @@ async function callKeyMoment(
   // Piece inventory of the position BEFORE the moment — without this, small
   // models hallucinate pieces and squares that aren't on the board.
   const board = boardPiecesNatural(moment.fen_before, moment.side, language, audience);
+  const text = reviewText(language);
 
   const facts = {
     lang: language,
     audience,
-    perspective: language === 'bg' ? 'ти' : 'you',
+    perspective: text.perspective,
     moment: {
       ply: moment.ply,
       side: moment.side,
@@ -189,41 +268,26 @@ async function callKeyMoment(
     },
   };
 
-  const sys = systemPrompt(audience, language) + (language === 'bg' ? JSON_HARD_BG : JSON_HARD_EN);
-  const task = language === 'bg'
-    ? `FACTS:\n${JSON.stringify(facts, null, 2)}\n\nTASK: Опиши този ключов момент. Обърни се с "ти". Слотове:
-- title: ≤6 думи, без точка в края.
-- what_happened: 1 изречение — какво направи играчът и оценката на двигателя.
-- why_it_matters: 1 изречение — каква е цената или принципът зад грешката/успеха.
-- what_to_learn: 1 изречение — какво да запомниш.
-Схема: { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`
-    : `FACTS:\n${JSON.stringify(facts, null, 2)}\n\nTASK: Describe this key moment. Address as "you". Slots:
-- title: ≤6 words, no period at the end.
-- what_happened: 1 sentence — what the player did and the engine's verdict.
-- why_it_matters: 1 sentence — the cost or the principle behind it.
-- what_to_learn: 1 sentence — the takeaway.
-Schema: { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`;
+  const sys = systemPrompt(audience, language) + text.jsonHard;
+  const task = `FACTS:\n${JSON.stringify(facts, null, 2)}\n\n${text.taskMoment}`;
 
   try {
     const result = await chatJsonRetry<{ title?: string; what_happened?: string; why_it_matters?: string; what_to_learn?: string; prose?: string }>([
       { role: 'system', content: sys },
       { role: 'user', content: task },
     ], { temperature: 0.2, numPredict: 400, signal });
-    const title = (result.title ?? '').trim() || (language === 'bg' ? 'Ключов момент' : 'Key moment');
+    const title = (result.title ?? '').trim() || text.keyMoment;
     // Slot-fill OR legacy `prose` field — accept both for backward compat.
     const prose = result.prose?.trim() || joinSlots(result.what_happened, result.why_it_matters, result.what_to_learn) || fallbackMoment(moment, language);
     return { ...moment, title, prose };
   } catch {
-    return { ...moment, title: language === 'bg' ? 'Ключов момент' : 'Key moment', prose: fallbackMoment(moment, language) };
+    return { ...moment, title: text.keyMoment, prose: fallbackMoment(moment, language) };
   }
 }
 
 function fallbackMoment(m: KeyMomentSummary, language: Language): string {
   const cls = verdictPhrase(m.classification, language);
-  if (language === 'bg') {
-    return `На полу-ход ${m.ply} играта се обърна. ${cls}. Загубата беше около ${m.cp_loss} стотни от пешка.`;
-  }
-  return `On ply ${m.ply} the game turned. ${cls}. The cost was about ${m.cp_loss} centipawns.`;
+  return reviewText(language).fallbackMoment(m.ply, cls, m.cp_loss);
 }
 
 async function callSummary(
@@ -247,10 +311,11 @@ async function callSummary(
     counts[m.classification]++;
   }
 
+  const text = reviewText(language);
   const facts = {
     lang: language,
     audience,
-    perspective: language === 'bg' ? 'ти' : 'you',
+    perspective: text.perspective,
     your_accuracy: userAcc,
     opponent_accuracy: oppAcc,
     estimated_elo: userElo,
@@ -259,10 +324,8 @@ async function callSummary(
     opening: analysis.opening_name ? { eco: analysis.opening_eco, name: analysis.opening_name } : null,
   };
 
-  const sys = systemPrompt(audience, language) + (language === 'bg' ? JSON_HARD_BG : JSON_HARD_EN);
-  const task = language === 'bg'
-    ? `FACTS:\n${JSON.stringify(facts, null, 2)}\n\nTASK: Обобщи партията за играча. Обърни се с "ти". Схема: { "summary": string (3-4 изречения), "skill_assessment": string (1 изречение за нивото), "opening_prose": string (≤2 изречения за дебюта) }`
-    : `FACTS:\n${JSON.stringify(facts, null, 2)}\n\nTASK: Summarize the game for the player. Address as "you". Schema: { "summary": string (3-4 sentences), "skill_assessment": string (1 sentence on skill), "opening_prose": string (≤2 sentences on the opening) }`;
+  const sys = systemPrompt(audience, language) + text.jsonHard;
+  const task = `FACTS:\n${JSON.stringify(facts, null, 2)}\n\n${text.taskSummary}`;
 
   try {
     const result = await chatJsonRetry<{ summary?: string; skill_assessment?: string; opening_prose?: string }>([
@@ -284,17 +347,14 @@ async function callSummary(
 }
 
 function fallbackSummary(acc: number, counts: Record<Classification, number>, language: Language): string {
-  if (language === 'bg') {
-    return `Точността ти беше ${acc.toFixed(1)}%. Имаше ${counts.brilliant} брилянтни, ${counts.mistake} грешки и ${counts.blunder} блъндера.`;
-  }
-  return `Your accuracy was ${acc.toFixed(1)}%. You had ${counts.brilliant} brilliant moves, ${counts.mistake} mistakes, and ${counts.blunder} blunders.`;
+  return reviewText(language).fallbackSummary(acc.toFixed(1), counts.brilliant, counts.mistake, counts.blunder);
 }
 function fallbackSkill(elo: number | null, language: Language): string {
-  if (elo == null) return language === 'bg' ? 'Все още нямаме оценка на нивото.' : 'No skill estimate yet.';
-  return language === 'bg' ? `Партията ти изглежда на ниво около ${elo} Elo.` : `This game played at roughly ${elo} Elo.`;
+  const text = reviewText(language);
+  return elo == null ? text.fallbackSkillNone : text.fallbackSkill(elo);
 }
 function fallbackOpening(name: string, language: Language): string {
-  return language === 'bg' ? `Започна с ${name} — солиден избор.` : `You opened with ${name} — a solid choice.`;
+  return reviewText(language).fallbackOpening(name);
 }
 
 /** Build the full Game Review. Emits onProgress events as steps complete. */

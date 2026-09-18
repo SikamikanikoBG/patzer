@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LANGUAGES, type Language } from '../lib/languages';
 import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
 import { api } from '../api';
 import { useAuth, type Profile, type BoardTheme, type SiteTheme } from '../state/auth';
@@ -51,7 +52,7 @@ export default function Settings() {
     setTimeout(() => setSaved(false), 1800);
   }
 
-  const langVoices = voices.filter((v) => v.lang.toLowerCase().startsWith(form.language === 'bg' ? 'bg' : 'en'));
+  const langVoices = voices.filter((v) => v.lang.toLowerCase().startsWith(form.language));
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-24">
@@ -100,10 +101,8 @@ export default function Settings() {
           </div>
           <div>
             <label className="label mb-1 block">{t('settings.language')}</label>
-            <select className="input" value={form.language} onChange={(e) => set('language', e.target.value as 'en' | 'bg')}>
-              <option value="en">{t('common.english')}</option>
-              <option value="bg">{t('common.bulgarian')}</option>
-             <option value="es">{t('common.spanish')}</option> 
+            <select className="input" value={form.language} onChange={(e) => set('language', e.target.value as Language)}>
+              {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{t(l.nameKey)}</option>)}
             </select>
           </div>
           <div>
@@ -285,7 +284,7 @@ export default function Settings() {
                 </div>
               </div>
               <button onClick={() => {
-                const text = form.language === 'bg' ? t('settings.ttsPreviewTextBg') : t('settings.ttsPreviewText');
+                const text = i18n.getFixedT(form.language)('settings.ttsPreviewText');
                 speak(text, { voice: form.tts_voice, rate: form.tts_rate, pitch: form.tts_pitch, lang: form.language });
               }} className="btn-secondary self-start text-sm">
                 <Volume2 className="h-4 w-4" /> {t('settings.ttsPreview')}

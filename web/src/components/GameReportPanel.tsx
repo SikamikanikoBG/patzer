@@ -5,10 +5,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { renderMarkdown, stripReasoning } from '../lib/markdown';
+import type { Language } from '../lib/languages';
 
 export interface GameReviewProse {
   version: number;
-  language: 'en' | 'bg';
+  language: Language;
   audience: string;
   opening: { eco: string; name: string; prose: string } | null;
   summary: string;

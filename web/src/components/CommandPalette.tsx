@@ -15,6 +15,7 @@ import { api } from '../api';
 import { useAuth } from '../state/auth';
 import type { GameRow } from '../types';
 import { cn } from '../lib/utils';
+import { LANGUAGES } from '../lib/languages';
 
 interface Action {
   id: string;
@@ -72,8 +73,7 @@ export default function CommandPalette({ open, onClose }: Props) {
       base.push({ id: 'nav-admin-system', label: t('admin.system'), icon: Server, group: 'nav', run: () => { nav('/admin/system'); onClose(); } });
     }
     base.push(
-      { id: 'lang-en', label: 'Switch to English', icon: Globe, group: 'action', keywords: 'language english', run: async () => { await i18n.changeLanguage('en'); onClose(); } },
-      { id: 'lang-bg', label: 'Превключи на Български', icon: Globe, group: 'action', keywords: 'language bulgarian bg', run: async () => { await i18n.changeLanguage('bg'); onClose(); } },
+      ...LANGUAGES.map((l) => ({ id: `lang-${l.code}`, label: `${t('palette.switchLanguage', { defaultValue: 'Switch to' })} ${l.native}`, icon: Globe, group: 'action' as const, keywords: `language ${l.native.toLowerCase()} ${l.code}`, run: async () => { await i18n.changeLanguage(l.code); onClose(); } })),
       { id: 'theme-light', label: t('palette.themeLight', { defaultValue: 'Light theme' }), icon: Sun, group: 'action', run: async () => { await api.patch('/api/settings/profile', { site_theme: 'light' }); await refresh(); onClose(); } },
       { id: 'theme-dark', label: t('palette.themeDark', { defaultValue: 'Dark theme' }), icon: Moon, group: 'action', run: async () => { await api.patch('/api/settings/profile', { site_theme: 'dark' }); await refresh(); onClose(); } },
       { id: 'logout', label: t('common.logout'), icon: LogOut, group: 'action', run: async () => { await api.post('/api/auth/logout'); await refresh(); nav('/login'); onClose(); } },
