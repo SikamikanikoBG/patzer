@@ -6,7 +6,16 @@ import type { Classification } from '../types.js';
 // or estimateElo curve changes — analyses cached at an older version will be
 // silently re-run on next view.
 //
-// v8 (this revision) — calibrated against Hikaru April 2026 archive:
+// v9 — Brilliant was unreachable. The sacrifice test compared the player's
+//   material before vs after *their own move*, which can never drop (only
+//   captures change material, and you can't capture your own pieces). 4,482
+//   classified moves on the reference DB, zero Brilliants. Now measured as the
+//   material the opponent can win on the very next move, net of whatever the
+//   played move captured (Bxf7+ = bishop hanging, pawn taken ⇒ net 2). The
+//   PV replay recapture filter is unchanged; a PV in which the opponent
+//   declines the capture counts as a sound sacrifice.
+//
+// v8 — calibrated against Hikaru April 2026 archive:
 //   - Great tightened: gap threshold 150 → 200 cp, and the "near-best
 //     (cpLoss ≤ 30) + only-good-move" pattern from v7 is removed entirely.
 //     chess.com never tags Great unless the player picked engine #1, and we
@@ -21,7 +30,7 @@ import type { Classification } from '../types.js';
 //   survive recapture); cpLossForAcpl caps ACPL at 300.
 // v6 — chess.com Game Review parity pass. See `.claude/specs/chess-math.md`.
 // ─────────────────────────────────────────────────────────────────────────────
-export const SCORING_VERSION = 8;
+export const SCORING_VERSION = 9;
 
 // Soft ceiling for ply-based book fallback when no ECO lookup is provided.
 // With ECO-based detection (the analyzer passes `inBook` per ply), this is
@@ -90,40 +99,84 @@ export function materialFromFen(fen: string): { white: number; black: number } {
   return { white, black };
 }
 
+const PIECE_VALUE: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+function uciToMove(uci: string): { from: string; to: string; promotion?: string } {
+  return { from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4) || undefined };
+}
+
+// Static exchange evaluation on one square: how much material does the side
+// to move net by starting a capture sequence there, assuming both sides keep
+// capturing with their least valuable attacker and either may stop when
+// continuing would lose. Uses chess.js legal-move generation, so pins, checks
+// and king safety are respected. Bounded by the number of attackers.
+export function staticExchange(fen: string, square: string): number {
+  let chess: Chess;
+  try { chess = new Chess(fen); } catch { return 0; }
+  const captures = chess.moves({ verbose: true }).filter((m) => m.to === square && m.captured);
+  if (captures.length === 0) return 0;
+  const attacker = captures.reduce((best, m) => (PIECE_VALUE[m.piece]! < PIECE_VALUE[best.piece]! ? m : best));
+  const gain = PIECE_VALUE[attacker.captured!]!;
+  chess.move(attacker);
+  // The opponent may recapture (recursively) or decline; we may stop after our
+  // capture, so the sequence value is never negative for the initiator.
+  return Math.max(0, gain - staticExchange(chess.fen(), square));
+}
+
+// How much material (pawn-equivalents) did the played move put en prise, net of
+// what it captured? Runs a static exchange on every square the opponent can
+// capture on in the position after the move and takes the best one. A player's
+// own move can never lower their own material, so this — not a before/after
+// diff — is what a "sacrifice" looks like at the moment it is offered.
+export function hangingMaterial(fenBefore: string, fenAfter: string, sideToMove: 'white' | 'black'): number {
+  const matBefore = materialFromFen(fenBefore);
+  const matAfter = materialFromFen(fenAfter);
+  const oppBefore = sideToMove === 'white' ? matBefore.black : matBefore.white;
+  const oppAfter = sideToMove === 'white' ? matAfter.black : matAfter.white;
+  const gained = oppBefore - oppAfter; // what our move captured
+  let biggest = 0;
+  try {
+    const targets = new Set(new Chess(fenAfter).moves({ verbose: true }).filter((m) => m.captured).map((m) => m.to));
+    for (const sq of targets) biggest = Math.max(biggest, staticExchange(fenAfter, sq));
+  } catch {
+    return 0;
+  }
+  return biggest - gained;
+}
+
 // Does the engine's PV resolve into an equalising recapture sequence?
 // Brilliant requires a *real* sacrifice — if the opponent's PV reply trades
-// back, we replay 4 plies through chess.js and compare end-material to
-// pre-move material. If we've recovered to within 1 pawn, the sacrifice was
-// illusory and the move should classify as Best, not Brilliant.
+// back, we replay 4 plies through chess.js and compare the end material
+// balance to the pre-move balance. If we're back within 1 pawn, the sacrifice
+// was illusory and the move should classify as Best, not Brilliant.
 function isTrivialRecapture(args: {
   sideToMove: 'white' | 'black';
-  matBefore: { white: number; black: number };
-  matAfterPlayed: { white: number; black: number };
+  fenBefore: string;            // FEN before the played move
   pv: string[];                 // engine PV from the position AFTER the played move, in UCI
   fenAfterPlayed: string;       // FEN after the played move (chess.js wants this)
 }): boolean {
-  const playerMatBefore = args.sideToMove === 'white' ? args.matBefore.white : args.matBefore.black;
-  const playerMatAfter = args.sideToMove === 'white' ? args.matAfterPlayed.white : args.matAfterPlayed.black;
-  const lossNow = playerMatBefore - playerMatAfter;
-  if (lossNow <= 0) return true; // didn't actually lose anything ⇒ not a sac at all
+  // Compare material *balance* (ours minus theirs), not our own count: a
+  // recapture restores the balance by lowering the opponent's material.
+  const balance = (fen: string) => {
+    const m = materialFromFen(fen);
+    return args.sideToMove === 'white' ? m.white - m.black : m.black - m.white;
+  };
+  const balanceBefore = balance(args.fenBefore);
 
-  // Replay up to 4 plies of the engine PV (opponent reply + our recapture +
-  // opponent's follow-up + our second tempo) and re-check material.
+  // No PV, or the engine's reply is not a capture: the opponent declines the
+  // offer, which is exactly what a sound sacrifice looks like. Not trivial.
   if (args.pv.length < 1) return false;
   try {
     const replay = new Chess(args.fenAfterPlayed);
-    for (const uci of args.pv.slice(0, 4)) {
-      const m = replay.move({
-        from: uci.slice(0, 2),
-        to: uci.slice(2, 4),
-        promotion: uci.slice(4) || undefined,
-      });
-      if (!m) break;
+    const reply = replay.move(uciToMove(args.pv[0]!));
+    if (!reply.captured) return false;
+    // Replay up to 3 more plies (our recapture, opponent's follow-up, our
+    // second tempo) and re-check material.
+    for (const uci of args.pv.slice(1, 4)) {
+      replay.move(uciToMove(uci));
     }
-    const matEnd = materialFromFen(replay.fen());
-    const playerMatAtEnd = args.sideToMove === 'white' ? matEnd.white : matEnd.black;
-    // Recovered to within 1 pawn of starting material ⇒ trivial trade, not a sac.
-    return (playerMatBefore - playerMatAtEnd) <= 1;
+    // Recovered to within 1 pawn of the starting balance ⇒ trivial trade, not a sac.
+    return (balanceBefore - balance(replay.fen())) <= 1;
   } catch {
     return false;
   }
@@ -179,20 +232,16 @@ export function refineClassification(args: {
   //   - outside opening (ply > BOOK_PLIES, consistent with the book rule above)
   //   - player is NOT already crushing (eval ≤ +500cp before)
   //   - resulting position is not bad (eval ≥ −50cp after)
-  //   - move sacrifices ≥ 2 pawns of material (i.e. ≥ minor piece)
+  //   - move leaves ≥ 2 pawns of material en prise, net of what it captured
+  //     (i.e. ≥ a minor piece hangs, or a rook for a pawn, …)
   //   - cp_loss ≤ 20 (it's still the engine's #1, just sometimes ties with #2)
   //   - sacrifice is genuine — not a recapture sequence that nets to zero
   if (isBest && ply > BOOK_PLIES && playerEvalBeforeCp <= 500 && playerEvalAfterCp >= -50 && cpLoss <= 20) {
-    const matBefore = materialFromFen(fenBefore);
-    const matAfter = materialFromFen(fenAfter);
-    const playerMatBefore = sideToMove === 'white' ? matBefore.white : matBefore.black;
-    const playerMatAfter = sideToMove === 'white' ? matAfter.white : matAfter.black;
-    const sacrificed = playerMatBefore - playerMatAfter;
+    const sacrificed = hangingMaterial(fenBefore, fenAfter, sideToMove);
     if (sacrificed >= 2) {
       const trivial = isTrivialRecapture({
         sideToMove,
-        matBefore,
-        matAfterPlayed: matAfter,
+        fenBefore,
         pv: args.pvAfterPlayed ?? [],
         fenAfterPlayed: fenAfter,
       });
