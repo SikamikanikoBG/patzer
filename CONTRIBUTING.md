@@ -24,9 +24,7 @@ Requirements: Node ≥ 20.11.
 git clone https://github.com/SikamikanikoBG/patzer.git
 cd patzer
 npm install
-# Windows: download Stockfish into ./bin/
-npm run setup
-# Linux/macOS: install Stockfish via package manager (apt / brew)
+npm run setup   # downloads Stockfish 17 into ./bin/ (Windows, Linux, macOS)
 npm run dev
 ```
 
@@ -57,10 +55,18 @@ Two key invariants:
 
 ```bash
 npm run typecheck
+npm test
 npm run build
 ```
 
-Both must be green. CI runs them on Node 20 and 22 plus a Docker image build.
+All three must be green. CI runs them on Node 20 and 22 plus a Docker image build.
+
+## Tests
+
+`npm test` runs [vitest](https://vitest.dev). Server tests live in `server/test/*.test.ts` (kept out of
+`server/dist`); web tests can sit next to their component as `*.test.ts(x)`. `npm run test:watch` for a
+watch loop. If you touch `server/src/chess/classifier.ts` or `glicko.ts`, extend the matching suite — the
+rating and classification math is exactly the code where a silent regression hurts everyone for weeks.
 
 ## Commit style
 
@@ -79,17 +85,17 @@ No strict format, but please:
 
 ## Adding a language
 
-Two files plus one register call. Pick an ISO 639-1 code (`es` for Spanish, `ru` for Russian, etc.) — call it `<code>` below.
+Every language-dependent string is in a lookup table keyed by language code, so a new language is one
+entry per table — no `if (language === …)` branches to chase. Pick an ISO 639-1 code (`es`, `ru`, …) — call
+it `<code>` below. Spanish (`es`, PR #17) is a complete worked example to diff against.
 
 1. **UI strings.** Copy `web/src/locales/en.json` to `web/src/locales/<code>.json` and translate every string. Don't change the keys. Plurals use `i18next`'s `{{count}}` syntax — leave those tokens alone.
-2. **Coach prompt fragments.** The coach speaks the player's language. The strings live in `server/src/coach/prompts.ts`:
-   - `CLASS_PHRASE_<EN|BG>` — one phrase per move classification (`brilliant`, `best`, …, `miss`).
-   - `severityFromCpLoss` — language-tagged blocks for "small / medium / huge" mistake magnitude.
-   - The `headerEn` / `headerBg` template literals plus the matching `askEn` / `askBg` instruction trailers near the bottom of the file.
-   - `sanToNatural` — translates piece names (knight → "horsey" for kids, etc.) per language.
-   Add `<code>` variants alongside the EN/BG ones, then plumb them through the existing `language === 'bg' ? … : …` branches.
-3. **Register the locale** in `web/src/i18n.ts` (the `resources` map) and add the option in `web/src/pages/Settings.tsx` (the language `<select>`) plus `web/src/pages/Setup.tsx` (the `LangBtn` row).
-4. **Database default.** The `profiles.language` column is a free-form `TEXT NOT NULL DEFAULT 'en'` (see `server/src/db.ts`), so no migration is needed — existing users keep their language.
+2. **Register it once** in `web/src/lib/languages.ts` (`LANGUAGES`: code, short badge, name key, native name, BCP-47 tag for text-to-speech) and import the JSON in `web/src/i18n.ts`. Every toggle, select, TTS voice filter and signup default reads that list.
+3. **Server enums.** Add `<code>` to the `z.enum(['en', 'bg', 'es'])` language schemas (`grep -rn "'es'" server/src/routes`) and to the `Language` type in `server/src/types.ts`.
+4. **Coach text.** The coach speaks the player's language:
+   - `server/src/coach/prompts.ts` — add a `<code>` entry to each `Record<Language, …>` table (`PIECE_NAMES`, `AUDIENCE_DATA`, `PERSONA`, `HARD_RULES`, `CASTLE_*`, `MOVE_DESCRIPTIONS`, `CLASS_PHRASES`, and the evaluation/material phrase tables further down).
+   - `server/src/coach/review.ts` — add a `<code>` entry to `REVIEW_TEXT` (Game Review task prompts and fallback sentences).
+5. **Database default.** The `profiles.language` column is a free-form `TEXT NOT NULL DEFAULT 'en'` (see `server/src/db.ts`), so no migration is needed — existing users keep their language.
 
 To test locally: `npm run dev`, switch to your language in *Settings*, play a couple of moves with the coach on, and confirm the coach output stays in your language across kid / beginner / intermediate / advanced audience tiers.
 

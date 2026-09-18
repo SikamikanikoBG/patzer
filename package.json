@@ -17,12 +17,15 @@
     "dev": "concurrently -n server,web -c blue,magenta \"npm:dev -w server\" \"npm:dev -w web\"",
     "build": "npm run build -w server && npm run build -w web",
     "start": "npm run start -w server",
-    "typecheck": "tsc -b server web --noEmit",
-    "setup": "node scripts/setup.js"
+    "typecheck": "tsc -b server web --noEmit && tsc -p server/test/tsconfig.json",
+    "setup": "node scripts/setup.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.7"
   },
   "engines": {
     "node": ">=20.11"
