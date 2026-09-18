@@ -1,5 +1,5 @@
 export type Role = 'admin' | 'user';
-export type Language = 'en' | 'bg';
+export type Language = 'en' | 'bg' | 'es';
 export type Audience = 'kid' | 'beginner' | 'intermediate' | 'advanced';
 export type CoachBehavior = 'silent' | 'on_demand' | 'always_on_pedagogical';
 export type Difficulty = 'kid' | 'beginner' | 'easy' | 'medium' | 'hard' | 'master' | 'stockfish';
