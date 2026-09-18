@@ -630,5 +630,34 @@
       "rapid": "Rápidas",
       "daily": "Diarias"
     }
+  },
+  "threat": {
+    "title": "¿Cuál es la amenaza?",
+    "show": "Mostrar amenaza",
+    "if": "Si {{side}} pasara",
+    "inCheck": "En jaque: la amenaza es el propio jaque.",
+    "mate": "jaque mate",
+    "mateIn": "mate en {{n}}",
+    "takes": "captura el {{piece}} en {{square}}",
+    "check": "da jaque",
+    "winsDecisive": "ganando material decisivo",
+    "winsRook": "ganando una torre o más",
+    "winsPiece": "ganando una pieza",
+    "winsExchange": "ganando la calidad",
+    "winsPawn": "ganando un peón",
+    "small": "una pequeña ganancia",
+    "none": "sin amenaza material inmediata: una jugada tranquila de mejora",
+    "side": {
+      "white": "las blancas",
+      "black": "las negras"
+    },
+    "pieces": {
+      "pawn": "peón",
+      "knight": "caballo",
+      "bishop": "alfil",
+      "rook": "torre",
+      "queen": "dama",
+      "king": "rey"
+    }
   }
 }

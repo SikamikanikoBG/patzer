@@ -10,6 +10,7 @@ import {
   Microscope, RotateCcw, FlipVertical2, Wand2, Loader2,
 } from 'lucide-react';
 import ChessBoard from '../components/ChessBoard';
+import ThreatPanel from '../components/ThreatPanel';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 
@@ -269,6 +270,16 @@ export default function Lab() {
               {t('lab.idlePrompt', { defaultValue: 'Click Analyze to see what Stockfish thinks.' })}
             </div>
           )}
+
+          <ThreatPanel
+            fen={fen}
+            currentCpWhite={(() => {
+              const top = analyze.data?.lines?.[0];
+              if (!top || analyze.data?.fen !== fen) return 0;
+              const cp = top.mate != null ? (top.mate > 0 ? 10000 : -10000) : (top.cp ?? 0);
+              return turn === 'white' ? cp : -cp;
+            })()}
+          />
 
           {history.length > 0 && (
             <div className="card overflow-hidden">

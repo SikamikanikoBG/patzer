@@ -613,8 +613,51 @@
     "sendChallenge": "Send challenge",
     "challengeHint": "They’ll get a live invitation if online.",
     "backToPlayers": "All players",
-    "sort": { "rating": "Rating", "winrate": "Win %", "games": "Games", "name": "Name" },
-    "streak": { "win": "win streak", "loss": "loss streak", "draw": "draw streak" },
-    "tc": { "bullet": "Bullet", "blitz": "Blitz", "rapid": "Rapid", "daily": "Daily" }
+    "sort": {
+      "rating": "Rating",
+      "winrate": "Win %",
+      "games": "Games",
+      "name": "Name"
+    },
+    "streak": {
+      "win": "win streak",
+      "loss": "loss streak",
+      "draw": "draw streak"
+    },
+    "tc": {
+      "bullet": "Bullet",
+      "blitz": "Blitz",
+      "rapid": "Rapid",
+      "daily": "Daily"
+    }
+  },
+  "threat": {
+    "title": "What's the threat?",
+    "show": "Show threat",
+    "if": "If {{side}} passed",
+    "inCheck": "In check — the threat is the check itself.",
+    "mate": "checkmate",
+    "mateIn": "mate in {{n}}",
+    "takes": "takes the {{piece}} on {{square}}",
+    "check": "gives check",
+    "winsDecisive": "winning decisive material",
+    "winsRook": "winning a rook or more",
+    "winsPiece": "winning a piece",
+    "winsExchange": "winning the exchange",
+    "winsPawn": "winning a pawn",
+    "small": "a small gain",
+    "none": "no immediate material threat — a quiet improving move",
+    "side": {
+      "white": "White",
+      "black": "Black"
+    },
+    "pieces": {
+      "pawn": "pawn",
+      "knight": "knight",
+      "bishop": "bishop",
+      "rook": "rook",
+      "queen": "queen",
+      "king": "king"
+    }
   }
 }

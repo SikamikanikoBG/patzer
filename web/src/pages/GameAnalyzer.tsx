@@ -15,6 +15,7 @@ import KeyMomentsList from '../components/KeyMomentsList';
 import OpeningBanner from '../components/OpeningBanner';
 import ClassificationBadge from '../components/ClassificationBadge';
 import CapturedPieces from '../components/CapturedPieces';
+import ThreatPanel from '../components/ThreatPanel';
 import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
@@ -493,6 +494,8 @@ export default function GameAnalyzer() {
                 onAdvance={() => setPly((p) => Math.min(positions.length - 1, p + 1))}
                 onHover={setLinesHover}
               />
+
+              <ThreatPanel fen={currentFen} currentCpWhite={currentEvalCp} />
 
               <GameMetaToolbar
                 gameId={gameId}
