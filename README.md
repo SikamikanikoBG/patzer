@@ -45,7 +45,7 @@ Patzer is a tiny, self-hosted take on the Chess.com / Lichess workflow you actua
 - **Players & profiles** — a directory of everyone on your server with a rating leaderboard, live presence and public profiles (record, per-time-class ratings, your head-to-head), challenge-from-profile, and a "missed invitations" rail.
 - **AI Coach (your LLM)** — point at any [Ollama](https://ollama.com) host. Audience-tuned voices for Kid / Beginner / Intermediate / Advanced. Anti-hallucination by design — chess facts are computed server-side; the LLM only renders them.
 - **Family-ready** — multi-user with admin console, per-profile language, kid-mode blunder warnings, "horsey" piece names for the youngest profiles.
-- **Multilingual** — EN + BG out of the box, UI *and* coach prompts. PRs for more languages welcome.
+- **Multilingual** — English, Bulgarian and Spanish out of the box, UI *and* coach prompts. Adding a language is one table entry per file — see CONTRIBUTING.
 - **Self-hosted, single container** — runs on a Pi, a NAS, an old laptop. Your games never leave home.
 
 ## Screenshots

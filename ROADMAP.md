@@ -2,21 +2,20 @@
 
 A loose, opinionated list of where Patzer is headed. Items aren't promises — they're the maintainer's current view, and they shift. Open an issue / discussion if you want to nudge priority.
 
-## Now (3.x)
+## Now
 
-- **Opening explorer.** Live master-game stats from Lichess ("Master games here: 47% white, 14% draw") layered on top of the local ECO/name lookup that already exists. → [#11](https://github.com/SikamikanikoBG/patzer/issues/11)
-- **PvP draw / takeback / rematch.** The PvP lobby and live connection both work now; the protocol is still missing offer-draw, takeback-request, and one-click rematch. → [#10](https://github.com/SikamikanikoBG/patzer/issues/10)
-- **Mobile play layout.** Sticky bottom action bar, swipe-up sheet for the moves panel, safe-area padding. → [#13](https://github.com/SikamikanikoBG/patzer/issues/13)
+- **Drag gesture for the phone moves sheet** — the tap-to-expand sheet shipped in 7.10; a real swipe is the follow-up.
+- **Master games when Lichess reopens its API** — the panel is wired (7.10) and waits on [lila#19610](https://github.com/lichess-org/lila/issues/19610); a self-hosted explorer works today via `LICHESS_EXPLORER_URL`.
+- **More languages.** Spanish landed in 7.10 thanks to @fiedri; the recipe in CONTRIBUTING is now one table entry per file. Any language a contributor actually speaks is welcome.
 
 ## Soon
 
-- **Threats display.** "What's the opponent threatening here?" toggle in Game Review. → [#12](https://github.com/SikamikanikoBG/patzer/issues/12)
-- **Cross-platform setup.** `setup.sh` mirroring `setup.ps1`. → [#16](https://github.com/SikamikanikoBG/patzer/issues/16)
-- **Test suite.** vitest with coverage on the classifier and Glicko rating math. → [#15](https://github.com/SikamikanikoBG/patzer/issues/15)
-- **More languages.** A third locale alongside English/Bulgarian — Spanish is the likely first win, but any language a contributor actually speaks is welcome. → [#14](https://github.com/SikamikanikoBG/patzer/issues/14)
+- **Split `prompts.ts`** into `locales/*.ts`, `moves.ts`, `facts.ts` (same public API) — proposed by @fiedri in #17.
+- **Web component tests** — the vitest harness (7.10) covers the server; the React side has one pure-helper suite so far.
 
 ## Shipped since this was last updated
 
+- **7.10.0** — Spanish (#14/#17), PvP draw / takeback / rematch (#10), "What's the threat?" (#12), master-game stats (#11), phone Play layout (#13), `setup.sh` (#16), vitest suite + e2e (#15); PvP sessions and clocks fixed; Brilliant classification fixed.
 - **Tactic puzzles from your blunders** — `/train`, personalized from your own analyzed games.
 - **MultiPV in the analyzer** — multiple candidate lines in Lab/Game Review, plus the full `brilliant`→`miss` classification tier.
 - **Stockfish strength tuning** — `UCI_LimitStrength` + `UCI_Elo` per difficulty tier.

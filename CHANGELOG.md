@@ -4,6 +4,73 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.10.0] — 2026-09-18
+
+### Spanish, tests, PvP negotiation, and two bugs nobody could have seen
+
+This release closes every open issue on the tracker (#10–#16) and merges the
+first external feature PR. Thanks to **@fiedri** for the Spanish translation
+and — more than that — for restructuring the coach prompts so the *next*
+language is a table entry instead of a branch in every function.
+
+- **New: Spanish.** The whole app — UI, setup wizard, coach persona and
+  hard rules, move narration, Game Review prose — in `es`. Every language
+  toggle now iterates one registry (`web/src/lib/languages.ts`), so adding a
+  fourth language touches one list, one JSON file and the server enums; the
+  contributor guide has the recipe. Text-to-speech picks a Spanish voice
+  and previews in Spanish. (#14, #17 by @fiedri)
+- **New: PvP draw offers, takebacks and one-click rematch.** Offer a draw
+  (crossing offers count as agreement), ask for a takeback (rolls back to
+  before your last move, one or two plies as needed), and from the game-over
+  card start a rematch with colours swapped and the same clock — no trip
+  back through the lobby. Offers are relayed live, survive a refresh, and are
+  cancelled by any move. (#10)
+- **New: "What's the threat?" in Game Review and Lab.** If you passed, what
+  would the opponent play? A null-move engine probe rendered in plain words
+  from the move's own facts — "Nxf7, takes the pawn on f7, winning a piece",
+  "Qxf7#, checkmate" — never an invented line, no LLM involved. (#12)
+- **New: master-game stats.** A "Master games" card under the engine lines
+  with win/draw/loss, game count, ECO name and the top continuations from the
+  Lichess Opening Explorer, proxied and cached server-side, shown next to —
+  never instead of — the engine. `LICHESS_EXPLORER_URL` points it at a
+  self-hosted explorer. Heads-up: Lichess is currently refusing third-party
+  API clients (lila#19610), so the card shows an "unreachable" line until
+  they reopen it or you run your own. (#11)
+- **New: phone layout for Play.** Full-width board, a sticky bottom bar
+  (back/forward, moves, flip, hint, resign, PvP actions in a menu) and a
+  tap-to-expand moves sheet. Desktop also gains a board flip. (#13)
+- **New: `setup.sh`.** `npm run setup` now works on Linux and macOS too —
+  detects OS/CPU, fetches the matching official Stockfish 17 build into
+  `./bin/`, and is safe to re-run. (#16)
+- **New: a real test suite.** `npm test` (vitest) runs in CI on every PR:
+  the classification ladder and Elo calibration, the Glicko-1 math, the PGN
+  save/restore cycle PvP reconnects depend on, the explorer client against a
+  mocked upstream, and the threat/takeback/time-control helpers.
+  `npm run test:e2e` boots a real server and plays a PvP game over two
+  WebSockets. (#15)
+- **Fixed: two-player games never relayed a single move.** Each player has
+  their own `games` row, but PvP sessions were keyed by that row id — so the
+  two humans sat in two separate sessions, each seeing "opponent
+  disconnected". Sessions are now keyed by the shared game id. Found by the
+  new end-to-end test; nobody had reported it because the live instance has
+  never had two people online at once.
+- **Fixed: timed PvP games ran without clocks.** The stored time control is
+  `600+0` but the socket looked it up as the keyword `rapid`; it also made
+  "classical" a 10-minute game. Both formats are understood now and
+  classical is 30 minutes again.
+- **Fixed: Brilliant moves could not exist.** The sacrifice test compared
+  your material before and after *your own* move, which never changes —
+  4,482 classified moves in the reference database and not one Brilliant.
+  Sacrifices are now measured with a static exchange evaluation on the
+  position after the move, net of what it captured, with the engine-line
+  recapture filter comparing material *balance*. Roughly 1 in 100 engine-top
+  moves now qualifies before the filter, which is about what chess.com shows.
+  Scoring version 8 → 9: cached analyses re-run on next view.
+- **Changed: Game Review prose is table-driven.** `review.ts` joins
+  `prompts.ts` in keeping every language string in one lookup — English and
+  Bulgarian output is byte-identical (verified across 26,776 prompt
+  renderings).
+
 ## [7.9.0] — 2026-09-06
 
 ### vLLM support, three bug fixes, and a security pass
