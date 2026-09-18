@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { notifyUser } from '../ws/lobby.js';
-import { classifyTimeControl, defaultTimeControlFor } from '../chess/timeClass.js';
+import { createPvpGamePair } from '../chess/pvpGames.js';
 
 const router = new Hono();
 router.use('*', requireAuth);
@@ -165,40 +165,19 @@ router.post('/:id/accept', (c) => {
   // Acceptor gets the picked color, challenger gets the opposite (if 'random')
   const challengerColor: 'white' | 'black' = finalColor === 'white' ? 'black' : 'white';
 
-  // Create the underlying game pair (one row per user)
+  // Create the underlying game pair (one row per user). Each side is handed
+  // *their own* row id — see createPvpGamePair (and #2 for why it matters).
   const externalId = `pvp-${id}-${Date.now()}`;
-  const startingPgn = ''; // empty until first move
-
-  // Resolve a real "<base>+<inc>" string from the keyword time control. The
-  // legacy column stored just the keyword; v4 normalizes to the real format
-  // so post-game classification (and chesscom-style time_class) is unambiguous.
-  const tcClass = classifyTimeControl(row.time_control);
-  const tcString = tcClass ? defaultTimeControlFor(tcClass) : (row.time_control || 'untimed');
-
-  const insertGame = db.prepare(`
-    INSERT INTO games (user_id, source, external_id, pgn, white, black, result, time_control, end_time, user_color, opponent_user_id, rated, time_class)
-    VALUES (?, 'pvp', ?, ?, ?, ?, NULL, ?, NULL, ?, ?, ?, ?)
-  `);
-
-  // White player's row
-  const whitePlayerId = challengerColor === 'white' ? row.from_user_id : row.to_user_id;
-  const blackPlayerId = challengerColor === 'white' ? row.to_user_id : row.from_user_id;
-  const whiteName = challengerColor === 'white' ? row.from_display_name! : row.to_display_name!;
-  const blackName = challengerColor === 'white' ? row.to_display_name! : row.from_display_name!;
-
-  const rated = tcClass ? 1 : 0; // untimed games are unrated
-  const rWhite = insertGame.run(whitePlayerId, externalId, startingPgn, whiteName, blackName, tcString, 'white', blackPlayerId, rated, tcClass);
-  const rBlack = insertGame.run(blackPlayerId, externalId, startingPgn, whiteName, blackName, tcString, 'black', whitePlayerId, rated, tcClass);
-  // Each player has their own `games` row (own id, own `user_id`) — the WS
-  // handler looks a game up by `WHERE id = ? AND user_id = ?`, so each side
-  // must be handed *their own* row id, not a shared one. Previously both
-  // sides received the White row's id, so whichever player was Black got
-  // routed to a game_id that belonged to the other player and could never
-  // connect (#2 — stuck on "Connecting to game…").
-  const whiteGameId = Number(rWhite.lastInsertRowid);
-  const blackGameId = Number(rBlack.lastInsertRowid);
-  const challengerGameId = challengerColor === 'white' ? whiteGameId : blackGameId;
-  const acceptorGameId = finalColor === 'white' ? whiteGameId : blackGameId;
+  const pair = createPvpGamePair({
+    externalId,
+    whiteUserId: challengerColor === 'white' ? row.from_user_id : row.to_user_id,
+    blackUserId: challengerColor === 'white' ? row.to_user_id : row.from_user_id,
+    whiteName: challengerColor === 'white' ? row.from_display_name! : row.to_display_name!,
+    blackName: challengerColor === 'white' ? row.to_display_name! : row.from_display_name!,
+    timeControl: row.time_control,
+  });
+  const challengerGameId = challengerColor === 'white' ? pair.whiteGameId : pair.blackGameId;
+  const acceptorGameId = finalColor === 'white' ? pair.whiteGameId : pair.blackGameId;
 
   db.prepare(`UPDATE challenges SET status = 'accepted', game_id = ? WHERE id = ?`).run(acceptorGameId, id);
 

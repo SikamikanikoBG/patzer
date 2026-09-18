@@ -20,7 +20,8 @@
     "typecheck": "tsc -b server web --noEmit && tsc -p server/test/tsconfig.json",
     "setup": "node scripts/setup.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "tsx server/test/e2e/pvp-negotiation.ts"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",

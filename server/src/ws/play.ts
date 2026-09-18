@@ -1,6 +1,9 @@
 import { WebSocketServer, type WebSocket } from 'ws';
 import type { Server, IncomingMessage } from 'node:http';
 import { Chess } from 'chess.js';
+import { createPvpGamePair } from '../chess/pvpGames.js';
+import { resolveTimeControl } from '../chess/timeClass.js';
+import { applyTakeback } from '../chess/takeback.js';
 import { lookupUser, SESSION_COOKIE_NAME } from '../auth/sessions.js';
 import { StockfishEngine } from '../chess/stockfish.js';
 import { db } from '../db.js';
@@ -78,7 +81,7 @@ interface BotSession {
 
 // ---- PVP SESSION ----
 
-interface PvpPlayer { user_id: number; ws: WebSocket | null; display_name: string }
+interface PvpPlayer { user_id: number; ws: WebSocket | null; display_name: string; color: 'white' | 'black' }
 interface PvpSession {
   kind: 'pvp';
   game_id: number;
@@ -93,9 +96,20 @@ interface PvpSession {
   saved: boolean;
   analysisEngine: StockfishEngine | null;
   analysisQueue: Promise<void>;
+  // Pending offers, by the colour that made them. Cleared on any move (a draw
+  // offer or takeback request only stands until the position changes).
+  drawOffer: 'white' | 'black' | null;
+  takebackRequest: 'white' | 'black' | null;
+  // After game over: who has asked for a rematch. Both → new game pair.
+  rematchOffer: 'white' | 'black' | null;
+  rematchGame: { whiteGameId: number; blackGameId: number } | null;
 }
 
-const pvpSessions = new Map<number, PvpSession>(); // game_id → session
+// Keyed by the pair's shared external_id, NOT a games row id: each player has
+// their own row (own id) for the same game, and both must land in one session.
+// Keying by row id (pre-7.10) put the two players in two sessions that never
+// saw each other's moves.
+const pvpSessions = new Map<string, PvpSession>(); // external_id → session
 
 // Drop PvP sessions where neither side has been connected for a long time.
 // Without this, an abandoned game accumulates a Chess instance + an idle
@@ -106,15 +120,15 @@ const PVP_IDLE_TTL_MS = 15 * 60_000;
 const PVP_LONG_TTL_MS = 6 * 60 * 60_000; // even with one side connected, drop after 6h
 setInterval(() => {
   const now = Date.now();
-  for (const [gameId, s] of pvpSessions) {
+  for (const [key, s] of pvpSessions) {
     const bothGone = !s.white.ws && !s.black.ws;
     const idleFor = now - s.lastMoveAt;
     if (bothGone && idleFor > PVP_IDLE_TTL_MS) {
       if (s.analysisEngine) s.analysisEngine.quit().catch(() => { /* ignore */ });
-      pvpSessions.delete(gameId);
+      pvpSessions.delete(key);
     } else if (idleFor > PVP_LONG_TTL_MS) {
       if (s.analysisEngine) s.analysisEngine.quit().catch(() => { /* ignore */ });
-      pvpSessions.delete(gameId);
+      pvpSessions.delete(key);
     }
   }
 }, 5 * 60_000).unref();
@@ -579,7 +593,7 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
     return;
   }
 
-  let session = pvpSessions.get(gameId);
+  let session = pvpSessions.get(row.external_id);
   if (!session) {
     // Find paired (opponent's) game row to discover opponent user id
     const opponentId = row.opponent_user_id ?? null;
@@ -588,8 +602,9 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
       ws.close();
       return;
     }
-    const tcKey = row.time_control || 'untimed';
-    const tc = TIME_CONTROLS[tcKey] ?? null;
+    // The row holds a "<base>+<inc>" seconds string (or 'untimed'), never a
+    // preset keyword — resolveTimeControl handles both.
+    const tc = resolveTimeControl(row.time_control);
     // Hydrate chess state from saved PGN if present (lets us resume after
     // a server restart or a F5 refresh in the middle of a game).
     const chess = new Chess();
@@ -620,11 +635,11 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
       external_id: row.external_id,
       chess,
       white: row.user_color === 'white'
-        ? { user_id: user.id, ws: null, display_name: row.white }
-        : { user_id: opponentId, ws: null, display_name: row.white },
+        ? { user_id: user.id, ws: null, display_name: row.white, color: 'white' }
+        : { user_id: opponentId, ws: null, display_name: row.white, color: 'white' },
       black: row.user_color === 'black'
-        ? { user_id: user.id, ws: null, display_name: row.black }
-        : { user_id: opponentId, ws: null, display_name: row.black },
+        ? { user_id: user.id, ws: null, display_name: row.black, color: 'black' }
+        : { user_id: opponentId, ws: null, display_name: row.black, color: 'black' },
       timeControl: tc,
       whiteTimeMs: whiteMs,
       blackTimeMs: blackMs,
@@ -632,8 +647,12 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
       saved: false,
       analysisEngine: null,
       analysisQueue: Promise.resolve(),
+      drawOffer: null,
+      takebackRequest: null,
+      rematchOffer: null,
+      rematchGame: null,
     };
-    pvpSessions.set(gameId, session);
+    pvpSessions.set(row.external_id, session);
   }
 
   const myColor: 'white' | 'black' = row.user_color;
@@ -652,6 +671,8 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
     blackTimeMs: session.blackTimeMs,
     history: session.chess.history(),
     turn: session.chess.turn(),
+    draw_offer: session.drawOffer,
+    takeback_request: session.takebackRequest,
   });
   if (opp.ws) send(opp.ws, 'opponent_status', { online: true });
 
@@ -686,6 +707,9 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
 
         const move = session.chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4) || undefined });
         if (!move) { send(ws, 'error', { message: 'illegal move' }); return; }
+        // A move answers any standing offer: the position it referred to is gone.
+        session.drawOffer = null;
+        session.takebackRequest = null;
 
         const payload = {
           type: 'move_made',
@@ -723,6 +747,88 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
         });
       } else if (type === 'resign') {
         await endPvpGame(session, myColor === 'white' ? '0-1' : '1-0', 'resignation');
+
+      // ---- Draw offers ------------------------------------------------------
+      } else if (type === 'offer_draw') {
+        if (session.saved) return;
+        if (session.drawOffer === opp.color) {
+          // Both sides want it: that's an acceptance.
+          await endPvpGame(session, '1/2-1/2', 'agreement');
+          return;
+        }
+        session.drawOffer = myColor;
+        send(ws, 'draw_offered', { by: myColor });
+        if (opp.ws) send(opp.ws, 'draw_offered', { by: myColor });
+      } else if (type === 'accept_draw') {
+        if (session.saved || session.drawOffer !== opp.color) return;
+        await endPvpGame(session, '1/2-1/2', 'agreement');
+      } else if (type === 'decline_draw') {
+        if (session.drawOffer !== opp.color) return;
+        session.drawOffer = null;
+        send(ws, 'draw_declined', { by: myColor });
+        if (opp.ws) send(opp.ws, 'draw_declined', { by: myColor });
+
+      // ---- Takebacks ---------------------------------------------------------
+      } else if (type === 'request_takeback') {
+        if (session.saved) return;
+        // Nothing of mine to take back yet.
+        const mine = session.chess.history().length >= (session.chess.turn() === myColor[0] ? 2 : 1);
+        if (!mine) return;
+        if (session.takebackRequest === opp.color) return; // theirs is pending; answer it instead
+        session.takebackRequest = myColor;
+        send(ws, 'takeback_requested', { by: myColor });
+        if (opp.ws) send(opp.ws, 'takeback_requested', { by: myColor });
+      } else if (type === 'accept_takeback') {
+        if (session.saved || session.takebackRequest !== opp.color) return;
+        applyTakeback(session, opp.color);
+        session.takebackRequest = null;
+        session.drawOffer = null;
+        const payload = {
+          fen: session.chess.fen(), history: session.chess.history(), turn: session.chess.turn(),
+          whiteTimeMs: session.whiteTimeMs, blackTimeMs: session.blackTimeMs, by: opp.color,
+        };
+        send(ws, 'takeback_applied', payload);
+        if (opp.ws) send(opp.ws, 'takeback_applied', payload);
+        try { persistPvpClocks(session); } catch (err) { console.warn('[pvp] persist failed', err); }
+      } else if (type === 'decline_takeback') {
+        if (session.takebackRequest !== opp.color) return;
+        session.takebackRequest = null;
+        send(ws, 'takeback_declined', { by: myColor });
+        if (opp.ws) send(opp.ws, 'takeback_declined', { by: myColor });
+
+      // ---- Rematch (only once the game is over) ------------------------------
+      } else if (type === 'offer_rematch' || type === 'accept_rematch') {
+        if (!session.saved) return;
+        if (session.rematchGame) {
+          send(ws, 'rematch_start', { game_id: myColor === 'white' ? session.rematchGame.blackGameId : session.rematchGame.whiteGameId });
+          return;
+        }
+        if (session.rematchOffer === opp.color) {
+          // Colours swap: last game's white plays black.
+          const pair = createPvpGamePair({
+            externalId: `pvp-r${session.game_id}-${Date.now()}`,
+            whiteUserId: session.black.user_id,
+            blackUserId: session.white.user_id,
+            whiteName: session.black.display_name,
+            blackName: session.white.display_name,
+            timeControl: session.timeControl ? `${session.timeControl.initial / 1000}+${session.timeControl.increment / 1000}` : 'untimed',
+          });
+          session.rematchGame = pair;
+          // Old white is the new black, and vice versa.
+          if (session.white.ws) send(session.white.ws, 'rematch_start', { game_id: pair.blackGameId });
+          if (session.black.ws) send(session.black.ws, 'rematch_start', { game_id: pair.whiteGameId });
+          return;
+        }
+        if (type === 'accept_rematch') return; // nothing to accept
+        session.rematchOffer = myColor;
+        send(ws, 'rematch_offered', { by: myColor });
+        if (opp.ws) send(opp.ws, 'rematch_offered', { by: myColor });
+      } else if (type === 'decline_rematch') {
+        if (session.rematchOffer !== opp.color) return;
+        session.rematchOffer = null;
+        send(ws, 'rematch_declined', { by: myColor });
+        if (opp.ws) send(opp.ws, 'rematch_declined', { by: myColor });
+
       } else if (type === 'request_hint') {
         const turn = session.chess.turn();
         const isMyTurn = (turn === 'w' && me === session.white) || (turn === 'b' && me === session.black);
@@ -801,7 +907,7 @@ async function endPvpGame(session: PvpSession, result: '1-0' | '0-1' | '1/2-1/2'
   }
 
   if (session.analysisEngine) session.analysisEngine.quit().catch(() => { /* ignore */ });
-  pvpSessions.delete(session.game_id);
+  pvpSessions.delete(session.external_id);
 
   // Apply Glicko-1 rating updates if the game was rated.
   applyRatedUpdate(session, result);

@@ -58,3 +58,38 @@ export function defaultTimeControlFor(cls: TimeClass): string {
       return '1/86400';
   }
 }
+
+export interface ClockSettings { initial: number; increment: number }
+
+/** Keyword presets used by the challenge UI. `untimed` → null (no clocks). */
+export const TIME_CONTROL_PRESETS: Record<string, ClockSettings | null> = {
+  bullet:    { initial: 60_000,      increment: 0 },
+  blitz:     { initial: 5 * 60_000,  increment: 0 },
+  rapid:     { initial: 10 * 60_000, increment: 0 },
+  classical: { initial: 30 * 60_000, increment: 0 },
+  untimed:   null,
+};
+
+/** Resolve either a preset keyword ("rapid") or a stored "<base>+<inc>"
+ *  seconds string ("600+0", what the games row actually holds) into clock
+ *  settings. Anything unparseable means no clocks. */
+export function resolveTimeControl(tc: string | null | undefined): ClockSettings | null {
+  if (!tc) return null;
+  const s = tc.trim().toLowerCase();
+  if (s in TIME_CONTROL_PRESETS) return TIME_CONTROL_PRESETS[s] ?? null;
+  const m = /^(\d+)(?:\+(\d+))?$/.exec(s);
+  if (!m) return null;
+  const base = Number(m[1]);
+  const inc = Number(m[2] ?? 0);
+  if (!Number.isFinite(base) || base <= 0) return null;
+  return { initial: base * 1000, increment: inc * 1000 };
+}
+
+export function normaliseTimeControl(tc: string): string {
+  const key = tc.trim().toLowerCase();
+  if (key in TIME_CONTROL_PRESETS) {
+    const preset = TIME_CONTROL_PRESETS[key];
+    return preset ? `${preset.initial / 1000}+${preset.increment / 1000}` : 'untimed';
+  }
+  return resolveTimeControl(key) ? key : 'untimed';
+}

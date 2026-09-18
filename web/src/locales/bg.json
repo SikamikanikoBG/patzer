@@ -123,7 +123,8 @@
       "insufficient_material": "с недостатъчен материал",
       "fifty_move_or_draw": "по правилото на 50-те хода",
       "time": "по време",
-      "draw": "равенство"
+      "draw": "равенство",
+      "agreement": "по споразумение"
     },
     "playAgain": "Играй отново",
     "review": "Анализирай тази партия",
@@ -137,7 +138,19 @@
     "overPrompt": "Какво следва?",
     "keepLooking": "Само погледни дъската",
     "showResult": "Натисни за резултат",
-    "flip": "Обърни дъската"
+    "flip": "Обърни дъската",
+    "offerDraw": "Предложи реми",
+    "drawOffered": "Реми е предложено — чакаме",
+    "drawOfferedBy": "{{name}} предлага реми",
+    "takeback": "Върни ход",
+    "takebackRequested": "Поискано връщане на ход — чакаме",
+    "takebackRequestedBy": "{{name}} иска да върне ход",
+    "rematch": "Реванш",
+    "rematchOffered": "Реванш е предложен…",
+    "rematchOfferedBy": "{{name}} иска реванш",
+    "acceptRematch": "Приеми реванш",
+    "rematchDeclined": "Реваншът е отказан",
+    "more": "Още"
   },
   "review": {
     "title": "Анализ на партия",

@@ -68,6 +68,9 @@ All three must be green. CI runs them on Node 20 and 22 plus a Docker image buil
 watch loop. If you touch `server/src/chess/classifier.ts` or `glicko.ts`, extend the matching suite — the
 rating and classification math is exactly the code where a silent regression hurts everyone for weeks.
 
+`npm run test:e2e` boots a real server on a throwaway SQLite file and drives two WebSocket clients through a
+full PvP game (moves, clocks, draw offers, takebacks, rematch). Run it whenever you touch `server/src/ws/play.ts`.
+
 ## Commit style
 
 No strict format, but please:

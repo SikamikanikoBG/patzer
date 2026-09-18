@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Flag, Lightbulb, Swords, Bot, Users as UsersIcon, Check, X, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Radio, Sparkles, FlipVertical2, ListOrdered } from 'lucide-react';
+import { Flag, Lightbulb, Swords, Bot, Users as UsersIcon, Check, X, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Radio, Sparkles, FlipVertical2, ListOrdered, Handshake, Undo2, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Chess } from 'chess.js';
 import ChessBoard from '../components/ChessBoard';
@@ -30,7 +30,10 @@ interface ServerMsg {
   fen?: string;
   san?: string;
   uci?: string;
-  by?: 'user' | 'engine' | 'opponent';
+  by?: 'user' | 'engine' | 'opponent' | 'white' | 'black';
+  // pvp offers
+  draw_offer?: 'white' | 'black' | null;
+  takeback_request?: 'white' | 'black' | null;
   whiteTimeMs?: number;
   blackTimeMs?: number;
   result?: '1-0' | '0-1' | '1/2-1/2';
@@ -83,6 +86,15 @@ export default function Play() {
   // Board flip + the phone-only moves sheet (see the sticky bottom bar).
   const [flipped, setFlipped] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  // PvP negotiation state: who has a standing offer, from my point of view.
+  type Offer = 'me' | 'them' | null;
+  const [drawOffer, setDrawOffer] = useState<Offer>(null);
+  const [takeback, setTakeback] = useState<Offer>(null);
+  const [rematch, setRematch] = useState<Offer>(null);
+  const [rematchDeclined, setRematchDeclined] = useState(false);
+  const userColorRef = useRef<'white' | 'black'>('white');
+  useEffect(() => { userColorRef.current = userColor; }, [userColor]);
   const orientation: 'white' | 'black' = flipped ? (userColor === 'white' ? 'black' : 'white') : userColor;
   const [whiteMs, setWhiteMs] = useState(0);
   const [blackMs, setBlackMs] = useState(0);
@@ -171,7 +183,34 @@ export default function Play() {
     setPositions([{ fen: START_FEN }]);
     setBrowseIndex(null);
     setGameOverDismissed(false);
+    setDrawOffer(null); setTakeback(null); setRematch(null); setRematchDeclined(false);
+    setMoreOpen(false); setSheetOpen(false);
   }
+
+  /** Rebuild the per-ply position list + move list from a SAN history. Used
+   *  on (re)connect and after an accepted takeback. */
+  function loadHistory(history: string[] | undefined, startFen: string) {
+    if (history && history.length > 0) {
+      const replay = new Chess();
+      const positionsFromHistory: Position[] = [{ fen: replay.fen() }];
+      const movesFromHistory: Move[] = [];
+      for (let i = 0; i < history.length; i++) {
+        const san = history[i]!;
+        const m = replay.move(san, { strict: false });
+        if (!m) break;
+        positionsFromHistory.push({ fen: replay.fen(), lastFrom: m.from, lastTo: m.to });
+        movesFromHistory.push({ ply: i + 1, san: m.san, uci: m.from + m.to + (m.promotion ?? '') });
+      }
+      setPositions(positionsFromHistory);
+      setMoves(movesFromHistory);
+    } else {
+      setPositions([{ fen: startFen }]);
+      setMoves([]);
+    }
+    setBrowseIndex(null);
+  }
+
+  const mine = (by: string | undefined): Offer => (by ? (by === userColorRef.current ? 'me' : 'them') : null);
 
   function handleMessage(ev: MessageEvent) {
     const msg = JSON.parse(ev.data) as ServerMsg;
@@ -186,28 +225,57 @@ export default function Play() {
         if (msg.whiteTimeMs !== undefined) setWhiteMs(msg.whiteTimeMs);
         if (msg.blackTimeMs !== undefined) setBlackMs(msg.blackTimeMs);
         if (msg.time_control) setTc(msg.time_control as typeof TIME_CONTROLS[number]);
+        if (msg.your_color) userColorRef.current = msg.your_color;
         // Rebuild the position list from the SAN history (PvP reconnect can land mid-game).
-        if (msg.history && msg.history.length > 0) {
-          const replay = new Chess();
-          const positionsFromHistory: Position[] = [{ fen: replay.fen() }];
-          const movesFromHistory: Move[] = [];
-          for (let i = 0; i < msg.history.length; i++) {
-            const san = msg.history[i]!;
-            const m = replay.move(san, { strict: false });
-            if (!m) break;
-            positionsFromHistory.push({ fen: replay.fen(), lastFrom: m.from, lastTo: m.to });
-            movesFromHistory.push({ ply: i + 1, san: m.san, uci: m.from + m.to + (m.promotion ?? '') });
-          }
-          setPositions(positionsFromHistory);
-          setMoves(movesFromHistory);
-        } else {
-          setPositions([{ fen: startFen }]);
-          setMoves([]);
-        }
-        setBrowseIndex(null);
+        loadHistory(msg.history, startFen);
+        setDrawOffer(mine(msg.draw_offer ?? undefined));
+        setTakeback(mine(msg.takeback_request ?? undefined));
         playSound('game_start');
         break;
       }
+      // ---- PvP negotiation ----
+      case 'draw_offered':
+        setDrawOffer(mine(msg.by));
+        if (msg.by !== userColorRef.current) playSound('game_start');
+        break;
+      case 'draw_declined':
+        setDrawOffer(null);
+        break;
+      case 'takeback_requested':
+        setTakeback(mine(msg.by));
+        if (msg.by !== userColorRef.current) playSound('game_start');
+        break;
+      case 'takeback_declined':
+        setTakeback(null);
+        break;
+      case 'takeback_applied': {
+        setTakeback(null); setDrawOffer(null);
+        if (msg.fen) setFen(msg.fen);
+        loadHistory(msg.history, msg.fen ?? START_FEN);
+        if (msg.whiteTimeMs !== undefined) setWhiteMs(msg.whiteTimeMs);
+        if (msg.blackTimeMs !== undefined) setBlackMs(msg.blackTimeMs);
+        setHint(null); setLastClassifiedMove(null); setBlunder(null); setPreviewing(false);
+        forceBoardSync();
+        break;
+      }
+      case 'rematch_offered':
+        setRematch(mine(msg.by));
+        setRematchDeclined(false);
+        if (msg.by !== userColorRef.current) { setGameOverDismissed(false); playSound('game_start'); }
+        break;
+      case 'rematch_declined':
+        setRematch(null);
+        setRematchDeclined(true);
+        break;
+      case 'rematch_start':
+        if (msg.game_id) {
+          try { wsRef.current?.close(); } catch { /* ignore */ }
+          wsRef.current = null;
+          setPhase('setup');
+          resetGameState();
+          nav(`/play?game=${msg.game_id}`);
+        }
+        break;
       case 'opponent_status':
         setOpponent((o) => o ? { ...o, online: !!msg.online } : o);
         break;
@@ -226,6 +294,7 @@ export default function Play() {
         if (msg.whiteTimeMs !== undefined) setWhiteMs(msg.whiteTimeMs);
         if (msg.blackTimeMs !== undefined) setBlackMs(msg.blackTimeMs);
         setHint(null);
+        setDrawOffer(null); setTakeback(null);
         break;
       }
       case 'move_classified': {
@@ -318,6 +387,16 @@ export default function Play() {
   }
 
   function resign() { wsRef.current?.send(JSON.stringify({ type: 'resign' })); }
+  const sendType = (type: string) => wsRef.current?.send(JSON.stringify({ type }));
+  const offerDraw = () => sendType('offer_draw');
+  const acceptDraw = () => sendType('accept_draw');
+  const declineDraw = () => sendType('decline_draw');
+  const requestTakeback = () => sendType('request_takeback');
+  const acceptTakeback = () => sendType('accept_takeback');
+  const declineTakeback = () => sendType('decline_takeback');
+  const offerRematch = () => sendType('offer_rematch');
+  const acceptRematch = () => sendType('accept_rematch');
+  const declineRematch = () => sendType('decline_rematch');
   function requestHint() {
     setHintLoading(true);
     wsRef.current?.send(JSON.stringify({ type: 'request_hint' }));
@@ -469,6 +548,23 @@ export default function Play() {
               {opponent?.display_name} disconnected — waiting for them to come back…
             </div>
           )}
+          {isPvP && (drawOffer === 'them' || takeback === 'them' || (rematch === 'them' && phase === 'over')) && (
+            <div className="mb-2 flex flex-wrap items-center gap-2 rounded-xl border border-accent-500/40 bg-accent-500/10 px-3 py-2 text-sm">
+              <span className="min-w-0 flex-1">
+                {drawOffer === 'them' ? t('play.drawOfferedBy', { name: oppLabel })
+                  : takeback === 'them' ? t('play.takebackRequestedBy', { name: oppLabel })
+                  : t('play.rematchOfferedBy', { name: oppLabel })}
+              </span>
+              <button onClick={drawOffer === 'them' ? acceptDraw : takeback === 'them' ? acceptTakeback : acceptRematch} className="btn-primary h-9 px-3 text-sm"><Check className="h-4 w-4" />{t('challenge.accept')}</button>
+              <button onClick={drawOffer === 'them' ? declineDraw : takeback === 'them' ? declineTakeback : declineRematch} className="btn-secondary h-9 px-3 text-sm"><X className="h-4 w-4" />{t('challenge.decline')}</button>
+            </div>
+          )}
+          {isPvP && phase === 'playing' && (drawOffer === 'me' || takeback === 'me') && (
+            <div className="mb-2 flex items-center gap-2 rounded-xl border border-ink-200 bg-ink-50 px-3 py-2 text-sm text-ink-500 dark:border-ink-700 dark:bg-ink-800/60">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              {drawOffer === 'me' ? t('play.drawOffered') : t('play.takebackRequested')}
+            </div>
+          )}
           <div className="my-1 flex items-center justify-between gap-2">
             <CapturedPieces fen={fen} side={userColor === 'white' ? 'black' : 'white'} />
           </div>
@@ -543,6 +639,16 @@ export default function Play() {
                 <button onClick={() => setFlipped((f) => !f)} className="btn-secondary h-11 px-3 text-sm sm:px-4" title={t('play.flip', { defaultValue: 'Flip board' })}>
                   <FlipVertical2 className="h-4 w-4" />
                 </button>
+                {isPvP && (
+                  <>
+                    <button onClick={offerDraw} disabled={drawOffer !== null} className="btn-secondary h-11 px-3 text-sm sm:px-4" title={t('play.offerDraw')}>
+                      <Handshake className="h-4 w-4" />{t('play.offerDraw')}
+                    </button>
+                    <button onClick={requestTakeback} disabled={takeback !== null || moves.length === 0} className="btn-secondary h-11 px-3 text-sm sm:px-4" title={t('play.takeback')}>
+                      <Undo2 className="h-4 w-4" />{t('play.takeback')}
+                    </button>
+                  </>
+                )}
                 <button onClick={requestHint} disabled={hintLoading || isBrowsing} className="btn-secondary h-11 px-3 text-sm sm:px-4">
                   {hintLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lightbulb className="h-4 w-4" />}
                   {t('play.hint')}
@@ -611,13 +717,32 @@ export default function Play() {
               <span className="truncate">{t('review.moves')}</span>
               <span className="ml-1 rounded-full bg-ink-100 px-1.5 text-[11px] tabular-nums dark:bg-ink-800">{moves.length}</span>
             </button>
-            <button onClick={() => setFlipped((f) => !f)} className="btn-secondary h-11 w-11 shrink-0 p-0" title={t('play.flip', { defaultValue: 'Flip board' })}><FlipVertical2 className="h-5 w-5" /></button>
             {phase === 'playing' && (
+              <button onClick={requestHint} disabled={hintLoading || isBrowsing} className="btn-secondary h-11 w-11 shrink-0 p-0" title={t('play.hint')}>
+                {hintLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lightbulb className="h-5 w-5" />}
+              </button>
+            )}
+            {isPvP && phase === 'playing' ? (
+              <div className="relative shrink-0">
+                <button onClick={() => setMoreOpen((o) => !o)} className="btn-secondary h-11 w-11 p-0" title={t('play.more', { defaultValue: 'More' })}><MoreHorizontal className="h-5 w-5" /></button>
+                {moreOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[41]" onClick={() => setMoreOpen(false)} />
+                    <div className="absolute bottom-full right-0 z-[42] mb-2 w-52 space-y-1 rounded-xl border border-ink-200 bg-white p-1.5 shadow-lift dark:border-ink-700 dark:bg-ink-900">
+                      <button onClick={() => { setMoreOpen(false); setFlipped((f) => !f); }} className="btn-ghost h-10 w-full justify-start px-3 text-sm"><FlipVertical2 className="h-4 w-4" />{t('play.flip')}</button>
+                      <button onClick={() => { setMoreOpen(false); offerDraw(); }} disabled={drawOffer !== null} className="btn-ghost h-10 w-full justify-start px-3 text-sm"><Handshake className="h-4 w-4" />{t('play.offerDraw')}</button>
+                      <button onClick={() => { setMoreOpen(false); requestTakeback(); }} disabled={takeback !== null || moves.length === 0} className="btn-ghost h-10 w-full justify-start px-3 text-sm"><Undo2 className="h-4 w-4" />{t('play.takeback')}</button>
+                      <button onClick={() => { setMoreOpen(false); resign(); }} className="btn-ghost h-10 w-full justify-start px-3 text-sm text-bad"><Flag className="h-4 w-4" />{t('play.resign')}</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
               <>
-                <button onClick={requestHint} disabled={hintLoading || isBrowsing} className="btn-secondary h-11 w-11 shrink-0 p-0" title={t('play.hint')}>
-                  {hintLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lightbulb className="h-5 w-5" />}
-                </button>
-                <button onClick={resign} className="btn-danger h-11 w-11 shrink-0 p-0" title={t('play.resign')}><Flag className="h-5 w-5" /></button>
+                <button onClick={() => setFlipped((f) => !f)} className="btn-secondary h-11 w-11 shrink-0 p-0" title={t('play.flip', { defaultValue: 'Flip board' })}><FlipVertical2 className="h-5 w-5" /></button>
+                {phase === 'playing' && (
+                  <button onClick={resign} className="btn-danger h-11 w-11 shrink-0 p-0" title={t('play.resign')}><Flag className="h-5 w-5" /></button>
+                )}
               </>
             )}
           </div>
@@ -714,12 +839,28 @@ export default function Play() {
                 <div className="space-y-3 p-5">
                   <p className="text-sm text-ink-600 dark:text-ink-300">{t('play.overPrompt')}</p>
                   <div className="flex flex-col gap-2 sm:flex-row">
-                    <button
-                      onClick={() => { setPhase('setup'); resetGameState(); }}
-                      className="btn-primary flex-1"
-                    >
-                      <Swords className="h-4 w-4" />{t('play.playAgain')}
-                    </button>
+                    {isPvP ? (
+                      rematch === 'them' ? (
+                        <button onClick={acceptRematch} className="btn-primary flex-1">
+                          <RefreshCw className="h-4 w-4" />{t('play.acceptRematch')}
+                        </button>
+                      ) : rematch === 'me' ? (
+                        <button disabled className="btn-primary flex-1">
+                          <Loader2 className="h-4 w-4 animate-spin" />{t('play.rematchOffered')}
+                        </button>
+                      ) : (
+                        <button onClick={offerRematch} className="btn-primary flex-1" title={rematchDeclined ? t('play.rematchDeclined') : undefined}>
+                          <RefreshCw className="h-4 w-4" />{t('play.rematch')}
+                        </button>
+                      )
+                    ) : (
+                      <button
+                        onClick={() => { setPhase('setup'); resetGameState(); }}
+                        className="btn-primary flex-1"
+                      >
+                        <Swords className="h-4 w-4" />{t('play.playAgain')}
+                      </button>
+                    )}
                     {result.gameId ? (
                       <button onClick={() => nav(`/review/${result.gameId}`)} className="btn-secondary flex-1">
                         <Sparkles className="h-4 w-4" />{t('play.review')}
@@ -730,6 +871,14 @@ export default function Play() {
                       </button>
                     )}
                   </div>
+                  {isPvP && rematchDeclined && rematch === null && (
+                    <p className="text-center text-xs text-ink-500">{t('play.rematchDeclined')}</p>
+                  )}
+                  {isPvP && (
+                    <button onClick={() => { try { wsRef.current?.close(); } catch { /* ignore */ } setPhase('setup'); resetGameState(); nav('/play'); }} className="btn-ghost w-full text-xs text-ink-500">
+                      <Swords className="h-3.5 w-3.5" />{t('play.playAgain')}
+                    </button>
+                  )}
                   <button
                     onClick={() => setGameOverDismissed(true)}
                     className="btn-ghost w-full text-xs text-ink-500"

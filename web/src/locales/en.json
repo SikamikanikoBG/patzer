@@ -123,7 +123,8 @@
       "insufficient_material": "by insufficient material",
       "fifty_move_or_draw": "by the fifty-move rule",
       "time": "on time",
-      "draw": "draw"
+      "draw": "draw",
+      "agreement": "by agreement"
     },
     "playAgain": "Play again",
     "review": "Review this game",
@@ -137,7 +138,19 @@
     "overPrompt": "What's next?",
     "keepLooking": "Just look at the board",
     "showResult": "Tap to view",
-    "flip": "Flip board"
+    "flip": "Flip board",
+    "offerDraw": "Offer draw",
+    "drawOffered": "Draw offered — waiting for {{name}}",
+    "drawOfferedBy": "{{name}} offers a draw",
+    "takeback": "Takeback",
+    "takebackRequested": "Takeback requested — waiting",
+    "takebackRequestedBy": "{{name}} asks to take back a move",
+    "rematch": "Rematch",
+    "rematchOffered": "Rematch offered…",
+    "rematchOfferedBy": "{{name}} wants a rematch",
+    "acceptRematch": "Accept rematch",
+    "rematchDeclined": "Rematch declined",
+    "more": "More"
   },
   "review": {
     "title": "Game Review",

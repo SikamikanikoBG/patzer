@@ -123,7 +123,8 @@
       "insufficient_material": "por material insuficiente",
       "fifty_move_or_draw": "por la regla de las 50 jugadas",
       "time": "por tiempo",
-      "draw": "por acuerdo mutuo"
+      "draw": "por acuerdo mutuo",
+      "agreement": "por acuerdo"
     },
     "playAgain": "Jugar otra vez",
     "review": "Revisar esta partida",
@@ -137,7 +138,19 @@
     "overPrompt": "¿Qué quieres hacer ahora?",
     "keepLooking": "Solo explorar el tablero",
     "showResult": "Toca para ver",
-    "flip": "Girar tablero"
+    "flip": "Girar tablero",
+    "offerDraw": "Ofrecer tablas",
+    "drawOffered": "Tablas ofrecidas: esperando",
+    "drawOfferedBy": "{{name}} ofrece tablas",
+    "takeback": "Deshacer jugada",
+    "takebackRequested": "Deshacer solicitado: esperando",
+    "takebackRequestedBy": "{{name}} pide deshacer una jugada",
+    "rematch": "Revancha",
+    "rematchOffered": "Revancha ofrecida…",
+    "rematchOfferedBy": "{{name}} quiere una revancha",
+    "acceptRematch": "Aceptar revancha",
+    "rematchDeclined": "Revancha rechazada",
+    "more": "Más"
   },
   "review": {
     "title": "Análisis de partida",
