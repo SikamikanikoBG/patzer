@@ -1,6 +1,7 @@
 import { Chess } from "chess.js";
 import type { Audience, Language } from "../types.js";
 import { pieceNames } from "./locales.js";
+import { sanToNatural } from "./moves.js";
 
 /** Natural-language label for a win-percentage value, from the player's
  *  perspective. Gives small models a concrete word to anchor on instead of
@@ -24,7 +25,7 @@ function getEvalStateKey(winPctPlayer: number): EvalStateKey {
   return "losing";
 }
 
-function evaluationStateNatural(
+export function evaluationStateNatural(
   winPctPlayer: number,
   language: Language,
 ): string {
@@ -163,7 +164,7 @@ export function boardPiecesNatural(
 
 /** Natural-language description of material balance from the player's
  *  perspective. `diffPlayer` is in pawn units (positive = player ahead). */
-function materialBalanceNatural(
+export function materialBalanceNatural(
   diffPlayer: number,
   language: Language,
   audience: Audience,
@@ -203,7 +204,7 @@ function materialBalanceNatural(
   return ahead ? `you are up a ${pieceLabel}` : `you are down a ${pieceLabel}`;
 }
 
-function parseMoveDetail(
+export function parseMoveDetail(
   san: string,
   fenBefore: string,
   language: Language,
