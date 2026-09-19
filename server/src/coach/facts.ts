@@ -1,5 +1,5 @@
 import type { Audience, Language, Classification } from "../types.js";
-import { pieceNames, verdictPhrase } from "./locales.js";
+import { pieceNames, verdictPhrase, PIECE_VALUE } from "./locales.js";
 import { sanToNatural, pvToNaturalSan, recentMovesNatural } from "./moves.js";
 import { evaluationStateNatural, boardPiecesNatural, materialBalanceNatural, parseMoveDetail } from "./facts-utils.js";
 
