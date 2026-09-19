@@ -70,7 +70,7 @@ const PIECE_NAME_KID_ES: Record<string, string> = {
   N: "caballito",
   P: "peón",
 };
-const PIECE_VALUE: Record<string, number> = {
+export const PIECE_VALUE: Record<string, number> = {
   K: 0,
   Q: 9,
   R: 5,
