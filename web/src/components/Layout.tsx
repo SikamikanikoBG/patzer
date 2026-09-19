@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope } from 'lucide-react';
+import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope, ChevronDown } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { cn } from '../lib/utils';
@@ -27,6 +27,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
   const nav = useNavigate();
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [version, setVersion] = useState<string>('');
 
@@ -36,8 +37,11 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
       .catch(() => setVersion(''));
   }, []);
 
-  // Auto-close mobile drawer on route change
-  useEffect(() => { setNavOpen(false); }, [location.pathname]);
+  // Auto-close mobile drawer and the admin menu on route change
+  useEffect(() => {
+    setNavOpen(false);
+    setAdminOpen(false);
+  }, [location.pathname]);
 
   async function logout() {
     await api.post('/api/auth/logout');
@@ -52,7 +56,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
         end
         className={({ isActive }) =>
           cn(
-            'relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+            'relative flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors',
             isActive
               ? 'text-white'
               : 'text-chesscom-300 hover:bg-chesscom-800 hover:text-white',
@@ -110,8 +114,59 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             {user?.role === 'admin' && (
               <>
                 <span className="mx-2 h-5 w-px bg-chesscom-700" />
-                <NavPill to="/admin/users" icon={Users} label={t('admin.users')} />
-                <NavPill to="/admin/system" icon={Server} label={t('admin.system')} />
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setAdminOpen((open) => !open)}
+                    aria-expanded={adminOpen}
+                    aria-haspopup="menu"
+                    className={cn(
+                      'relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      adminOpen
+                        ? 'bg-chesscom-800 text-white'
+                        : 'text-chesscom-300 hover:bg-chesscom-800 hover:text-white',
+                    )}
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>{t('common.admin', { defaultValue: 'Admin' })}</span>
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                  {adminOpen && (
+                    <div
+                      role="menu"
+                      className="absolute left-0 top-full mt-1 min-w-44 rounded-lg border border-chesscom-700 bg-chesscom-900 p-1 shadow-lg"
+                    >
+                      <NavLink
+                        to="/admin/users"
+                        role="menuitem"
+                        onClick={() => setAdminOpen(false)}
+                        className={({ isActive }) => cn(
+                          'flex items-center gap-2 rounded-md px-3 py-2 text-sm',
+                          isActive
+                            ? 'bg-chesscom-800 text-white'
+                            : 'text-chesscom-200 hover:bg-chesscom-800 hover:text-white',
+                        )}
+                      >
+                        <Users className="h-4 w-4" />
+                        <span>{t('admin.users')}</span>
+                      </NavLink>
+                      <NavLink
+                        to="/admin/system"
+                        role="menuitem"
+                        onClick={() => setAdminOpen(false)}
+                        className={({ isActive }) => cn(
+                          'flex items-center gap-2 rounded-md px-3 py-2 text-sm',
+                          isActive
+                            ? 'bg-chesscom-800 text-white'
+                            : 'text-chesscom-200 hover:bg-chesscom-800 hover:text-white',
+                        )}
+                      >
+                        <Server className="h-4 w-4" />
+                        <span>{t('admin.system')}</span>
+                      </NavLink>
+                    </div>
+                  )}
+                </div>
               </>
             )}
           </nav>
