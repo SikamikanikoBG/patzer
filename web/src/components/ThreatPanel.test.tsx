@@ -2,6 +2,15 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { fireEvent, render, screen, cleanup } from '@testing-library/react';
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (_key: string, options?: Record<string, unknown>) => {
+      const template = String(options?.defaultValue ?? _key);
+      return template.replace(/{{(\\w+)}}/g, (_match, name) => String(options?.[name] ?? `{{${name}}}`));
+    },
+  }),
+}));
+
 vi.mock('../api', () => ({
   api: {
     post: vi.fn(),
