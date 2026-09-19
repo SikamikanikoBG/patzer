@@ -12,7 +12,7 @@ import { api } from '../api';
 import ThreatPanel from './ThreatPanel';
 
 const IN_CHECK_FEN = 'rnbqkbnr/pppp1kpp/8/4p3/4P3/5Q2/PPPP1PPP/RNB1KBNR b KQ - 0 3';
-const THREAT_FEN = '4k3/8/8/8/8/5q2/6P1/4K3 w - - 0 1';
+const THREAT_FEN = 'k7/5P2/8/8/8/5q2/8/4K3 w - - 0 1';
 
 function resolved(lines: unknown[]) {
   return Promise.resolve({ lines });
@@ -27,20 +27,20 @@ describe('ThreatPanel', () => {
   it('renders the threatened move and plain-language explanation', async () => {
     vi.mocked(api.post).mockReturnValueOnce(
       resolved([{
-        uci: 'f3g2',
-        san: 'Qxg2',
-        pv_san: ['Qxg2'],
+        uci: 'f3f7',
+        san: 'Qxf7',
+        pv_san: ['Qxf7'],
         cp: 300,
         mate: null,
         multipv: 1,
       }]).then((r) => r as never),
     );
 
-    render(<ThreatPanel fen={THREAT_FEN} currentCpWhite={-100} />);
+    render(<ThreatPanel fen={THREAT_FEN} currentCpWhite={0} />);
     fireEvent.click(screen.getByRole('button', { name: 'Show threat' }));
 
-    expect(await screen.findByText('Qxg2')).toBeTruthy();
-    expect(screen.getByText('takes the pawn on g2, winning a piece')).toBeTruthy();
+    expect(await screen.findByText('Qxf7')).toBeTruthy();
+    expect(screen.getByText('takes the pawn on f7, winning a piece')).toBeTruthy();
     expect(api.post).toHaveBeenCalledWith('/api/analyze/position', expect.objectContaining({
       depth: 14,
       lines: 1,
@@ -60,9 +60,9 @@ describe('ThreatPanel', () => {
       .mockRejectedValueOnce(Object.assign(new Error('busy'), { status: 429 }))
       .mockReturnValueOnce(
         resolved([{
-          uci: 'f3g2',
-          san: 'Qxg2',
-          pv_san: ['Qxg2'],
+          uci: 'f3f7',
+          san: 'Qxf7',
+          pv_san: ['Qxf7'],
           cp: 300,
           mate: null,
           multipv: 1,
@@ -75,7 +75,7 @@ describe('ThreatPanel', () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     expect(api.post).toHaveBeenCalledTimes(1);
 
-    expect(await screen.findByText('Qxg2')).toBeTruthy();
+    expect(await screen.findByText('Qxf7')).toBeTruthy();
     expect(api.post).toHaveBeenCalledTimes(2);
   });
 });
