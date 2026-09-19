@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,1 L9,5 L0,9 z" fill="#8b949e"/>
+    </marker>
+    <marker id="arrd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,1 L9,5 L0,9 z" fill="#6e7681"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="600" fill="#0d1117"/>
+
+  <!-- Browser -->
+  <g transform="translate(40,150)">
+    <rect width="230" height="262" rx="16" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <rect x="16" y="16" width="198" height="14" rx="7" fill="#30363d"/>
+    <circle cx="26" cy="23" r="4" fill="#0d1117"/><circle cx="40" cy="23" r="4" fill="#0d1117"/><circle cx="54" cy="23" r="4" fill="#0d1117"/>
+    <text x="115" y="70" text-anchor="middle" font-size="19" font-weight="700" fill="#f0f6fc">Your browser</text>
+    <text x="115" y="94" text-anchor="middle" font-size="13" fill="#8b949e">phone · tablet · desktop</text>
+    <g font-size="14" fill="#c9d1d9">
+      <text x="115" y="134" text-anchor="middle">React 18 + Vite</text>
+      <text x="115" y="158" text-anchor="middle">Tailwind · chessground</text>
+      <text x="115" y="182" text-anchor="middle">EN · BG · ES</text>
+      <text x="115" y="206" text-anchor="middle">Web Speech TTS</text>
+    </g>
+    <!-- mini board -->
+    <g transform="translate(95,214)">
+      <rect x="0" y="0" width="5" height="5" fill="#eeeed2"/><rect x="5" y="0" width="5" height="5" fill="#769656"/><rect x="10" y="0" width="5" height="5" fill="#eeeed2"/><rect x="15" y="0" width="5" height="5" fill="#769656"/><rect x="20" y="0" width="5" height="5" fill="#eeeed2"/><rect x="25" y="0" width="5" height="5" fill="#769656"/><rect x="30" y="0" width="5" height="5" fill="#eeeed2"/><rect x="35" y="0" width="5" height="5" fill="#769656"/><rect x="0" y="5" width="5" height="5" fill="#769656"/><rect x="5" y="5" width="5" height="5" fill="#eeeed2"/><rect x="10" y="5" width="5" height="5" fill="#769656"/><rect x="15" y="5" width="5" height="5" fill="#eeeed2"/><rect x="20" y="5" width="5" height="5" fill="#769656"/><rect x="25" y="5" width="5" height="5" fill="#eeeed2"/><rect x="30" y="5" width="5" height="5" fill="#769656"/><rect x="35" y="5" width="5" height="5" fill="#eeeed2"/><rect x="0" y="10" width="5" height="5" fill="#eeeed2"/><rect x="5" y="10" width="5" height="5" fill="#769656"/><rect x="10" y="10" width="5" height="5" fill="#eeeed2"/><rect x="15" y="10" width="5" height="5" fill="#769656"/><rect x="20" y="10" width="5" height="5" fill="#eeeed2"/><rect x="25" y="10" width="5" height="5" fill="#769656"/><rect x="30" y="10" width="5" height="5" fill="#eeeed2"/><rect x="35" y="10" width="5" height="5" fill="#769656"/><rect x="0" y="15" width="5" height="5" fill="#769656"/><rect x="5" y="15" width="5" height="5" fill="#eeeed2"/><rect x="10" y="15" width="5" height="5" fill="#769656"/><rect x="15" y="15" width="5" height="5" fill="#eeeed2"/><rect x="20" y="15" width="5" height="5" fill="#769656"/><rect x="25" y="15" width="5" height="5" fill="#eeeed2"/><rect x="30" y="15" width="5" height="5" fill="#769656"/><rect x="35" y="15" width="5" height="5" fill="#eeeed2"/><rect x="0" y="20" width="5" height="5" fill="#eeeed2"/><rect x="5" y="20" width="5" height="5" fill="#769656"/><rect x="10" y="20" width="5" height="5" fill="#eeeed2"/><rect x="15" y="20" width="5" height="5" fill="#769656"/><rect x="20" y="20" width="5" height="5" fill="#eeeed2"/><rect x="25" y="20" width="5" height="5" fill="#769656"/><rect x="30" y="20" width="5" height="5" fill="#eeeed2"/><rect x="35" y="20" width="5" height="5" fill="#769656"/><rect x="0" y="25" width="5" height="5" fill="#769656"/><rect x="5" y="25" width="5" height="5" fill="#eeeed2"/><rect x="10" y="25" width="5" height="5" fill="#769656"/><rect x="15" y="25" width="5" height="5" fill="#eeeed2"/><rect x="20" y="25" width="5" height="5" fill="#769656"/><rect x="25" y="25" width="5" height="5" fill="#eeeed2"/><rect x="30" y="25" width="5" height="5" fill="#769656"/><rect x="35" y="25" width="5" height="5" fill="#eeeed2"/><rect x="0" y="30" width="5" height="5" fill="#eeeed2"/><rect x="5" y="30" width="5" height="5" fill="#769656"/><rect x="10" y="30" width="5" height="5" fill="#eeeed2"/><rect x="15" y="30" width="5" height="5" fill="#769656"/><rect x="20" y="30" width="5" height="5" fill="#eeeed2"/><rect x="25" y="30" width="5" height="5" fill="#769656"/><rect x="30" y="30" width="5" height="5" fill="#eeeed2"/><rect x="35" y="30" width="5" height="5" fill="#769656"/><rect x="0" y="35" width="5" height="5" fill="#769656"/><rect x="5" y="35" width="5" height="5" fill="#eeeed2"/><rect x="10" y="35" width="5" height="5" fill="#769656"/><rect x="15" y="35" width="5" height="5" fill="#eeeed2"/><rect x="20" y="35" width="5" height="5" fill="#769656"/><rect x="25" y="35" width="5" height="5" fill="#eeeed2"/><rect x="30" y="35" width="5" height="5" fill="#769656"/><rect x="35" y="35" width="5" height="5" fill="#eeeed2"/>
+    </g>
+  </g>
+
+  <!-- Patzer container -->
+  <g transform="translate(330,60)">
+    <rect width="560" height="480" rx="22" fill="#111620" stroke="#484f58" stroke-width="1.5" stroke-dasharray="0"/>
+    <rect x="18" y="-14" width="300" height="28" rx="14" fill="#81b64c"/>
+    <text x="168" y="5" text-anchor="middle" font-size="14" font-weight="700" fill="#0d1117">PATZER — ONE DOCKER CONTAINER</text>
+
+    <!-- Hono server -->
+    <g transform="translate(40,50)">
+      <rect width="480" height="190" rx="14" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+      <text x="24" y="38" font-size="19" font-weight="700" fill="#f0f6fc">Hono server</text>
+      <text x="160" y="38" font-size="13" fill="#8b949e">Node 20 · TypeScript</text>
+      <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#c9d1d9">
+        <text x="24" y="72">/api/auth  /games  /analyze  /coach  /openings  /admin</text>
+        <text x="24" y="96">/ws/play    live games · draw · takeback · rematch</text>
+        <text x="24" y="120">/ws/lobby   presence · challenges</text>
+      </g>
+      <g font-size="13" fill="#c9d1d9">
+        <text x="24" y="156">Move classification · Glicko-1 ratings · Game Review facts</text>
+        <text x="24" y="176">Coach prompts are built from computed facts — the LLM never sees SAN</text>
+      </g>
+    </g>
+
+    <!-- Stockfish -->
+    <g transform="translate(40,300)">
+      <rect width="225" height="140" rx="14" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+      <text x="20" y="36" font-size="18" font-weight="700" fill="#f0f6fc">Stockfish 17</text>
+      <g font-size="13" fill="#c9d1d9">
+        <text x="20" y="64">native binary, UCI</text>
+        <text x="20" y="86">7 bot tiers · MultiPV analysis</text>
+        <text x="20" y="108">threat probe · hints</text>
+      </g>
+    </g>
+
+    <!-- SQLite -->
+    <g transform="translate(295,300)">
+      <rect width="225" height="140" rx="14" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+      <text x="20" y="36" font-size="18" font-weight="700" fill="#f0f6fc">SQLite</text>
+      <g font-size="13" fill="#c9d1d9">
+        <text x="20" y="64">users · games · analyses</text>
+        <text x="20" y="86">ratings · settings · puzzles</text>
+        <text x="20" y="108" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">volume: /app/data</text>
+      </g>
+    </g>
+
+    <!-- inner arrows -->
+    <path d="M150,240 L150,300" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+    <text x="162" y="278" font-size="12" fill="#8b949e">UCI</text>
+    <path d="M410,240 L410,300" stroke="#8b949e" stroke-width="2" marker-end="url(#arr)"/>
+  </g>
+
+  <!-- Browser <-> server -->
+  <path d="M272,240 L328,240" stroke="#8b949e" stroke-width="2" marker-start="url(#arr)" marker-end="url(#arr)"/>
+  <text x="300" y="224" text-anchor="middle" font-size="12" fill="#8b949e">HTTPS</text>
+  <text x="300" y="262" text-anchor="middle" font-size="12" fill="#8b949e">WS</text>
+
+  <!-- External: LLM -->
+  <g transform="translate(940,100)">
+    <rect width="220" height="150" rx="14" fill="#1f2a1a" stroke="#3f5a2e" stroke-width="1.5" stroke-dasharray="6 5"/>
+    <text x="20" y="34" font-size="12" font-weight="700" letter-spacing="1" fill="#ffc934">OPTIONAL · YOUR LAN</text>
+    <text x="20" y="64" font-size="18" font-weight="700" fill="#f0f6fc">Your LLM</text>
+    <g font-size="13" fill="#c9d1d9">
+      <text x="20" y="90">Ollama or vLLM</text>
+      <text x="20" y="112">any model — gemma3:1b works</text>
+      <text x="20" y="134">facts in → coach prose out</text>
+    </g>
+  </g>
+  <path d="M892,160 L938,160" stroke="#6e7681" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrd)"/>
+
+  <!-- External: Chess.com -->
+  <g transform="translate(940,300)">
+    <rect width="220" height="120" rx="14" fill="#1f2a1a" stroke="#3f5a2e" stroke-width="1.5" stroke-dasharray="6 5"/>
+    <text x="20" y="34" font-size="12" font-weight="700" letter-spacing="1" fill="#ffc934">OPTIONAL · INTERNET</text>
+    <text x="20" y="64" font-size="18" font-weight="700" fill="#f0f6fc">Chess.com · Lichess</text>
+    <g font-size="13" fill="#c9d1d9">
+      <text x="20" y="90">import your public games</text>
+      <text x="20" y="108">master-game statistics</text>
+    </g>
+  </g>
+  <path d="M938,360 L892,360" stroke="#6e7681" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrd)"/>
+
+  <!-- Caption -->
+  <text x="600" y="578" text-anchor="middle" font-size="14" fill="#c9d1d9">Everything chess is computed in the container. The LLM only phrases pre-computed facts, so a 1B model cannot invent a knight that isn't there.</text>
+</svg>

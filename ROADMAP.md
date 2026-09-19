@@ -10,6 +10,8 @@ A loose, opinionated list of where Patzer is headed. Items aren't promises — t
 
 ## Soon
 
+- **Federated PvP over Nostr relays.** Play someone running *their own* Patzer with no shared instance: each install gets a keypair, challenges and moves are (encrypted) ephemeral events on two or three public relays, resume comes from the PGN persistence PvP already has. Nobody hosts a server, nobody moderates one, kid mode stays at home. Opt-in.
+- **Invite codes for signup** — so a family, club or classroom can run one instance for people who don't self-host, without open registration.
 - **Split `prompts.ts`** into `locales/*.ts`, `moves.ts`, `facts.ts` (same public API) — proposed by @fiedri in #17.
 - **Web component tests** — the vitest harness (7.10) covers the server; the React side has one pure-helper suite so far.
 

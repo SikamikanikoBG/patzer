@@ -43,7 +43,7 @@ publishes for free. Premium changes nothing about the API surface Patzer uses.
 
 ## Is Ollama required?
 
-It's required **only** for the AI Coach narrator. Everything else — playing
+An LLM host (Ollama or vLLM) is required **only** for the AI Coach narrator. Everything else — playing
 vs Stockfish, playing vs a friend, importing games, classifying moves,
 computing accuracy, drawing the eval graph, marking blunders — works without
 any LLM. If you never set up Ollama, you'll still get a serviceable Game
@@ -52,9 +52,34 @@ Review; the Coach panel just won't talk back.
 ## Can it run on a Raspberry Pi?
 
 Yes, with caveats. Stockfish + the web stack run comfortably on a Pi 4 / Pi 5.
-The AI Coach has to call out to an Ollama host — which usually isn't a Pi,
-because small LLMs are still pretty heavy. Point Patzer at an Ollama running
-on a desktop or NAS on the same LAN; the Pi just hosts the web app.
+The AI Coach has to call out to an Ollama or vLLM host — which usually isn't
+a Pi, because small LLMs are still pretty heavy. Point Patzer at an Ollama
+running on a desktop or NAS on the same LAN; the Pi just hosts the web app.
+That said, the coach only *phrases* facts computed by Stockfish, so a 1B
+model on a modest CPU produces perfectly readable commentary.
+
+## Can I play a friend who lives somewhere else?
+
+Yes — PvP just needs both browsers to reach the *same* Patzer instance, so
+the question is only how your friend reaches your box. No public server is
+involved and nothing needs to be opened on your router:
+
+- **Tailscale (easiest).** Install Tailscale on the Patzer host and on your
+  friend's phone/laptop, then [share the node](https://tailscale.com/kb/1084/sharing)
+  with their tailnet (or put them in yours). They open
+  `http://<your-node>:8800`, log in with the profile you made for them, and
+  challenge you from *Players*. Moves travel over WireGuard, relayed through
+  Tailscale's DERP servers when a direct path can't be found.
+- **Cloudflare Tunnel + Access.** Gives you a real `chess.example.com` with
+  TLS and an email-based login gate in front of Patzer, without exposing a
+  port. Set `COOKIE_SECURE=true` and make sure WebSockets are enabled on the
+  tunnel (they are by default).
+- **Plain WireGuard / any VPN** you already run works the same way.
+
+Whatever you choose, give each friend their own profile (Admin → Users) so
+ratings, history and the coach's audience level are theirs. Federated play
+between two *separate* Patzer installs — no shared instance at all — is on
+the [roadmap](../ROADMAP.md).
 
 ## I'm behind a NAT / reverse proxy. What do I do?
 
@@ -122,7 +147,9 @@ see [CONTRIBUTING.md](../CONTRIBUTING.md#what-well-probably-push-back-on).
 
 ## How do I add my language?
 
-Two JSON files and a register call. Step-by-step in
+One locale JSON, one entry in the language registry, and one row in each of
+the coach's text tables — every string is table-driven, no branches to chase.
+Spanish (PR #17) is a complete worked example. Step-by-step in
 [CONTRIBUTING.md → Adding a language](../CONTRIBUTING.md#adding-a-language).
 
 ## Why GPL components if the project is MIT?

@@ -69,7 +69,7 @@ export default function ExplorerPanel({ fen, onPreview }: { fen: string; onPrevi
     <div className="card overflow-hidden">
       <div className="flex items-center gap-1 border-b border-chesscom-100 bg-chesscom-50/40 px-3 py-2 dark:border-chesscom-700 dark:bg-chesscom-900/40">
         <BookOpen className="h-3.5 w-3.5 text-chesscom-500" />
-        <span className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">
+        <span className="text-xs font-semibold uppercase tracking-wider text-chesscom-500 dark:text-chesscom-300">
           {t('explorer.title', { defaultValue: 'Master games' })}
         </span>
         <button
@@ -103,7 +103,7 @@ export default function ExplorerPanel({ fen, onPreview }: { fen: string; onPrevi
                 )}
               </div>
               <WdlBar white={data.white ?? 0} draws={data.draws ?? 0} black={data.black ?? 0} />
-              <div className="flex justify-between text-[10px] uppercase tracking-wider text-chesscom-500">
+              <div className="flex justify-between text-[10px] uppercase tracking-wider text-chesscom-500 dark:text-chesscom-300">
                 <span>{t('explorer.white', { defaultValue: 'White' })} {pct(data.white ?? 0, total)}%</span>
                 <span>{t('explorer.draw', { defaultValue: 'Draw' })} {pct(data.draws ?? 0, total)}%</span>
                 <span>{t('explorer.black', { defaultValue: 'Black' })} {pct(data.black ?? 0, total)}%</span>

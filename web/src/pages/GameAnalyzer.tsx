@@ -689,7 +689,7 @@ function LinesPanel({ enabled, onToggle, lines, loading, error, playedUci, onAdv
     <div className="card overflow-hidden">
       <div className="flex items-center gap-1 border-b border-chesscom-100 bg-chesscom-50/40 px-3 py-2 dark:border-chesscom-700 dark:bg-chesscom-900/40">
         <Search className="h-3.5 w-3.5 text-chesscom-500" />
-        <span className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">
+        <span className="text-xs font-semibold uppercase tracking-wider text-chesscom-500 dark:text-chesscom-300">
           {t('review.lines', { defaultValue: 'Engine lines' })}
         </span>
         <button

@@ -136,7 +136,7 @@ export default function ThreatPanel({ fen, currentCpWhite }: { fen: string; curr
     <div className="card overflow-hidden">
       <div className="flex items-center gap-1 border-b border-chesscom-100 bg-chesscom-50/40 px-3 py-2 dark:border-chesscom-700 dark:bg-chesscom-900/40">
         <Crosshair className="h-3.5 w-3.5 text-chesscom-500" />
-        <span className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">
+        <span className="text-xs font-semibold uppercase tracking-wider text-chesscom-500 dark:text-chesscom-300">
           {t('threat.title', { defaultValue: "What's the threat?" })}
         </span>
         <button
@@ -160,7 +160,7 @@ export default function ThreatPanel({ fen, currentCpWhite }: { fen: string; curr
           {state === 'ok' && threat && (
             <div className="space-y-1 py-1">
               <div className="flex items-baseline gap-2">
-                <span className="text-[11px] uppercase tracking-wider text-chesscom-500">
+                <span className="text-[11px] uppercase tracking-wider text-chesscom-500 dark:text-chesscom-300">
                   {t('threat.if', { side: t(`threat.side.${stm}`, { defaultValue: stm }), defaultValue: 'If {{side}} passed' })}
                 </span>
                 <span className="font-mono text-sm font-bold text-chesscom-900 dark:text-chesscom-100">{threat.san}</span>
