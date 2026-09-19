@@ -1,5 +1,7 @@
+import { Chess } from "chess.js";
+import { cpToWinPct } from "../chess/classifier.js";
 import type { Audience, Language, Classification } from "../types.js";
-import { pieceNames, verdictPhrase, PIECE_VALUE } from "./locales.js";
+import { verdictPhrase, PIECE_VALUE } from "./locales.js";
 import { sanToNatural, pvToNaturalSan, recentMovesNatural } from "./moves.js";
 import { evaluationStateNatural, boardPiecesNatural, materialBalanceNatural, parseMoveDetail } from "./facts-utils.js";
 
