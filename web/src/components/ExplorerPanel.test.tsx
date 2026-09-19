@@ -13,6 +13,10 @@ import ExplorerPanel from './ExplorerPanel';
 
 const FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
+function flush(): Promise<void> {
+  return Promise.resolve();
+}
+
 describe('ExplorerPanel', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -30,7 +34,9 @@ describe('ExplorerPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show master stats' }));
 
     await vi.advanceTimersByTimeAsync(300);
-    expect(await screen.findByText('Lichess master database unreachable right now.')).toBeTruthy();
+    await flush();
+
+    expect(screen.getByText('Lichess master database unreachable right now.')).toBeTruthy();
     expect(screen.queryByText(/master games/i)).toBeNull();
     expect(screen.queryByText('White 0%')).toBeNull();
   });
@@ -53,7 +59,9 @@ describe('ExplorerPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show master stats' }));
 
     await vi.advanceTimersByTimeAsync(300);
-    expect(await screen.findByText('1000 master games')).toBeTruthy();
+    await flush();
+
+    expect(screen.getByText('1000 master games')).toBeTruthy();
     expect(screen.getByText('B00 · King Pawn Game')).toBeTruthy();
     expect(screen.getByText('e4')).toBeTruthy();
     expect(screen.getByText('d4')).toBeTruthy();
@@ -76,9 +84,11 @@ describe('ExplorerPanel', () => {
 
     render(<ExplorerPanel fen={FEN} onPreview={onPreview} />);
     fireEvent.click(screen.getByRole('button', { name: 'Show master stats' }));
-    await vi.advanceTimersByTimeAsync(300);
 
-    const row = await screen.findByText('e4');
+    await vi.advanceTimersByTimeAsync(300);
+    await flush();
+
+    const row = screen.getByText('e4');
     fireEvent.mouseEnter(row.parentElement!);
     fireEvent.mouseLeave(row.parentElement!);
 
