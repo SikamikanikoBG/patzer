@@ -146,7 +146,7 @@ profiles, so a family/club instance feels like the small social network it is.
   (profile), plus `GET /api/challenges/history` for invitation activity. All
   read-only and auth-scoped; no schema changes — built on existing tables.
 - **Delivery:** images now also publish to **Docker Hub**
-  (`sikamikaniko123/patzer`) on every push to `main`, and the ardi deployment
+  (`sikamikaniko123/patzer`) on every push to `main`, and the reference home-server deployment
   tracks that image via Watchtower for hands-off redeploys.
 
 ## [7.7.0] — 2026-06-23
