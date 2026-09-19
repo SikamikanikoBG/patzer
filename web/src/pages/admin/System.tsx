@@ -15,6 +15,7 @@ interface SysSettings {
   p95_ms?: number | null;
   call_count?: number;
   // signup + email (v7.7.0)
+  update_check_enabled?: boolean;
   allow_signup?: boolean;
   require_email_verification?: boolean;
   notify_admin_on_signup?: boolean;
@@ -30,6 +31,7 @@ interface SysSettings {
 }
 
 interface MailState {
+  update_check_enabled: boolean;
   allow_signup: boolean;
   require_email_verification: boolean;
   notify_admin_on_signup: boolean;
@@ -56,6 +58,7 @@ export default function AdminSystem() {
 
   // Signup + email (v7.7.0)
   const [mail, setMail] = useState<MailState>({
+    update_check_enabled: true,
     allow_signup: true, require_email_verification: false, notify_admin_on_signup: true,
     public_base_url: '', smtp_host: '', smtp_port: '', smtp_secure: false, smtp_user: '', smtp_from: '',
   });
@@ -84,6 +87,7 @@ export default function AdminSystem() {
         call_count: d.call_count ?? 0,
       });
       setMail({
+        update_check_enabled: d.update_check_enabled ?? true,
         allow_signup: d.allow_signup ?? true,
         require_email_verification: d.require_email_verification ?? false,
         notify_admin_on_signup: d.notify_admin_on_signup ?? true,
@@ -106,6 +110,7 @@ export default function AdminSystem() {
     setMailBusy(true);
     try {
       await api.patch('/api/admin/system', {
+        update_check_enabled: mail.update_check_enabled,
         allow_signup: mail.allow_signup,
         require_email_verification: mail.require_email_verification,
         notify_admin_on_signup: mail.notify_admin_on_signup,
@@ -359,6 +364,9 @@ export default function AdminSystem() {
           </div>
         </div>
         <div className="space-y-4 p-5">
+          <ToggleRow checked={mail.update_check_enabled} onChange={(v) => setMail({ ...mail, update_check_enabled: v })}
+            label={t('update.checkTitle', { defaultValue: 'Check for updates' })}
+            hint={t('update.checkHelp', { defaultValue: 'Once every six hours, Patzer asks GitHub whether a newer release exists.' })} />
           <ToggleRow checked={mail.allow_signup} onChange={(v) => setMail({ ...mail, allow_signup: v })}
             label={t('admin.allowSignup')} hint={t('admin.allowSignupHint')} />
           <ToggleRow checked={mail.require_email_verification} onChange={(v) => setMail({ ...mail, require_email_verification: v })}

@@ -42,6 +42,11 @@ export default function CoachPanel({ systemConfigured, request, autoPlay, trigge
     setMutedState(v);
     try { localStorage.setItem(MUTE_STORAGE_KEY, v ? '1' : '0'); } catch { /* ignore */ }
   };
+  // `ask()` closes over `muted` at the render that created it, so muting
+  // mid-request left the finally-block below reading a stale `false` and the
+  // coach spoke anyway — the mute button looked broken. Read it from a ref.
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
   const abortRef = useRef<AbortController | null>(null);
   const timerRef = useRef<number | null>(null);
 
@@ -94,7 +99,7 @@ export default function CoachPanel({ systemConfigured, request, autoPlay, trigge
       if ((e as Error).name !== 'AbortError') setError((e as Error).message);
     } finally {
       setBusy(false);
-      if (autoPlay && acc.trim() && user?.profile.tts_enabled && !muted) {
+      if (autoPlay && acc.trim() && user?.profile.tts_enabled && !mutedRef.current) {
         playTts(acc);
       }
     }
@@ -102,7 +107,7 @@ export default function CoachPanel({ systemConfigured, request, autoPlay, trigge
 
   function playTts(s?: string) {
     const content = s ?? text;
-    if (!content.trim() || !user) return;
+    if (!content.trim() || !user || mutedRef.current) return;
     setSpeaking(true);
     const u = speak(content, {
       voice: user.profile.tts_voice,

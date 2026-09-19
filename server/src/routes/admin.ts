@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { db, getSetting, setSetting } from '../db.js';
+import { updateCheckEnabled, setUpdateCheckEnabled } from '../updates.js';
 import { requireAdmin } from '../auth/middleware.js';
 import { hashPassword } from '../auth/passwords.js';
 import { testConnection, testModel, llmUrl, llmStats, type LlmProvider } from '../coach/llm.js';
@@ -159,6 +160,9 @@ router.get('/system', async (c) => {
     p95_ms: stats.p95Ms,
     call_count: stats.count,
 
+    // ---- Update check ----
+    update_check_enabled: updateCheckEnabled(),
+
     // ---- Signup + email (v7.7.0) ----
     allow_signup: getSetting('allow_signup') !== '0',
     require_email_verification: getSetting('require_email_verification') === '1',
@@ -185,6 +189,7 @@ const systemSchema = z.object({
   vllm_url: z.string().url().or(z.literal('')).optional(),
   vllm_model: z.string().optional(),
   stockfish_path: z.string().optional(),
+  update_check_enabled: z.boolean().optional(),
   // Signup + email config
   allow_signup: z.boolean().optional(),
   require_email_verification: z.boolean().optional(),
@@ -218,6 +223,7 @@ router.patch('/system', async (c) => {
   setStr('vllm_model', d.vllm_model);
   setStr('stockfish_path', d.stockfish_path);
 
+  if (d.update_check_enabled !== undefined) setUpdateCheckEnabled(d.update_check_enabled);
   setBool('allow_signup', d.allow_signup);
   setBool('require_email_verification', d.require_email_verification);
   setBool('notify_admin_on_signup', d.notify_admin_on_signup);

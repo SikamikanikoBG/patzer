@@ -150,7 +150,8 @@
     "rematchOfferedBy": "{{name}} quiere una revancha",
     "acceptRematch": "Aceptar revancha",
     "rematchDeclined": "Revancha rechazada",
-    "more": "Más"
+    "more": "Más",
+    "swipeMoves": "Desliza hacia arriba para ver las jugadas"
   },
   "review": {
     "title": "Análisis de partida",
@@ -685,5 +686,15 @@
     "white": "Blancas",
     "draw": "Tablas",
     "black": "Negras"
+  },
+  "update": {
+    "available": "Patzer {{latest}} ya está disponible — estás usando {{current}}.",
+    "whatsNew": "Novedades",
+    "how": "Descarga la nueva imagen y recrea el contenedor.",
+    "dismiss": "Ocultar hasta la próxima versión",
+    "checkTitle": "Buscar actualizaciones",
+    "checkHelp": "Cada seis horas Patzer pregunta a GitHub si hay una versión más reciente y muestra un aviso de una línea si la hay. No envía nada sobre ti ni sobre tus partidas: es una lectura anónima de una página pública. Desactívalo si esta máquina no tiene internet o si prefieres seguir las versiones por tu cuenta.",
+    "upToDate": "Actualizado",
+    "newAvailable": "La versión {{latest}} está disponible"
   }
 }

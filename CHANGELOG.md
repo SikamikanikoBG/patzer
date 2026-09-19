@@ -4,6 +4,54 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.11.0] — 2026-09-19
+
+### It tells you when it's out of date, and the header stops falling off the screen
+
+Four community pull requests landed today — thanks to **@Vaibhavs25**, who
+picked up four of the open issues in one sitting.
+
+- **New: Patzer notices when a newer release is out.** A self-hosted app can't
+  update itself and shouldn't try, but it can stop you discovering six months
+  later that the thing you wanted was fixed in July. Patzer now asks GitHub at
+  most once every six hours whether there's a newer tag, and shows one quiet
+  line at the top of the page when there is, with a link to the release notes
+  and a reminder to pull the image. Dismiss it and that version never nags you
+  again. It sends nothing about you or your games — it's an anonymous read of a
+  public page — a failed check is silent, and you can switch the whole thing
+  off in **Admin → System** or with `UPDATE_CHECK=0`.
+- **Fixed: the header overflowed the window.** With nine nav items, an admin
+  account and the language toggle, the top bar wrapped onto two lines and
+  pushed the `ES` button and the user chip off the right-hand edge — on a
+  1440px laptop, which is most laptops. Two things were wrong: the bar was
+  capped at 1280px wide no matter how big your monitor was, so the nav never
+  had room even at 1920; and the pills overflowed their container instead of
+  giving way, so they painted over the user menu. The bar now uses the width
+  it has, and the nav *measures itself* — when the labels don't fit, the pills
+  become icons with tooltips, so every destination stays one click away instead
+  of some being hidden. Measuring rather than picking a breakpoint matters
+  because an admin carries two more items than a regular profile and Bulgarian
+  labels are wider than English ones: any fixed width would be wrong for
+  somebody. `Users` and `System` also moved into an Admin dropdown. (#22, PR by
+  @Vaibhavs25, finished off afterwards)
+- **Fixed: the coach's mute button didn't always mute.** Two separate bugs,
+  both in the gap between "you press mute" and "sound comes out". The panel
+  read a stale copy of the mute flag when a reply finished streaming, so muting
+  mid-answer still read the answer aloud. And the speech helper has two
+  deferred paths — a one-tick delay to dodge a Chrome bug, and a wait for the
+  OS voice list, which on Windows is usually empty on first use — neither of
+  which was cancellable, so a mute landing in either window was simply ignored
+  and the coach carried on talking. Both now check a generation counter that
+  `cancel()` bumps. Covered by tests that fail against the old behaviour.
+- **New: the phone moves sheet is draggable.** Swipe up on the *Moves* button
+  to open it, drag the handle down to dismiss, with the sheet following your
+  finger. Tapping still works, the move list inside still scrolls, and
+  `prefers-reduced-motion` disables the gesture rather than just shortening the
+  animation. (#23, PR by @Vaibhavs25)
+
+Also: the Spanish/Bulgarian strings for the new UI, and `npm test` is now at 89
+tests.
+
 ## [7.10.1] — 2026-09-19
 
 ### Black could not move in a PvP game

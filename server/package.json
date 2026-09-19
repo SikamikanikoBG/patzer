@@ -1,6 +1,6 @@
 {
   "name": "@patzer/server",
-  "version": "7.10.1",
+  "version": "7.11.0",
   "private": true,
   "type": "module",
   "main": "dist/index.js",

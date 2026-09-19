@@ -51,6 +51,7 @@ Patzer is a tiny, self-hosted take on the Chess.com / Lichess workflow you actua
 - **Multilingual** — English, Bulgarian and Spanish out of the box, UI *and* coach prompts. Adding a language is one table entry per file — see CONTRIBUTING.
 - **Self-hosted, single container** — runs on a Pi, a NAS, an old laptop. Your games never leave home.
 - **Phone-friendly** — full-width board, sticky action bar and a swipe-up move list on small screens.
+- **Tells you when it's stale** — a self-hosted app can't update itself, but Patzer checks GitHub every six hours and shows a one-line notice when a newer release is out, so you know to pull. Sends nothing about you; switch it off in *Admin → System*.
 
 ## Screenshots
 
@@ -238,6 +239,7 @@ All user-facing configuration is done **through the UI** and persisted in SQLite
 | `DB_PATH` | `./data/chess.db` | SQLite database file |
 | `STOCKFISH_PATH` | (auto) | Override Stockfish binary path |
 | `LICHESS_EXPLORER_URL` | `https://explorer.lichess.ovh` | Opening-explorer upstream for the *Master games* panel (a self-hosted `lila-openingexplorer` works) |
+| `UPDATE_CHECK` | `1` | Set to `0` to disable the six-hourly "a newer release exists" check for the whole deployment (there's also a toggle in *Admin → System*) |
 | `SESSION_SECRET` | (auto-generated) | Cookie signing secret. Persisted on first run. |
 | `COOKIE_SECURE`  | `false` | Set to `true` when terminating TLS at a reverse proxy so session cookies are flagged `Secure`. |
 

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope, ChevronDown } from 'lucide-react';
 import { api } from '../api';
+import UpdateNotice from './UpdateNotice';
 import { useAuth } from '../state/auth';
 import { cn } from '../lib/utils';
 import ChangelogModal from './ChangelogModal';
@@ -49,14 +50,48 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
     nav('/login');
   }
 
+  // Nine destinations plus an Admin menu don't fit on a laptop with labels
+  // showing. A breakpoint can't decide this: an admin carries two more items
+  // than a regular profile, and Bulgarian labels are noticeably wider than
+  // English ones, so any fixed width is wrong for somebody. Measure instead —
+  // if the pills would overflow, drop to icons with tooltips, which keeps
+  // every destination one click away rather than hiding some of them.
+  const navRef = useRef<HTMLElement | null>(null);
+  const fullNavWidth = useRef(0);
+  const [compactNav, setCompactNav] = useState(false);
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const check = () => {
+      const available = nav.clientWidth;
+      // dataset, not the closure: the observer can fire mid-update.
+      const isCompact = nav.dataset.compact === '1';
+      if (!isCompact) {
+        // Labels are showing, so this is the width they actually need.
+        fullNavWidth.current = nav.scrollWidth;
+        if (nav.scrollWidth > available + 1) setCompactNav(true);
+      } else if (fullNavWidth.current && available > fullNavWidth.current + 24) {
+        // 24px of hysteresis so a window sitting exactly on the boundary
+        // doesn't flip back and forth.
+        setCompactNav(false);
+      }
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(nav);
+    return () => ro.disconnect();
+  }, [compactNav, user?.role, i18n.language]);
+  const navLabelClass = compactNav ? 'hidden' : 'inline';
+
   function NavPill({ to, icon: Icon, label }: { to: string; icon: React.ElementType; label: string }) {
     return (
       <NavLink
         to={to}
         end
+        title={label}
         className={({ isActive }) =>
           cn(
-            'relative flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+            'relative flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium transition-colors 2xl:px-3',
             isActive
               ? 'text-white'
               : 'text-chesscom-300 hover:bg-chesscom-800 hover:text-white',
@@ -64,8 +99,8 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
           )
         }
       >
-        <Icon className="h-4 w-4" />
-        <span>{label}</span>
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className={navLabelClass}>{label}</span>
       </NavLink>
     );
   }
@@ -92,16 +127,17 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
 
   return (
     <div className="flex min-h-screen flex-col bg-panel dark:bg-chesscom-950">
+      <UpdateNotice />
       {/* Top bar — dark sage, horizontal nav. */}
       <header className="sticky top-0 z-30 bg-chesscom-900 text-white shadow-soft">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:px-6">
+        <div className="mx-auto flex h-14 max-w-[1920px] items-center gap-2 px-3 sm:px-6">
           <NavLink to="/" className="flex shrink-0 items-center gap-2">
             <LogoMark size={28} />
             <span className="hidden text-base font-bold tracking-tight sm:inline">{t('app.name')}</span>
           </NavLink>
 
           {/* Desktop nav */}
-          <nav className="ml-4 hidden flex-1 items-center gap-0.5 md:flex">
+          <nav ref={navRef} data-compact={compactNav ? '1' : '0'} className="ml-4 hidden min-w-0 flex-1 items-center gap-0.5 md:flex">
             <NavPill to="/" icon={Home} label={t('app.home')} />
             <NavPill to="/play" icon={Swords} label={t('home.playTitle')} />
             <NavPill to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
@@ -118,6 +154,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
                   <button
                     type="button"
                     onClick={() => setAdminOpen((open) => !open)}
+                    title={t('common.admin', { defaultValue: 'Admin' })}
                     aria-expanded={adminOpen}
                     aria-haspopup="menu"
                     className={cn(
@@ -127,8 +164,8 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
                         : 'text-chesscom-300 hover:bg-chesscom-800 hover:text-white',
                     )}
                   >
-                    <Users className="h-4 w-4" />
-                    <span>{t('common.admin', { defaultValue: 'Admin' })}</span>
+                    <Users className="h-4 w-4 shrink-0" />
+                    <span className={navLabelClass}>{t('common.admin', { defaultValue: 'Admin' })}</span>
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                   {adminOpen && (
@@ -176,25 +213,30 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             {onOpenPalette && (
               <button
                 onClick={onOpenPalette}
-                className="hidden items-center gap-2 rounded-md border border-chesscom-700 bg-chesscom-800/70 px-2.5 py-1.5 text-xs text-chesscom-300 hover:bg-chesscom-800 hover:text-white sm:inline-flex"
+                className="hidden shrink-0 items-center gap-2 rounded-md border border-chesscom-700 bg-chesscom-800/70 px-2.5 py-1.5 text-xs text-chesscom-300 hover:bg-chesscom-800 hover:text-white sm:inline-flex"
                 title="Command palette (⌘K)"
               >
                 <Search className="h-3.5 w-3.5" />
-                <span className="hidden lg:inline">{t('palette.search', { defaultValue: 'Search' })}</span>
-                <kbd className="hidden rounded border border-chesscom-700 px-1 font-mono text-[11px] text-chesscom-300 lg:inline">⌘K</kbd>
+                <span className="hidden min-[1800px]:inline">{t('palette.search', { defaultValue: 'Search' })}</span>
+                <kbd className="hidden rounded border border-chesscom-700 px-1 font-mono text-[11px] text-chesscom-300 min-[1800px]:inline">⌘K</kbd>
               </button>
             )}
             {onOpenShortcuts && (
               <button
                 onClick={onOpenShortcuts}
-                className="hidden rounded-md p-2 text-chesscom-300 hover:bg-chesscom-800 hover:text-white sm:inline-flex"
+                className="hidden shrink-0 rounded-md p-2 text-chesscom-300 hover:bg-chesscom-800 hover:text-white min-[1800px]:inline-flex"
                 title={t('shortcuts.title', { defaultValue: 'Keyboard shortcuts' })}
               >
                 <Keyboard className="h-4 w-4" />
               </button>
             )}
-            {/* Language toggle */}
-            <div className="hidden rounded-lg border border-chesscom-700 bg-chesscom-800 p-0.5 text-xs sm:flex">
+            {/* Language toggle — only on genuinely wide screens (2xl). Below
+                that the nav plus the user cluster already fill the bar, and
+                this was the first thing to hang off the right edge on a
+                laptop. Nothing becomes unreachable: the switch is in
+                Settings, in the command palette (⌘K → "Switch to …") and in
+                the mobile drawer. */}
+            <div className="hidden shrink-0 rounded-lg border border-chesscom-700 bg-chesscom-800 p-0.5 text-xs min-[1800px]:flex">
               {LANGUAGES.map((l) => (
                 <button
                   key={l.code}
@@ -205,17 +247,21 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             </div>
 
             {/* User chip */}
-            <NavLink to="/settings" className="hidden items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-chesscom-800 sm:flex">
+            <NavLink
+              to="/settings"
+              className="hidden shrink-0 items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-chesscom-800 sm:flex"
+              title={`${user?.profile.display_name ?? ''} @${user?.username ?? ''}`}
+            >
               <span className="text-lg leading-none">{user?.profile.avatar_emoji ?? '♟'}</span>
-              <div className="text-right text-xs leading-tight">
-                <div className="font-medium">{user?.profile.display_name}</div>
-                <div className="text-[11px] text-chesscom-400">@{user?.username}</div>
+              <div className="hidden max-w-[10rem] text-right text-xs leading-tight xl:block">
+                <div className="truncate font-medium">{user?.profile.display_name}</div>
+                <div className="truncate text-[11px] text-chesscom-400">@{user?.username}</div>
               </div>
             </NavLink>
 
             <NavLink
               to="/settings"
-              className="hidden rounded-md p-2 text-chesscom-300 hover:bg-chesscom-800 hover:text-white sm:inline-flex"
+              className="hidden shrink-0 rounded-md p-2 text-chesscom-300 hover:bg-chesscom-800 hover:text-white xl:inline-flex"
               title={t('common.settings')}
             >
               <SettingsIcon className="h-4 w-4" />
@@ -223,11 +269,11 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
 
             <button
               onClick={logout}
-              className="hidden items-center gap-1.5 rounded-md border border-chesscom-700 bg-chesscom-800/50 px-2.5 py-1.5 text-sm text-chesscom-200 hover:border-bad/60 hover:bg-bad/15 hover:text-white sm:inline-flex"
+              className="hidden shrink-0 items-center gap-1.5 rounded-md border border-chesscom-700 bg-chesscom-800/50 px-2.5 py-1.5 text-sm text-chesscom-200 hover:border-bad/60 hover:bg-bad/15 hover:text-white sm:inline-flex"
               title={t('common.logout')}
             >
               <LogOut className="h-4 w-4" />
-              <span className="hidden lg:inline">{t('common.logout')}</span>
+              <span className="hidden xl:inline">{t('common.logout')}</span>
             </button>
 
             {/* Mobile menu button */}

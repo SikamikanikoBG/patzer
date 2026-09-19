@@ -44,6 +44,12 @@ function pickVoice(opts: SpeakOpts): SpeechSynthesisVoice | undefined {
   return undefined;
 }
 
+// Bumped by cancel(). Both deferred paths in speak() check it before actually
+// talking, so a cancel that lands *after* speak() was called but *before* the
+// utterance starts still wins. Without this, muting the coach in that window
+// was simply ignored and it carried on reading the line out.
+let generation = 0;
+
 export function speak(text: string, opts: SpeakOpts = {}): SpeechSynthesisUtterance | null {
   if (typeof speechSynthesis === 'undefined') return null;
   const clean = stripMarkdown(stripReasoning(text));
@@ -51,7 +57,12 @@ export function speak(text: string, opts: SpeakOpts = {}): SpeechSynthesisUttera
 
   // Voices may not be ready yet on Windows; wait briefly then retry.
   if (getVoices().length === 0) {
-    const off = onVoicesReady(() => { off(); speak(text, opts); });
+    const queuedAt = generation;
+    const off = onVoicesReady(() => {
+      off();
+      if (queuedAt !== generation) return; // cancelled while we waited
+      speak(text, opts);
+    });
     return null;
   }
 
@@ -76,10 +87,15 @@ export function speak(text: string, opts: SpeakOpts = {}): SpeechSynthesisUttera
   u.onerror = (ev) => console.warn('[tts] error', ev.error, { text: clean.slice(0, 60), lang: u.lang, voice: u.voice?.name });
 
   // Chrome bug: cancel() then immediate speak() can be ignored. Defer one tick.
-  setTimeout(() => speechSynthesis.speak(u), 0);
+  const startedAt = generation;
+  setTimeout(() => {
+    if (startedAt !== generation) return; // cancelled inside the deferral
+    speechSynthesis.speak(u);
+  }, 0);
   return u;
 }
 
 export function cancel() {
+  generation++;
   if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
 }

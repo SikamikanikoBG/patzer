@@ -150,7 +150,8 @@
     "rematchOfferedBy": "{{name}} wants a rematch",
     "acceptRematch": "Accept rematch",
     "rematchDeclined": "Rematch declined",
-    "more": "More"
+    "more": "More",
+    "swipeMoves": "Swipe up to open moves"
   },
   "review": {
     "title": "Game Review",
@@ -685,5 +686,15 @@
     "white": "White",
     "draw": "Draw",
     "black": "Black"
+  },
+  "update": {
+    "available": "Patzer {{latest}} is out — you are running {{current}}.",
+    "whatsNew": "What's new",
+    "how": "Pull the new image and recreate the container.",
+    "dismiss": "Dismiss until the next release",
+    "checkTitle": "Check for updates",
+    "checkHelp": "Once every six hours, Patzer asks GitHub whether a newer release exists and shows a one-line notice if so. It sends nothing about you or your games — it is an unauthenticated read of a public page. Turn it off if this machine has no internet, or if you would rather track releases yourself.",
+    "upToDate": "Up to date",
+    "newAvailable": "Version {{latest}} is available"
   }
 }

@@ -737,7 +737,7 @@ export default function Play() {
               onPointerUp={handleMovesPointerUp}
               onPointerCancel={() => { movesTouchStartY.current = null; }}
               className="btn-secondary h-11 min-w-0 flex-1 px-2 text-sm"
-              title={reduceMotion ? undefined : 'Swipe up to open moves'}
+              title={reduceMotion ? undefined : t('play.swipeMoves', { defaultValue: 'Swipe up to open moves' })}
             >
               <ListOrdered className="h-4 w-4 shrink-0" />
               <span className="truncate">{t('review.moves')}</span>
