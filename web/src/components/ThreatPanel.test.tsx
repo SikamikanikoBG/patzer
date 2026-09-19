@@ -12,7 +12,11 @@ import { api } from '../api';
 import ThreatPanel from './ThreatPanel';
 
 const IN_CHECK_FEN = 'rnbqkbnr/pppp1kpp/8/4p3/4P3/5Q2/PPPP1PPP/RNB1KBNR b KQ - 0 3';
-const THREAT_FEN = '4k3/8/8/8/8/5q2/6P1/4K3 w - - 0 1';
+const THREAT_FEN = '4k3/8/8/5q2/8/8/6P1/4K3 w - - 0 1';
+
+function flush(): Promise<void> {
+  return Promise.resolve();
+}
 
 function resolved(lines: unknown[]) {
   return Promise.resolve({ lines });
@@ -44,23 +48,26 @@ describe('ThreatPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show threat' }));
 
     await vi.advanceTimersByTimeAsync(400);
-    expect(await screen.findByText('Qxg2')).toBeTruthy();
-    expect(screen.getByText('takes the pawn on g2, winning a piece')).toBeTruthy();
+    await flush();
+
     expect(api.post).toHaveBeenCalledWith('/api/analyze/position', expect.objectContaining({
       depth: 14,
       lines: 1,
     }));
+    expect(screen.getByText('Qxg2')).toBeTruthy();
+    expect(screen.getByText('takes the pawn on g2, winning a piece')).toBeTruthy();
   });
 
   it('renders the in-check message and never calls the API', async () => {
     render(<ThreatPanel fen={IN_CHECK_FEN} currentCpWhite={0} />);
     fireEvent.click(screen.getByRole('button', { name: 'Show threat' }));
 
-    expect(await screen.findByText('In check — the threat is the check itself.')).toBeTruthy();
+    await flush();
+    expect(screen.getByText('In check — the threat is the check itself.')).toBeTruthy();
     expect(api.post).not.toHaveBeenCalled();
   });
 
-  it('retries a 429 response before showing an error', async () => {
+  it('retries a 429 response before showing the result', async () => {
     vi.mocked(api.post)
       .mockRejectedValueOnce(Object.assign(new Error('busy'), { status: 429 }))
       .mockReturnValueOnce(
@@ -78,8 +85,13 @@ describe('ThreatPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show threat' }));
 
     await vi.advanceTimersByTimeAsync(400);
+    await flush();
+    expect(api.post).toHaveBeenCalledTimes(1);
+
     await vi.advanceTimersByTimeAsync(900);
-    expect(await screen.findByText('Qxg2')).toBeTruthy();
+    await flush();
+
+    expect(screen.getByText('Qxg2')).toBeTruthy();
     expect(api.post).toHaveBeenCalledTimes(2);
   });
 });
