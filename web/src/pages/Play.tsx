@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Flag, Lightbulb, Swords, Bot, Users as UsersIcon, Check, X, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Radio, Sparkles, FlipVertical2, ListOrdered, Handshake, Undo2, MoreHorizontal, RefreshCw } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls, useReducedMotion } from 'framer-motion';
 import { Chess } from 'chess.js';
 import ChessBoard from '../components/ChessBoard';
 import ClassificationBadge from '../components/ClassificationBadge';
@@ -87,6 +87,9 @@ export default function Play() {
   const [flipped, setFlipped] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const sheetDragControls = useDragControls();
+  const movesTouchStartY = useRef<number | null>(null);
   // PvP negotiation state: who has a standing offer, from my point of view.
   type Offer = 'me' | 'them' | null;
   const [drawOffer, setDrawOffer] = useState<Offer>(null);
@@ -402,6 +405,22 @@ export default function Play() {
     wsRef.current?.send(JSON.stringify({ type: 'request_hint' }));
   }
 
+  function startSheetDrag(event: React.PointerEvent<HTMLElement>) {
+    if (!reduceMotion) sheetDragControls.start(event);
+  }
+
+  function handleMovesPointerDown(event: React.PointerEvent<HTMLButtonElement>) {
+    if (reduceMotion || event.pointerType === 'mouse') return;
+    movesTouchStartY.current = event.clientY;
+  }
+
+  function handleMovesPointerUp(event: React.PointerEvent<HTMLButtonElement>) {
+    const startY = movesTouchStartY.current;
+    movesTouchStartY.current = null;
+    if (reduceMotion || startY === null) return;
+    if (startY - event.clientY > 48) setSheetOpen(true);
+  }
+
   const turn = fen.split(' ')[1] === 'w' ? 'white' : 'black';
   // Browse / live state
   const liveIndex = positions.length - 1;
@@ -712,7 +731,14 @@ export default function Play() {
             <button onClick={isBrowsing ? stepForward : goToLive} disabled={!isBrowsing} className={`h-11 w-11 shrink-0 p-0 ${isBrowsing ? 'btn-primary' : 'btn-secondary'}`} title={isBrowsing ? t('play.rewindNext') : t('play.rewindLive')}>
               {isBrowsing ? <ChevronRight className="h-5 w-5" /> : <Radio className="h-4 w-4" />}
             </button>
-            <button onClick={() => setSheetOpen(true)} className="btn-secondary h-11 min-w-0 flex-1 px-2 text-sm">
+            <button
+              onClick={() => setSheetOpen(true)}
+              onPointerDown={handleMovesPointerDown}
+              onPointerUp={handleMovesPointerUp}
+              onPointerCancel={() => { movesTouchStartY.current = null; }}
+              className="btn-secondary h-11 min-w-0 flex-1 px-2 text-sm"
+              title={reduceMotion ? undefined : 'Swipe up to open moves'}
+            >
               <ListOrdered className="h-4 w-4 shrink-0" />
               <span className="truncate">{t('review.moves')}</span>
               <span className="ml-1 rounded-full bg-ink-100 px-1.5 text-[11px] tabular-nums dark:bg-ink-800">{moves.length}</span>
@@ -749,22 +775,58 @@ export default function Play() {
         </div>
       )}
 
-      {/* PHONE MOVES SHEET — tap-to-expand; a drag gesture is a fine follow-up. */}
+      {/* PHONE MOVES SHEET — tap or swipe to open; drag the handle/header down to dismiss. */}
       <AnimatePresence>
         {sheetOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[45] bg-black/40 lg:hidden" onClick={() => setSheetOpen(false)} />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', stiffness: 380, damping: 36 }}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[45] bg-black/40 lg:hidden"
+              onClick={() => setSheetOpen(false)}
+            />
+            <motion.div
+              initial={{ y: reduceMotion ? 0 : '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: reduceMotion ? 0 : '100%' }}
+              transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 36 }}
+              drag={reduceMotion ? false : 'y'}
+              dragControls={sheetDragControls}
+              dragListener={false}
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={{ top: 0, bottom: 0.45 }}
+              onDragEnd={(_, info) => {
+                if (info.offset.y > 80 || info.velocity.y > 500) setSheetOpen(false);
+              }}
               className="fixed inset-x-0 bottom-0 z-[46] max-h-[70vh] rounded-t-2xl bg-white shadow-lift dark:bg-ink-900 lg:hidden"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-              <button onClick={() => setSheetOpen(false)} className="flex w-full flex-col items-center pt-2" aria-label={t('common.close', { defaultValue: 'Close' })}>
+              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+            >
+              <button
+                onClick={() => setSheetOpen(false)}
+                onPointerDown={(event) => startSheetDrag(event)}
+                className="flex w-full flex-col items-center pt-2 touch-none"
+                aria-label={t('common.close', { defaultValue: 'Close' })}
+              >
                 <span className="h-1.5 w-10 rounded-full bg-ink-300 dark:bg-ink-600" />
               </button>
-              <div className="flex items-center justify-between px-4 pb-2 pt-1">
+
+              <div
+                className="flex items-center justify-between px-4 pb-2 pt-1 touch-none"
+                onPointerDown={(event) => {
+                  if (!(event.target as HTMLElement).closest('button')) startSheetDrag(event);
+                }}
+              >
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-chesscom-500">{t('review.moves')}</h3>
-                <button onClick={() => setSheetOpen(false)} className="btn-ghost h-8 px-2 text-xs">{t('common.close', { defaultValue: 'Close' })}</button>
+                <button
+                  onClick={() => setSheetOpen(false)}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  className="btn-ghost h-8 px-2 text-xs"
+                >
+                  {t('common.close', { defaultValue: 'Close' })}
+                </button>
               </div>
+
               <div className="max-h-[calc(70vh-4rem)] overflow-y-auto px-4 pb-4">
                 <MovesList moves={moves} />
               </div>
