@@ -40,6 +40,32 @@ export default function ChessBoard({
   onMoveRef.current = onMove;
   turnColorRef.current = turnColor;
 
+  // chessground caches the board's position on screen and only refreshes it on
+  // window resize/scroll. Anything that moves the board *without* a resize
+  // leaves that cache stale, and from then on every click is mapped to the
+  // wrong square — the piece under the cursor never gets selected and the
+  // board looks dead. Playing Black in a PvP game hit this every single time:
+  // the board mounts while the opponent is still connecting (the "waiting for
+  // them to come back" banner is on screen), the banner disappears the moment
+  // they arrive, the board slides up by its height, and Black can't move a
+  // piece for the rest of the game. A refresh "fixed" it, which is why it
+  // looked like a flaky socket.
+  const rectRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  function measure() {
+    const r = ref.current!.getBoundingClientRect();
+    return { x: r.x, y: r.y, w: r.width, h: r.height };
+  }
+  function syncBounds() {
+    if (!ref.current || !apiRef.current) return;
+    const now = measure();
+    const prev = rectRef.current;
+    if (prev
+      && Math.abs(prev.x - now.x) < 0.5 && Math.abs(prev.y - now.y) < 0.5
+      && Math.abs(prev.w - now.w) < 0.5 && Math.abs(prev.h - now.h) < 0.5) return;
+    rectRef.current = now;
+    if (prev) apiRef.current.redrawAll();
+  }
+
   function handleAfter(orig: Key, dest: Key) {
     if (needsPromotion(fenRef.current, orig, dest)) {
       // Show our picker instead of auto-promoting
@@ -81,7 +107,13 @@ export default function ChessBoard({
       drawable: { enabled: true, defaultSnapToValidMove: true },
     };
     apiRef.current = Chessground(ref.current, config);
+    rectRef.current = measure();
+    // Size changes (a collapsing sidebar, a phone rotating) don't reach
+    // chessground on their own either — `syncBounds` is cheap, so just call it.
+    const ro = new ResizeObserver(() => syncBounds());
+    ro.observe(ref.current);
     return () => {
+      ro.disconnect();
       apiRef.current?.destroy();
       apiRef.current = null;
     };
@@ -108,6 +140,7 @@ export default function ChessBoard({
     } else {
       apiRef.current.setShapes([]);
     }
+    syncBounds();
   }, [fen, orientation, turnColor, lastMove, movable, arrows, resetKey]);
 
   function pickPromotion(piece: PieceLetter) {

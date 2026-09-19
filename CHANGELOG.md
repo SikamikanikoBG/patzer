@@ -4,6 +4,32 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.10.1] — 2026-09-19
+
+### Black could not move in a PvP game
+
+Playing a full game against another person through two browsers — the one
+test nobody had run — found this immediately. As Black, you could see the
+opponent's moves arrive, the clock ran, "Your turn" showed, and clicking your
+pieces did **nothing**. A page refresh fixed it, which is exactly why it read
+like a flaky connection.
+
+chessground caches where the board sits on screen and only re-measures on a
+window resize or scroll. Black's board mounts while the opponent is still
+connecting, so the "waiting for them to come back" banner is on screen; the
+moment they arrive the banner disappears and the board slides up by its
+height. chessground keeps the old position, so every click is mapped to the
+square *below* the one you clicked — usually an empty square, so nothing gets
+selected and the board looks dead. White never saw it, because White's board
+mounts after the opponent is already online.
+
+The board now re-measures itself whenever it moves or changes size (and a
+ResizeObserver covers a resize that comes with no re-render, like a rotating
+phone). Two new tests: a component test that pins the re-measure, and
+`npm run test:ui` — two real browsers playing each other through the actual
+interface, which is the only thing that would have caught this. Nothing else
+changed.
+
 ## [7.10.0] — 2026-09-18
 
 ### Spanish, tests, PvP negotiation, and two bugs nobody could have seen

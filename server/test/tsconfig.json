@@ -3,7 +3,15 @@
   "compilerOptions": {
     "rootDir": "..",
     "noEmit": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["../src/**/*", "./**/*"]
+  "include": [
+    "../src/**/*",
+    "./**/*"
+  ],
+  "exclude": [
+    "./e2e/pvp-ui.ts"
+  ]
 }

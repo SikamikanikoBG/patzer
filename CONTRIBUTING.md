@@ -71,6 +71,12 @@ rating and classification math is exactly the code where a silent regression hur
 `npm run test:e2e` boots a real server on a throwaway SQLite file and drives two WebSocket clients through a
 full PvP game (moves, clocks, draw offers, takebacks, rematch). Run it whenever you touch `server/src/ws/play.ts`.
 
+`npm run test:ui` does the same thing through the actual interface, with two real browsers clicking the board.
+It needs playwright, which is deliberately *not* a project dependency (it would pull browser binaries into
+every install): `npm i -D playwright && npx playwright install chromium` first. Run it whenever you touch
+`web/src/components/ChessBoard.tsx` or `web/src/pages/Play.tsx` — a board that renders perfectly but silently
+ignores clicks has shipped twice now, and only this test sees it.
+
 ## Commit style
 
 No strict format, but please:

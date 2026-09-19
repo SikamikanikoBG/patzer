@@ -5,6 +5,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     include: ['server/test/**/*.test.ts', 'web/src/**/*.test.{ts,tsx}'],
+    // Node by default; the few component tests opt into jsdom with a
+    // `// @vitest-environment happy-dom` pragma at the top of the file.
     environment: 'node',
   },
 });
