@@ -3,3 +3,4 @@
 export * from "./locales.js";
 export * from "./moves.js";
 export * from "./facts.js";
+export * from "./facts-utils.js";
