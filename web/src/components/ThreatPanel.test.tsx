@@ -12,7 +12,7 @@ import { api } from '../api';
 import ThreatPanel from './ThreatPanel';
 
 const IN_CHECK_FEN = 'rnbqkbnr/pppp1kpp/8/4p3/4P3/5Q2/PPPP1PPP/RNB1KBNR b KQ - 0 3';
-const THREAT_FEN = '4k3/8/8/5q2/8/8/6P1/4K3 w - - 0 1';
+const THREAT_FEN = '4k3/8/8/8/8/5q2/6P1/4K3 w - - 0 1';
 
 function flush(): Promise<void> {
   return Promise.resolve();
