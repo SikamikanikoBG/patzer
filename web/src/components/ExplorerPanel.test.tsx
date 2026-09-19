@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 vi.mock('../api', () => ({
   api: {
@@ -29,14 +29,10 @@ describe('ExplorerPanel', () => {
     render(<ExplorerPanel fen={FEN} />);
     fireEvent.click(screen.getByRole('button', { name: 'Show master stats' }));
 
-    await vi.runAllTimersAsync();
-
-    await waitFor(() => {
-      expect(screen.getByText('Lichess master database unreachable right now.')).toBeInTheDocument();
-    });
-
-    expect(screen.queryByText(/master games/i)).not.toBeInTheDocument();
-    expect(screen.queryByText('White 0%')).not.toBeInTheDocument();
+    await vi.advanceTimersByTimeAsync(300);
+    expect(await screen.findByText('Lichess master database unreachable right now.')).toBeTruthy();
+    expect(screen.queryByText(/master games/i)).toBeNull();
+    expect(screen.queryByText('White 0%')).toBeNull();
   });
 
   it('renders game count, WDL bar, and top continuations', async () => {
@@ -56,19 +52,15 @@ describe('ExplorerPanel', () => {
     render(<ExplorerPanel fen={FEN} />);
     fireEvent.click(screen.getByRole('button', { name: 'Show master stats' }));
 
-    await vi.runAllTimersAsync();
-
-    await waitFor(() => {
-      expect(screen.getByText('1000 master games')).toBeInTheDocument();
-      expect(screen.getByText('B00 · King Pawn Game')).toBeInTheDocument();
-      expect(screen.getByText('e4')).toBeInTheDocument();
-      expect(screen.getByText('d4')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('White 60%')).toBeInTheDocument();
-    expect(screen.getByText('Draw 30%')).toBeInTheDocument();
-    expect(screen.getByText('Black 10%')).toBeInTheDocument();
-    expect(screen.getByText(/400/)).toBeInTheDocument();
+    await vi.advanceTimersByTimeAsync(300);
+    expect(await screen.findByText('1000 master games')).toBeTruthy();
+    expect(screen.getByText('B00 · King Pawn Game')).toBeTruthy();
+    expect(screen.getByText('e4')).toBeTruthy();
+    expect(screen.getByText('d4')).toBeTruthy();
+    expect(screen.getByText('White 60%')).toBeTruthy();
+    expect(screen.getByText('Draw 30%')).toBeTruthy();
+    expect(screen.getByText('Black 10%')).toBeTruthy();
+    expect(screen.getByText(/400/)).toBeTruthy();
   });
 
   it('passes preview callbacks for continuation hover', async () => {
@@ -84,7 +76,7 @@ describe('ExplorerPanel', () => {
 
     render(<ExplorerPanel fen={FEN} onPreview={onPreview} />);
     fireEvent.click(screen.getByRole('button', { name: 'Show master stats' }));
-    await vi.runAllTimersAsync();
+    await vi.advanceTimersByTimeAsync(300);
 
     const row = await screen.findByText('e4');
     fireEvent.mouseEnter(row.parentElement!);
