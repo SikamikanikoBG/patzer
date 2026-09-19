@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { fireEvent, render, screen, cleanup } from '@testing-library/react';
 
 vi.mock('../api', () => ({
   api: {
@@ -13,30 +13,19 @@ import ExplorerPanel from './ExplorerPanel';
 
 const FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
-function flush(): Promise<void> {
-  return Promise.resolve();
-}
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 describe('ExplorerPanel', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it('shows only the muted unavailable message when explorer data is unavailable', async () => {
     vi.mocked(api.get).mockRejectedValueOnce(new Error('upstream down'));
 
     render(<ExplorerPanel fen={FEN} />);
     fireEvent.click(screen.getByRole('button', { name: 'Show master stats' }));
 
-    await vi.advanceTimersByTimeAsync(300);
-    await flush();
-
-    expect(screen.getByText('Lichess master database unreachable right now.')).toBeTruthy();
+    expect(await screen.findByText('Lichess master database unreachable right now.')).toBeTruthy();
     expect(screen.queryByText(/master games/i)).toBeNull();
     expect(screen.queryByText('White 0%')).toBeNull();
   });
@@ -58,10 +47,7 @@ describe('ExplorerPanel', () => {
     render(<ExplorerPanel fen={FEN} />);
     fireEvent.click(screen.getByRole('button', { name: 'Show master stats' }));
 
-    await vi.advanceTimersByTimeAsync(300);
-    await flush();
-
-    expect(screen.getByText('1000 master games')).toBeTruthy();
+    expect(await screen.findByText('1000 master games')).toBeTruthy();
     expect(screen.getByText('B00 · King Pawn Game')).toBeTruthy();
     expect(screen.getByText('e4')).toBeTruthy();
     expect(screen.getByText('d4')).toBeTruthy();
@@ -85,12 +71,9 @@ describe('ExplorerPanel', () => {
     render(<ExplorerPanel fen={FEN} onPreview={onPreview} />);
     fireEvent.click(screen.getByRole('button', { name: 'Show master stats' }));
 
-    await vi.advanceTimersByTimeAsync(300);
-    await flush();
-
-    const row = screen.getByText('e4');
-    fireEvent.mouseEnter(row.parentElement!);
-    fireEvent.mouseLeave(row.parentElement!);
+    const row = (await screen.findByText('e4')).parentElement!;
+    fireEvent.mouseEnter(row);
+    fireEvent.mouseLeave(row);
 
     expect(onPreview).toHaveBeenNthCalledWith(1, 'e2e4');
     expect(onPreview).toHaveBeenNthCalledWith(2, null);
