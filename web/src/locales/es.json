@@ -151,7 +151,8 @@
     "acceptRematch": "Aceptar revancha",
     "rematchDeclined": "Revancha rechazada",
     "more": "Más",
-    "swipeMoves": "Desliza hacia arriba para ver las jugadas"
+    "swipeMoves": "Desliza hacia arriba para ver las jugadas",
+    "premoveClear": "Cancelar premovimientos (Esc)"
   },
   "review": {
     "title": "Análisis de partida",

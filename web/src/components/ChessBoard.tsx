@@ -84,7 +84,10 @@ export default function ChessBoard({
       orientation,
       turnColor,
       coordinates: true,
-      animation: { enabled: true, duration: 200 },
+      // No slide animation. In a real game the 200ms tween is dead time: you
+      // see the piece arrive later than the board already knows, and on a fast
+      // time control that reads as lag. Pieces appear where they are.
+      animation: { enabled: false, duration: 0 },
       highlight: { lastMove: true, check: true },
       movable: {
         ...(movable

@@ -4,6 +4,39 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.12.0] — 2026-09-19
+
+### Premove queues, an instant board, and a clock you can read at a glance
+
+Three changes aimed squarely at playing fast.
+
+- **New: queue up to six premoves.** chessground holds exactly one premove, so
+  the queue is Patzer's own. While the opponent is thinking you can keep
+  playing: the board shows the position *as if* every queued move had been
+  made — your pieces are already sitting where you put them, with an arrow per
+  move and the move list under the board — which is the trace you actually want
+  rather than a single ghost arrow. Each move is re-checked against reality the
+  instant the opponent moves: if it's still legal it's sent immediately, if it
+  isn't, the whole queue is dropped rather than half-played. Escape cancels, so
+  does clicking the chip.
+
+  The edge cases it handles, because a premove queue is mostly edge cases: a
+  queued move that gives check ends the queue (the position after it isn't one
+  you can plan from); the queue clears on takeback, on game over, and whenever
+  the server rejects anything; premoves are ignored while you're browsing back
+  through the game; promotion works (the picker runs against the queued
+  position, not the live one); and a premove skips the blunder warning, because
+  the point of premoving is speed.
+
+- **Removed: the piece slide animation.** It was 200ms of dead time on every
+  move — the board knew the position before you could see it, which reads as
+  lag on a fast time control. Pieces now appear where they are.
+
+- **The clock grows under 30 seconds.** The side actually on the clock doubles
+  in size below 30s (18px → 36px) so it's readable without looking away from
+  the board, and keeps the red pulse it already had below 10s. The idle side
+  stays small — a big number on a clock that isn't running is just noise.
+
 ## [7.11.0] — 2026-09-19
 
 ### It tells you when it's out of date, and the header stops falling off the screen

@@ -25,6 +25,61 @@ interface Position { fen: string; lastFrom?: string; lastTo?: string }
 
 const START_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
+/** A move the player has queued up while the opponent is still thinking. */
+interface Premove { uci: string; from: string; to: string; san: string }
+
+// Generous, but not unbounded: past this the queue is fantasy rather than a
+// plan, and every queued move multiplies the chance the whole thing is
+// discarded when the opponent does something unexpected.
+const MAX_PREMOVES = 6;
+
+/** Hand the turn back to us without a move, so the next premove can be picked
+ *  from the same side. En passant can't survive a pass, so it's cleared. */
+function passTurn(fen: string): string {
+  const parts = fen.split(' ');
+  if (parts.length < 4) return fen;
+  parts[1] = parts[1] === 'w' ? 'b' : 'w';
+  parts[3] = '-';
+  return parts.join(' ');
+}
+
+/** The position as it would be with every queued move played, always with
+ *  `me` to move so the board offers our own pieces. Premoving means acting on
+ *  the opponent's clock, so the first thing it does is pass their turn: we are
+ *  deliberately planning as if they had done nothing. Stops early if a queued
+ *  move stopped being playable — the caller then simply can't queue more. */
+function applyPremoves(baseFen: string, list: Premove[], me: 'white' | 'black'): string {
+  let fen = baseFen;
+  if ((fen.split(' ')[1] === 'w' ? 'white' : 'black') !== me) {
+    const passed = passTurn(fen);
+    try { new Chess(passed); fen = passed; } catch { return fen; }
+  }
+  for (const p of list) {
+    try {
+      const c = new Chess(fen);
+      const m = c.move({ from: p.from, to: p.to, promotion: p.uci.slice(4) || undefined });
+      if (!m) return fen;
+      fen = passTurn(c.fen());
+      // A premove that gives check leaves an illegal "and now it's my turn
+      // again" position; chess.js rejects it, which ends the queue here.
+      new Chess(fen);
+    } catch {
+      return fen;
+    }
+  }
+  return fen;
+}
+
+/** Is this queued move still playable in the position that actually arrived? */
+function isLegalIn(fen: string, p: Premove): boolean {
+  try {
+    const c = new Chess(fen);
+    return !!c.move({ from: p.from, to: p.to, promotion: p.uci.slice(4) || undefined });
+  } catch {
+    return false;
+  }
+}
+
 interface ServerMsg {
   type: string;
   fen?: string;
@@ -111,6 +166,15 @@ export default function Play() {
   const [gameOverDismissed, setGameOverDismissed] = useState(false);
   const [lastClassifiedMove, setLastClassifiedMove] = useState<{ ply: number; san: string; uci: string; classification: Classification; cp_loss: number; best_san: string | null; fen_before: string } | null>(null);
   const [boardArrows, setBoardArrows] = useState<{ orig: string; dest: string; brush: string }[]>([]);
+  // Queued premoves, in the order they'll be played. chessground has its own
+  // premove but it holds exactly one, so the queue is ours: the board shows the
+  // position as if every queued move had been played, with an arrow per move,
+  // and each one is validated against reality the moment the opponent moves.
+  const [premoves, setPremoves] = useState<Premove[]>([]);
+  // handleMessage is installed on the socket once, so it closes over the first
+  // render's state. Anything it touches has to come from a ref.
+  const premovesRef = useRef<Premove[]>([]);
+  premovesRef.current = premoves;
   const [boardKey, setBoardKey] = useState(0);
   const forceBoardSync = () => setBoardKey((k) => k + 1);
 
@@ -179,6 +243,11 @@ export default function Play() {
     ws.onclose = () => { /* ignore */ };
   }
 
+  function clearPremoves() {
+    premovesRef.current = [];
+    setPremoves([]);
+  }
+
   function resetGameState() {
     setFen(START_FEN);
     setMoves([]); setResult(null); setHint(null); setLastClassifiedMove(null);
@@ -188,6 +257,7 @@ export default function Play() {
     setGameOverDismissed(false);
     setDrawOffer(null); setTakeback(null); setRematch(null); setRematchDeclined(false);
     setMoreOpen(false); setSheetOpen(false);
+    clearPremoves();
   }
 
   /** Rebuild the per-ply position list + move list from a SAN history. Used
@@ -252,7 +322,7 @@ export default function Play() {
         setTakeback(null);
         break;
       case 'takeback_applied': {
-        setTakeback(null); setDrawOffer(null);
+        setTakeback(null); setDrawOffer(null); clearPremoves();
         if (msg.fen) setFen(msg.fen);
         loadHistory(msg.history, msg.fen ?? START_FEN);
         if (msg.whiteTimeMs !== undefined) setWhiteMs(msg.whiteTimeMs);
@@ -298,6 +368,26 @@ export default function Play() {
         if (msg.blackTimeMs !== undefined) setBlackMs(msg.blackTimeMs);
         setHint(null);
         setDrawOffer(null); setTakeback(null);
+        // A move landed — if it's now our turn and we have moves queued, play
+        // the next one. It has to be re-checked against the real position:
+        // the opponent may have captured the piece, blocked the square, or
+        // given check. If it no longer works, the whole queue is dropped —
+        // silently keeping some of it is how you lose a game you thought you
+        // had planned.
+        if (msg.fen && premovesRef.current.length > 0) {
+          const nowTurn = msg.fen.split(' ')[1] === 'w' ? 'white' : 'black';
+          if (nowTurn === userColorRef.current) {
+            const [next, ...rest] = premovesRef.current;
+            if (next && isLegalIn(msg.fen, next)) {
+              premovesRef.current = rest;
+              setPremoves(rest);
+              commitMove(next.uci);
+            } else {
+              clearPremoves();
+              forceBoardSync();
+            }
+          }
+        }
         break;
       }
       case 'move_classified': {
@@ -345,6 +435,7 @@ export default function Play() {
         break;
       }
       case 'game_over':
+        clearPremoves();
         setPhase('over');
         playSound('game_end');
         if (msg.result) setResult({ result: msg.result, reason: msg.reason ?? '' });
@@ -360,11 +451,33 @@ export default function Play() {
         // PvP analysis is ready — could refresh UI; for now just no-op
         break;
       case 'error':
-        // Server rejected something (illegal move etc) — re-sync the board
+        // Server rejected something (illegal move etc) — re-sync the board and
+        // drop the queue: whatever we thought the position was, it isn't.
+        clearPremoves();
         forceBoardSync();
         setPreviewing(false);
         break;
     }
+  }
+
+  /** Board move handler. Plays immediately when it's our turn and nothing is
+   *  queued; otherwise adds to the premove queue. */
+  function onBoardMove(uci: string) {
+    const myTurnNow = turn === userColor && premoves.length === 0;
+    if (myTurnNow) { attemptMove(uci); return; }
+    if (phase !== 'playing' || isBrowsing || blunder || previewing) return;
+    const from = uci.slice(0, 2), to = uci.slice(2, 4);
+    const promotion = uci.slice(4) || undefined;
+    let san = '';
+    try {
+      const c = new Chess(shadowFen);
+      const m = c.move({ from, to, promotion });
+      if (!m) return;
+      san = m.san;
+    } catch { return; }
+    const next = [...premoves, { uci, from, to, san }];
+    premovesRef.current = next;
+    setPremoves(next);
   }
 
   function attemptMove(uci: string) {
@@ -426,11 +539,23 @@ export default function Play() {
   const liveIndex = positions.length - 1;
   const isBrowsing = browseIndex !== null && browseIndex !== liveIndex;
   const displayedPos = positions[browseIndex ?? liveIndex] ?? positions[0]!;
-  const displayedFen = isBrowsing ? displayedPos.fen : fen;
+  // The board shows the queue already played, which is the "trace" — you see
+  // where your pieces will be, not just arrows.
+  const shadowFen = applyPremoves(fen, premoves, userColor);
+  const displayedFen = isBrowsing ? displayedPos.fen : shadowFen;
   const displayedLastMove: [string, string] | undefined = displayedPos.lastFrom && displayedPos.lastTo
     ? [displayedPos.lastFrom, displayedPos.lastTo]
     : undefined;
-  const movable = phase === 'playing' && turn === userColor && !blunder && !previewing && !isBrowsing;
+  // Premoving means the board stays live on the opponent's clock. The shadow
+  // position always has us to move, so chessground offers our own pieces.
+  const premoveArrows = premoves.map((p) => ({ orig: p.from, dest: p.to, brush: 'yellow' }));
+  const shadowTurn = shadowFen.split(' ')[1] === 'w' ? 'white' : 'black';
+  // Only offer more premoves while the shadow still has us to move — a queued
+  // move that gives check leaves a position chess.js won't continue from, and
+  // guessing past that point is fiction.
+  const canQueueMore = shadowTurn === userColor && premoves.length < MAX_PREMOVES;
+  const movable = phase === 'playing' && !blunder && !previewing && !isBrowsing
+    && (turn === userColor ? true : canQueueMore);
   const goToLive = () => setBrowseIndex(null);
   const stepBack = () => setBrowseIndex((b) => Math.max(0, (b ?? liveIndex) - 1));
   const stepForward = () => setBrowseIndex((b) => {
@@ -449,6 +574,9 @@ export default function Play() {
       else if (e.key === 'ArrowRight') { e.preventDefault(); stepForward(); }
       else if (e.key === 'Home') { e.preventDefault(); setBrowseIndex(0); }
       else if (e.key === 'End') { e.preventDefault(); goToLive(); }
+      else if (e.key === 'Escape' && premovesRef.current.length > 0) {
+        e.preventDefault(); clearPremoves(); forceBoardSync();
+      }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -600,10 +728,10 @@ export default function Play() {
                 fen={displayedFen}
                 orientation={orientation}
                 movable={movable}
-                turnColor={turn}
-                onMove={attemptMove}
+                turnColor={movable ? userColor : turn}
+                onMove={onBoardMove}
                 lastMove={displayedLastMove as never}
-                arrows={isBrowsing ? [] : (boardArrows as never[])}
+                arrows={isBrowsing ? [] : ([...boardArrows, ...premoveArrows] as never[])}
                 resetKey={boardKey}
               />
               {/* Living pieces (kid mode) — emoji moods over each of the
@@ -678,6 +806,19 @@ export default function Play() {
           )}
           {/* Phone: one-line status under the board; everything else lives in the sticky bar. */}
           {phase === 'playing' && <div className="mt-2 text-center text-sm lg:hidden">{statusNode}</div>}
+
+          {premoves.length > 0 && (
+            <div className="mt-2 flex items-center justify-center gap-2">
+              <button
+                onClick={() => { clearPremoves(); forceBoardSync(); }}
+                className="flex items-center gap-2 rounded-full border border-gold-500/50 bg-gold-500/15 px-3 py-1 text-xs font-medium text-chesscom-800 hover:bg-gold-500/25 dark:text-chesscom-100"
+                title={t('play.premoveClear', { defaultValue: 'Cancel premoves (Esc)' })}
+              >
+                <span className="font-mono">{premoves.map((p) => p.san).join(' → ')}</span>
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* SIDE PANEL — on phones the move list moves into the bottom sheet;
@@ -1110,14 +1251,24 @@ function FriendTab({ onChallengeAccepted }: { onChallengeAccepted: (gameId: numb
 }
 
 function ClockBar({ timeMs, active, label, flip }: { timeMs: number; active: boolean; label: string; flip?: boolean }) {
-  const low = active && timeMs > 0 && timeMs < 10_000;
+  // Under 30s the clock is the thing you need to read at a glance, so it grows
+  // and the row grows with it; under 10s it also goes red and pulses. Only for
+  // the side actually on the clock — a big number on the idle side is noise.
+  const urgent = active && timeMs > 0 && timeMs <= 30_000;
+  const critical = active && timeMs > 0 && timeMs < 10_000;
   return (
-    <div className={`flex items-center justify-between rounded-md px-4 py-2 transition-colors
+    <div className={`flex items-center justify-between rounded-md px-4 transition-all
+      ${urgent ? 'py-2.5' : 'py-2'}
       ${active
-        ? (low ? 'bg-bad text-white animate-pulse-soft' : 'bg-green-500 text-white')
+        ? (critical ? 'bg-bad text-white animate-pulse-soft' : 'bg-green-500 text-white')
         : 'bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-800 dark:text-chesscom-300'} ${flip ? '' : ''}`}>
       <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
-      <span className="font-mono text-lg font-bold tabular-nums">{fmtClock(timeMs)}</span>
+      <span
+        className={`font-mono font-bold tabular-nums transition-all ${urgent ? 'text-3xl leading-none tracking-tight sm:text-4xl' : 'text-lg'}`}
+        aria-live={critical ? 'assertive' : 'off'}
+      >
+        {fmtClock(timeMs)}
+      </span>
     </div>
   );
 }

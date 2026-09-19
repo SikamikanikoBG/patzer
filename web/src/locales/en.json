@@ -151,7 +151,8 @@
     "acceptRematch": "Accept rematch",
     "rematchDeclined": "Rematch declined",
     "more": "More",
-    "swipeMoves": "Swipe up to open moves"
+    "swipeMoves": "Swipe up to open moves",
+    "premoveClear": "Cancel premoves (Esc)"
   },
   "review": {
     "title": "Game Review",
