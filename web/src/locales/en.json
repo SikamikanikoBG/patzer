@@ -697,5 +697,12 @@
     "checkHelp": "Once every six hours, Patzer asks GitHub whether a newer release exists and shows a one-line notice if so. It sends nothing about you or your games — it is an unauthenticated read of a public page. Turn it off if this machine has no internet, or if you would rather track releases yourself.",
     "upToDate": "Up to date",
     "newAvailable": "Version {{latest}} is available"
+  },
+  "github": {
+    "star": "Star on GitHub",
+    "starred": "Starred",
+    "thanks": "Thanks for starring Patzer!",
+    "starTitle": "Star Patzer on GitHub — it is the whole thank-you the project asks for",
+    "changelogCta": "Patzer is free and self-hosted."
   }
 }

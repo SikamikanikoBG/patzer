@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { renderMarkdown } from '../lib/markdown';
+import GitHubStar from './GitHubStar';
 
 interface Props { onClose: () => void }
 
@@ -29,6 +30,12 @@ export default function ChangelogModal({ onClose }: Props) {
           {loading
             ? <div className="text-ink-500">{t('common.loading')}</div>
             : <div className="text-sm" dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }} />}
+        </div>
+        {/* Having just read what the last few releases gave you for free is the
+            one moment to ask for a star. */}
+        <div className="flex items-center justify-between gap-3 border-t border-ink-200 px-5 py-3 text-xs text-ink-500 dark:border-ink-700">
+          <span>{t('github.changelogCta', { defaultValue: 'Patzer is free and self-hosted.' })}</span>
+          <GitHubStar variant="inline" className="shrink-0" />
         </div>
       </div>
     </div>

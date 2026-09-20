@@ -4,6 +4,36 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.13.0] — 2026-09-20
+
+### Star on GitHub link
+
+Patzer is free and self-hosted, so there is exactly one thing it can ask for in
+return. This release adds a **Star on GitHub** link — in three places that stay
+out of the way, and nowhere near the board.
+
+- **In the footer, beside the version chip.** On every page, at the same size
+  as the version, with the repo's live star count next to it. Deliberately not
+  in the top bar: that bar already measures itself and collapses nine nav pills
+  to icons when the labels don't fit a laptop, so a star button up there would
+  have cost somebody a destination.
+- **At the bottom of the changelog.** Having just read what the last few
+  releases handed you for free is the one moment to ask.
+- **Under the login card.** That is where someone sizing Patzer up for their
+  own box lands — and until now nothing in the product said where the source
+  lives. The word `github` appeared exactly once in the whole web app, in a
+  help string on the admin page.
+
+The count comes from GitHub's public API once a day per browser and is cached in
+`localStorage`. If the box has no internet, the call fails or you are
+rate-limited, the link still works and simply shows no number. Click it once and
+it goes muted — *Starred* — and stops nudging on that device for good. The
+browser cannot actually check whether you starred without your GitHub
+credentials, which Patzer will never ask for, so it takes the click at its word.
+
+Bulgarian and Spanish strings included. Five new tests cover the cache, the
+offline path and the once-only nudge; `npm test` is at 100.
+
 ## [7.12.0] — 2026-09-19
 
 ### Premove queues, an instant board, and a clock you can read at a glance

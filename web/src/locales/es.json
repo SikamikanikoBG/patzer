@@ -697,5 +697,12 @@
     "checkHelp": "Cada seis horas Patzer pregunta a GitHub si hay una versión más reciente y muestra un aviso de una línea si la hay. No envía nada sobre ti ni sobre tus partidas: es una lectura anónima de una página pública. Desactívalo si esta máquina no tiene internet o si prefieres seguir las versiones por tu cuenta.",
     "upToDate": "Actualizado",
     "newAvailable": "La versión {{latest}} está disponible"
+  },
+  "github": {
+    "star": "Dar una estrella",
+    "starred": "Con estrella",
+    "thanks": "¡Gracias por la estrella!",
+    "starTitle": "Dale una estrella a Patzer en GitHub — es el único agradecimiento que el proyecto pide",
+    "changelogCta": "Patzer es gratuito y lo alojas tú."
   }
 }

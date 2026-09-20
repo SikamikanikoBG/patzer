@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { LogoMark } from './Logo';
 import { LANGUAGES, normalizeLanguage } from '../lib/languages';
+import GitHubStar from './GitHubStar';
 
 // Shared visual frame for the unauthenticated pages (login / signup / forgot /
 // reset / verify) so they all read as the same product. Mirrors Login.tsx's
@@ -33,6 +34,11 @@ export default function AuthShell({ title, subtitle, children }: { title: string
               <button type="button" onClick={() => i18n.changeLanguage(l.code)} className={`px-2 py-1 ${normalizeLanguage(i18n.language) === l.code ? 'text-ink-700 underline dark:text-ink-200' : 'hover:text-ink-700'}`}>{l.short}</button>
             </Fragment>
           ))}
+        </div>
+        {/* The login card is also where someone evaluating Patzer lands, so the
+            repo gets one quiet line here too. */}
+        <div className="mt-2 flex justify-center">
+          <GitHubStar />
         </div>
       </motion.div>
     </div>

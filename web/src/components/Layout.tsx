@@ -7,6 +7,7 @@ import UpdateNotice from './UpdateNotice';
 import { useAuth } from '../state/auth';
 import { cn } from '../lib/utils';
 import ChangelogModal from './ChangelogModal';
+import GitHubStar from './GitHubStar';
 import { LogoMark, LogoLockup } from './Logo';
 import { LANGUAGES, normalizeLanguage } from '../lib/languages';
 
@@ -351,17 +352,21 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
         </div>
       </main>
 
-      {/* Footer with version chip */}
-      <footer className="border-t border-chesscom-200 bg-white px-3 py-2 text-center text-xs text-chesscom-400 dark:border-chesscom-800 dark:bg-chesscom-900">
-        {version && (
-          <button
-            onClick={() => setShowChangelog(true)}
-            className="hover:text-chesscom-700 dark:hover:text-chesscom-200"
-            title="View changelog"
-          >
-            Patzer v{version}
-          </button>
-        )}
+      {/* Footer with version chip and the one place the repo is advertised. */}
+      <footer className="border-t border-chesscom-200 bg-white px-3 py-2 text-xs text-chesscom-400 dark:border-chesscom-800 dark:bg-chesscom-900">
+        <div className="flex items-center justify-center gap-2">
+          {version && (
+            <button
+              onClick={() => setShowChangelog(true)}
+              className="hover:text-chesscom-700 dark:hover:text-chesscom-200"
+              title="View changelog"
+            >
+              Patzer v{version}
+            </button>
+          )}
+          {version && <span aria-hidden="true">·</span>}
+          <GitHubStar />
+        </div>
       </footer>
 
       {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
