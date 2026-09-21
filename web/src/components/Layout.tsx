@@ -32,10 +32,14 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
   const [adminOpen, setAdminOpen] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [version, setVersion] = useState<string>('');
+  const [demoMode, setDemoMode] = useState(false);
 
   useEffect(() => {
-    api.get<{ version: string }>('/api/meta')
-      .then((d) => setVersion(d.version))
+    api.get<{ version: string; demo?: boolean }>('/api/meta')
+      .then((d) => {
+        setVersion(d.version);
+        if (d.demo) setDemoMode(true);
+      })
       .catch(() => setVersion(''));
   }, []);
 
@@ -287,6 +291,12 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
           </div>
         </div>
       </header>
+
+      {demoMode && (
+        <div className="border-b border-chesscom-200/50 bg-chesscom-100 px-3 py-2 text-center text-sm font-medium text-chesscom-800 dark:border-chesscom-700 dark:bg-chesscom-800 dark:text-chesscom-200 sm:px-6">
+          Demo Mode — This is a public demo. Data resets nightly.
+        </div>
+      )}
 
       {/* Mobile drawer */}
       {navOpen && (

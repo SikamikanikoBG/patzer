@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { db, getSetting, setSetting } from '../db.js';
 import { updateCheckEnabled, setUpdateCheckEnabled } from '../updates.js';
-import { requireAdmin } from '../auth/middleware.js';
+import { requireAdmin, requireNotDemo } from '../auth/middleware.js';
 import { hashPassword } from '../auth/passwords.js';
 import { testConnection, testModel, llmUrl, llmStats, type LlmProvider } from '../coach/llm.js';
 import { StockfishEngine } from '../chess/stockfish.js';
@@ -11,6 +11,12 @@ import type { Profile, Role } from '../types.js';
 
 const router = new Hono();
 router.use('*', requireAdmin);
+router.use('*', async (c, next) => {
+  if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.method !== 'OPTIONS') {
+    return requireNotDemo(c, next);
+  }
+  return next();
+});
 
 // ---- Users ----
 

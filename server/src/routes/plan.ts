@@ -6,12 +6,18 @@
 
 import { Hono } from 'hono';
 import { db } from '../db.js';
-import { requireAuth } from '../auth/middleware.js';
+import { requireAuth, requireNotDemo } from '../auth/middleware.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
 import type { Color } from '../types.js';
 
 const router = new Hono();
 router.use('*', requireAuth);
+router.use('*', async (c, next) => {
+  if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.method !== 'OPTIONS') {
+    return requireNotDemo(c, next);
+  }
+  return next();
+});
 
 type GoalKind = 'puzzles_solve' | 'opening_play' | 'review_games' | 'accuracy' | 'win_streak';
 

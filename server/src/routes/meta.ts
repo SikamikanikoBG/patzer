@@ -27,7 +27,7 @@ function readChangelog(): string {
 }
 
 router.get('/', (c) => {
-  return c.json({ version: readVersion(), name: 'chess' });
+  return c.json({ version: readVersion(), name: 'chess', ...(config.demoMode ? { demo: true } : {}) });
 });
 
 // Is there a newer release than the one we're running? Answers from a cache

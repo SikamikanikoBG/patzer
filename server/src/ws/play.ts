@@ -299,7 +299,15 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
         const tc = TIME_CONTROLS[tcKey] ?? null;
 
         const engine = new StockfishEngine();
-        await engine.start();
+        try {
+          await engine.start();
+        } catch (err) {
+          if (err instanceof Error && err.message === 'engine_limit_reached') {
+            send(ws, 'error', { message: 'Demo server is currently busy. Please try again later.' });
+            return;
+          }
+          throw err;
+        }
         const conf = DIFFICULTY[difficulty];
         await engine.setOption('Threads', '1');
         await engine.setOption('Hash', '32');

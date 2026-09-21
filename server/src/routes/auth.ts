@@ -4,6 +4,7 @@ import { setCookie, getCookie, deleteCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { db, getSetting, userCount } from '../db.js';
 import { config } from '../config.js';
+import { requireNotDemo } from '../auth/middleware.js';
 import { hashPassword, verifyPassword } from '../auth/passwords.js';
 import { issueToken, consumeToken } from '../auth/tokens.js';
 import {
@@ -155,8 +156,16 @@ router.post('/logout', (c) => {
 });
 
 router.get('/me', (c) => {
-  const cookie = getCookie(c, SESSION_COOKIE_NAME);
-  const user = lookupUser(cookie);
+  let cookie = getCookie(c, SESSION_COOKIE_NAME);
+  let user = lookupUser(cookie);
+  if (!user && config.demoMode) {
+    const demoUser = db.prepare('SELECT id FROM users WHERE username = ?').get('demo1') as { id: number } | undefined;
+    if (demoUser) {
+      cookie = createSession(demoUser.id);
+      setCookie(c, SESSION_COOKIE_NAME, cookie, sessionCookieOpts());
+      user = lookupUser(cookie);
+    }
+  }
   if (!user) return c.json({ user: null });
   return c.json({ user });
 });
@@ -198,7 +207,7 @@ const registerSchema = z.object({
   language: z.enum(['en', 'bg', 'es']).default('en'),
 });
 
-router.post('/register', async (c) => {
+router.post('/register', requireNotDemo, async (c) => {
   if (userCount() === 0) return c.json({ error: 'setup_required' }, 409);
   if (!signupEnabled()) return c.json({ error: 'signup_disabled' }, 403);
 
@@ -289,7 +298,7 @@ const emailOnlySchema = z.object({ email: z.string().trim().email().max(200) });
 
 // Generic-success on purpose: we never reveal whether an address has an account
 // (account-enumeration guard). The work only happens when it lines up.
-router.post('/forgot', async (c) => {
+router.post('/forgot', requireNotDemo, async (c) => {
   const body = await c.req.json().catch(() => null);
   const parsed = emailOnlySchema.safeParse(body);
   // Even malformed input gets the same opaque 200 — no oracle.
@@ -323,7 +332,7 @@ const resetSchema = z.object({
   password: z.string().min(10).max(200),
 });
 
-router.post('/reset', async (c) => {
+router.post('/reset', requireNotDemo, async (c) => {
   const body = await c.req.json().catch(() => null);
   const parsed = resetSchema.safeParse(body);
   if (!parsed.success) return c.json({ error: 'invalid_input', details: parsed.error.flatten() }, 400);

@@ -1,12 +1,18 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { db } from '../db.js';
-import { requireAuth } from '../auth/middleware.js';
+import { requireAuth, requireNotDemo } from '../auth/middleware.js';
 import { notifyUser } from '../ws/lobby.js';
 import { createPvpGamePair } from '../chess/pvpGames.js';
 
 const router = new Hono();
 router.use('*', requireAuth);
+router.use('*', async (c, next) => {
+  if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.method !== 'OPTIONS') {
+    return requireNotDemo(c, next);
+  }
+  return next();
+});
 
 // Auto-expire pending challenges older than this. Without it, a user's
 // `incoming` list could keep returning a months-old "join my game" from a

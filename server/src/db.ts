@@ -277,3 +277,7 @@ export function userCount(): number {
   const row = db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number };
   return row.c;
 }
+
+if (config.demoMode && userCount() === 0) {
+  import('./demo-seed.js').then((m) => m.seedDemoData()).catch(console.error);
+}
