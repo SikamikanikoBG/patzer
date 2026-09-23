@@ -162,6 +162,11 @@ router.post('/', async (c) => {
   try {
     const result = await work;
     return c.json({ analysis: result, cached: false });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'engine_limit_reached') {
+      return c.json({ error: 'demo_server_busy', message: 'Demo server is currently analyzing at maximum capacity' }, 429);
+    }
+    throw err;
   } finally {
     inflight.delete(user.id);
   }
@@ -237,6 +242,9 @@ router.post('/position', async (c) => {
     const result = await work;
     return c.json(result);
   } catch (err) {
+    if (err instanceof Error && err.message === 'engine_limit_reached') {
+      return c.json({ error: 'demo_server_busy', message: 'Demo server is currently analyzing at maximum capacity' }, 429);
+    }
     return c.json({ error: 'engine_error', detail: err instanceof Error ? err.message : String(err) }, 500);
   } finally {
     positionInflight.delete(user.id);

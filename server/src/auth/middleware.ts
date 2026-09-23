@@ -3,6 +3,7 @@ import { getCookie } from 'hono/cookie';
 import { lookupUser, SESSION_COOKIE_NAME } from './sessions.js';
 import { userCount } from '../db.js';
 import type { AuthedUser } from '../types.js';
+import { config } from '../config.js';
 
 declare module 'hono' {
   interface ContextVariableMap {
@@ -29,5 +30,12 @@ export const requireAdmin: MiddlewareHandler = async (c, next) => {
   if (!user) return c.json({ error: 'unauthorized' }, 401);
   if (user.role !== 'admin') return c.json({ error: 'forbidden' }, 403);
   c.set('user', user);
+  await next();
+};
+
+export const requireNotDemo: MiddlewareHandler = async (c, next) => {
+  if (config.demoMode) {
+    return c.json({ error: 'demo_mode', message: 'Not available in demo mode' }, 403);
+  }
   await next();
 };

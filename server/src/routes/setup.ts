@@ -7,7 +7,15 @@ import { hashPassword } from '../auth/passwords.js';
 import { createSession, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from '../auth/sessions.js';
 import { testConnection } from '../coach/llm.js';
 
+import { requireNotDemo } from '../auth/middleware.js';
+
 const router = new Hono();
+router.use('*', async (c, next) => {
+  if (c.req.method !== 'GET' && c.req.method !== 'HEAD' && c.req.method !== 'OPTIONS') {
+    return requireNotDemo(c, next);
+  }
+  return next();
+});
 
 router.get('/status', (c) => {
   return c.json({ setup_required: userCount() === 0 });

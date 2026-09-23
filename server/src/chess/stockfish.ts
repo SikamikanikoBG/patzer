@@ -4,6 +4,8 @@ import { resolve } from 'node:path';
 import { config } from '../config.js';
 import { getSetting } from '../db.js';
 
+let activeEngineCount = 0;
+
 function discoverStockfishPath(): string | null {
   // Only well-known absolute paths and the explicit user hint are accepted.
   // We deliberately do NOT fall back to a bare "stockfish" PATH lookup — on a
@@ -87,7 +89,11 @@ export class StockfishEngine {
   }
 
   async start(): Promise<void> {
+    if (config.demoMode && activeEngineCount >= config.demoStockfishCap) {
+      throw new Error('engine_limit_reached');
+    }
     this.proc = spawn(this.path, [], { stdio: ['pipe', 'pipe', 'pipe'] });
+    activeEngineCount++;
     this.proc.stdout.setEncoding('utf8');
     this.proc.stdout.on('data', (chunk: string) => this.onData(chunk));
     this.proc.on('error', (err) => console.error('[stockfish]', err));
@@ -302,6 +308,7 @@ export class StockfishEngine {
     if (!proc) return;
     this.proc = null;
     this.ready = false;
+    activeEngineCount--;
     try { proc.stdin.write('stop\nquit\n'); } catch { /* ignore */ }
 
     const exited = new Promise<void>((res) => {

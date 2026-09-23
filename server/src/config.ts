@@ -44,4 +44,6 @@ export const config = {
   stockfishPathHint: process.env.STOCKFISH_PATH || undefined,
   projectRoot: PROJECT_ROOT,
   cookieSecure: parseBool(process.env.COOKIE_SECURE, false),
+  demoMode: parseBool(process.env.DEMO_MODE, false),
+  demoStockfishCap: Number(process.env.DEMO_STOCKFISH_CAP ?? 2),
 };
