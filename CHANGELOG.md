@@ -4,6 +4,48 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.14.0] — 2026-09-23
+
+### Your game is still there when you come back
+
+Switching to another app mid-game and coming back used to lose the game. Not
+"lose the connection" — lose the game. This release fixes that for bot games and
+for games against a friend, which failed the same way for two different reasons.
+
+- **Fixed: a game against the bot was never written down until it ended.** It
+  lived entirely inside the WebSocket that created it, so closing the tab — or a
+  phone freezing the browser while you answered a message — destroyed it with no
+  trace. Every move is now snapshotted server-side, and reconnecting picks the
+  game up mid-position. It survives the tab closing, a reload, and a server
+  restart. **Your clock is not charged for the time you were away**: PvP charges
+  it because a human is waiting, but the bot is a process that wasn't even
+  running, and flagging you for closing a tab would punish the exact thing this
+  release is about. Bot games are unrated, so there's nothing to protect.
+- **Fixed: the page never reconnected.** `onclose` was literally
+  `/* ignore */` — so after a phone sleep the board still looked alive, the clock
+  kept counting down, and nothing you did reached the server. The socket now
+  retries with a backoff, and retries *immediately* on the events that actually
+  fire when a phone wakes up. This is what was killing longer games with a
+  friend: the server kept those games correctly all along, but the browser had
+  quietly stopped talking to it.
+- **New: "Continue where you left off."** Until now there was no route back into
+  an unfinished game at all — a friend game could only be reached if you still
+  had its URL. The Play screen now lists the bot game you left and every
+  unfinished game with a friend, with how far in you are and which colour you're
+  playing. One button to resume, one to discard.
+- **New: the clock measures real time.** It used to count interval ticks rather
+  than elapsed time, and browsers throttle timers in background tabs. It now
+  measures real time, and freezes while the socket is down instead of counting
+  down a game you aren't connected to.
+- **Fixed: the GitHub star count from 7.13.0 never appeared.** The page's own
+  Content-Security-Policy blocked the request and logged a violation on every
+  page load. Found by the new browser test.
+
+Two new test suites, because "it reconnects" is not something to take on trust:
+`npm run test:resume` drives the protocol against a real server (kill the socket,
+reconnect, keep playing), and `npm run test:resume-ui` does it in a real browser,
+including pulling the network out from under a live game.
+
 ## [7.13.0] — 2026-09-20
 
 ### Star on GitHub link

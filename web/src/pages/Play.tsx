@@ -14,6 +14,7 @@ import { useAuth } from '../state/auth';
 import { useLobby } from '../state/lobby';
 import { fmtClock } from '../lib/utils';
 import { api } from '../api';
+import { ReconnectingSocket, type SocketLike } from '../lib/reconnectingSocket';
 import { soundForMove, inferMoveFlagsFromSan, playSound } from '../lib/sounds';
 import type { Difficulty, Classification } from '../types';
 
@@ -114,6 +115,25 @@ interface ServerMsg {
   online?: boolean;
 }
 
+interface ResumableBot {
+  difficulty: Difficulty;
+  user_color: 'white' | 'black';
+  time_control: string;
+  ply: number;
+  updated_at: string;
+}
+interface ResumablePvp {
+  game_id: number;
+  opponent: string;
+  user_color: 'white' | 'black';
+  time_control: string;
+  ply: number;
+  updated_at: string;
+}
+interface LiveGames { bot: ResumableBot | null; pvp: ResumablePvp[] }
+
+interface GameResult { result: string; reason: string; gameId?: number }
+
 interface BlunderPreview { uci: string; classification: Classification; cp_loss: number; best_uci: string | null; best_san: string | null; eval_after_cp: number }
 
 export default function Play() {
@@ -156,7 +176,7 @@ export default function Play() {
   const orientation: 'white' | 'black' = flipped ? (userColor === 'white' ? 'black' : 'white') : userColor;
   const [whiteMs, setWhiteMs] = useState(0);
   const [blackMs, setBlackMs] = useState(0);
-  const [result, setResult] = useState<{ result: string; reason: string; gameId?: number } | null>(null);
+  const [result, setResult] = useState<GameResult | null>(null);
   const [coachConfigured, setCoachConfigured] = useState(false);
   const [hint, setHint] = useState<{ from: string; to: string } | null>(null);
   const [hintLoading, setHintLoading] = useState(false);
@@ -178,15 +198,76 @@ export default function Play() {
   const [boardKey, setBoardKey] = useState(0);
   const forceBoardSync = () => setBoardKey((k) => k + 1);
 
-  const wsRef = useRef<WebSocket | null>(null);
   const tickRef = useRef<number | null>(null);
   const fenBeforeMoveRef = useRef<string>(fen);
+
+  // Connection state. `connected` drives the UI; `connectedRef` is read from
+  // the clock tick, which outlives the render it was created in.
+  const [connected, setConnected] = useState(true);
+  const connectedRef = useRef(true);
+  const [live, setLive] = useState<LiveGames | null>(null);
+  const resultRef = useRef<GameResult | null>(null);
+  const socketRef = useRef<ReconnectingSocket | null>(null);
+  function socket(): ReconnectingSocket {
+    if (!socketRef.current) {
+      socketRef.current = new ReconnectingSocket({
+        open: (url) => new WebSocket(url) as unknown as SocketLike,
+        // Via refs, so a message arriving after a reconnect never lands in the
+        // closure from the render that happened to open the socket.
+        onMessage: (ev) => handleMessageRef.current(ev),
+        onStatusChange: (up) => { setConnected(up); connectedRef.current = up; },
+      });
+    }
+    return socketRef.current;
+  }
 
   useEffect(() => {
     api.get<{ configured: boolean }>('/api/coach/status')
       .then((s) => setCoachConfigured(s.configured))
       .catch(() => setCoachConfigured(false));
   }, []);
+
+  // Once a bot game is over there is nothing left to hold a socket open for —
+  // and the server has already deleted the snapshot, so a reconnect would only
+  // find nothing. A PvP socket stays up: rematch is negotiated over it.
+  useEffect(() => {
+    resultRef.current = result;
+    if (result && !pvpGameId) socketRef.current?.disconnect();
+  }, [result, pvpGameId]);
+
+  // What can I walk back into? Asked on the setup screen, and again whenever we
+  // land back on it, so finishing a game doesn't leave a stale "resume" card.
+  useEffect(() => {
+    if (phase !== 'setup' || pvpGameId) return;
+    let alive = true;
+    api.get<LiveGames>('/api/games/live')
+      .then((l) => { if (alive) setLive(l); })
+      .catch(() => { if (alive) setLive(null); });
+    return () => { alive = false; };
+  }, [phase, pvpGameId]);
+
+  // A phone doesn't tell the page it went to sleep — it just stops running it,
+  // and the socket is dead by the time you look again. These three events are
+  // what actually fire on the way back, so each one gets an immediate retry
+  // rather than waiting out the backoff.
+  useEffect(() => {
+    function wake() {
+      if (document.visibilityState !== 'visible') return;
+      socketRef.current?.wake();
+    }
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('online', wake);
+    window.addEventListener('pageshow', wake);
+    return () => {
+      document.removeEventListener('visibilitychange', wake);
+      window.removeEventListener('online', wake);
+      window.removeEventListener('pageshow', wake);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Leaving the page must not leave a reconnect loop running behind it.
+  useEffect(() => () => { socketRef.current?.disconnect(); }, []);
 
   // PvP: auto-connect when arriving with ?game=ID
   useEffect(() => {
@@ -202,13 +283,25 @@ export default function Play() {
     }
   }, [setupTab, lobby]);
 
-  // Local clock tick during play
+  // Local clock tick during play.
+  //
+  // Counts real elapsed time instead of assuming the interval fired on
+  // schedule. A backgrounded tab throttles timers to once a second or stops
+  // them altogether, so "subtract 100ms per tick" drifted badly on exactly the
+  // phone case this release is about. The clock also freezes while the socket
+  // is down: we have no idea what it's really doing until the server says so,
+  // and a display that keeps counting a game you aren't connected to is a lie.
   useEffect(() => {
     if (phase !== 'playing' || tc === 'untimed') return;
     const turn = fen.split(' ')[1] === 'w' ? 'white' : 'black';
+    let last = Date.now();
     const id = window.setInterval(() => {
-      if (turn === 'white') setWhiteMs((m) => Math.max(0, m - 100));
-      else setBlackMs((m) => Math.max(0, m - 100));
+      const now = Date.now();
+      const dt = now - last;
+      last = now;
+      if (!connectedRef.current) return;
+      if (turn === 'white') setWhiteMs((m) => Math.max(0, m - dt));
+      else setBlackMs((m) => Math.max(0, m - dt));
     }, 100);
     tickRef.current = id;
     return () => { if (tickRef.current) clearInterval(tickRef.current); };
@@ -219,28 +312,56 @@ export default function Play() {
     setBoardArrows(hint ? [{ orig: hint.from, dest: hint.to, brush: 'green' }] : []);
   }, [hint]);
 
+  // ---- CONNECTION ----
+  //
+  // The socket dies whenever a phone sleeps, the browser backgrounds the tab,
+  // or the network blinks. Until v7.14.0 `onclose` was literally
+  // `/* ignore */`: the game went on looking alive, the clock kept counting
+  // down, and nothing you did reached the server ever again. Now the socket
+  // reconnects, and the server keeps the game so there is something to
+  // reconnect *to*.
+  const wsUrl = (gameId: number | null) => {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    return gameId === null
+      ? `${proto}://${location.host}/ws/play`
+      : `${proto}://${location.host}/ws/play?game=${gameId}`;
+  };
+
   function startBot() {
     const finalColor = color === 'random' ? (Math.random() < 0.5 ? 'white' : 'black') : color;
     setUserColor(finalColor);
     resetGameState();
+    setPhase('playing');
+    // Opening means "new game"; every reconnection after it means "resume" —
+    // otherwise coming back from a locked phone would wipe the game and deal a
+    // fresh one, which is the bug with extra steps.
+    socket().connect(
+      wsUrl(null),
+      { type: 'new_game', difficulty, color: finalColor, time_control: tc },
+      { type: 'resume' },
+    );
+  }
 
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    const ws = new WebSocket(`${proto}://${location.host}/ws/play`);
-    wsRef.current = ws;
-    ws.onopen = () => {
-      ws.send(JSON.stringify({ type: 'new_game', difficulty, color: finalColor, time_control: tc }));
-    };
-    ws.onmessage = handleMessage;
-    ws.onclose = () => { /* ignore */ };
+  /** Walk back into the bot game the server kept for us. */
+  function resumeBot(from: ResumableBot) {
+    setUserColor(from.user_color);
+    userColorRef.current = from.user_color;
+    resetGameState();
+    setPhase('playing');
+    socket().connect(wsUrl(null), { type: 'resume' });
   }
 
   function connectPvp(gameId: number) {
     resetGameState();
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    const ws = new WebSocket(`${proto}://${location.host}/ws/play?game=${gameId}`);
-    wsRef.current = ws;
-    ws.onmessage = handleMessage;
-    ws.onclose = () => { /* ignore */ };
+    setPhase('playing');
+    // PvP needs no opening message: the server hands the socket its whole
+    // state in `pvp_hello`, on the first connection and on every one after.
+    socket().connect(wsUrl(gameId), null);
+  }
+
+  async function discardBotGame() {
+    try { await api.del('/api/games/live/bot'); } catch { /* ignore */ }
+    setLive((l) => l ? { ...l, bot: null } : l);
   }
 
   function clearPremoves() {
@@ -249,6 +370,7 @@ export default function Play() {
   }
 
   function resetGameState() {
+    resultRef.current = null;
     setFen(START_FEN);
     setMoves([]); setResult(null); setHint(null); setLastClassifiedMove(null);
     setOpponent(null); setBoardArrows([]);
@@ -290,7 +412,11 @@ export default function Play() {
     switch (msg.type) {
       case 'game_started':
       case 'pvp_hello': {
-        setPhase('playing');
+        // A reconnect that lands on a game we already saw finish must not put
+        // the result away and hand the board back — the server replays the
+        // position either way, and a checkmate is still a checkmate.
+        const alreadyOver = !!resultRef.current;
+        setPhase(alreadyOver ? 'over' : 'playing');
         const startFen = msg.fen ?? START_FEN;
         if (msg.fen) setFen(msg.fen);
         if (msg.your_color) setUserColor(msg.your_color);
@@ -303,7 +429,7 @@ export default function Play() {
         loadHistory(msg.history, startFen);
         setDrawOffer(mine(msg.draw_offer ?? undefined));
         setTakeback(mine(msg.takeback_request ?? undefined));
-        playSound('game_start');
+        if (!alreadyOver) playSound('game_start');
         break;
       }
       // ---- PvP negotiation ----
@@ -342,8 +468,7 @@ export default function Play() {
         break;
       case 'rematch_start':
         if (msg.game_id) {
-          try { wsRef.current?.close(); } catch { /* ignore */ }
-          wsRef.current = null;
+          socketRef.current?.disconnect();
           setPhase('setup');
           resetGameState();
           nav(`/play?game=${msg.game_id}`);
@@ -450,6 +575,14 @@ export default function Play() {
       case 'analysis_ready':
         // PvP analysis is ready — could refresh UI; for now just no-op
         break;
+      case 'resume_failed':
+        // The stored game is gone or unplayable. Say so and go back to setup
+        // rather than leaving someone staring at an empty board.
+        socketRef.current?.disconnect();
+        setPhase('setup');
+        resetGameState();
+        setLive((l) => l ? { ...l, bot: null } : l);
+        break;
       case 'error':
         // Server rejected something (illegal move etc) — re-sync the board and
         // drop the queue: whatever we thought the position was, it isn't.
@@ -459,6 +592,11 @@ export default function Play() {
         break;
     }
   }
+
+  // The socket is opened once but the handler is rebuilt every render; route
+  // messages through a ref so a reconnect never lands in a stale closure.
+  const handleMessageRef = useRef(handleMessage);
+  useEffect(() => { handleMessageRef.current = handleMessage; });
 
   /** Board move handler. Plays immediately when it's our turn and nothing is
    *  queued; otherwise adds to the premove queue. */
@@ -481,12 +619,11 @@ export default function Play() {
   }
 
   function attemptMove(uci: string) {
-    if (!wsRef.current) return;
     const enableWarning = !!user?.profile.blunder_warning;
     fenBeforeMoveRef.current = fen;
     if (enableWarning) {
       setPreviewing(true);
-      wsRef.current.send(JSON.stringify({ type: 'preview_move', uci }));
+      socket().send({ type: 'preview_move', uci });
     } else {
       commitMove(uci);
     }
@@ -494,7 +631,7 @@ export default function Play() {
 
   function commitMove(uci: string) {
     setBlunder(null);
-    wsRef.current?.send(JSON.stringify({ type: 'move', uci }));
+    socket().send({ type: 'move', uci });
   }
 
   function tryAnotherMove() {
@@ -502,8 +639,8 @@ export default function Play() {
     forceBoardSync(); // roll back the chessground visual to the authoritative FEN
   }
 
-  function resign() { wsRef.current?.send(JSON.stringify({ type: 'resign' })); }
-  const sendType = (type: string) => wsRef.current?.send(JSON.stringify({ type }));
+  function resign() { socket().send({ type: 'resign' }); }
+  const sendType = (type: string) => socket().send({ type });
   const offerDraw = () => sendType('offer_draw');
   const acceptDraw = () => sendType('accept_draw');
   const declineDraw = () => sendType('decline_draw');
@@ -515,7 +652,7 @@ export default function Play() {
   const declineRematch = () => sendType('decline_rematch');
   function requestHint() {
     setHintLoading(true);
-    wsRef.current?.send(JSON.stringify({ type: 'request_hint' }));
+    socket().send({ type: 'request_hint' });
   }
 
   function startSheetDrag(event: React.PointerEvent<HTMLElement>) {
@@ -591,6 +728,59 @@ export default function Play() {
           <h1 className="page-h1">{t('play.newGame')}</h1>
           <p className="page-sub">Pick a bot or challenge a friend.</p>
         </header>
+        {/* Games you walked away from. Before v7.14.0 there was no way back into
+            one at all — a bot game was simply destroyed, and a friend game could
+            only be reached if you still had its URL. */}
+        {live && (live.bot || live.pvp.length > 0) && (
+          <div className="card space-y-3 p-4 sm:p-5">
+            <div className="label">{t('play.resume.title', { defaultValue: 'Continue where you left off' })}</div>
+            {live.bot && (
+              <div className="flex flex-wrap items-center gap-3">
+                <Bot className="h-5 w-5 shrink-0 text-chesscom-500" />
+                <div className="min-w-0 flex-1 text-sm">
+                  <div className="font-medium">
+                    {t('play.resume.bot', {
+                      difficulty: t(`play.diff.${live.bot.difficulty}`),
+                      defaultValue: 'Against {{difficulty}}',
+                    })}
+                  </div>
+                  <div className="text-xs text-ink-500">
+                    {t('play.resume.detail', {
+                      moves: Math.ceil(live.bot.ply / 2),
+                      color: t(`play.${live.bot.user_color}`),
+                      defaultValue: '{{moves}} moves in, you are {{color}}',
+                    })}
+                  </div>
+                </div>
+                <button onClick={() => resumeBot(live.bot!)} className="btn-primary shrink-0">
+                  <Swords className="h-4 w-4" />{t('play.resume.action', { defaultValue: 'Resume' })}
+                </button>
+                <button onClick={discardBotGame} className="btn-ghost shrink-0 text-xs text-ink-500">
+                  {t('play.resume.discard', { defaultValue: 'Discard' })}
+                </button>
+              </div>
+            )}
+            {live.pvp.map((g) => (
+              <div key={g.game_id} className="flex flex-wrap items-center gap-3">
+                <UsersIcon className="h-5 w-5 shrink-0 text-chesscom-500" />
+                <div className="min-w-0 flex-1 text-sm">
+                  <div className="truncate font-medium">{g.opponent}</div>
+                  <div className="text-xs text-ink-500">
+                    {t('play.resume.detail', {
+                      moves: Math.ceil(g.ply / 2),
+                      color: t(`play.${g.user_color}`),
+                      defaultValue: '{{moves}} moves in, you are {{color}}',
+                    })}
+                  </div>
+                </div>
+                <button onClick={() => nav(`/play?game=${g.game_id}`)} className="btn-primary shrink-0">
+                  <Swords className="h-4 w-4" />{t('play.resume.action', { defaultValue: 'Resume' })}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex gap-2">
           <TabButton active={setupTab === 'bot'} onClick={() => setSetupTab('bot')} icon={Bot}>{t('play.tabBot')}</TabButton>
           <TabButton active={setupTab === 'friend'} onClick={() => setSetupTab('friend')} icon={UsersIcon}>{t('play.tabFriend')}</TabButton>
@@ -689,6 +879,15 @@ export default function Play() {
             column itself narrow. */}
         <div className="mx-auto w-full lg:mx-0 lg:flex-1 lg:max-w-[760px]">
           <ClockBar timeMs={userColor === 'white' ? blackMs : whiteMs} active={turn !== userColor} label={oppLabel} flip />
+          {/* Say it plainly rather than letting a dead socket look like a live
+              game. The clock is frozen behind this and the game is safe on the
+              server — which is the reassurance worth giving. */}
+          {!connected && phase === 'playing' && (
+            <div className="mb-2 flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
+              <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+              {t('play.reconnecting', { defaultValue: 'Reconnecting… your game is saved.' })}
+            </div>
+          )}
           {oppDisconnected && (
             <div className="mb-2 flex items-center gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
               <span className="inline-flex h-2 w-2 animate-pulse rounded-full bg-amber-500" />
@@ -1078,7 +1277,7 @@ export default function Play() {
                     <p className="text-center text-xs text-ink-500">{t('play.rematchDeclined')}</p>
                   )}
                   {isPvP && (
-                    <button onClick={() => { try { wsRef.current?.close(); } catch { /* ignore */ } setPhase('setup'); resetGameState(); nav('/play'); }} className="btn-ghost w-full text-xs text-ink-500">
+                    <button onClick={() => { socketRef.current?.disconnect(); setPhase('setup'); resetGameState(); nav('/play'); }} className="btn-ghost w-full text-xs text-ink-500">
                       <Swords className="h-3.5 w-3.5" />{t('play.playAgain')}
                     </button>
                   )}
@@ -1279,10 +1478,12 @@ function MovesList({ moves }: { moves: Move[] }) {
   if (rows.length === 0) return <div className="text-sm text-chesscom-400">—</div>;
   return (
     <div className="grid grid-cols-[auto,1fr,1fr] gap-x-3 gap-y-1 text-sm">
+      {/* `data-ply` is a stable hook for the browser tests, which need to count
+          what is really on the board rather than scrape SAN out of the DOM. */}
       {rows.flatMap((r) => [
         <span key={`n${r.num}`} className="text-chesscom-400">{r.num}.</span>,
-        <span key={`w${r.num}`}>{r.w?.san ?? ''}{r.w?.classification && <ClsGlyph c={r.w.classification} />}</span>,
-        <span key={`b${r.num}`}>{r.b?.san ?? ''}{r.b?.classification && <ClsGlyph c={r.b.classification} />}</span>,
+        <span key={`w${r.num}`} data-ply={r.w?.ply}>{r.w?.san ?? ''}{r.w?.classification && <ClsGlyph c={r.w.classification} />}</span>,
+        <span key={`b${r.num}`} data-ply={r.b?.ply}>{r.b?.san ?? ''}{r.b?.classification && <ClsGlyph c={r.b.classification} />}</span>,
       ])}
     </div>
   );

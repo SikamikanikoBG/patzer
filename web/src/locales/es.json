@@ -152,7 +152,15 @@
     "rematchDeclined": "Revancha rechazada",
     "more": "Más",
     "swipeMoves": "Desliza hacia arriba para ver las jugadas",
-    "premoveClear": "Cancelar premovimientos (Esc)"
+    "premoveClear": "Cancelar premovimientos (Esc)",
+    "resume": {
+      "title": "Continúa donde lo dejaste",
+      "bot": "Contra {{difficulty}}",
+      "detail": "{{moves}} jugadas, juegas con {{color}}",
+      "action": "Reanudar",
+      "discard": "Descartar"
+    },
+    "reconnecting": "Reconectando… tu partida está guardada."
   },
   "review": {
     "title": "Análisis de partida",

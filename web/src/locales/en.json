@@ -152,7 +152,15 @@
     "rematchDeclined": "Rematch declined",
     "more": "More",
     "swipeMoves": "Swipe up to open moves",
-    "premoveClear": "Cancel premoves (Esc)"
+    "premoveClear": "Cancel premoves (Esc)",
+    "resume": {
+      "title": "Continue where you left off",
+      "bot": "Against {{difficulty}}",
+      "detail": "{{moves}} moves in, you are {{color}}",
+      "action": "Resume",
+      "discard": "Discard"
+    },
+    "reconnecting": "Reconnecting… your game is saved."
   },
   "review": {
     "title": "Game Review",

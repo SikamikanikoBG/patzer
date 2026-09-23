@@ -12,6 +12,7 @@
     "./**/*"
   ],
   "exclude": [
-    "./e2e/pvp-ui.ts"
+    "./e2e/pvp-ui.ts",
+    "./e2e/resume-ui.ts"
   ]
 }

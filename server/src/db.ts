@@ -247,6 +247,28 @@ db.exec(`CREATE INDEX IF NOT EXISTS idx_auth_tokens_user ON auth_tokens(user_id,
 // Drop tokens that are spent or long expired so the table can't grow unbounded.
 db.prepare(`DELETE FROM auth_tokens WHERE used_at IS NOT NULL OR expires_at < datetime('now')`).run();
 
+// v7.14.0 — a bot game in progress, so closing the tab (or a phone putting the
+// browser to sleep) doesn't destroy it. Deliberately NOT a `games` row: rows in
+// `games` are finished games and feed the game list, Insights, ratings and the
+// analysis pipeline, none of which should see a half-played position. One row
+// per user, because you can only be in one bot game at a time; starting a new
+// one replaces it. Deleted the moment the game ends and lands in `games`.
+db.exec(`CREATE TABLE IF NOT EXISTS live_bot_games (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  difficulty TEXT NOT NULL,
+  user_color TEXT NOT NULL CHECK(user_color IN ('white','black')),
+  time_control TEXT NOT NULL,
+  pgn TEXT NOT NULL,
+  white_time_ms INTEGER,
+  black_time_ms INTEGER,
+  last_move_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+)`);
+// An abandoned game is worth keeping for a while — you may well come back to it
+// tomorrow — but not forever. A fortnight is long enough to be generous and
+// short enough that the table stays small.
+db.prepare(`DELETE FROM live_bot_games WHERE updated_at < datetime('now','-14 days')`).run();
+
 // Open signup defaults ON — the operator explicitly wants family members to
 // self-register. Admins can flip it off from the Admin → System console. Seeded
 // only when absent so a deliberate later 'off' survives restarts.

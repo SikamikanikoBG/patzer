@@ -4,6 +4,7 @@ import { Chess } from 'chess.js';
 import { createPvpGamePair } from '../chess/pvpGames.js';
 import { resolveTimeControl } from '../chess/timeClass.js';
 import { applyTakeback } from '../chess/takeback.js';
+import { persistLiveBotGame, clearLiveBotGame, loadLiveBotGame } from '../chess/liveBotGames.js';
 import { lookupUser, SESSION_COOKIE_NAME } from '../auth/sessions.js';
 import { StockfishEngine } from '../chess/stockfish.js';
 import { db } from '../db.js';
@@ -72,6 +73,9 @@ interface BotSession {
   analysisQueue: Promise<void>;       // serializes evaluations on the analysis engine
   difficulty: Difficulty;
   userColor: 'white' | 'black';
+  /** The preset key ('blitz', 'untimed', ...) — persisted so a resumed game
+   *  comes back with the same clock, and echoed to the client on resume. */
+  tcKey: string;
   timeControl: { initial: number; increment: number } | null;
   whiteTimeMs: number;
   blackTimeMs: number;
@@ -275,11 +279,28 @@ function routeConnection(ws: WebSocket, user: AuthedUser, req: IncomingMessage) 
   }
 }
 
+// Snapshot a live bot game so a closed tab, a dead socket or a server restart
+// no longer throws it away.
+function snapshot(session: BotSession): void {
+  persistLiveBotGame({
+    user_id: session.user.id,
+    difficulty: session.difficulty,
+    user_color: session.userColor,
+    tcKey: session.tcKey,
+    pgn: session.chess.pgn(),
+    whiteTimeMs: session.whiteTimeMs,
+    blackTimeMs: session.blackTimeMs,
+    lastMoveAt: session.lastMoveAt,
+  });
+}
+
 // ---- BOT GAME ----
 
 async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
   let session: BotSession | null = null;
 
+  // What is resumable is answered by GET /api/games/live, before a socket is
+  // opened at all; this socket's job is to resume, not to advertise.
   send(ws, 'hello', { user: { id: user.id, username: user.username, display_name: user.profile.display_name } });
 
   ws.on('message', async (raw) => {
@@ -310,12 +331,15 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
           kind: 'bot', user,
           chess: new Chess(), engine, analysisEngine: null, analysisQueue: Promise.resolve(),
           difficulty, userColor,
+          tcKey,
           timeControl: tc,
           whiteTimeMs: tc?.initial ?? 0,
           blackTimeMs: tc?.initial ?? 0,
           lastMoveAt: Date.now(),
           saved: false,
         };
+        // Starting a game replaces whatever was in progress — you only get one.
+        snapshot(session);
 
         send(ws, 'game_started', {
           fen: session.chess.fen(), turn: session.chess.turn(),
@@ -324,6 +348,72 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
         });
 
         if (userColor === 'black') await playBotMove(ws, session);
+      } else if (type === 'resume') {
+        const row = loadLiveBotGame(user.id);
+        if (!row) { send(ws, 'resume_failed', { message: 'no_game' }); return; }
+
+        const chess = new Chess();
+        try {
+          if (row.pgn.trim()) chess.loadPgn(row.pgn, { strict: false });
+        } catch (err) {
+          console.warn('[live-bot] pgn restore failed', err);
+          clearLiveBotGame(user.id);
+          send(ws, 'resume_failed', { message: 'corrupt' });
+          return;
+        }
+        if (chess.isGameOver()) {
+          // Finished while we weren't looking (shouldn't happen — endBotGame
+          // clears the row — but a resumed position must never be playable).
+          clearLiveBotGame(user.id);
+          send(ws, 'resume_failed', { message: 'no_game' });
+          return;
+        }
+
+        if (session) {
+          session.engine.quit().catch(() => { /* ignore */ });
+          if (session.analysisEngine) session.analysisEngine.quit().catch(() => { /* ignore */ });
+        }
+
+        const difficulty = (row.difficulty in DIFFICULTY ? row.difficulty : 'medium') as Difficulty;
+        const tcKey = row.time_control;
+        const tc = TIME_CONTROLS[tcKey] ?? null;
+
+        const engine = new StockfishEngine();
+        await engine.start();
+        await engine.setOption('Threads', '1');
+        await engine.setOption('Hash', '32');
+        await applyDifficulty(engine, DIFFICULTY[difficulty]);
+        await engine.newGame();
+
+        // Clocks come back exactly as they were at the last move, and the
+        // elapsed wall time is NOT charged. PvP does charge it, because over
+        // there a human is sitting across the board waiting for you. Here the
+        // opponent is a process that was not even running — flagging someone
+        // for closing a tab would punish the very thing this release fixes.
+        // Bot games are unrated, so there is nothing to protect.
+        session = {
+          kind: 'bot', user,
+          chess, engine, analysisEngine: null, analysisQueue: Promise.resolve(),
+          difficulty, userColor: row.user_color,
+          tcKey,
+          timeControl: tc,
+          whiteTimeMs: row.white_time_ms ?? tc?.initial ?? 0,
+          blackTimeMs: row.black_time_ms ?? tc?.initial ?? 0,
+          lastMoveAt: Date.now(),
+          saved: false,
+        };
+        snapshot(session);
+
+        send(ws, 'game_started', {
+          fen: session.chess.fen(), turn: session.chess.turn(),
+          difficulty, userColor: session.userColor, time_control: tcKey,
+          whiteTimeMs: session.whiteTimeMs, blackTimeMs: session.blackTimeMs,
+          history: session.chess.history(),
+          resumed: true,
+        });
+
+        // You may have moved and then closed the tab before the bot replied.
+        if (session.chess.turn() !== session.userColor[0]) await playBotMove(ws, session);
       } else if (type === 'move' && session) {
         const uci = msg.uci as string;
         if (!uci || uci.length < 4) return;
@@ -408,6 +498,8 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
           }
         });
 
+        snapshot(session);
+
         if (await checkBotGameOver(ws, session)) return;
         await playBotMove(ws, session);
       } else if (type === 'preview_move' && session) {
@@ -487,6 +579,7 @@ async function playBotMove(ws: WebSocket, session: BotSession) {
     fen: session.chess.fen(), san: move.san, uci, by: 'engine',
     whiteTimeMs: session.whiteTimeMs, blackTimeMs: session.blackTimeMs,
   });
+  snapshot(session);
   await checkBotGameOver(ws, session);
 }
 
@@ -508,6 +601,8 @@ async function checkBotGameOver(ws: WebSocket, session: BotSession): Promise<boo
 async function endBotGame(ws: WebSocket, session: BotSession, result: '1-0' | '0-1' | '1/2-1/2', reason: string) {
   if (session.saved) return;
   session.saved = true;
+  // The game is about to become a `games` row; there is nothing left to resume.
+  clearLiveBotGame(session.user.id);
   send(ws, 'game_over', { result, reason, fen: session.chess.fen() });
 
   const userId = session.user.id;

@@ -48,7 +48,11 @@ app.use('*', async (c, next) => {
       "font-src 'self' data:",
       "style-src 'self' 'unsafe-inline'",
       "script-src 'self'",
-      "connect-src 'self'",
+      // api.github.com is the star count behind the "Star on GitHub" link added
+      // in 7.13.0. Without it the browser blocks the request and logs a CSP
+      // violation on every page load; the link still works, the number never
+      // appears. One read-only, unauthenticated GET.
+      "connect-src 'self' https://api.github.com",
       "base-uri 'self'",
       "frame-ancestors 'none'",
       "form-action 'self'",

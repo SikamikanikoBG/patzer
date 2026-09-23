@@ -4,6 +4,8 @@ import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { fetchRecentGames, getPlayer, type ChessComGame } from '../chess/chesscom.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
+import { Chess } from 'chess.js';
+import { clearLiveBotGame, loadLiveBotGame, resumableSummary } from '../chess/liveBotGames.js';
 
 const router = new Hono();
 router.use('*', requireAuth);
@@ -39,6 +41,63 @@ router.get('/', (c) => {
     LIMIT ?
   `).all(SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, ...params, limit);
   return c.json({ games: rows });
+});
+
+// Games you can walk back into: the bot game you left mid-move, and any PvP
+// game with a friend that hasn't finished. Registered BEFORE `/:id` — Hono
+// matches in order, and `/:id` would otherwise swallow `/live`.
+//
+// This is the entry point that didn't exist before v7.14.0: leaving a game and
+// coming back had no route through the UI at all. You had to still have the
+// original URL.
+interface UnfinishedPvpRow {
+  id: number; white: string; black: string; user_color: 'white' | 'black';
+  time_control: string; pgn: string; last_move_at: string | null; created_at: string;
+}
+
+router.get('/live', (c) => {
+  const user = c.get('user');
+
+  const pvpRows = db.prepare(`
+    SELECT id, white, black, user_color, time_control, pgn, last_move_at, created_at
+    FROM games
+    WHERE user_id = ? AND source = 'pvp' AND end_time IS NULL
+      AND COALESCE(last_move_at, created_at) > datetime('now','-14 days')
+    ORDER BY COALESCE(last_move_at, created_at) DESC
+    LIMIT 20
+  `).all(user.id) as UnfinishedPvpRow[];
+
+  const pvp = [];
+  for (const row of pvpRows) {
+    let ply = 0;
+    try {
+      const probe = new Chess();
+      if (row.pgn && row.pgn.trim()) probe.loadPgn(row.pgn, { strict: false });
+      // A finished position with no end_time means the game ended in a way we
+      // failed to record. Don't invite the user back into a game they cannot play.
+      if (probe.isGameOver()) continue;
+      ply = probe.history().length;
+    } catch {
+      continue;
+    }
+    pvp.push({
+      game_id: row.id,
+      opponent: row.user_color === 'white' ? row.black : row.white,
+      user_color: row.user_color,
+      time_control: row.time_control,
+      ply,
+      updated_at: row.last_move_at ?? row.created_at,
+    });
+  }
+
+  return c.json({ bot: resumableSummary(loadLiveBotGame(user.id)), pvp });
+});
+
+/** "Start a new one instead" — throw away the stored bot game. */
+router.delete('/live/bot', (c) => {
+  const user = c.get('user');
+  clearLiveBotGame(user.id);
+  return c.json({ ok: true });
 });
 
 const notesSchema = z.object({ notes: z.string().max(4000) });
