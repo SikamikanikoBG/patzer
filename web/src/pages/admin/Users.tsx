@@ -145,7 +145,7 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
               <option value="admin">{t('admin.roleAdmin')}</option>
             </select>
             <select className="input" value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value as Language })}>
-              {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{t(l.nameKey)}</option>)}
+              {LANGUAGES.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
             </select>
             <select className="input" value={form.audience} onChange={(e) => setForm({ ...form, audience: e.target.value as never })}>
               <option value="kid">{t('settings.audienceLevel.kid')}</option>

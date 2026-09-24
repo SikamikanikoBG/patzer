@@ -102,7 +102,7 @@ export default function Settings() {
           <div>
             <label className="label mb-1 block">{t('settings.language')}</label>
             <select className="input" value={form.language} onChange={(e) => set('language', e.target.value as Language)}>
-              {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{t(l.nameKey)}</option>)}
+              {LANGUAGES.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
             </select>
           </div>
           <div>

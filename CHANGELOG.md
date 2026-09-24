@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   English; they are now translated in the browser from their id/kind, with
   the server text as fallback. Bulgarian and Spanish fall back to English for
   the new keys, exactly as before, until someone translates them.
+- **Language pickers showed every language in the current one.** After
+  switching to Bulgarian, the Settings select read "Немски" for German — no
+  way back for someone who can't read Cyrillic. Settings, the setup wizard
+  and Admin → Users now list each language in itself (English, Български,
+  Español, Deutsch), like the command palette already did.
 
 ## [7.14.0] — 2026-09-23
 

@@ -8,19 +8,19 @@ export interface LanguageInfo {
   code: Language;
   /** Short badge used in the EN / BG / ES toggles. */
   short: string;
-  /** i18n key for the full name shown in selects. */
-  nameKey: string;
-  /** Native name, used where the label must be readable in the *target* language. */
+  /** The language's name in itself ("Deutsch", "Български"). Every picker
+   *  shows this, never a translation: someone who switched to a language they
+   *  can't read must still be able to find their own to switch back. */
   native: string;
   /** BCP-47 tag handed to the Web Speech API. */
   bcp47: string;
 }
 
 export const LANGUAGES: readonly LanguageInfo[] = [
-  { code: 'en', short: 'EN', nameKey: 'common.english', native: 'English', bcp47: 'en-US' },
-  { code: 'bg', short: 'BG', nameKey: 'common.bulgarian', native: 'Български', bcp47: 'bg-BG' },
-  { code: 'es', short: 'ES', nameKey: 'common.spanish', native: 'Español', bcp47: 'es-ES' },
-  { code: 'de', short: 'DE', nameKey: 'common.german', native: 'Deutsch', bcp47: 'de-DE' },
+  { code: 'en', short: 'EN', native: 'English', bcp47: 'en-US' },
+  { code: 'bg', short: 'BG', native: 'Български', bcp47: 'bg-BG' },
+  { code: 'es', short: 'ES', native: 'Español', bcp47: 'es-ES' },
+  { code: 'de', short: 'DE', native: 'Deutsch', bcp47: 'de-DE' },
 ] as const;
 
 export const LANGUAGE_CODES: readonly Language[] = LANGUAGES.map((l) => l.code);
