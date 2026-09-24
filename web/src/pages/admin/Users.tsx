@@ -42,7 +42,7 @@ export default function AdminUsers() {
         <table className="w-full text-sm">
           <thead className="bg-ink-50 text-xs uppercase tracking-wide text-ink-500 dark:bg-ink-900">
             <tr>
-              <th className="px-4 py-2 text-left">User</th>
+              <th className="px-4 py-2 text-left">{t('admin.colUser')}</th>
               <th className="px-4 py-2 text-left">{t('admin.role')}</th>
               <th className="px-4 py-2 text-left">{t('common.language')}</th>
               <th className="px-4 py-2 text-left">{t('admin.audience')}</th>

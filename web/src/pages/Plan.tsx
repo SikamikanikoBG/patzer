@@ -5,6 +5,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { goalText } from '../lib/goalText';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Icons from 'lucide-react';
 import {
@@ -171,6 +172,7 @@ function SectionHeader({ label, count, tone = 'chesscom-500' }: { label: string;
 function GoalCard({ goal }: { goal: PlanGoal }) {
   const { t } = useTranslation();
   const Icon = resolveIcon(goal.icon);
+  const text = goalText(t, goal);
 
   const pct = progressPct(goal);
   const completed = goal.status === 'completed';
@@ -205,11 +207,11 @@ function GoalCard({ goal }: { goal: PlanGoal }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <h3 className="truncate text-sm font-semibold text-chesscom-900 dark:text-chesscom-100">
-              {goal.title}
+              {text.title}
             </h3>
             {completed && <Check className="h-4 w-4 shrink-0 text-gold-600" />}
           </div>
-          <p className="mt-0.5 text-xs text-chesscom-500">{goal.description}</p>
+          <p className="mt-0.5 text-xs text-chesscom-500">{text.description}</p>
         </div>
       </div>
 

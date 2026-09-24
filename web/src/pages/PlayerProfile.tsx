@@ -11,7 +11,7 @@ import { ArrowLeft, Swords, Check, Loader2, Target, Flame, Calendar } from 'luci
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { useLobby } from '../state/lobby';
-import { cn } from '../lib/utils';
+import { cn, fmtTimeControl } from '../lib/utils';
 
 const TIME_CONTROLS = ['untimed', 'bullet', 'blitz', 'rapid', 'classical'] as const;
 const TIME_CLASSES = ['bullet', 'blitz', 'rapid', 'daily'] as const;
@@ -186,7 +186,7 @@ export default function PlayerProfile() {
                         <div className="text-xs text-chesscom-500">
                           <span>{new Date(g.end_time).toLocaleDateString()}</span>
                           <span className="mx-1.5 text-chesscom-400">·</span>
-                          <span>{g.time_control}</span>
+                          <span>{fmtTimeControl(g.time_control, t)}</span>
                           {g.opening_name && (
                             <span className="hidden sm:inline">
                               <span className="mx-1.5 text-chesscom-400">·</span>

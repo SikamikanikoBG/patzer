@@ -128,7 +128,7 @@ export default function CommandPalette({ open, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-start justify-center px-4 pt-[12vh]" role="dialog" aria-modal="true">
-      <button aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/55 backdrop-blur-sm" />
+      <button aria-label={t('common.close')} onClick={onClose} className="absolute inset-0 bg-black/55 backdrop-blur-sm" />
       <div className="relative z-10 w-full max-w-xl overflow-hidden rounded-xl border border-chesscom-200 bg-white shadow-lift dark:border-chesscom-700 dark:bg-chesscom-800 animate-fade-in">
         <div className="flex items-center gap-2 border-b border-chesscom-200 px-3 py-2 dark:border-chesscom-700">
           <Search className="h-4 w-4 text-chesscom-400" />
@@ -139,7 +139,7 @@ export default function CommandPalette({ open, onClose }: Props) {
             placeholder={t('palette.placeholder', { defaultValue: 'Type to search nav, actions, games…' })}
             className="flex-1 bg-transparent py-1.5 text-sm outline-none placeholder:text-chesscom-400"
           />
-          <kbd className="hidden rounded border border-chesscom-200 px-1.5 py-0.5 text-[11px] text-chesscom-400 sm:inline dark:border-chesscom-700">esc</kbd>
+          <kbd className="hidden rounded border border-chesscom-200 px-1.5 py-0.5 text-[11px] text-chesscom-400 sm:inline dark:border-chesscom-700">{t('palette.esc')}</kbd>
         </div>
         <div ref={listRef} className="max-h-[60vh] overflow-y-auto py-1">
           {filtered.length === 0 ? (
@@ -163,9 +163,10 @@ export default function CommandPalette({ open, onClose }: Props) {
 }
 
 function PaletteSection({ items, active, setActive }: { items: Action[]; active: number; setActive: (i: number) => void }) {
+  const { t } = useTranslation();
   const groups: Record<Action['group'], Action[]> = { nav: [], action: [], game: [] };
   for (const a of items) groups[a.group].push(a);
-  const labels: Record<Action['group'], string> = { nav: 'Navigate', action: 'Actions', game: 'Recent games' };
+  const labels: Record<Action['group'], string> = { nav: t('palette.navGroup'), action: t('palette.actionGroup'), game: t('palette.gameGroup') };
   let runningIndex = 0;
   return (
     <>

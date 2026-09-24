@@ -325,25 +325,25 @@ export default function GameAnalyzer() {
             <div className="min-w-0 truncate text-chesscom-500">
               {move ? (
                 <>
-                  <span className="font-medium text-chesscom-900 dark:text-chesscom-100">{ply % 2 === 1 ? 'W' : 'B'}: {move.san}</span>
+                  <span className="font-medium text-chesscom-900 dark:text-chesscom-100">{ply % 2 === 1 ? t('review.sideShort.white') : t('review.sideShort.black')}: {move.san}</span>
                   {move.best_move_san && move.best_move_san !== move.san && (
-                    <span className="ml-2 text-xs text-chesscom-400">best: {move.best_move_san}</span>
+                    <span className="ml-2 text-xs text-chesscom-400">{t('review.best', { san: move.best_move_san })}</span>
                   )}
                 </>
-              ) : <span className="italic">starting position</span>}
+              ) : <span className="italic">{t('review.startingPosition')}</span>}
             </div>
             <div className="font-mono text-base font-semibold tabular-nums">
               {fmtCp(currentEvalCp)}
             </div>
           </div>
           <div className="mt-3 flex items-center justify-center gap-1.5 sm:gap-2">
-            <button onClick={() => setPly(0)} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title="First"><ChevronsLeft className="h-5 w-5" /></button>
-            <button onClick={() => setPly((p) => Math.max(0, p - 1))} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title="Previous"><ChevronLeft className="h-5 w-5" /></button>
+            <button onClick={() => setPly(0)} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.first')}><ChevronsLeft className="h-5 w-5" /></button>
+            <button onClick={() => setPly((p) => Math.max(0, p - 1))} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.prev')}><ChevronLeft className="h-5 w-5" /></button>
             <div className="flex h-10 min-w-[5rem] items-center justify-center rounded-xl bg-chesscom-100 px-3 text-sm font-mono tabular-nums dark:bg-chesscom-800 sm:h-12 sm:min-w-[5.5rem]">
               {ply} / {positions.length - 1}
             </div>
-            <button onClick={() => setPly((p) => Math.min(positions.length - 1, p + 1))} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title="Next"><ChevronRight className="h-5 w-5" /></button>
-            <button onClick={() => setPly(positions.length - 1)} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title="Last"><ChevronsRight className="h-5 w-5" /></button>
+            <button onClick={() => setPly((p) => Math.min(positions.length - 1, p + 1))} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.next')}><ChevronRight className="h-5 w-5" /></button>
+            <button onClick={() => setPly(positions.length - 1)} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.last')}><ChevronsRight className="h-5 w-5" /></button>
           </div>
 
         </div>
@@ -405,9 +405,9 @@ export default function GameAnalyzer() {
                     className="w-full"
                   />
                   <div className="mt-1 flex justify-between text-[11px] text-chesscom-400">
-                    <span>fast (8)</span>
-                    <span>quality (16)</span>
-                    <span>deep (22)</span>
+                    <span>{t('review.depthFast')}</span>
+                    <span>{t('review.depthQuality')}</span>
+                    <span>{t('review.depthDeep')}</span>
                   </div>
                   <button
                     onClick={() => analyze(requestedDepth, true)}
@@ -658,15 +658,15 @@ function ExportRow({ pgn, fen, fileBase }: { pgn: string; fen: string; fileBase:
 
   return (
     <div className="card flex flex-wrap items-center gap-2 p-2 text-xs">
-      <button onClick={() => copy('fen', fen)} className="btn-ghost px-2 py-1 text-xs" title="Copy FEN of current position">
+      <button onClick={() => copy('fen', fen)} className="btn-ghost px-2 py-1 text-xs" title={t('review.copyFenTitle')}>
         {copied === 'fen' ? <Check className="h-3.5 w-3.5 text-board-dark" /> : <Copy className="h-3.5 w-3.5" />}
         {copied === 'fen' ? t('common.copied') : `${t('common.copy')} FEN`}
       </button>
-      <button onClick={() => copy('pgn', pgn)} className="btn-ghost px-2 py-1 text-xs" title="Copy full PGN">
+      <button onClick={() => copy('pgn', pgn)} className="btn-ghost px-2 py-1 text-xs" title={t('review.copyPgnTitle')}>
         {copied === 'pgn' ? <Check className="h-3.5 w-3.5 text-board-dark" /> : <Copy className="h-3.5 w-3.5" />}
         {copied === 'pgn' ? t('common.copied') : `${t('common.copy')} PGN`}
       </button>
-      <button onClick={downloadPgn} className="btn-ghost px-2 py-1 text-xs" title="Download .pgn">
+      <button onClick={downloadPgn} className="btn-ghost px-2 py-1 text-xs" title={t('review.downloadPgnTitle')}>
         <Download className="h-3.5 w-3.5" />
         {t('common.download')}
       </button>

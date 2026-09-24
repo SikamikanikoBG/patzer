@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Download, Trophy, Frown, Equal, BookOpen, Inbox, Settings as SettingsIcon, Star, Search, X } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
-import { fmtAccuracy } from '../lib/utils';
+import { fmtAccuracy, fmtTimeControl } from '../lib/utils';
 import { cn } from '../lib/utils';
 import type { GameRow } from '../types';
 
@@ -90,7 +90,7 @@ export default function Review() {
             <button
               onClick={() => setQ('')}
               className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-chesscom-400 hover:bg-chesscom-100 dark:hover:bg-chesscom-700"
-              aria-label="Clear"
+              aria-label={t('review.clearSearch')}
             >
               <X className="h-3 w-3" />
             </button>
@@ -158,6 +158,7 @@ export default function Review() {
 }
 
 function GameCard({ g }: { g: GameRow }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const star = useMutation({
     mutationFn: (next: boolean) => api.patch(`/api/games/${g.id}/bookmark`, { bookmarked: next }),
@@ -177,21 +178,21 @@ function GameCard({ g }: { g: GameRow }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 text-sm">
             <span className={cn('truncate font-semibold', g.user_color === 'white' ? 'text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-700 dark:text-chesscom-200')}>{g.white}</span>
-            <span className="text-chesscom-400">vs</span>
+            <span className="text-chesscom-400">{t('players.vs')}</span>
             <span className={cn('truncate font-semibold', g.user_color === 'black' ? 'text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-700 dark:text-chesscom-200')}>{g.black}</span>
-            <span className="text-xs text-chesscom-400">· {g.time_control}</span>
+            <span className="text-xs text-chesscom-400">· {fmtTimeControl(g.time_control, t)}</span>
             {g.opening_name && <span className="hidden truncate text-xs text-chesscom-400 sm:inline">· {g.opening_name}</span>}
           </div>
           <div className="mt-0.5 flex items-center gap-2 text-xs text-chesscom-500">
             <span>{new Date(g.end_time).toLocaleDateString()}</span>
             <span>·</span>
-            <span className="capitalize">{g.source}</span>
-            {g.notes && <span className="ml-1 italic text-chesscom-400">· note</span>}
+            <span>{t(`review.source.${g.source}`, { defaultValue: g.source })}</span>
+            {g.notes && <span className="ml-1 italic text-chesscom-400">· {t('review.hasNote')}</span>}
           </div>
         </div>
         {g.analyzed ? (
           <div className="text-right text-xs">
-            <div className="text-[11px] uppercase tracking-wider text-chesscom-400">accuracy</div>
+            <div className="text-[11px] uppercase tracking-wider text-chesscom-400">{t('review.accuracy')}</div>
             <div className="font-mono text-sm font-semibold tabular-nums">
               <span className="text-chesscom-700 dark:text-chesscom-200">{fmtAccuracy(g.accuracy_white)}</span>
               <span className="mx-1 text-chesscom-400">/</span>

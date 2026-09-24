@@ -176,7 +176,7 @@ export default function GameReportPanel({ gameId, initial, onMomentJump, onGener
       </div>
       {review.key_moments.length > 0 && (
         <div className="space-y-1.5">
-          <div className="text-[11px] uppercase tracking-wide text-chesscom-500">Key Moments</div>
+          <div className="text-[11px] uppercase tracking-wide text-chesscom-500">{t('review.keyMoments')}</div>
           {review.key_moments.map((m) => (
             <button key={m.ply}
               onClick={() => onMomentJump?.(m.ply)}

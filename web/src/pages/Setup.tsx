@@ -115,7 +115,7 @@ export default function Setup() {
                   <p className="mt-1 text-xs text-ink-400">{t('setup.passwordHint')}</p>
                 </div>
                 <button onClick={() => setStep(2)} disabled={!username || password.length < 10} className="btn-primary w-full">
-                  Next <ChevronRight className="h-4 w-4" />
+                  {t('setup.next')} <ChevronRight className="h-4 w-4" />
                 </button>
               </motion.div>
             )}

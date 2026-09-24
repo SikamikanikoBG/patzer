@@ -35,7 +35,7 @@ export default function ShortcutsModal({ open, onClose }: Props) {
       title: t('shortcuts.review', { defaultValue: 'Game Review' }),
       rows: [
         ['←  →', t('shortcuts.prevNext', { defaultValue: 'Previous / Next move' })],
-        ['Home  End', t('shortcuts.firstLast', { defaultValue: 'First / Last position' })],
+        [t('shortcuts.homeEnd'), t('shortcuts.firstLast', { defaultValue: 'First / Last position' })],
         ['F', t('shortcuts.flipBoard', { defaultValue: 'Flip board' })],
         ['B', t('shortcuts.bookmark', { defaultValue: 'Toggle bookmark' })],
         ['S', t('shortcuts.share', { defaultValue: 'Copy link to position' })],
@@ -45,7 +45,7 @@ export default function ShortcutsModal({ open, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true">
-      <button aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/55 backdrop-blur-sm" />
+      <button aria-label={t('common.close')} onClick={onClose} className="absolute inset-0 bg-black/55 backdrop-blur-sm" />
       <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-xl border border-chesscom-200 bg-white shadow-lift dark:border-chesscom-700 dark:bg-chesscom-800 animate-fade-in">
         <div className="flex items-center justify-between border-b border-chesscom-200 px-4 py-3 dark:border-chesscom-700">
           <h2 className="text-sm font-semibold">{t('shortcuts.title', { defaultValue: 'Keyboard shortcuts' })}</h2>

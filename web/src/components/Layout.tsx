@@ -215,7 +215,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
               <button
                 onClick={onOpenPalette}
                 className="hidden shrink-0 items-center gap-2 rounded-md border border-chesscom-700 bg-chesscom-800/70 px-2.5 py-1.5 text-xs text-chesscom-300 hover:bg-chesscom-800 hover:text-white sm:inline-flex"
-                title="Command palette (⌘K)"
+                title={t('palette.open')}
               >
                 <Search className="h-3.5 w-3.5" />
                 <span className="hidden min-[1800px]:inline">{t('palette.search', { defaultValue: 'Search' })}</span>
@@ -359,7 +359,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
             <button
               onClick={() => setShowChangelog(true)}
               className="hover:text-chesscom-700 dark:hover:text-chesscom-200"
-              title="View changelog"
+              title={t('common.viewChangelog')}
             >
               Patzer v{version}
             </button>

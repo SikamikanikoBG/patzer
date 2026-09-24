@@ -1,6 +1,7 @@
 // List of the 3–5 highest-impact plies for the Game Report.
 // Each row is clickable — selecting jumps the board + move list to that ply.
 
+import { useTranslation } from 'react-i18next';
 import { CLASS_STYLE, GLYPH_SVG } from '../lib/classification';
 import type { Classification } from '../types';
 
@@ -24,13 +25,14 @@ interface Props {
 }
 
 export default function KeyMomentsList({ items, current, onSelect }: Props) {
+  const { t } = useTranslation();
   if (items.length === 0) {
-    return <div className="card p-4 text-sm text-chesscom-500">No key moments — a clean game.</div>;
+    return <div className="card p-4 text-sm text-chesscom-500">{t('review.noKeyMoments')}</div>;
   }
   return (
     <div className="card overflow-hidden">
       <div className="border-b border-chesscom-100 bg-chesscom-50/60 px-4 py-2 text-[11px] uppercase tracking-wide text-chesscom-500 dark:border-chesscom-700 dark:bg-chesscom-900/40">
-        Key Moments
+        {t('review.keyMoments')}
       </div>
       <div className="divide-y divide-chesscom-100 dark:divide-chesscom-700">
         {items.map((m) => {
@@ -50,7 +52,7 @@ export default function KeyMomentsList({ items, current, onSelect }: Props) {
                   <span className="font-mono text-xs tabular-nums text-chesscom-500">#{Math.ceil(m.ply / 2)}{m.side === 'black' ? '…' : '.'}</span>
                   <span className="font-semibold">{m.san}</span>
                   {m.best_san && m.best_san !== m.san && (
-                    <span className="text-xs text-chesscom-500">best: <span className="font-medium text-chesscom-700 dark:text-chesscom-200">{m.best_san}</span></span>
+                    <span className="text-xs text-chesscom-500">{t('review.bestLabel')} <span className="font-medium text-chesscom-700 dark:text-chesscom-200">{m.best_san}</span></span>
                   )}
                 </div>
                 <div className="mt-0.5 truncate text-xs">

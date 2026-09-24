@@ -211,7 +211,7 @@ function PlayerCard({ p, rank }: { p: PlayerSummary; rank: number | null }) {
             {p.avatar_emoji}
           </div>
           {p.online && (
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-chesscom-800" title="online" />
+            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-chesscom-800" title={t('players.onlineTitle')} />
           )}
         </div>
 
