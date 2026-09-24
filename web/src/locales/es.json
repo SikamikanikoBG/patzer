@@ -290,7 +290,17 @@
       "guardingDesc": "Defiende a una pieza aliada que está siendo atacada.",
       "sleeping": "Dormida",
       "sleepingDesc": "Sigue en su casilla inicial — ¡despiértala!"
-    }
+    },
+    "soundSet": "Sonidos de jaque y fin de partida",
+    "soundSetOption": {
+      "classic": "Clásico",
+      "soft": "Suave"
+    },
+    "soundSetDesc": {
+      "classic": "Campanas brillantes: los sonidos originales de Patzer.",
+      "soft": "Cálidas notas de marimba de madera, a juego con los sonidos de las jugadas."
+    },
+    "soundSetPreview": "Escuchar"
   },
   "admin": {
     "users": "Usuarios",
