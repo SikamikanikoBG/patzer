@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { fetchRecentGames, getPlayer, type ChessComGame } from '../chess/chesscom.js';
+import { fetchRecentGames as fetchLichessGames, toImportRow } from '../chess/lichess.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
 import { Chess } from 'chess.js';
 import { clearLiveBotGame, loadLiveBotGame, resumableSummary } from '../chess/liveBotGames.js';
@@ -200,6 +201,52 @@ router.post('/import/chesscom', async (c) => {
   }
 
   return c.json({ imported, total: games.length });
+});
+
+const lichessImportSchema = z.object({
+  username: z.string().trim().regex(/^[A-Za-z0-9_-]{2,30}$/).optional(),
+  limit: z.number().int().min(1).max(200).default(20),
+  // Only games that ended after this moment (ms since epoch).
+  since: z.number().int().positive().optional(),
+});
+
+router.post('/import/lichess', async (c) => {
+  const user = c.get('user');
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = lichessImportSchema.safeParse(body);
+  if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
+  const username = parsed.data.username ?? user.profile.lichess_username;
+  if (!username) return c.json({ error: 'no_lichess_username' }, 400);
+
+  let games;
+  try {
+    games = await fetchLichessGames(username, { max: parsed.data.limit, since: parsed.data.since });
+  } catch (e) {
+    const code = (e as Error).message;
+    if (code === 'not_found') return c.json({ error: 'player_not_found' }, 404);
+    if (code === 'rate_limited') return c.json({ error: 'lichess_rate_limited' }, 429);
+    if (code === 'invalid_username') return c.json({ error: 'invalid_input' }, 400);
+    return c.json({ error: 'lichess_unavailable' }, 502);
+  }
+
+  // Same rules as the chess.com importer: never rated in Patzer's pool, and
+  // the (user, source, external_id) key makes a re-import a no-op.
+  const stmt = db.prepare(`
+    INSERT INTO games (user_id, source, external_id, pgn, white, black, result, time_control, time_class, end_time, user_color, rated)
+    VALUES (?, 'lichess', ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+    ON CONFLICT(user_id, source, external_id) DO NOTHING
+  `);
+  let imported = 0;
+  let skipped = 0;
+  for (const g of games) {
+    const row = toImportRow(g, username);
+    if (!row) { skipped++; continue; }
+    const r = stmt.run(user.id, row.external_id, row.pgn, row.white, row.black, row.result,
+      row.time_control, row.time_class, row.end_time, row.user_color);
+    if (r.changes > 0) imported++;
+  }
+
+  return c.json({ imported, total: games.length, skipped });
 });
 
 function resultFor(g: ChessComGame, userColor: 'white' | 'black' | null): string {

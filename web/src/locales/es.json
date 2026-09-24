@@ -165,8 +165,8 @@
     "import": "Importar de Chess.com",
     "importing": "Importando…",
     "imported": "Se importaron {{n}} partidas nuevas",
-    "noGames": "Aún no hay partidas. Importa algunas de Chess.com o juega una partida.",
-    "noUsername": "Ingresa tu usuario de Chess.com en Ajustes para importar partidas.",
+    "noGames": "Aún no hay partidas. Importa algunas de Chess.com o Lichess, o juega una partida.",
+    "noUsername": "Ingresa tu usuario de Chess.com o Lichess en Ajustes para importar partidas.",
     "analyze": "Analizar",
     "reanalyze": "Reanalizar",
     "analyzing": "Analizando… ({{progress}}%)",
@@ -194,13 +194,23 @@
     "notesPlaceholder": "Tus notas privadas sobre esta partida…",
     "notesPrivate": "Solo tú puedes ver esto.",
     "notesUnsaved": "Haz clic fuera para guardar",
-    "setUsername": "Guardar usuario de Chess.com",
+    "setUsername": "Guardar usuario de Chess.com o Lichess",
     "lines": "Variantes del motor",
     "linesShow": "Mostrar mejores variantes del motor",
     "linesHide": "Ocultar",
     "linesFetching": "obteniendo…",
     "linesRefreshing": "actualizando…",
-    "linesPlayed": "jugada"
+    "linesPlayed": "jugada",
+    "importLichess": "Importar de Lichess",
+    "importError": {
+      "player_not_found": "No se encontró ningún jugador con ese nombre de usuario.",
+      "lichess_rate_limited": "Lichess pide una breve pausa: inténtalo de nuevo en un minuto.",
+      "lichess_unavailable": "No se puede conectar con Lichess ahora mismo. Inténtalo más tarde.",
+      "generic": "La importación falló. Inténtalo de nuevo más tarde."
+    },
+    "source": {
+      "lichess": "Lichess"
+    }
   },
   "classification": {
     "brilliant": "Brillante",
@@ -290,7 +300,9 @@
       "guardingDesc": "Defiende a una pieza aliada que está siendo atacada.",
       "sleeping": "Dormida",
       "sleepingDesc": "Sigue en su casilla inicial — ¡despiértala!"
-    }
+    },
+    "lichess": "Usuario de Lichess",
+    "lichessHelp": "Se usa para importar partidas y analizarlas"
   },
   "admin": {
     "users": "Usuarios",

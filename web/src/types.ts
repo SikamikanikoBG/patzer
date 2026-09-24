@@ -71,7 +71,7 @@ export interface AnalysisResult {
 
 export interface GameRow {
   id: number;
-  source: 'chesscom' | 'played' | 'imported' | 'pvp';
+  source: 'chesscom' | 'lichess' | 'played' | 'imported' | 'pvp';
   external_id: string | null;
   white: string;
   black: string;

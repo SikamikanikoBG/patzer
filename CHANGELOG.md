@@ -14,6 +14,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   mehr"), so move and material phrasing decline properly instead of gluing
   bare nouns together. (#18)
 
+- **Import games from Lichess.** Next to the Chess.com importer: set a
+  Lichess username in **Settings** and *Import from Lichess* appears in Game
+  Review. Uses Lichess's public export API (no token), sends a real
+  User-Agent, makes one request at a time from the server and tells you to
+  wait a minute instead of retrying when Lichess answers 429. Standard chess
+  only — variants, aborted and unfinished games are skipped — and importing
+  twice doesn't duplicate anything. Correspondence games land in the same
+  *daily* pool as chess.com's. Import errors (unknown player, Lichess down)
+  are shown now instead of failing silently, for Chess.com too. (#28)
+
+### Changed
+- **`games.source` accepts `lichess`.** SQLite can't alter a CHECK
+  constraint, so existing installs rebuild the `games` table once on startup:
+  in one transaction, with foreign keys off for the swap so no analysis,
+  puzzle or rating history is cascade-deleted, and with the row count and
+  `foreign_key_check` verified before it commits. If anything goes wrong it
+  rolls back, logs, and the server starts as before without the Lichess
+  import.
+
 ### Fixed
 - **English text on translated screens.** Around 140 strings were hard-coded
   in components (Settings descriptions, the greeting, phase names, the game

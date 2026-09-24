@@ -168,8 +168,8 @@
     "import": "Import from Chess.com",
     "importing": "Importing…",
     "imported": "Imported {{n}} new games",
-    "noGames": "No games yet. Import some from Chess.com or play a game.",
-    "noUsername": "Set your Chess.com username in Settings to import games.",
+    "noGames": "No games yet. Import some from Chess.com or Lichess, or play a game.",
+    "noUsername": "Set your Chess.com or Lichess username in Settings to import games.",
     "analyze": "Analyze",
     "reanalyze": "Re-analyze",
     "analyzing": "Analyzing… ({{progress}}%)",
@@ -197,7 +197,7 @@
     "notesPlaceholder": "Your private notes on this game…",
     "notesPrivate": "Only you can see this.",
     "notesUnsaved": "Click outside to save",
-    "setUsername": "Set Chess.com username",
+    "setUsername": "Set Chess.com or Lichess username",
     "lines": "Engine lines",
     "linesShow": "Show top engine lines",
     "linesHide": "Hide",
@@ -218,7 +218,8 @@
     "source": {
       "chesscom": "Chess.com",
       "played": "Played",
-      "pvp": "PvP"
+      "pvp": "PvP",
+      "lichess": "Lichess"
     },
     "hasNote": "note",
     "clearSearch": "Clear",
@@ -242,7 +243,14 @@
     "performance": "Performance",
     "noKeyMoments": "No key moments — a clean game.",
     "noEval": "No evaluation yet",
-    "bestLabel": "best:"
+    "bestLabel": "best:",
+    "importLichess": "Import from Lichess",
+    "importError": {
+      "player_not_found": "No player with that username was found.",
+      "lichess_rate_limited": "Lichess asks for a short break — try again in a minute.",
+      "lichess_unavailable": "Lichess can't be reached right now. Try again later.",
+      "generic": "The import failed. Please try again later."
+    }
   },
   "classification": {
     "brilliant": "Brilliant",
@@ -356,7 +364,9 @@
     "ttsDesc": "Coach can read its explanations aloud. Uses your operating system's voices.",
     "ttsNoVoices": "No voices found for this language. Install the OS language pack to see more options.",
     "unsaved": "Unsaved changes",
-    "noChanges": "No changes"
+    "noChanges": "No changes",
+    "lichess": "Lichess username",
+    "lichessHelp": "Used to import games for review"
   },
   "admin": {
     "users": "Users",

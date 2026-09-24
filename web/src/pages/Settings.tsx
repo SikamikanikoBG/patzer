@@ -34,6 +34,7 @@ export default function Settings() {
       language: form.language,
       audience: form.audience,
       chesscom_username: form.chesscom_username || null,
+      lichess_username: form.lichess_username || null,
       coach_behavior: form.coach_behavior,
       tts_enabled: !!form.tts_enabled,
       tts_voice: form.tts_voice,
@@ -115,10 +116,15 @@ export default function Settings() {
             </select>
             <div className="mt-1 text-xs text-ink-400">{t('settings.audienceHelp')}</div>
           </div>
-          <div className="sm:col-span-2">
+          <div>
             <label className="label mb-1 block">{t('settings.chessCom')}</label>
             <input className="input" value={form.chesscom_username ?? ''} onChange={(e) => set('chesscom_username', e.target.value)} placeholder="username" />
             <div className="mt-1 text-xs text-ink-400">{t('settings.chessComHelp')}</div>
+          </div>
+          <div>
+            <label className="label mb-1 block">{t('settings.lichess')}</label>
+            <input className="input" value={form.lichess_username ?? ''} onChange={(e) => set('lichess_username', e.target.value)} placeholder="username" />
+            <div className="mt-1 text-xs text-ink-400">{t('settings.lichessHelp')}</div>
           </div>
         </div>
       </section>

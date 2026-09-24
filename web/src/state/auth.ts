@@ -17,6 +17,7 @@ export interface Profile {
   language: Language;
   audience: Audience;
   chesscom_username: string | null;
+  lichess_username: string | null;
   coach_behavior: CoachBehavior;
   tts_enabled: number;
   tts_voice: string | null;
