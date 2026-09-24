@@ -7,11 +7,15 @@
 // (partials 1.0, 2.01, 2.99, 4.07 — close to a real handbell spectrum).
 
 type SoundKind = 'move' | 'capture' | 'check' | 'castle' | 'promotion' | 'game_start' | 'game_end' | 'click';
+/** 'classic' = the original bells; 'soft' swaps check and game-end for
+ *  marimba-style wooden bars that sit closer to the wood-knock move sounds. */
+export type SoundSet = 'classic' | 'soft';
 
 let ctx: AudioContext | null = null;
 let dryBus: GainNode | null = null;
 let wetBus: GainNode | null = null;
 let enabled = true;
+let soundSet: SoundSet = 'classic';
 
 interface Bus { c: AudioContext; dry: GainNode; wet: GainNode; now: number }
 
@@ -180,10 +184,22 @@ function pluck(b: Bus, t0: number, opts: { freq: number; duration: number; gain?
   });
 }
 
+function marimba(b: Bus, t0: number, opts: { freq: number; duration: number; gain?: number }) {
+  // A tuned wooden bar: fundamental plus the ~4x and ~10x overtones a marimba
+  // bar is cut to produce, with a short mallet click on top. The overtones die
+  // first, which is what makes it read as "soft wood" rather than "bell".
+  const peak = opts.gain ?? 0.2;
+  noiseClick(b, t0, { duration: 0.008, gain: peak * 0.5, cutoff: 2500, highpass: 400, wet: 0.2 });
+  damped(b, t0, { freq: opts.freq, duration: opts.duration, gain: peak, attack: 0.003, wet: 0.35 });
+  damped(b, t0, { freq: opts.freq * 3.93, duration: opts.duration * 0.35, gain: peak * 0.28, attack: 0.002, wet: 0.3 });
+  damped(b, t0, { freq: opts.freq * 9.87, duration: opts.duration * 0.12, gain: peak * 0.08, attack: 0.001, wet: 0.3 });
+}
+
 // ---- Public API ---------------------------------------------------------
 
 export function setSoundEnabled(on: boolean) { enabled = on; }
 export function getSoundEnabled() { return enabled; }
+export function setSoundSet(set: SoundSet) { soundSet = set === 'soft' ? 'soft' : 'classic'; }
 
 // Some browsers require user interaction before audio plays. Call this once
 // from a click/keydown handler to "warm" the context.
@@ -208,6 +224,12 @@ export function playSound(kind: SoundKind) {
       noiseClick(b, t + 0.008, { duration: 0.04, gain: 0.18, cutoff: 1200, highpass: 350, wet: 0.5 });
       break;
     case 'check': {
+      if (soundSet === 'soft') {
+        // Two short rising marimba notes (E5 → A5).
+        marimba(b, t,         { freq: 659, duration: 0.28, gain: 0.2 });
+        marimba(b, t + 0.085, { freq: 880, duration: 0.35, gain: 0.2 });
+        break;
+      }
       // Two-tone bell — a small alert without being shrill.
       bell(b, t,         { freq: 1175, duration: 0.55, gain: 0.18 });   // D6
       bell(b, t + 0.09,  { freq: 880,  duration: 0.55, gain: 0.14 });   // A5
@@ -234,6 +256,17 @@ export function playSound(kind: SoundKind) {
       break;
     }
     case 'game_end': {
+      if (soundSet === 'soft') {
+        // The classic G5 → E5 → C5 cadence on marimba, with a faint bell
+        // layered underneath so it still sounds like Patzer, just softer.
+        const notes: [number, number, number][] = [[784, 0, 0.5], [659, 0.16, 0.6], [523, 0.34, 1.1]];
+        for (const [freq, delay, duration] of notes) {
+          marimba(b, t + delay, { freq, duration, gain: 0.15 });
+          bell(b, t + delay, { freq, duration: duration * 0.8, gain: 0.045 });
+        }
+        damped(b, t + 0.34, { freq: 131, duration: 0.7, gain: 0.07, type: 'sine', wet: 0.45 });
+        break;
+      }
       // Resolving cadence — descend G5 → E5 → C5 → low rumble.
       bell(b, t,        { freq: 784, duration: 0.55, gain: 0.16 });
       bell(b, t + 0.16, { freq: 659, duration: 0.6,  gain: 0.16 });

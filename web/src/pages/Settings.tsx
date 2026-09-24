@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { LANGUAGES, type Language } from '../lib/languages';
 import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
 import { api } from '../api';
-import { useAuth, type Profile, type BoardTheme, type SiteTheme } from '../state/auth';
+import { useAuth, type Profile, type BoardTheme, type SiteTheme, type SoundSet } from '../state/auth';
 import { getVoices, onVoicesReady, speak } from '../lib/tts';
+import { playSound, setSoundSet } from '../lib/sounds';
 
 const EMOJIS = ['♟','♞','♝','♜','♛','♚','🦊','🐯','🦁','🐻','🐼','🐰','🐶','🐱','🐹','🐢','🐧','🐳','⭐','🌟'];
 
@@ -43,6 +44,7 @@ export default function Settings() {
       piece_set: form.piece_set,
       site_theme: form.site_theme,
       sound_enabled: !!form.sound_enabled,
+      sound_set: form.sound_set,
       blunder_warning: !!form.blunder_warning,
       kid_piece_emotions: !!form.kid_piece_emotions,
     });
@@ -53,6 +55,15 @@ export default function Settings() {
   }
 
   const langVoices = voices.filter((v) => v.lang.toLowerCase().startsWith(form.language));
+
+  // Play check then game-end in the given set, then fall back to the saved
+  // set so an unsaved preview doesn't leak into the next game.
+  function previewSoundSet(s: SoundSet) {
+    setSoundSet(s);
+    playSound('check');
+    window.setTimeout(() => playSound('game_end'), 700);
+    window.setTimeout(() => setSoundSet(user?.profile.sound_set ?? 'classic'), 2500);
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-24">
@@ -197,6 +208,28 @@ export default function Settings() {
               <div className="text-xs text-ink-500">{t('settings.soundEffectsDesc')}</div>
             </div>
           </label>
+          {!!form.sound_enabled && (
+            <div className="pl-8">
+              <label className="label mb-1 block">{t('settings.soundSet')}</label>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {(['classic', 'soft'] as const).map((s) => (
+                  <div key={s} className={`flex items-start gap-2 rounded-xl border p-3 text-sm transition-colors
+                    ${form.sound_set === s
+                      ? 'border-ink-900 bg-ink-900 text-cream dark:border-cream dark:bg-cream dark:text-ink-900'
+                      : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}>
+                    <button type="button" onClick={() => set('sound_set', s)} className="min-w-0 flex-1 text-left">
+                      <div className="font-medium">{t(`settings.soundSetOption.${s}`)}</div>
+                      <div className={`mt-1 text-xs ${form.sound_set === s ? 'opacity-80' : 'text-ink-500'}`}>{t(`settings.soundSetDesc.${s}`)}</div>
+                    </button>
+                    <button type="button" onClick={() => previewSoundSet(s)} className="shrink-0 rounded-md p-1 opacity-80 hover:opacity-100"
+                      title={t('settings.soundSetPreview')} aria-label={t('settings.soundSetPreview')}>
+                      <Volume2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <label className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-ink-50 dark:hover:bg-ink-700/50">
             <input type="checkbox" className="mt-1" checked={!!form.blunder_warning} onChange={(e) => set('blunder_warning', e.target.checked ? 1 : 0)} />
             <div>

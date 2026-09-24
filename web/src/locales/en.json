@@ -356,7 +356,17 @@
     "ttsDesc": "Coach can read its explanations aloud. Uses your operating system's voices.",
     "ttsNoVoices": "No voices found for this language. Install the OS language pack to see more options.",
     "unsaved": "Unsaved changes",
-    "noChanges": "No changes"
+    "noChanges": "No changes",
+    "soundSet": "Check & game-end sounds",
+    "soundSetOption": {
+      "classic": "Classic",
+      "soft": "Soft"
+    },
+    "soundSetDesc": {
+      "classic": "Bright bells — the original Patzer sounds.",
+      "soft": "Warm wooden marimba notes that match the move sounds."
+    },
+    "soundSetPreview": "Preview"
   },
   "admin": {
     "users": "Users",

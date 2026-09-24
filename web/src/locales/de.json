@@ -356,7 +356,17 @@
     "ttsDesc": "Der Coach kann seine Erklärungen vorlesen. Dafür werden die Stimmen deines Betriebssystems verwendet.",
     "ttsNoVoices": "Keine Stimmen für diese Sprache gefunden. Installiere das Sprachpaket deines Betriebssystems, um mehr Auswahl zu haben.",
     "unsaved": "Ungespeicherte Änderungen",
-    "noChanges": "Keine Änderungen"
+    "noChanges": "Keine Änderungen",
+    "soundSet": "Töne für Schach & Partieende",
+    "soundSetOption": {
+      "classic": "Klassisch",
+      "soft": "Weich"
+    },
+    "soundSetDesc": {
+      "classic": "Helle Glocken — die ursprünglichen Patzer-Töne.",
+      "soft": "Warme Holz-Marimba-Töne, passend zu den Zug-Tönen."
+    },
+    "soundSetPreview": "Anhören"
   },
   "admin": {
     "users": "Benutzer",

@@ -128,6 +128,10 @@ ensureColumn('profiles', 'sound_enabled', `INTEGER NOT NULL DEFAULT 1`);
 // so kids can read the whole board emotionally rather than square by square.
 // Off by default; intended to be toggled from Settings for audience='kid'.
 ensureColumn('profiles', 'kid_piece_emotions', `INTEGER NOT NULL DEFAULT 0`);
+// Which synthesized sound set plays check / game-end. 'classic' is the
+// original bells and stays the default so nobody's game changes sound
+// under them; 'soft' swaps those two for marimba-style wooden bars.
+ensureColumn('profiles', 'sound_set', `TEXT NOT NULL DEFAULT 'classic'`);
 ensureColumn('games', 'opponent_user_id', `INTEGER REFERENCES users(id) ON DELETE SET NULL`);
 // PvP clock persistence — without these a refresh during a blitz game silently
 // reset both clocks to the time control's initial. last_move_at is needed so
