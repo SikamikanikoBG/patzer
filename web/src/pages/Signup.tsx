@@ -1,24 +1,70 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, Link } from 'react-router-dom';
-import { UserPlus, MailCheck } from 'lucide-react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { UserPlus, MailCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { useAuthConfig } from '../lib/useAuthConfig';
 import { humanizeError } from '../lib/errors';
 import AuthShell from '../components/AuthShell';
-import { normalizeLanguage } from '../lib/languages';
+import { isLanguage, normalizeLanguage } from '../lib/languages';
+
+type InviteProblem = 'invalid' | 'revoked' | 'expired' | 'used_up';
+type InviteCheck = { state: 'checking' } | { state: 'valid' } | { state: 'invalid'; reason: InviteProblem };
+
+const INVITE_PROBLEM_KEYS: Record<InviteProblem, string> = {
+  invalid: 'auth.errInviteInvalid',
+  revoked: 'auth.errInviteRevoked',
+  expired: 'auth.errInviteExpired',
+  used_up: 'auth.errInviteUsedUp',
+};
+
+// Same rule as normalizeInviteCode() on the server: case, dashes and spaces
+// don't matter.
+const normalizeCode = (raw: string) => raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
+const CODE_LENGTH = 12;
 
 export default function Signup() {
   const { t, i18n } = useTranslation();
   const { refresh } = useAuth();
   const { config, loaded } = useAuthConfig();
   const nav = useNavigate();
+  const [params] = useSearchParams();
+  const linkCode = params.get('invite') ?? '';
 
   const [form, setForm] = useState({ username: '', password: '', display_name: '', email: '' });
+  const [invite, setInvite] = useState(linkCode);
+  const [check, setCheck] = useState<InviteCheck | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [done, setDone] = useState(false); // verification-required state
+
+  const inviteOnly = config.signup_mode === 'invite';
+  // With open signup the field only appears for someone who came via a link.
+  const showInvite = inviteOnly || !!linkCode;
+  const code = normalizeCode(invite);
+
+  // Check the code as soon as it is complete — straight away when it came in
+  // the link — so a dead invite is reported before anyone fills in the form.
+  useEffect(() => {
+    if (code.length !== CODE_LENGTH) { setCheck(null); return; }
+    let alive = true;
+    setCheck({ state: 'checking' });
+    api.get<{ valid: boolean; reason?: InviteProblem; language?: string | null }>(`/api/auth/invite?code=${code}`)
+      .then((r) => {
+        if (!alive) return;
+        if (!r.valid) { setCheck({ state: 'invalid', reason: r.reason ?? 'invalid' }); return; }
+        setCheck({ state: 'valid' });
+        // The account will be created in the invite's language; show the
+        // page in it too, so a Spanish class link reads Spanish from here on.
+        if (isLanguage(r.language) && normalizeLanguage(i18n.language) !== r.language) void i18n.changeLanguage(r.language);
+      })
+      // The server checks again on submit; a failed probe just shows nothing.
+      .catch(() => { if (alive) setCheck(null); });
+    return () => { alive = false; };
+  }, [code, i18n]);
+
+  const inviteOk = !inviteOnly || (code.length === CODE_LENGTH && check?.state !== 'invalid');
 
   const emailLooksValid = !form.email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
   const canSubmit =
@@ -26,6 +72,7 @@ export default function Signup() {
     form.password.length >= 10 &&
     form.display_name.trim().length >= 1 &&
     emailLooksValid &&
+    inviteOk &&
     !busy;
 
   async function submit(e: React.FormEvent) {
@@ -36,6 +83,9 @@ export default function Signup() {
       const res = await api.post<{ user?: unknown; verification_required?: boolean }>('/api/auth/register', {
         ...form,
         language: normalizeLanguage(i18n.language),
+        // With open signup a dead invite is dropped rather than blocking a
+        // signup that needs no invite at all.
+        ...(inviteOnly || check?.state === 'valid' ? { invite: code } : {}),
       });
       if (res.verification_required) {
         setDone(true);
@@ -74,11 +124,32 @@ export default function Signup() {
   }
 
   return (
-    <AuthShell title={t('auth.signupTitle')} subtitle={t('auth.signupSubtitle')}>
+    <AuthShell title={t('auth.signupTitle')} subtitle={inviteOnly ? t('auth.signupSubtitleInvite') : t('auth.signupSubtitle')}>
       <form onSubmit={submit} className="space-y-3">
+        {showInvite && (
+          <div>
+            <label className="label mb-1 block" htmlFor="invite-code">{t('auth.inviteCode')}</label>
+            <input
+              id="invite-code" className="input font-mono uppercase tracking-wider" autoComplete="off" spellCheck={false}
+              placeholder="ABCD-EFGH-JKLM" autoFocus={!linkCode} value={invite} onChange={(e) => setInvite(e.target.value)}
+            />
+            {check?.state === 'checking' && <p className="mt-1 text-xs text-ink-400">{t('auth.inviteChecking')}</p>}
+            {check?.state === 'valid' && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-accent-600">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> {t('auth.inviteValid')}
+              </p>
+            )}
+            {check?.state === 'invalid' && (
+              <p role="alert" className="mt-1 flex items-start gap-1 text-xs text-bad">
+                <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" />
+                <span>{inviteOnly ? t(INVITE_PROBLEM_KEYS[check.reason]) : t('auth.inviteOpenFallback')}</span>
+              </p>
+            )}
+          </div>
+        )}
         <div>
           <label className="label mb-1 block">{t('common.username')}</label>
-          <input className="input" autoComplete="username" autoFocus value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+          <input className="input" autoComplete="username" autoFocus={!showInvite || !!linkCode} value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
         </div>
         <div>
           <label className="label mb-1 block">{t('common.displayName')}</label>

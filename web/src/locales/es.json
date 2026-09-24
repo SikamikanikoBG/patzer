@@ -316,8 +316,6 @@
     "unverified": "sin verificar",
     "signupConfig": "Registros",
     "signupConfigIntro": "Controla si los visitantes pueden crear sus propias cuentas.",
-    "allowSignup": "Permitir autorregistro",
-    "allowSignupHint": "Mostrar un enlace de registro en la pantalla de inicio de sesión.",
     "requireVerification": "Requerir verificación de correo",
     "requireVerificationHint": "Los nuevos usuarios deben confirmar su correo antes de iniciar sesión.",
     "requireVerificationNeedsSmtp": "Configura el SMTP a continuación para activar esta opción.",

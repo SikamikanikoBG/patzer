@@ -6,11 +6,13 @@ import { api } from '../../api';
 import { useAuth } from '../../state/auth';
 import { humanizeError } from '../../lib/errors';
 import { LANGUAGES, type Language } from '../../lib/languages';
+import InvitesSection from './Invites';
 
 interface UserRow {
   id: number; username: string; role: 'admin' | 'user'; created_at: string;
   display_name: string; avatar_emoji: string; language: Language; audience: string;
   email: string | null; email_verified: number;
+  invite_code: string | null; invite_note: string | null;
 }
 
 export default function AdminUsers() {
@@ -26,7 +28,11 @@ export default function AdminUsers() {
 
   const del = useMutation({
     mutationFn: (id: number) => api.del(`/api/admin/users/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin', 'users'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'users'] });
+      // The invite list names the accounts made with each invite.
+      void qc.invalidateQueries({ queryKey: ['admin', 'invites'] });
+    },
   });
 
   return (
@@ -64,6 +70,9 @@ export default function AdminUsers() {
                           {!u.email_verified && <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t('admin.unverified')}</span>}
                         </div>
                       )}
+                      {u.invite_code && (
+                        <div className="text-xs text-ink-400">{t('admin.invitedVia', { label: u.invite_note || u.invite_code })}</div>
+                      )}
                     </div>
                   </div>
                 </td>
@@ -86,6 +95,8 @@ export default function AdminUsers() {
           </tbody>
         </table>
       </div>
+
+      <InvitesSection />
 
       {showCreate && <CreateUserModal onClose={() => setShowCreate(false)} onCreated={() => qc.invalidateQueries({ queryKey: ['admin', 'users'] })} />}
     </div>

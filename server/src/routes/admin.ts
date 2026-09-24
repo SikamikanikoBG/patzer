@@ -7,6 +7,18 @@ import { hashPassword } from '../auth/passwords.js';
 import { testConnection, testModel, llmUrl, llmStats, type LlmProvider } from '../coach/llm.js';
 import { StockfishEngine } from '../chess/stockfish.js';
 import { isMailerConfigured, sendMail, verifyConnection, welcomeTemplate } from '../email/mailer.js';
+import {
+  signupMode,
+  setSignupMode,
+  createInvite,
+  listInvites,
+  revokeInvite,
+  deleteInvite,
+  inviteStatus,
+  formatInviteCode,
+  type InviteRow,
+} from '../auth/invites.js';
+import { publicBaseUrl } from '../publicUrl.js';
 import type { Profile, Role } from '../types.js';
 
 const router = new Hono();
@@ -17,11 +29,14 @@ router.use('*', requireAdmin);
 router.get('/users', (c) => {
   const rows = db.prepare(`
     SELECT u.id, u.username, u.role, u.created_at, u.email, u.email_verified,
-           p.display_name, p.avatar_emoji, p.language, p.audience
+           p.display_name, p.avatar_emoji, p.language, p.audience,
+           i.code AS invite_code, i.note AS invite_note
     FROM users u JOIN profiles p ON p.user_id = u.id
+    LEFT JOIN invites i ON i.id = u.invite_id
     ORDER BY u.id
-  `).all();
-  return c.json({ users: rows });
+  `).all() as { invite_code: string | null }[];
+  const users = rows.map((r) => ({ ...r, invite_code: r.invite_code ? formatInviteCode(r.invite_code) : null }));
+  return c.json({ users });
 });
 
 const createUserSchema = z.object({
@@ -141,6 +156,66 @@ router.delete('/users/:id', (c) => {
   return c.json({ ok: true });
 });
 
+// ---- Invites (#26) ----
+
+function inviteJson(inv: InviteRow, base: string, usedBy: string[]) {
+  const code = formatInviteCode(inv.code);
+  return {
+    id: inv.id,
+    code,
+    link: `${base}/signup?invite=${code}`,
+    note: inv.note,
+    max_uses: inv.max_uses,
+    uses: inv.uses,
+    expires_at: inv.expires_at,
+    language: inv.language,
+    audience: inv.audience,
+    created_at: inv.created_at,
+    revoked_at: inv.revoked_at,
+    status: inviteStatus(inv),
+    used_by: usedBy,
+  };
+}
+
+router.get('/invites', (c) => {
+  const base = publicBaseUrl(c);
+  const usedBy = new Map<number, string[]>();
+  const accounts = db.prepare('SELECT invite_id, username FROM users WHERE invite_id IS NOT NULL ORDER BY id').all() as
+    { invite_id: number; username: string }[];
+  for (const a of accounts) usedBy.set(a.invite_id, [...(usedBy.get(a.invite_id) ?? []), a.username]);
+  return c.json({
+    signup_mode: signupMode(),
+    invites: listInvites().map((inv) => inviteJson(inv, base, usedBy.get(inv.id) ?? [])),
+  });
+});
+
+// Defaults are the cautious ones: one account, one week.
+const createInviteSchema = z.object({
+  note: z.string().trim().max(80).optional(),
+  max_uses: z.number().int().min(1).max(1000).nullable().default(1),
+  expires_in_days: z.number().int().min(1).max(365).nullable().default(7),
+  language: z.enum(['en', 'bg', 'es', 'de']).nullable().default(null),
+  audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).nullable().default(null),
+});
+
+router.post('/invites', async (c) => {
+  const body = await c.req.json().catch(() => null);
+  const parsed = createInviteSchema.safeParse(body ?? {});
+  if (!parsed.success) return c.json({ error: 'invalid_input', details: parsed.error.flatten() }, 400);
+  const invite = createInvite(parsed.data, c.get('user').id);
+  return c.json({ invite: inviteJson(invite, publicBaseUrl(c), []) });
+});
+
+router.post('/invites/:id/revoke', (c) => {
+  if (!revokeInvite(Number(c.req.param('id')))) return c.json({ error: 'not_found' }, 404);
+  return c.json({ ok: true });
+});
+
+router.delete('/invites/:id', (c) => {
+  if (!deleteInvite(Number(c.req.param('id')))) return c.json({ error: 'not_found' }, 404);
+  return c.json({ ok: true });
+});
+
 // ---- System settings ----
 
 router.get('/system', async (c) => {
@@ -164,7 +239,7 @@ router.get('/system', async (c) => {
     update_check_enabled: updateCheckEnabled(),
 
     // ---- Signup + email (v7.7.0) ----
-    allow_signup: getSetting('allow_signup') !== '0',
+    signup_mode: signupMode(),
     require_email_verification: getSetting('require_email_verification') === '1',
     notify_admin_on_signup: getSetting('notify_admin_on_signup') !== '0',
     public_base_url: getSetting('public_base_url') ?? '',
@@ -191,6 +266,8 @@ const systemSchema = z.object({
   stockfish_path: z.string().optional(),
   update_check_enabled: z.boolean().optional(),
   // Signup + email config
+  signup_mode: z.enum(['open', 'invite', 'closed']).optional(),
+  // Pre-invite on/off switch, still accepted: true = open, false = closed.
   allow_signup: z.boolean().optional(),
   require_email_verification: z.boolean().optional(),
   notify_admin_on_signup: z.boolean().optional(),
@@ -224,7 +301,8 @@ router.patch('/system', async (c) => {
   setStr('stockfish_path', d.stockfish_path);
 
   if (d.update_check_enabled !== undefined) setUpdateCheckEnabled(d.update_check_enabled);
-  setBool('allow_signup', d.allow_signup);
+  if (d.signup_mode) setSignupMode(d.signup_mode);
+  else if (d.allow_signup !== undefined) setSignupMode(d.allow_signup ? 'open' : 'closed');
   setBool('require_email_verification', d.require_email_verification);
   setBool('notify_admin_on_signup', d.notify_admin_on_signup);
   setStr('public_base_url', d.public_base_url);

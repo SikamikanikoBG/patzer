@@ -247,6 +247,27 @@ db.exec(`CREATE INDEX IF NOT EXISTS idx_auth_tokens_user ON auth_tokens(user_id,
 // Drop tokens that are spent or long expired so the table can't grow unbounded.
 db.prepare(`DELETE FROM auth_tokens WHERE used_at IS NOT NULL OR expires_at < datetime('now')`).run();
 
+// v7.15 — invite-only signup (#26). Unlike auth_tokens the code is stored as
+// is, not hashed: the admin has to be able to copy the link again later, and a
+// code only ever opens an ordinary account. Dates are ISO 8601 strings written
+// by the server. `language` has no CHECK on purpose — every new language would
+// otherwise need a table rebuild on existing installs.
+db.exec(`CREATE TABLE IF NOT EXISTS invites (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT NOT NULL UNIQUE,
+  note TEXT,
+  max_uses INTEGER,
+  uses INTEGER NOT NULL DEFAULT 0,
+  expires_at TEXT,
+  language TEXT,
+  audience TEXT CHECK(audience IN ('kid','beginner','intermediate','advanced')),
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TEXT NOT NULL,
+  revoked_at TEXT
+)`);
+// Which invite an account came from. Deleting the invite keeps the account.
+ensureColumn('users', 'invite_id', 'INTEGER REFERENCES invites(id) ON DELETE SET NULL');
+
 // v7.14.0 — a bot game in progress, so closing the tab (or a phone putting the
 // browser to sleep) doesn't destroy it. Deliberately NOT a `games` row: rows in
 // `games` are finished games and feed the game list, Insights, ratings and the

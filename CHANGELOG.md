@@ -13,8 +13,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ("der Springer zieht", but "schlägt den Bauern", "du hast einen Turm
   mehr"), so move and material phrasing decline properly instead of gluing
   bare nouns together. (#18)
+- **Invite-only sign-up.** Admin → System now has three answers to "who can
+  create an account": anyone, invite only, nobody. Admin → Users gets an
+  Invites list: each invite is a code and a `/signup?invite=…` link, limited
+  to a number of accounts and a lifetime (one account, one week unless you
+  pick otherwise), and can preset the language and coach level of the
+  accounts made with it — so a coach can hand a class a "Spanish, beginner"
+  link. Copy the link again later, withdraw it, and see who signed up with
+  it. The sign-up page checks an invite as soon as it's entered, so a dead
+  link is reported before anyone fills in the form. Existing installs keep
+  what they had: on becomes "anyone", off becomes "nobody". (#26)
 
 ### Fixed
+- **Admin → System's Save button didn't save the sign-up settings.** It only
+  saved the coach and engine fields; the sign-up switches were saved by
+  "Save email settings" further down, so changing them and pressing Save
+  quietly did nothing. Save now saves the whole page.
 - **English text on translated screens.** Around 140 strings were hard-coded
   in components (Settings descriptions, the greeting, phase names, the game
   list, key moments, admin pages…) or used a translation key that existed in
