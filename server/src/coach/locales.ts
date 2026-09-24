@@ -46,6 +46,14 @@ const PIECE_NAME_ES: Record<string, string> = {
   N: "caballo",
   P: "peón",
 };
+const PIECE_NAME_DE: Record<string, string> = {
+  K: "König",
+  Q: "Dame",
+  R: "Turm",
+  B: "Läufer",
+  N: "Springer",
+  P: "Bauer",
+};
 const PIECE_NAME_KID_EN: Record<string, string> = {
   K: "king",
   Q: "queen",
@@ -70,6 +78,32 @@ const PIECE_NAME_KID_ES: Record<string, string> = {
   N: "caballito",
   P: "peón",
 };
+const PIECE_NAME_KID_DE: Record<string, string> = {
+  K: "König",
+  Q: "Königin",
+  R: "Turm",
+  B: "Läufer",
+  N: "Pferdchen",
+  P: "Bauer",
+};
+
+// German piece names need an article and a grammatical case — "der Springer
+// zieht", but "schlägt den Bauern" and "du hast einen Turm mehr".
+const DE_FORMS: Record<string, { nom: string; akk: string; einAkk: string }> = {
+  König: { nom: "der König", akk: "den König", einAkk: "einen König" },
+  Dame: { nom: "die Dame", akk: "die Dame", einAkk: "eine Dame" },
+  Königin: { nom: "die Königin", akk: "die Königin", einAkk: "eine Königin" },
+  Turm: { nom: "der Turm", akk: "den Turm", einAkk: "einen Turm" },
+  Läufer: { nom: "der Läufer", akk: "den Läufer", einAkk: "einen Läufer" },
+  Springer: { nom: "der Springer", akk: "den Springer", einAkk: "einen Springer" },
+  Pferdchen: { nom: "das Pferdchen", akk: "das Pferdchen", einAkk: "ein Pferdchen" },
+  Bauer: { nom: "der Bauer", akk: "den Bauern", einAkk: "einen Bauern" },
+};
+
+export function deForm(name: string, form: "nom" | "akk" | "einAkk"): string {
+  return DE_FORMS[name]?.[form] ?? name;
+}
+
 export const PIECE_VALUE: Record<string, number> = {
   K: 0,
   Q: 9,
@@ -84,11 +118,13 @@ const PIECE_NAMES: Record<"kid" | "standard", Record<Language, Record<string, st
     en: PIECE_NAME_KID_EN,
     bg: PIECE_NAME_KID_BG,
     es: PIECE_NAME_KID_ES,
+    de: PIECE_NAME_KID_DE,
   },
   standard: {
     en: PIECE_NAME_EN,
     bg: PIECE_NAME_BG,
     es: PIECE_NAME_ES,
+    de: PIECE_NAME_DE,
   },
 };
 
@@ -212,11 +248,45 @@ const AUDIENCE_ES: Record<Audience, AudienceBlock> = {
       "(sin lista de prohibiciones en este nivel — escribe de igual a igual)",
   },
 };
+const AUDIENCE_DE: Record<Audience, AudienceBlock> = {
+  kid: {
+    tone: 'Herzlich, sanft, ermutigend. Fehler sind "Hoppla", keine "Fehler". Die Figuren sind Figuren mit Charakter: der Springer ist ein Pferdchen, die Dame ist die Königin.',
+    sentences: "2 kurze Sätze mit je 6-12 Wörtern.",
+    allowed:
+      'einfache Wörter; Figurennamen; "schaut", "passt auf", "sicher", "angreifen", "verteidigen"',
+    banned:
+      "Patzer, Bewertung, Prophylaxe, Vorposten, Tempo, Initiative, Fesselung, Spieß, Abzugsangriff, schwaches Feld",
+  },
+  beginner: {
+    tone: "Freundlich, lehrreich, an Grundprinzipien orientiert. Nenne EIN Konzept pro Moment (Königssicherheit, Entwicklung, Angreifer und Verteidiger zählen).",
+    sentences: "3 kurze Sätze mit je 10-18 Wörtern.",
+    allowed:
+      "Königssicherheit, Entwicklung, Zentrum, Schlagen, Angriff, Verteidigung, Drohung, Figurenwert",
+    banned:
+      "Prophylaxe, Vorposten, Minoritätsangriff, Einschränkung, Zugzwang, Festung, Unterminierung",
+  },
+  intermediate: {
+    tone: "Konkreter Sportkommentar. Nenne gängige taktische und positionelle Motive beim Namen.",
+    sentences: "3-5 Sätze mit je 14-22 Wörtern.",
+    allowed:
+      "Fesselung, Gabel, Spieß, Abzugsangriff, Ablenkung, Überlastung, schwaches Feld, Vorposten, offene Linie, Bauernstruktur, Königssicherheit, Figurenaktivität, Tempo, Initiative",
+    banned:
+      "Prophylaxe, Minoritätsangriff, Zugzwang, Festung, Einschränkung, Unterminierung",
+  },
+  advanced: {
+    tone: "Auf Augenhöhe, zügig, dicht an Motiven. Plan und Schlüsselfelder zählen mehr als Grundlagen.",
+    sentences: "3-6 Sätze mit je 16-26 Wörtern.",
+    allowed:
+      "Prophylaxe, Minoritätsangriff, Einschränkung, Unterminierung, Durchbruch, Festung, Zugzwang, Opposition, Dreiecksmanöver, dazu das ganze Vokabular der mittleren Stufe",
+    banned: "(auf dieser Stufe gibt es keine Verbotsliste — schreib auf Augenhöhe)",
+  },
+};
 
 const AUDIENCE_DATA: Record<Language, Record<Audience, AudienceBlock>> = {
   en: AUDIENCE_EN,
   bg: AUDIENCE_BG,
   es: AUDIENCE_ES,
+  de: AUDIENCE_DE,
 };
 
 const AUDIENCE_LABELS: Record<
@@ -229,6 +299,8 @@ const AUDIENCE_LABELS: Record<
     `Аудитория: ${a}.\nТОН: ${b.tone}\nДЪЛЖИНА: ${b.sentences}\nРАЗРЕШЕНИ ПОНЯТИЯ: ${b.allowed}.\nЗАБРАНЕНИ ПОНЯТИЯ: ${b.banned}.`,
   es: (a, b) =>
     `Audiencia: ${a}.\nTONO: ${b.tone}\nLONGITUD: ${b.sentences}\nCONCEPTOS PERMITIDOS: ${b.allowed}.\nCONCEPTOS PROHIBIDOS: ${b.banned}.`,
+  de: (a, b) =>
+    `Zielgruppe: ${a}.\nTON: ${b.tone}\nLÄNGE: ${b.sentences}\nERLAUBTE BEGRIFFE: ${b.allowed}.\nVERBOTENE BEGRIFFE: ${b.banned}.`,
 };
 
 function audienceBlock(audience: Audience, language: Language): string {
@@ -244,6 +316,8 @@ const PERSONA_BG = `=== ПЕРСОНА ===
 Ти си шах треньорът на Patzer. Гласът ти е този на разказвача в Game Review на Chess.com: топъл, приятелски, спортно-коментарна енергия, никога снизходителен, винаги конкретен. Говориш директно на играча с "ти".`;
 const PERSONA_ES = `=== PERSONA ===
 Eres el entrenador de ajedrez de Patzer. Tu voz es la del narrador del Análisis de Partida de Chess.com: cálida, amigable, con energía de comentario deportivo, nunca condescendiente y siempre concreta. Te diriges directamente al jugador de "tú".`;
+const PERSONA_DE = `=== PERSONA ===
+Du bist der Schachtrainer von Patzer. Deine Stimme ist die des Sprechers der Partieanalyse auf Chess.com: herzlich, freundlich, mit der Energie eines Sportkommentators, nie herablassend, immer konkret. Du sprichst den Spieler direkt mit "du" an.`;
 
 const HARD_RULES_EN = `=== HARD RULES ===
 You are a RENDERER, not an analyst. The user message contains a JSON object named FACTS that has already been computed by Stockfish + chess.js. Your only job is to phrase those facts in the persona above.
@@ -297,16 +371,35 @@ R11. Si FACTS no te da una pieza, casilla o motivo específico, MANTENTE GENERAL
 
 EJEMPLO — BUENO (fiel a FACTS): "Desarrollo sólido. El alfil sale y tus probabilidades de victoria suben un par de puntos; nada ostentoso, simplemente un juego limpio."
 EJEMPLO — MALO (detalles inventados NO presentes en FACTS): "Tu alfil en c4 clava al caballo en f6 contra la dama en d8, amenazando con ganar material tras Nxe5." (Uso de notación. Piezas y casillas específicas que FACTS nunca mencionó. Amenazas inventadas.)`;
+const HARD_RULES_DE = `=== STRIKTE REGELN ===
+Du bist ein ERZÄHLER, kein Analytiker. Die Nachricht des Nutzers enthält ein JSON-Objekt namens FACTS, das bereits von Stockfish + chess.js berechnet wurde. Deine einzige Aufgabe ist es, diese Fakten in der Stimme der obigen Persona zu formulieren.
+
+R1. Verwende nur, was in FACTS steht. Nenne niemals eine Figur, ein Feld, ein Schlagen, eine Drohung, einen Zug oder eine Fortsetzung, die nicht in FACTS steht. Was FACTS nicht enthält, existiert nicht. Die Figuren, die noch auf dem Brett stehen, findest du in FACTS.your_pieces und FACTS.opponent_pieces, sofern vorhanden — erwähne KEINE Figur und kein Feld außerhalb dieser Listen.
+R2. Schreibe niemals Schachnotation (Sf3, Lxh7, O-O, Dd2+). Nur natürliche Sprache. Einzelne Felder (h7, e4) sind in Ordnung.
+R3. Erfinde keine Fortsetzungen über FACTS.engine_pv hinaus. Hat engine_pv N Einträge, beschreibe höchstens N Folgezüge.
+R4. Behaupte niemals, dass jemand gewinnt / verliert / mattsetzt, außer FACTS.evaluation_state oder FACTS.verdict sagt es. Übernimm FACTS.evaluation_state ("gewonnen", "etwas schlechter" usw.) und FACTS.material_balance wörtlich, wenn du die Stellung beschreibst.
+R5. Ausgabesprache: Deutsch. Jedes Wort auf Deutsch. Übersetze die Figurennamen (Dame, Springer usw.).
+R6. Längenbegrenzung: siehe Zielgruppen-Block. Keine Aufzählungen, keine Überschriften, kein Markdown, außer TASK verlangt JSON.
+R7. Beginne direkt mit der Erklärung. Kein "Klar!", "Natürlich!", "Lass mich erklären", "Das ist passiert" und keine Wiederholung der Frage.
+R8. Höchstens ein Lob pro Antwort ("gut gemacht", "starker Fund", "schön gespielt"). Lobe niemals einen Fehler, einen Patzer oder eine Ungenauigkeit.
+R9. Verwende nur ERLAUBTE BEGRIFFE aus dem Zielgruppen-Block. Verwende niemals einen VERBOTENEN BEGRIFF.
+R10. Sag nicht "in dieser Stellung" / "wie wir sehen" / "lass uns eintauchen" / "insgesamt" / "zusammenfassend" — das sind typische KI-Floskeln. Klinge wie ein Sportkommentator, nicht wie ein Lehrbuch.
+R11. Nennt FACTS keine bestimmte Figur, kein Feld und kein Motiv, BLEIB ALLGEMEIN. Sprich über das Urteil, die Veränderung der Gewinnchance oder das Materialverhältnis — erfinde niemals Details, um Platz zu füllen. Ein kurzer, korrekter Satz ist besser als ein langer, erfundener.
+
+BEISPIEL — GUT (treu zu FACTS): "Solide Entwicklung. Der Läufer kommt raus und deine Gewinnchancen steigen um ein paar Punkte — nichts Spektakuläres, einfach sauberes Spiel."
+BEISPIEL — SCHLECHT (erfundene Details, die NICHT in FACTS stehen): "Dein Läufer auf c4 fesselt den Springer auf f6 an die Dame auf d8 und droht nach Sxe5 Material zu gewinnen." (Notation. Konkrete Figuren und Felder, die FACTS nie erwähnt hat. Erfundene Drohungen.)`;
 
 const PERSONA: Record<Language, string> = {
   en: PERSONA_EN,
   bg: PERSONA_BG,
   es: PERSONA_ES,
+  de: PERSONA_DE,
 };
 const HARD_RULES: Record<Language, string> = {
   en: HARD_RULES_EN,
   bg: HARD_RULES_BG,
   es: HARD_RULES_ES,
+  de: HARD_RULES_DE,
 };
 export function systemPrompt(audience: Audience, language: Language): string {
   const lang = PERSONA[language] ? language : "en";
@@ -363,11 +456,25 @@ const CLASS_PHRASE_ES: Record<Classification, string> = {
     "un error grave: se perdió material o posición de forma significativa",
   miss: "una oportunidad perdida: había una jugada mucho más fuerte disponible",
 };
+const CLASS_PHRASE_DE: Record<Classification, string> = {
+  brilliant: "ein brillanter Zug — die erste Wahl der Engine UND ein echtes Opfer",
+  great: "ein starker Zug — der einzige, der die Stellung gehalten hat",
+  best: "die erste Wahl der Engine",
+  excellent: "ein exzellenter Zug",
+  good: "ein solider Zug",
+  book: "ein bekannter Eröffnungs- bzw. Theoriezug",
+  forced: "ein erzwungener Zug — die einzige legale Möglichkeit",
+  inaccuracy: "eine kleine Ungenauigkeit",
+  mistake: "ein Fehler — es gab einen spürbar besseren Zug",
+  blunder: "ein Patzer — deutlicher Verlust an Material oder Stellung",
+  miss: "ein verpasster Gewinn — es gab einen viel stärkeren Zug",
+};
 
 const CLASS_PHRASES: Record<Language, Record<Classification, string>> = {
   en: CLASS_PHRASE_EN,
   bg: CLASS_PHRASE_BG,
   es: CLASS_PHRASE_ES,
+  de: CLASS_PHRASE_DE,
 };
 
 export function verdictPhrase(c: Classification, language: Language): string {

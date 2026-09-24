@@ -6,7 +6,7 @@ Thanks for considering a contribution. Patzer is a small, opinionated project â€
 
 - **Bug fixes** of any size â€” open a PR, no need to ask first.
 - **Small, well-scoped features** that fit the "self-hosted Chess.com Game Review alternative for a household" pitch.
-- **Translations.** EN + BG ship today; see [Adding a language](#adding-a-language) below.
+- **Translations.** EN, BG, ES and DE ship today; see [Adding a language](#adding-a-language) below.
 - **Coach prompt improvements** for reducing hallucinations or improving voice in a specific audience (kid / beginner / etc.).
 
 ## What we'll probably push back on

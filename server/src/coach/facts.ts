@@ -31,6 +31,7 @@ const SECOND_PERSON_PERSPECTIVE: Record<Language, string> = {
   en: "you",
   bg: "ти",
   es: "tú",
+  de: "du",
 };
 /** FACTS payload for /api/coach/explain. */
 export function factsForExplain(
@@ -173,6 +174,14 @@ export function explainMovePrompt(
         : "Negras";
     return `FACTS:\n${factsJson}\n\nTASK: Explica la jugada. Dirígete al jugador como "${persp}". Usa FACTS.evaluation_state O FACTS.material_balance al describir la posición; ese es tu ancla. NO menciones ninguna pieza o casilla fuera de FACTS.your_pieces y FACTS.opponent_pieces. Sin notación de ajedrez. Sin JSON. Solo lenguaje natural, en español.`;
   }
+  if (language === "de") {
+    const persp = input.user_perspective
+      ? "du"
+      : input.player === "White"
+        ? "Weiß"
+        : "Schwarz";
+    return `FACTS:\n${factsJson}\n\nTASK: Erkläre den Zug. Sprich den Spieler mit "${persp}" an. Verwende FACTS.evaluation_state ODER FACTS.material_balance, wenn du die Stellung beschreibst — das ist dein Anker. Erwähne KEINE Figur und kein Feld außerhalb von FACTS.your_pieces und FACTS.opponent_pieces. Keine Schachnotation. Kein JSON. Nur natürliche Sprache, auf Deutsch.`;
+  }
 
   const persp = input.user_perspective ? "you" : input.player;
   return `FACTS:\n${factsJson}\n\nTASK: Explain the move. Address the player as "${persp}". Use FACTS.evaluation_state OR FACTS.material_balance when describing the position — that's your anchor. Do NOT mention any piece or square outside FACTS.your_pieces and FACTS.opponent_pieces. No chess notation. No JSON. Natural language only, in English.`;
@@ -205,6 +214,9 @@ export function hintPrompt(
   }
   if (language === "es") {
     return `FACTS:\n${factsJson}\n\nTASK: Da una pista conceptual sobre la posición — NO nombres una jugada, pieza o continuación específica. Orienta hacia dónde mirar. Sin notación de ajedrez. 1-2 frases en español.`;
+  }
+  if (language === "de") {
+    return `FACTS:\n${factsJson}\n\nTASK: Gib einen konzeptionellen Tipp zur Stellung — nenne KEINEN konkreten Zug, keine Figur und keine Fortsetzung. Zeig, wohin man schauen sollte. Keine Schachnotation. 1-2 Sätze auf Deutsch.`;
   }
   return `FACTS:\n${factsJson}\n\nTASK: Give a conceptual hint about the position — do NOT name a specific move, piece, or continuation. Point at the right idea. No chess notation. 1-2 sentences in English.`;
 } // ─────────────────────────────────────────────────────────────────────────────

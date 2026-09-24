@@ -1,6 +1,6 @@
 import { Chess } from "chess.js";
 import type { Audience, Language } from "../types.js";
-import { pieceNames } from "./locales.js";
+import { deForm, pieceNames } from "./locales.js";
 import { sanToNatural } from "./moves.js";
 
 /** Natural-language label for a win-percentage value, from the player's
@@ -68,6 +68,24 @@ export function evaluationStateNatural(
           return "perdiendo";
       }
 
+    case "de":
+      switch (key) {
+        case "winning":
+          return "gewonnen";
+        case "clearly_better":
+          return "klar besser";
+        case "slightly_better":
+          return "etwas besser";
+        case "equal":
+          return "ausgeglichen";
+        case "slightly_worse":
+          return "etwas schlechter";
+        case "clearly_worse":
+          return "klar schlechter";
+        case "losing":
+          return "verloren";
+      }
+
     case "en":
     default:
       switch (key) {
@@ -130,6 +148,9 @@ export function boardPiecesNatural(
           case "es":
             location = `${pieceName} en ${sq}`;
             break;
+          case "de":
+            location = `${pieceName} auf ${sq}`;
+            break;
           default:
             location = `${pieceName} on ${sq}`;
         }
@@ -145,6 +166,8 @@ export function boardPiecesNatural(
         return `${n} ${names.P!}и`;
       case "es":
         return n === 1 ? `${n} ${names.P}` : `${n} peones`;
+      case "de":
+        return n === 1 ? `${n} ${names.P}` : `${n} Bauern`;
       case "en":
       default:
         return `${n} ${names.P}${n === 1 ? "" : "s"}`;
@@ -176,6 +199,7 @@ export function materialBalanceNatural(
   if (abs < 1) {
     if (language === "bg") return "материалът е равен";
     if (language === "es") return "el material está igualado";
+    if (language === "de") return "das Material ist ausgeglichen";
     return "material is equal";
   }
 
@@ -187,6 +211,7 @@ export function materialBalanceNatural(
     if (abs >= 1.5) {
       if (language === "bg") pieceLabel = `${abs.toFixed(0)} ${names.P!}а`;
       else if (language === "es") pieceLabel = `${abs.toFixed(0)} peones`;
+      else if (language === "de") pieceLabel = `${abs.toFixed(0)} Bauern`;
       else pieceLabel = `${abs.toFixed(0)} ${names.P}s`;
     } else {
       pieceLabel = names.P!;
@@ -200,6 +225,11 @@ export function materialBalanceNatural(
     return ahead
       ? `tienes ${pieceLabel} de ventaja`
       : `tienes ${pieceLabel} de menos`;
+  }
+  if (language === "de") {
+    // "2 Bauern" already carries its number; a single piece needs "einen".
+    const label = /^\d/.test(pieceLabel) ? pieceLabel : deForm(pieceLabel, "einAkk");
+    return ahead ? `du hast ${label} mehr` : `du hast ${label} weniger`;
   }
   return ahead ? `you are up a ${pieceLabel}` : `you are down a ${pieceLabel}`;
 }
