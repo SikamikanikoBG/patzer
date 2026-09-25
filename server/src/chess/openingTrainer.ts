@@ -243,10 +243,11 @@ export interface ReviewAnswer {
   learned: boolean;
 }
 
-/** Check one answer from the review queue and reschedule the move. Returns
- *  null when the move isn't the user's. An item that isn't due (answered twice,
- *  or from a stale page) is checked but not rescheduled. */
-export function answerReview(userId: number, id: number, uci: string): ReviewAnswer | null {
+/** Check one answer from the review queue and reschedule the move. `uci`
+ *  null means "show me the move" — that counts as not knowing it. Returns null
+ *  when the move isn't the user's. An item that isn't due (answered twice, or
+ *  from a stale page) is checked but not rescheduled. */
+export function answerReview(userId: number, id: number, uci: string | null): ReviewAnswer | null {
   const row = db.prepare(`
     SELECT id, line_name, user_color, moves, expected_san, expected_uci, misses, streak, due_on,
            (due_on IS NOT NULL AND due_on <= date('now')) AS is_due
@@ -257,10 +258,12 @@ export function answerReview(userId: number, id: number, uci: string): ReviewAns
   if (!item) return null;
 
   let played: string | null = null;
-  try {
-    const chess = new Chess(item.fen);
-    played = chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4, 5) || undefined }).san;
-  } catch { /* illegal — counts as wrong */ }
+  if (uci) {
+    try {
+      const chess = new Chess(item.fen);
+      played = chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4, 5) || undefined }).san;
+    } catch { /* illegal — counts as wrong */ }
+  }
   const correct = played === row.expected_san;
 
   if (!row.is_due) {

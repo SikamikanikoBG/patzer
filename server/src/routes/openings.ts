@@ -241,7 +241,11 @@ router.get('/trainer/review', (c) => {
   return c.json({ items: dueReviews(me.id) });
 });
 
-const answerSchema = z.object({ uci: z.string().regex(/^[a-h][1-8][a-h][1-8][nbrq]?$/i) });
+// Either the move played, or { reveal: true } for "show me the move".
+const answerSchema = z.union([
+  z.object({ uci: z.string().regex(/^[a-h][1-8][a-h][1-8][nbrq]?$/i) }),
+  z.object({ reveal: z.literal(true) }),
+]);
 
 router.post('/trainer/review/:id', async (c) => {
   const me = c.get('user');
@@ -249,7 +253,7 @@ router.post('/trainer/review/:id', async (c) => {
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'invalid_input' }, 400);
   const parsed = answerSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
-  const answer = answerReview(me.id, id, parsed.data.uci.toLowerCase());
+  const answer = answerReview(me.id, id, 'uci' in parsed.data ? parsed.data.uci.toLowerCase() : null);
   if (!answer) return c.json({ error: 'not_found' }, 404);
   return c.json(answer);
 });

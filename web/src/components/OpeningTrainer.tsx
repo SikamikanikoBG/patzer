@@ -422,30 +422,38 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
   const items = data?.items ?? [];
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState<ReviewAnswer | null>(null);
+  // Whether "show me the move" gave the answer away (rather than a wrong guess).
+  const [revealed, setRevealed] = useState(false);
+  // After a miss you play the move of the line once yourself, so it sticks.
+  const [replayed, setReplayed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [right, setRight] = useState(0);
   const [boardKey, setBoardKey] = useState(0);
 
   const item = items[index] ?? null;
-  // After a right answer the board shows the move played; after a wrong one,
-  // the position again with an arrow for the move of the line.
+  const missed = !!answer && !answer.correct;
+  // Once the move of the line has been played (right away, or after a miss)
+  // the board shows it; until then, the position with an arrow after a miss.
   const shown = useMemo(() => {
     if (!item) return null;
-    if (answer?.correct) return positionAfter([...item.moves, answer.expected_san], item.moves.length + 1);
+    if (answer && (answer.correct || replayed)) {
+      return positionAfter([...item.moves, answer.expected_san], item.moves.length + 1);
+    }
     return positionAfter(item.moves, item.moves.length);
-  }, [item, answer]);
+  }, [item, answer, replayed]);
   const arrows = useMemo(() => {
-    if (!answer || answer.correct) return [];
-    const uci = answer.expected_uci;
+    if (!missed || replayed) return [];
+    const uci = answer!.expected_uci;
     return [{ orig: uci.slice(0, 2), dest: uci.slice(2, 4), brush: 'green' }];
-  }, [answer]);
+  }, [missed, replayed, answer]);
 
-  async function onMove(uci: string) {
-    if (!item || answer || busy) { setBoardKey((k) => k + 1); return; }
+  async function submit(body: { uci: string } | { reveal: true }) {
+    if (!item) return;
     setBusy(true);
     try {
-      const r = await api.post<ReviewAnswer>(`/api/openings/trainer/review/${item.id}`, { uci });
+      const r = await api.post<ReviewAnswer>(`/api/openings/trainer/review/${item.id}`, body);
       setAnswer(r);
+      setRevealed('reveal' in body);
       if (r.correct) {
         setRight((n) => n + 1);
         soundForMove(inferMoveFlagsFromSan(r.expected_san));
@@ -460,8 +468,22 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
     }
   }
 
+  function onMove(uci: string) {
+    if (!item || busy) { setBoardKey((k) => k + 1); return; }
+    if (!answer) { void submit({ uci }); return; }
+    if (missed && !replayed && isExpectedMove(item.fen, uci, answer.expected_san)) {
+      setReplayed(true);
+      soundForMove(inferMoveFlagsFromSan(answer.expected_san));
+      return;
+    }
+    // Anything else snaps back — and brings the arrow back with it.
+    setBoardKey((k) => k + 1);
+  }
+
   function next() {
     setAnswer(null);
+    setRevealed(false);
+    setReplayed(false);
     setIndex((i) => i + 1);
   }
 
@@ -488,8 +510,8 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
           fen={shown.fen}
           orientation={item.color}
           turnColor={item.color}
-          movable={!answer && !busy}
-          onMove={(uci) => void onMove(uci)}
+          movable={!busy && (!answer || (missed && !replayed))}
+          onMove={onMove}
           lastMove={shown.lastMove as never}
           arrows={arrows as never}
           resetKey={boardKey}
@@ -504,22 +526,38 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
         </LineHeader>
 
         {!answer ? (
-          <div className="card p-4 text-sm text-chesscom-700 dark:text-chesscom-200">{t('openings.trainer.reviewTask')}</div>
-        ) : (
-          <div className={`card p-4 ${answer.correct ? 'border-board-dark bg-board-dark/5' : 'border-mistake bg-mistake/5'}`}>
+          <div className="card p-4">
+            <div className="text-sm text-chesscom-700 dark:text-chesscom-200">{t('openings.trainer.reviewTask')}</div>
+            <button onClick={() => void submit({ reveal: true })} disabled={busy} className="btn-secondary mt-3 w-full text-sm">
+              <Lightbulb className="h-4 w-4" /> {t('openings.trainer.showMove')}
+            </button>
+          </div>
+        ) : answer.correct ? (
+          <div className="card border-board-dark bg-board-dark/5 p-4">
             <div className="flex items-start gap-2 text-sm font-semibold">
-              {answer.correct
-                ? <><Check className="mt-0.5 h-4 w-4 shrink-0 text-board-dark" /> {t('openings.trainer.correct')}</>
-                : <><X className="mt-0.5 h-4 w-4 shrink-0 text-mistake" /> {t('openings.trainer.reviewWrong', { san: answer.expected_san })}</>}
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-board-dark" /> {t('openings.trainer.correct')}
             </div>
             <div className="mt-1 text-xs text-chesscom-500">
               {answer.learned
                 ? t('openings.trainer.learned')
-                : answer.correct
-                  ? t('openings.trainer.backTomorrow', { streak: answer.streak, n: learnedAfter })
-                  : t('openings.trainer.startsOver')}
+                : t('openings.trainer.backTomorrow', { streak: answer.streak, n: learnedAfter })}
             </div>
             <button onClick={next} className="btn-primary mt-3 w-full text-sm">
+              {t('openings.trainer.next')} <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        ) : (
+          <div className={`card p-4 ${revealed ? 'border-gold-500/60 bg-gold-500/5' : 'border-mistake bg-mistake/5'}`}>
+            <div className="flex items-start gap-2 text-sm font-semibold">
+              {revealed
+                ? <><Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-gold-600" /> {t('openings.trainer.reviewRevealed', { san: answer.expected_san })}</>
+                : <><X className="mt-0.5 h-4 w-4 shrink-0 text-mistake" /> {t('openings.trainer.reviewWrong', { san: answer.expected_san })}</>}
+            </div>
+            {!replayed && (
+              <div className="mt-1 text-sm text-chesscom-700 dark:text-chesscom-200">{t('openings.trainer.reviewPlayIt')}</div>
+            )}
+            <div className="mt-1 text-xs text-chesscom-500">{t('openings.trainer.startsOver')}</div>
+            <button onClick={next} className={`${replayed ? 'btn-primary' : 'btn-secondary'} mt-3 w-full text-sm`}>
               {t('openings.trainer.next')} <ArrowRight className="h-4 w-4" />
             </button>
           </div>

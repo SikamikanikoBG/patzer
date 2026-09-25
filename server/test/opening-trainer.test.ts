@@ -181,6 +181,15 @@ describe('missed moves and the daily review queue', () => {
     expect(french.fen.split(' ')[1]).toBe('b');
   });
 
+  it('counts "show me the move" as not knowing it', () => {
+    nextDay();
+    const french = trainer.dueReviews(ME).find((i) => i.color === 'black')!;
+    expect(trainer.answerReview(ME, french.id, null)).toMatchObject({ correct: false, expected_san: 'c5', streak: 0, learned: false });
+    expect(trainer.dueReviews(ME).find((i) => i.id === french.id)).toBeUndefined();
+    const row = db.prepare(`SELECT misses, due_on > date('now') AS tomorrow FROM opening_misses WHERE id = ?`).get(french.id);
+    expect(row).toEqual({ misses: 2, tomorrow: 1 });
+  });
+
   it('accepts a promotion or an illegal move as an answer without crashing', () => {
     const id = trainer.dueReviews(ME)[0]!.id;
     expect(trainer.answerReview(ME, id, 'a7a8q')).toMatchObject({ correct: false });

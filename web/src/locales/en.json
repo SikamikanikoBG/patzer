@@ -623,6 +623,8 @@
       "reviewTask": "Find the next move of this line.",
       "correct": "Correct!",
       "reviewWrong": "Not quite — the line goes {{san}}.",
+      "reviewRevealed": "The line goes {{san}}.",
+      "reviewPlayIt": "Play it once on the board so it sticks.",
       "learned": "Learned! This move leaves the queue.",
       "backTomorrow": "Right {{streak}} of {{n}} times — see you tomorrow.",
       "startsOver": "It comes back tomorrow and starts over.",

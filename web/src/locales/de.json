@@ -623,6 +623,8 @@
       "reviewTask": "Finde den nächsten Zug dieser Linie.",
       "correct": "Richtig!",
       "reviewWrong": "Nicht ganz — in der Linie folgt {{san}}.",
+      "reviewRevealed": "In der Linie folgt {{san}}.",
+      "reviewPlayIt": "Spiel ihn einmal auf dem Brett nach, damit er sitzt.",
       "learned": "Gelernt! Dieser Zug verlässt die Warteschlange.",
       "backTomorrow": "{{streak}} von {{n}} Mal richtig — bis morgen.",
       "startsOver": "Er kommt morgen wieder und fängt von vorn an.",
