@@ -358,4 +358,160 @@ describe('the explanations tell the truth', () => {
     expect((find('notation', 'play') as MoveStep).line).toEqual(['g1f3']);
   });
 
+  it('beginner', () => {
+    const after = (fen: string, ...moves: string[]) => {
+      let cur = fen;
+      for (const m of moves) cur = demoMove(cur, m)!.fen;
+      return chess(cur);
+    };
+    const destsOf = (fen: string, sq: string) => chess(fen).moves({ square: sq as Square, verbose: true }).map((m) => m.to);
+    expect(after(find('mate-in-one', 'intro').fen!, 'h1h8').isCheckmate()).toBe(true);
+    expect(after(find('back-rank', 'intro').fen!, 'e1e8').isCheckmate()).toBe(true);
+    // "Now Re8 is only check — the king steps to h7."
+    const luft = after(find('back-rank', 'luft').fen!, 'e1e8');
+    expect(luft.inCheck() && !luft.isCheckmate()).toBe(true);
+    expect(luft.moves({ verbose: true }).map((m) => m.to)).toContain('h7');
+    // The ladder: every rook move is check, and it ends in mate.
+    const ladder = find('ladder', 'intro') as { fen: string; demo: string[] };
+    let cur = ladder.fen;
+    ladder.demo.forEach((m, i) => {
+      cur = demoMove(cur, m)!.fen;
+      if (i % 2 === 0) expect(chess(cur).inCheck(), m).toBe(true);
+    });
+    expect(chess(cur).isCheckmate()).toBe(true);
+    // Qf7 stalemates; Qe8 and Qf8 mate.
+    const patt = find('queen-mate', 'patt').fen!;
+    expect(after(patt, 'e7f7').isStalemate()).toBe(true);
+    expect(after(patt, 'e7e8').isCheckmate()).toBe(true);
+    expect(after(patt, 'e7f8').isCheckmate()).toBe(true);
+    expect(after(find('rook-mate', 'intro').fen!, 'h1h8').isCheckmate()).toBe(true);
+    // Tactics: the knight hangs; Nf6+ forks king and queen; Bb5 pins; Rd1+ skewers.
+    expect(chess(find('hanging', 'intro').fen!).isAttacked('d5', 'b')).toBe(false);
+    const fork = after(find('fork', 'intro').fen!, 'e4f6');
+    expect(fork.inCheck()).toBe(true);
+    expect(destsOf(withTurn(fork.fen(), 'white'), 'f6')).toContain('h5');
+    const pinned = after(find('pin', 'intro').fen!, 'f1b5');
+    expect(destsOf(pinned.fen(), 'c6')).toEqual([]);
+    expect(destsOf(find('pin', 'use').fen!, 'g7')).toEqual([]);
+    const skewer = after(find('skewer', 'intro').fen!, 'a1d1');
+    expect(skewer.inCheck()).toBe(true);
+    expect(skewer.moves({ verbose: true }).every((m) => m.piece === 'k' && m.to[0] !== 'd')).toBe(true);
+    // Openings: 8 squares for a centralised knight, 2 in the corner; 4 on the rim.
+    const why = find('center', 'why').fen!;
+    expect(destsOf(why, 'd4')).toHaveLength(8);
+    expect(destsOf(why, 'a1')).toHaveLength(2);
+    expect(destsOf('8/8/8/8/8/7N/8/8 w - - 0 1', 'h3')).toHaveLength(4);
+    expect(destsOf('8/8/8/8/8/5N2/8/8 w - - 0 1', 'f3')).toHaveLength(8);
+    const traps = find('traps', 'intro') as { fen: string; demo: string[] };
+    expect(after(traps.fen, ...traps.demo).isCheckmate()).toBe(true);
+    // Only the king guards f7 at the start.
+    expect(new Chess().attackers('f7', 'b')).toEqual(['e8']);
+  });
+
+  // The later explanations replay a real game (a checked Lichess puzzle) and
+  // describe it move by move; pin down what the words say.
+  it('intermediate and advanced', () => {
+    const demo = (lesson: string, moves = Infinity) => {
+      const step = find(lesson, 'intro') as { fen: string; demo: string[] };
+      let cur = step.fen;
+      for (const m of step.demo.slice(0, moves)) cur = demoMove(cur, m)!.fen;
+      return chess(cur);
+    };
+    const onlyMoves = (c: Chess) => c.moves({ verbose: true }).map((m) => m.san);
+    const kingSquare = (c: Chess) => c.board().flat().find((p) => p && p.type === 'k' && p.color === c.turn())!.square;
+    const checkers = (c: Chess) => c.attackers(kingSquare(c), c.turn() === 'w' ? 'b' : 'w').length;
+
+    // Discovered: Nc3+ — the queen on d3 checks, the knight hits the queen on d1.
+    const disc = demo('discovered', 1);
+    expect(disc.inCheck()).toBe(true);
+    expect(disc.attackers('f1', 'b')).toEqual(['d3']);
+    expect(disc.attackers('d1', 'b')).toContain('c3');
+    // Double check: two checkers, only king moves, and only Kh1.
+    const dbl = demo('double-check', 1);
+    expect(checkers(dbl)).toBe(2);
+    expect(onlyMoves(dbl)).toEqual(['Kh1']);
+    // Deflection: the king is the bishop's only guard, and after Kd3 there is none.
+    expect(demo('deflection', 0).attackers('f3', 'w')).toEqual(['e2']);
+    expect(demo('deflection', 2).attackers('f3', 'w')).toEqual([]);
+    expect(demo('attraction').isCheckmate()).toBe(true);
+    // Removing the defender: only the knight guards f2.
+    expect(demo('defender', 0).attackers('f2', 'w')).toEqual(['d1']);
+    // In-between move: Bxe3 takes a rook, with check.
+    const zw = demo('intermezzo', 0);
+    expect(zw.get('e3')?.type).toBe('r');
+    expect(demo('intermezzo', 1).inCheck()).toBe(true);
+    // Trapped: after Bf3 every queen move ends on a square White attacks.
+    const trap = demo('trapped', 1);
+    const queenMoves = trap.moves({ verbose: true }).filter((m) => m.piece === 'q');
+    expect(queenMoves.length).toBeGreaterThan(0);
+    for (const m of queenMoves) {
+      const after = chess(trap.fen());
+      after.move(m.san);
+      expect(after.isAttacked(m.to, 'w'), m.san).toBe(true);
+    }
+    // Mate in two: after Qg6+ the king has only h8.
+    expect(onlyMoves(demo('mate-in-two', 1))).toEqual(['Kh8']);
+    expect(demo('mate-in-two').isCheckmate()).toBe(true);
+    // Smothered: double check, the king must go to h1, the rook must take.
+    const sm = demo('smothered', 1);
+    expect(checkers(sm)).toBe(2);
+    expect(onlyMoves(sm)).toEqual(['Kh1']);
+    expect(onlyMoves(demo('smothered', 3))).toEqual(['Rxg1']);
+    expect(demo('smothered').isCheckmate()).toBe(true);
+    // Anastasia: Ne7+ is check, and the knight covers g8 and g6.
+    const an = demo('anastasia', 1);
+    expect(an.inCheck()).toBe(true);
+    expect(an.attackers('g8', 'w')).toContain('e7');
+    expect(an.attackers('g6', 'w')).toContain('e7');
+    expect(demo('anastasia').isCheckmate()).toBe(true);
+    // Arabian: the knight on f6 guards the rook on h7 and g8.
+    const ar = demo('arabian');
+    expect(ar.isCheckmate()).toBe(true);
+    expect(ar.attackers('h7', 'w')).toContain('f6');
+    expect(ar.attackers('g8', 'w')).toContain('f6');
+    // The square: after b5, …Ke6 steps in; from g6 no step reaches files b–e.
+    const q1 = play((find('square', 'q1') as { fen: string }).fen, 'b4b5')!;
+    expect(chess(q1.fen).moves({ verbose: true }).map((m) => m.to)).toContain('e6');
+    const q2 = play((find('square', 'q2') as { fen: string }).fen, 'b4b5')!;
+    expect(chess(q2.fen).moves({ verbose: true }).every((m) => m.to[0]! > 'e')).toBe(true);
+    // Opposition: in the drawn position the pawn has no move.
+    expect(chess(find('opposition', 'draw').fen!).moves({ square: 'e2', verbose: true })).toEqual([]);
+    // Pawn endgames: the king takes on d5.
+    expect(demo('pawn-endgames').get('d5')?.type).toBe('k');
+    // Mate in three: every one of the attacker's moves is check.
+    const m3 = find('mate-in-three', 'intro') as { fen: string; demo: string[] };
+    let cur = m3.fen;
+    m3.demo.forEach((m, i) => {
+      cur = demoMove(cur, m)!.fen;
+      if (i % 2 === 0) expect(chess(cur).inCheck(), m).toBe(true);
+    });
+    expect(chess(cur).isCheckmate()).toBe(true);
+    // Quiet move: Be5 neither checks nor captures, and cuts the rook off e8.
+    const quiet = find('quiet', 'intro') as { fen: string; demo: string[] };
+    const be5 = demoMove(quiet.fen, quiet.demo[0]!)!;
+    expect(be5.move.san).toBe('Be5');
+    expect(chess(be5.fen).attackers('e8', 'b')).toEqual([]);
+    // Zugzwang: after Kf4 Black has exactly one move, …g3, and hxg3 mates.
+    expect(onlyMoves(demo('zugzwang', 1))).toEqual(['g3']);
+    expect(demo('zugzwang').isCheckmate()).toBe(true);
+    // Clearance: Bg8+ is a discovered check from the rook on h3.
+    expect(demo('clearance', 1).attackers('h8', 'w')).toEqual(['h3']);
+    expect(demo('clearance').isCheckmate()).toBe(true);
+    // Interference: the bishop guards h8 until …f6 blocks it.
+    expect(demo('interference', 0).isAttacked('h8', 'b')).toBe(true);
+    expect(demo('interference', 2).isAttacked('h8', 'b')).toBe(false);
+    expect(demo('xray').isCheckmate()).toBe(true);
+    // Underpromotion: the knight checks and hits f3; a queen on e1 wouldn't.
+    const up = demo('underpromotion', 1);
+    expect(up.inCheck()).toBe(true);
+    expect(up.attackers('f3', 'b')).toContain('e1');
+    const asQueen = play(demo('underpromotion', 0).fen(), 'e2e1q')!;
+    expect(chess(asQueen.fen).attackers('f3', 'b')).not.toContain('e1');
+    // Lucena: the bridge ends with the rook blocking the check on b4.
+    const bridge = find('lucena', 'bridge') as { fen: string; demo: string[] };
+    let lu = bridge.fen;
+    for (const m of bridge.demo) lu = demoMove(lu, m)!.fen;
+    expect(chess(lu).get('b4')?.type).toBe('r');
+    expect(chess(withTurn(lu, 'white')).get('b7')?.type).toBe('p');
+  });
 });

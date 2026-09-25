@@ -7,22 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Learn section (beta).** A new *Learn* page with interactive lessons. This first
-  part brings the page and its first level, *New to chess*: 17 lessons from the
-  board and how each piece moves to check, checkmate, castling, en passant,
-  promotion, stalemate, what the pieces are worth and how moves are written
-  down. A lesson is a short
-  explanation with animated examples, then tasks: collect stars, tap squares,
-  find the move (Patzer answers), play an ending out against Stockfish, or
-  answer a question. A wrong move gets a reason where the position shows one
-  (stalemate, a check that isn't mate); "Show the solution" draws the arrows
-  and you play the moves yourself; the explanation can be looked up again
-  during the tasks. Each lesson earns one to three stars, stars add up to
-  levels, and there are three new achievements. Progress is stored per
-  profile on the server, an unfinished lesson resumes where you left it, kid
-  mode shows the same lessons in simpler words, and a Home tile suggests the
-  next lesson. Every task is checked twice: by the test suite (legal moves,
-  real mates, star tasks solvable in the stated number of moves) and by
+- **Learn section (beta).** A new *Learn* page with 54 interactive lessons in four
+  levels — New to chess, Beginner, Intermediate, Advanced: how the pieces
+  move and every rule, how moves are written down, basic checkmates, forks,
+  pins and the other tactics, mating patterns, opening principles, pawn and
+  rook endgames. A lesson is a short explanation with animated examples, then
+  tasks: collect stars, tap squares, find the move (Patzer answers), play an
+  ending out against Stockfish, or answer a question. A wrong move gets a
+  reason where the position shows one (stalemate, a check that isn't mate);
+  "Show the solution" draws the arrows and you play the moves yourself; the
+  explanation can be looked up again during the tasks. Each lesson earns one
+  to three stars, stars add up to levels, and there are three new
+  achievements. Progress is stored per profile on the server, an unfinished
+  lesson resumes where you left it, kid mode shows the same lessons in
+  simpler words, and a Home tile suggests the next lesson. The tactic, mate
+  and endgame tasks are puzzles from the Lichess puzzle database (CC0). Every
+  task is checked twice: by the test suite (legal moves, real mates, star
+  tasks solvable in the stated number of moves) and by
   `npm run verify:lessons`, which asks Stockfish whether each answer really is
   the one clearly best move. Lesson texts are English for now; German follows
   in its own pull request. Marked beta while it is being refined. (Roadmap #7)
