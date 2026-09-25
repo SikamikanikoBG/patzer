@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { LANGUAGES, type Language } from '../lib/languages';
 import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
 import { api } from '../api';
-import { useAuth, type Profile, type BoardTheme, type SiteTheme, type SoundSet } from '../state/auth';
+import { useAuth, type Profile, type BoardTheme, type SiteTheme, type SoundSet, type MoveSoundSet } from '../state/auth';
 import { getVoices, onVoicesReady, speak } from '../lib/tts';
-import { playSound, setSoundSet } from '../lib/sounds';
+import { moveSoundsReady, playSound, setMoveSoundSet, setSoundSet } from '../lib/sounds';
 
 const EMOJIS = ['♟','♞','♝','♜','♛','♚','🦊','🐯','🦁','🐻','🐼','🐰','🐶','🐱','🐹','🐢','🐧','🐳','⭐','🌟'];
 
@@ -45,6 +45,7 @@ export default function Settings() {
       site_theme: form.site_theme,
       sound_enabled: !!form.sound_enabled,
       sound_set: form.sound_set,
+      move_sound_set: form.move_sound_set,
       blunder_warning: !!form.blunder_warning,
       kid_piece_emotions: !!form.kid_piece_emotions,
     });
@@ -63,6 +64,17 @@ export default function Settings() {
     playSound('check');
     window.setTimeout(() => playSound('game_end'), 700);
     window.setTimeout(() => setSoundSet(user?.profile.sound_set ?? 'classic'), 2500);
+  }
+
+  // Same idea for moves: a move, a capture and a castle in the given set.
+  // Waits for the recordings first so 'board' isn't previewed as the synth.
+  async function previewMoveSoundSet(s: MoveSoundSet) {
+    setMoveSoundSet(s);
+    await moveSoundsReady();
+    playSound('move');
+    window.setTimeout(() => playSound('capture'), 550);
+    window.setTimeout(() => playSound('castle'), 1100);
+    window.setTimeout(() => setMoveSoundSet(user?.profile.move_sound_set ?? 'classic'), 2000);
   }
 
   return (
@@ -209,25 +221,15 @@ export default function Settings() {
             </div>
           </label>
           {!!form.sound_enabled && (
-            <div className="pl-8">
-              <label className="label mb-1 block">{t('settings.soundSet')}</label>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {(['classic', 'soft'] as const).map((s) => (
-                  <div key={s} className={`flex items-start gap-2 rounded-xl border p-3 text-sm transition-colors
-                    ${form.sound_set === s
-                      ? 'border-ink-900 bg-ink-900 text-cream dark:border-cream dark:bg-cream dark:text-ink-900'
-                      : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}>
-                    <button type="button" onClick={() => set('sound_set', s)} className="min-w-0 flex-1 text-left">
-                      <div className="font-medium">{t(`settings.soundSetOption.${s}`)}</div>
-                      <div className={`mt-1 text-xs ${form.sound_set === s ? 'opacity-80' : 'text-ink-500'}`}>{t(`settings.soundSetDesc.${s}`)}</div>
-                    </button>
-                    <button type="button" onClick={() => previewSoundSet(s)} className="shrink-0 rounded-md p-1 opacity-80 hover:opacity-100"
-                      title={t('settings.soundSetPreview')} aria-label={t('settings.soundSetPreview')}>
-                      <Volume2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+            <div className="space-y-3 pl-8">
+              <SoundChoice label={t('settings.moveSoundSet')} options={['classic', 'board'] as const} value={form.move_sound_set}
+                optionText={(s) => t(`settings.moveSoundSetOption.${s}`)} descText={(s) => t(`settings.moveSoundSetDesc.${s}`)}
+                previewText={t('settings.soundSetPreview')}
+                onPick={(s) => set('move_sound_set', s)} onPreview={(s) => void previewMoveSoundSet(s)} />
+              <SoundChoice label={t('settings.soundSet')} options={['classic', 'soft'] as const} value={form.sound_set}
+                optionText={(s) => t(`settings.soundSetOption.${s}`)} descText={(s) => t(`settings.soundSetDesc.${s}`)}
+                previewText={t('settings.soundSetPreview')}
+                onPick={(s) => set('sound_set', s)} onPreview={previewSoundSet} />
             </div>
           )}
           <label className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-ink-50 dark:hover:bg-ink-700/50">
@@ -414,5 +416,41 @@ function BoardThemeOption({ value, selected, onPick, label }: { value: BoardThem
       </div>
       <div className="mt-2">{label}</div>
     </button>
+  );
+}
+
+// Two option cards side by side, each with its own preview button — used for
+// the move sounds and for the check / game-end sounds.
+function SoundChoice<T extends string>({ label, options, value, optionText, descText, previewText, onPick, onPreview }: {
+  label: string;
+  options: readonly T[];
+  value: T;
+  optionText: (o: T) => string;
+  descText: (o: T) => string;
+  previewText: string;
+  onPick: (o: T) => void;
+  onPreview: (o: T) => void;
+}) {
+  return (
+    <div>
+      <label className="label mb-1 block">{label}</label>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {options.map((o) => (
+          <div key={o} className={`flex items-start gap-2 rounded-xl border p-3 text-sm transition-colors
+            ${value === o
+              ? 'border-ink-900 bg-ink-900 text-cream dark:border-cream dark:bg-cream dark:text-ink-900'
+              : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}>
+            <button type="button" onClick={() => onPick(o)} className="min-w-0 flex-1 text-left">
+              <div className="font-medium">{optionText(o)}</div>
+              <div className={`mt-1 text-xs ${value === o ? 'opacity-80' : 'text-ink-500'}`}>{descText(o)}</div>
+            </button>
+            <button type="button" onClick={() => onPreview(o)} className="shrink-0 rounded-md p-1 opacity-80 hover:opacity-100"
+              title={previewText} aria-label={previewText}>
+              <Volume2 className="h-4 w-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

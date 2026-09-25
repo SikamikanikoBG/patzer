@@ -1,21 +1,40 @@
-// Web Audio synthesized chess sound effects. No external assets — works
+// Web Audio synthesized chess sound effects. Synthesized by default — works
 // offline, keeps the bundle tiny. The signal chain runs through a soft
 // compressor + short convolution reverb (built from a decaying-noise impulse)
 // so even the synthesized layers get a bit of room around them. Move/capture
 // use wood-knock synthesis (transient noise click + low body resonance with
 // quick pitch droop); check/promotion use inharmonic-bell additive synthesis
 // (partials 1.0, 2.01, 2.99, 4.07 — close to a real handbell spectrum).
+// The optional 'board' move sounds are the only audio files: two short
+// recordings of real pieces on a wooden board (CC0, see THIRD_PARTY_NOTICES.md).
+
+import boardMoveUrl from '../assets/sounds/board-move.wav';
+import boardCaptureUrl from '../assets/sounds/board-capture.wav';
 
 type SoundKind = 'move' | 'capture' | 'check' | 'castle' | 'promotion' | 'game_start' | 'game_end' | 'click';
 /** 'classic' = the original bells; 'soft' swaps check and game-end for
  *  marimba-style wooden bars that sit closer to the wood-knock move sounds. */
 export type SoundSet = 'classic' | 'soft';
+/** 'classic' = the synthesized wood knocks; 'board' plays recordings of real
+ *  pieces for move / capture / castle. Check, promotion and game end are
+ *  unaffected — they follow SoundSet. */
+export type MoveSoundSet = 'classic' | 'board';
 
 let ctx: AudioContext | null = null;
 let dryBus: GainNode | null = null;
 let wetBus: GainNode | null = null;
 let enabled = true;
 let soundSet: SoundSet = 'classic';
+let moveSoundSet: MoveSoundSet = 'classic';
+
+// Decoded recordings; filled in the background once 'board' is chosen and
+// the AudioContext exists. Until then (or if loading fails) moves fall back
+// to the synthesized knocks, so a move is never silent.
+const boardSamples: { move?: AudioBuffer; capture?: AudioBuffer } = {};
+let boardLoading: Promise<void> | null = null;
+// The recordings are normalised to the same loudness; this puts them level
+// with the check / game-end sounds through the shared compressor.
+const BOARD_GAIN = 0.62;
 
 interface Bus { c: AudioContext; dry: GainNode; wet: GainNode; now: number }
 
@@ -51,7 +70,35 @@ function ensureBus(): Bus | null {
     comp.connect(master).connect(ctx.destination);
   }
   if (ctx.state === 'suspended') void ctx.resume();
+  if (moveSoundSet === 'board') void loadBoardSamples(ctx);
   return { c: ctx, dry: dryBus!, wet: wetBus!, now: ctx.currentTime };
+}
+
+function loadBoardSamples(c: AudioContext): Promise<void> {
+  // One attempt per page load: if it fails (offline, blocked), moves simply
+  // keep the synthesized knocks instead of retrying on every sound.
+  boardLoading ??= Promise.all(
+    (['move', 'capture'] as const).map(async (k) => {
+      const res = await fetch(k === 'move' ? boardMoveUrl : boardCaptureUrl);
+      if (!res.ok) throw new Error(`board sound ${k}: HTTP ${res.status}`);
+      boardSamples[k] = await c.decodeAudioData(await res.arrayBuffer());
+    }),
+  ).then(() => undefined, () => undefined);
+  return boardLoading;
+}
+
+/** Plays a board recording; false if 'board' isn't chosen or it hasn't loaded yet. */
+function boardSample(b: Bus, t0: number, kind: 'move' | 'capture', opts: { gain?: number; rate?: number } = {}): boolean {
+  const buf = moveSoundSet === 'board' ? boardSamples[kind] : undefined;
+  if (!buf) return false;
+  const src = b.c.createBufferSource();
+  src.buffer = buf;
+  src.playbackRate.value = opts.rate ?? 1;
+  const g = b.c.createGain();
+  g.gain.value = BOARD_GAIN * (opts.gain ?? 1);
+  src.connect(g).connect(b.dry);
+  src.start(t0);
+  return true;
 }
 
 function synthImpulseResponse(c: AudioContext, durationSec: number, decay: number): AudioBuffer {
@@ -200,6 +247,19 @@ function marimba(b: Bus, t0: number, opts: { freq: number; duration: number; gai
 export function setSoundEnabled(on: boolean) { enabled = on; }
 export function getSoundEnabled() { return enabled; }
 export function setSoundSet(set: SoundSet) { soundSet = set === 'soft' ? 'soft' : 'classic'; }
+export function setMoveSoundSet(set: MoveSoundSet) {
+  moveSoundSet = set === 'board' ? 'board' : 'classic';
+  if (moveSoundSet === 'board' && ctx) void loadBoardSamples(ctx);
+}
+
+/** Resolves once the chosen move sounds can play — e.g. so a settings preview
+ *  doesn't fall back to the synthesized knock while the recordings decode.
+ *  Call from a click handler: it may have to create the AudioContext. */
+export function moveSoundsReady(): Promise<void> {
+  if (moveSoundSet !== 'board') return Promise.resolve();
+  const b = ensureBus();
+  return b ? loadBoardSamples(b.c) : Promise.resolve();
+}
 
 // Some browsers require user interaction before audio plays. Call this once
 // from a click/keydown handler to "warm" the context.
@@ -216,9 +276,11 @@ export function playSound(kind: SoundKind) {
 
   switch (kind) {
     case 'move':
+      if (boardSample(b, t, 'move')) break;
       woodKnock(b, t, { pitch: 280, duration: 0.09, gain: 0.55 });
       break;
     case 'capture':
+      if (boardSample(b, t, 'capture', { gain: 1.12 })) break;
       // Heavier, slightly grittier knock — broader noise + lower body.
       woodKnock(b, t, { pitch: 165, duration: 0.13, gain: 0.7, bright: false });
       noiseClick(b, t + 0.008, { duration: 0.04, gain: 0.18, cutoff: 1200, highpass: 350, wet: 0.5 });
@@ -236,6 +298,11 @@ export function playSound(kind: SoundKind) {
       break;
     }
     case 'castle':
+      // King, then rook: the board move twice, the second a touch lower and softer.
+      if (boardSample(b, t, 'move')) {
+        boardSample(b, t + 0.11, 'move', { gain: 0.8, rate: 0.96 });
+        break;
+      }
       // Two crisp knocks (king + rook).
       woodKnock(b, t,        { pitch: 280, duration: 0.08, gain: 0.5, bright: true });
       woodKnock(b, t + 0.07, { pitch: 240, duration: 0.09, gain: 0.55, bright: true });

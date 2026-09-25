@@ -357,6 +357,15 @@
     "ttsNoVoices": "Keine Stimmen für diese Sprache gefunden. Installiere das Sprachpaket deines Betriebssystems, um mehr Auswahl zu haben.",
     "unsaved": "Ungespeicherte Änderungen",
     "noChanges": "Keine Änderungen",
+    "moveSoundSet": "Töne für Züge",
+    "moveSoundSetOption": {
+      "classic": "Klassisch",
+      "board": "Echtes Brett"
+    },
+    "moveSoundSetDesc": {
+      "classic": "Synthetisches Holzklopfen — die ursprünglichen Patzer-Töne.",
+      "board": "Aufnahmen echter Figuren, die auf ein Holzbrett gesetzt werden."
+    },
     "soundSet": "Töne für Schach & Partieende",
     "soundSetOption": {
       "classic": "Klassisch",
