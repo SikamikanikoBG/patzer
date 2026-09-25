@@ -31,11 +31,19 @@ export async function syncOnce(): Promise<void> {
   try {
     await importAll();
     await analyzePending();
-    kickAutoReview();
   } catch (err) {
     console.error('[chesscom-sync]', err);
   } finally {
     running = false;
+  }
+  // Auto-review is deliberately fire-and-forget and isolated from the import
+  // result: a review failure must never surface as (or block) a completed
+  // import. kickAutoReview() sweeps on its own worker and never throws
+  // synchronously; the guard is belt-and-braces.
+  try {
+    kickAutoReview();
+  } catch {
+    // no-op — keep the sync loop alive regardless of the review.
   }
 }
 

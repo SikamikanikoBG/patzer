@@ -377,6 +377,9 @@ export default function AdminSystem() {
           </div>
         </div>
         <div className="space-y-4 p-5">
+          <p className="text-xs text-ink-400">
+            Game Review runs on the bundled local Stockfish by default. To use the hosted chess-api.com engine instead, set <code className="font-mono">ENGINE_BACKEND=chessapi</code> (env) or the <code className="font-mono">engine_backend</code> setting — e.g. for a public try-it instance (DEMO_MODE, #27).
+          </p>
           <div>
             <label className="label mb-1 block">{t('admin.stockfishPath')}</label>
             <div className="flex gap-2">

@@ -1,11 +1,13 @@
 // Which engine Game Review runs on.
 //
 // Two backends, one contract:
-//   - `local`    — the bundled Stockfish binary (opt-in via ENGINE_BACKEND=local).
-//   - `chessapi` — chess-api.com, a hosted Stockfish 18 NNUE reached over HTTPS.
+//   - `local`    — the bundled Stockfish binary (the default).
+//   - `chessapi` — chess-api.com, a hosted Stockfish 18 NNUE reached over HTTPS
+//                  (opt-in via ENGINE_BACKEND=chessapi; the knob for a public
+//                  try-it instance — DEMO_MODE, #27).
 //
-// chess-api.com is the default backend; the bundled binary is the fallback and
-// the explicit opt-out. Measured against the live service (2026-09):
+// The bundled binary is the default; chess-api.com is opt-in. Measured against
+// the live service (2026-09):
 //   - The free tier stops each search at 50–100 ms, so a request for depth 18
 //     comes back at depth 11–13 — shallower than the local default of 16.
 //   - The HTTP endpoint returns ONE line per position however many `variants`
@@ -45,10 +47,11 @@ export interface AnalysisEngine {
 
 export function engineBackend(): EngineBackend {
   // Env wins so a deployment can pin the backend regardless of the UI. The
-  // default is the hosted chess-api.com engine; set ENGINE_BACKEND=local (or
-  // the `engine_backend` setting) to keep analysis on the bundled binary.
+  // default is the bundled local Stockfish; set ENGINE_BACKEND=chessapi (or
+  // the `engine_backend` setting) to use the hosted engine — e.g. the public
+  // try-it instance (DEMO_MODE, #27).
   const v = process.env.ENGINE_BACKEND ?? getSetting('engine_backend');
-  return v === 'local' ? 'local' : 'chessapi';
+  return v === 'chessapi' ? 'chessapi' : 'local';
 }
 
 export function createAnalysisEngine(backend: EngineBackend = engineBackend()): AnalysisEngine {
