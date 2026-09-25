@@ -2,13 +2,17 @@
 // Each node is a (san, position) pair; child counts are pruned to top 8 by
 // frequency on the server. Selecting a node renders its FEN on the mini-board
 // and shows the W/D/L breakdown for that line.
+//
+// The second tab is the opening trainer (components/OpeningTrainer.tsx): drill
+// a built-in line or any line of this tree, with a daily review of your misses.
 
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { BookMarked, ChevronRight, ChevronDown, Compass, Target } from 'lucide-react';
+import { BookMarked, ChevronRight, ChevronDown, Compass, GraduationCap, Target } from 'lucide-react';
 import ChessBoard from '../components/ChessBoard';
+import OpeningTrainer, { TRAINER_QUERY_KEY, fetchTrainer } from '../components/OpeningTrainer';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 
@@ -32,11 +36,65 @@ const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 export default function Openings() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get('tab') === 'trainer' ? 'trainer' : 'tree';
   const { data, isLoading } = useQuery({
     queryKey: ['openings-tree'],
     queryFn: () => api.get<TreeResponse>('/api/openings/tree'),
   });
+  const { data: trainer } = useQuery({ queryKey: TRAINER_QUERY_KEY, queryFn: fetchTrainer });
+  // Moves up to the tree node picked with "Practice this line".
+  const [practice, setPractice] = useState<string[] | null>(null);
+
+  function setTab(next: 'tree' | 'trainer') {
+    setSearchParams(next === 'trainer' ? { tab: 'trainer' } : {}, { replace: true });
+  }
+
+  const tabClass = (active: boolean) => `tab-pill flex items-center gap-1.5 ${active ? 'is-active' : ''}`;
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-5">
+      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="page-h1 flex items-center gap-2">
+            <BookMarked className="h-6 w-6 text-gold-600" />
+            {t('openings.title', { defaultValue: 'Openings' })}
+          </h1>
+          <p className="page-sub">{t('openings.subtitle', { defaultValue: 'Your repertoire as a tree.' })}</p>
+        </div>
+        {tab === 'tree' && !!data?.total_games && (
+          <div className="text-xs text-chesscom-500">
+            {t('openings.totalGames', { defaultValue: '{{n}} games in repertoire', n: data.total_games })}
+          </div>
+        )}
+      </header>
+
+      <div role="tablist" className="flex gap-1 border-b border-chesscom-200 dark:border-chesscom-700">
+        <button role="tab" aria-selected={tab === 'tree'} onClick={() => setTab('tree')} className={tabClass(tab === 'tree')}>
+          <Compass className="h-4 w-4" /> {t('openings.tabs.tree')}
+        </button>
+        <button role="tab" aria-selected={tab === 'trainer'} onClick={() => setTab('trainer')} className={tabClass(tab === 'trainer')}>
+          <GraduationCap className="h-4 w-4" /> {t('openings.tabs.trainer')}
+          {!!trainer?.due && (
+            <span className="badge bg-gold-500/15 font-mono tabular-nums text-gold-700 dark:text-gold-400">{trainer.due}</span>
+          )}
+        </button>
+      </div>
+
+      {tab === 'trainer' ? (
+        <OpeningTrainer repertoirePrefix={practice} onClearRepertoire={() => setPractice(null)} />
+      ) : isLoading ? (
+        <Skeleton />
+      ) : (
+        <RepertoireTree data={data} onPractice={(moves) => { setPractice(moves); setTab('trainer'); }} />
+      )}
+    </div>
+  );
+}
+
+function RepertoireTree({ data, onPractice }: { data: TreeResponse | undefined; onPractice: (moves: string[]) => void }) {
+  const { t } = useTranslation();
+  const { user } = useAuth();
 
   // Build a path key for each node so we can address it without referencing the object directly.
   // Path "" means root. Otherwise it's the joined SANs from root.
@@ -72,87 +130,62 @@ export default function Openings() {
     }
   }
 
-  if (isLoading) {
-    return <Skeleton />;
-  }
-
   if (!data || data.total_games === 0 || !root) {
     return (
-      <div className="mx-auto max-w-7xl space-y-5">
-        <header>
-          <h1 className="page-h1 flex items-center gap-2">
-            <BookMarked className="h-6 w-6 text-gold-600" />
-            {t('openings.title', { defaultValue: 'Openings' })}
-          </h1>
-          <p className="page-sub">{t('openings.subtitle', { defaultValue: 'Your repertoire as a tree.' })}</p>
-        </header>
-        <div className="card flex flex-col items-center gap-2 p-10 text-center">
-          <Compass className="h-8 w-8 text-chesscom-400" />
-          <div className="text-base font-semibold">
-            {t('openings.empty', { defaultValue: 'No opening data yet' })}
-          </div>
-          <div className="max-w-md text-sm text-chesscom-500">
-            {t('openings.emptyDesc', { defaultValue: 'Import or analyze a few games and your repertoire will branch out here.' })}
-          </div>
-          <Link to="/review" className="btn-primary mt-2 text-sm">
-            {t('review.title')}
-          </Link>
+      <div className="card flex flex-col items-center gap-2 p-10 text-center">
+        <Compass className="h-8 w-8 text-chesscom-400" />
+        <div className="text-base font-semibold">
+          {t('openings.empty', { defaultValue: 'No opening data yet' })}
         </div>
+        <div className="max-w-md text-sm text-chesscom-500">
+          {t('openings.emptyDesc', { defaultValue: 'Import or analyze a few games and your repertoire will branch out here.' })}
+        </div>
+        <Link to="/review" className="btn-primary mt-2 text-sm">
+          {t('review.title')}
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-5">
-      <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="page-h1 flex items-center gap-2">
-            <BookMarked className="h-6 w-6 text-gold-600" />
-            {t('openings.title', { defaultValue: 'Openings' })}
-          </h1>
-          <p className="page-sub">{t('openings.subtitle', { defaultValue: 'Your repertoire as a tree.' })}</p>
+    <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      {/* Tree pane */}
+      <section className="card overflow-hidden">
+        <div className="flex items-center gap-2 border-b border-chesscom-200 px-4 py-3 dark:border-chesscom-700">
+          <Compass className="h-4 w-4 text-board-dark" />
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">
+            {t('openings.tree', { defaultValue: 'Repertoire tree' })}
+          </h2>
         </div>
-        <div className="text-xs text-chesscom-500">
-          {t('openings.totalGames', { defaultValue: '{{n}} games in repertoire', n: data.total_games })}
+        <div className="max-h-[70vh] overflow-y-auto p-2">
+          <TreeRow
+            node={root}
+            path=""
+            depth={0}
+            expanded={expanded}
+            selectedPath={selectedPath}
+            onToggle={toggle}
+            onSelect={onClickNode}
+            isRoot
+          />
         </div>
-      </header>
+      </section>
 
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        {/* Tree pane */}
-        <section className="card overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-chesscom-200 px-4 py-3 dark:border-chesscom-700">
-            <Compass className="h-4 w-4 text-board-dark" />
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">
-              {t('openings.tree', { defaultValue: 'Repertoire tree' })}
-            </h2>
-          </div>
-          <div className="max-h-[70vh] overflow-y-auto p-2">
-            <TreeRow
-              node={root}
-              path=""
-              depth={0}
-              expanded={expanded}
-              selectedPath={selectedPath}
-              onToggle={toggle}
-              onSelect={onClickNode}
-              isRoot
-            />
-          </div>
-        </section>
+      {/* Detail pane */}
+      <aside className="space-y-3">
+        <div className={`board-theme-${user?.profile.board_theme ?? 'green'}`}>
+          <ChessBoard
+            fen={selectedNode?.fen || STARTING_FEN}
+            movable={false}
+            size={undefined}
+          />
+        </div>
 
-        {/* Detail pane */}
-        <aside className="space-y-3">
-          <div className={`board-theme-${user?.profile.board_theme ?? 'green'}`}>
-            <ChessBoard
-              fen={selectedNode?.fen || STARTING_FEN}
-              movable={false}
-              size={undefined}
-            />
-          </div>
-
-          <DetailCard node={selectedNode} />
-        </aside>
-      </div>
+        <DetailCard
+          node={selectedNode}
+          onPractice={() => onPractice(selectedPath ? selectedPath.split('|') : [])}
+        />
+      </aside>
     </div>
   );
 }
@@ -277,7 +310,7 @@ function TreeRow({
   );
 }
 
-function DetailCard({ node }: { node: TreeNode | null }) {
+function DetailCard({ node, onPractice }: { node: TreeNode | null; onPractice: () => void }) {
   const { t } = useTranslation();
   if (!node) {
     return (
@@ -351,6 +384,10 @@ function DetailCard({ node }: { node: TreeNode | null }) {
         <span className="font-mono tabular-nums text-chesscom-700 dark:text-chesscom-100">{node.played}</span>
       </div>
 
+      <button onClick={onPractice} className="btn-primary w-full text-sm">
+        <GraduationCap className="h-4 w-4" />
+        {t('openings.practiceLine')}
+      </button>
       <Link to={reviewHref} className="btn-secondary w-full text-sm">
         <Target className="h-4 w-4" />
         {t('openings.trainCta', { defaultValue: 'Train these →' })}
@@ -379,14 +416,11 @@ function moveNumberPrefix(ply: number): string {
 
 function Skeleton() {
   return (
-    <div className="mx-auto max-w-7xl animate-pulse space-y-5">
-      <div className="h-7 w-40 rounded bg-chesscom-200 dark:bg-chesscom-700" />
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <div className="h-[60vh] rounded-xl bg-chesscom-200 dark:bg-chesscom-700" />
-        <div className="space-y-3">
-          <div className="aspect-square rounded-xl bg-chesscom-200 dark:bg-chesscom-700" />
-          <div className="h-40 rounded-xl bg-chesscom-200 dark:bg-chesscom-700" />
-        </div>
+    <div className="grid animate-pulse gap-4 lg:grid-cols-[1.4fr_1fr]">
+      <div className="h-[60vh] rounded-xl bg-chesscom-200 dark:bg-chesscom-700" />
+      <div className="space-y-3">
+        <div className="aspect-square rounded-xl bg-chesscom-200 dark:bg-chesscom-700" />
+        <div className="h-40 rounded-xl bg-chesscom-200 dark:bg-chesscom-700" />
       </div>
     </div>
   );

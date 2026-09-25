@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ("der Springer zieht", but "schlägt den Bauern", "du hast einen Turm
   mehr"), so move and material phrasing decline properly instead of gluing
   bare nouns together. (#18)
+- **Opening trainer.** The Openings page has a second tab, *Trainer*. Pick a
+  line — one of 16 built-in main lines for White or Black, or any position in
+  your own repertoire tree ("Practice this line", continued the way most of
+  your games went on) — and Patzer plays the other side while you find your
+  moves. A wrong move is taken back so you can try again; "Show me the move"
+  draws the arrow. Every move you miss is stored on your profile and comes
+  back in a daily review queue until you've got it right on three different
+  days. (Roadmap #6)
 
 ### Fixed
 - **English text on translated screens.** Around 140 strings were hard-coded

@@ -8,12 +8,17 @@
 // Children per node are capped at 8 so the wire payload stays bounded.
 
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { Chess } from 'chess.js';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
 import { lookupOpeningByEpd, fenToEpd } from '../chess/openings.js';
 import { masterStats } from '../chess/explorer.js';
+import {
+  TRAINER_LINES, LEARNED_AFTER, MAX_LINE_PLIES, MAX_REPERTOIRE_PLIES,
+  replayLine, lineName, repertoireLine, recordMiss, queueSummary, dueReviews, answerReview,
+} from '../chess/openingTrainer.js';
 import type { Color } from '../types.js';
 
 const router = new Hono();
@@ -98,16 +103,21 @@ function finalize(node: MutableNode): TreeNode {
   };
 }
 
-router.get('/tree', (c) => {
-  const me = c.get('user');
-
-  const rows = db.prepare(`
+/** The games the tree is built from, newest first. */
+function treeGames(userId: number): GameRow[] {
+  return db.prepare(`
     SELECT g.pgn, g.user_color, g.result,
            CASE WHEN g.user_color='white' THEN a.accuracy_white ELSE a.accuracy_black END AS accuracy_user
     FROM analyses a JOIN games g ON g.id = a.game_id
     WHERE g.user_id = ? AND a.scoring_version >= ?
     ORDER BY g.end_time DESC, g.id DESC
-  `).all(me.id, SCORING_VERSION) as GameRow[];
+  `).all(userId, SCORING_VERSION) as GameRow[];
+}
+
+router.get('/tree', (c) => {
+  const me = c.get('user');
+
+  const rows = treeGames(me.id);
 
   const root = makeNode('', 0, new Chess().fen());
 
@@ -175,6 +185,73 @@ router.get('/explorer', async (c) => {
   }
   c.header('Cache-Control', 'private, max-age=3600');
   return c.json({ available: true, cached: result.cached, ...result.stats });
+});
+
+// ---- Opening trainer (roadmap #6) — see chess/openingTrainer.ts ----------
+
+router.get('/trainer', (c) => {
+  const me = c.get('user');
+  return c.json({ lines: TRAINER_LINES, learned_after: LEARNED_AFTER, ...queueSummary(me.id) });
+});
+
+// A line from your own repertoire: the moves up to a tree node, continued the
+// way your games most often went on — once for each color, so the page can
+// preselect the side you actually reach this position with.
+router.get('/trainer/repertoire', (c) => {
+  const me = c.get('user');
+  const raw = (c.req.query('moves') ?? '').trim();
+  const prefix = raw ? raw.split(/\s+/) : [];
+  if (prefix.length > MAX_REPERTOIRE_PLIES) return c.json({ error: 'invalid_line' }, 400);
+  const replayed = replayLine(prefix);
+  if (!replayed) return c.json({ error: 'invalid_line' }, 400);
+  const sans = replayed.map((m) => m.san);
+
+  const byColor: Record<Color, string[][]> = { white: [], black: [] };
+  for (const r of treeGames(me.id)) {
+    if (r.user_color !== 'white' && r.user_color !== 'black') continue;
+    const chess = new Chess();
+    try { chess.loadPgn(r.pgn, { strict: false }); } catch { continue; }
+    byColor[r.user_color].push(chess.history().slice(0, MAX_REPERTOIRE_PLIES));
+  }
+  const result = (color: Color) => {
+    const line = repertoireLine(byColor[color], sans);
+    return { ...line, name: lineName(line.moves) };
+  };
+  return c.json({ white: result('white'), black: result('black') });
+});
+
+const missSchema = z.object({
+  moves: z.array(z.string().min(1).max(12)).min(1).max(MAX_LINE_PLIES),
+  color: z.enum(['white', 'black']),
+  line_name: z.string().max(200).nullish(),
+});
+
+// The user missed the last move of `moves` — put it in the review queue.
+router.post('/trainer/miss', async (c) => {
+  const me = c.get('user');
+  const parsed = missSchema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
+  const ok = recordMiss(me.id, { moves: parsed.data.moves, color: parsed.data.color, lineName: parsed.data.line_name });
+  if (!ok) return c.json({ error: 'invalid_line' }, 400);
+  return c.json({ ok: true });
+});
+
+router.get('/trainer/review', (c) => {
+  const me = c.get('user');
+  return c.json({ items: dueReviews(me.id) });
+});
+
+const answerSchema = z.object({ uci: z.string().regex(/^[a-h][1-8][a-h][1-8][nbrq]?$/i) });
+
+router.post('/trainer/review/:id', async (c) => {
+  const me = c.get('user');
+  const id = Number(c.req.param('id'));
+  if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'invalid_input' }, 400);
+  const parsed = answerSchema.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
+  const answer = answerReview(me.id, id, parsed.data.uci.toLowerCase());
+  if (!answer) return c.json({ error: 'not_found' }, 404);
+  return c.json(answer);
 });
 
 export default router;
