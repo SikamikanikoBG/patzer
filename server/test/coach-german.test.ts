@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  explainMovePrompt,
   materialBalanceNatural,
   sanToNatural,
   systemPrompt,
@@ -41,5 +42,18 @@ describe("German coach phrasing", () => {
   it("has a German persona, rules and verdicts", () => {
     expect(systemPrompt("beginner", "de")).toContain("Ausgabesprache: Deutsch");
     expect(verdictPhrase("blunder", "de")).toMatch(/^ein Patzer/);
+  });
+
+  // 'Sprich den Spieler mit "du" an' made mistral:7b start most answers with
+  // "Du hast einen soliden Zug gespielt, du!" — ask for "duzen" instead.
+  it("asks for the informal du without making it a form of address", () => {
+    const usr = explainMovePrompt({
+      fen: START, player: "White", played_san: "e4", best_san: "e4",
+      classification: "best", cp_loss: 0, user_perspective: true,
+    }, "de", "beginner");
+    for (const prompt of [systemPrompt("beginner", "de"), usr]) {
+      expect(prompt).not.toContain('mit "du" an');
+      expect(prompt).toMatch(/[Dd]uz/);
+    }
   });
 });

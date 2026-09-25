@@ -123,14 +123,14 @@ Esquema: { "title": string, "what_happened": string, "why_it_matters": string, "
     perspective: 'du',
     phase: { opening: 'Eröffnung', middlegame: 'Mittelspiel', endgame: 'Endspiel' },
     keyMoment: 'Schlüsselmoment',
-    taskPhase: (phase) => `TASK: Beschreibe in 2-3 Sätzen, wie der Spieler die Phase „${phase}“ gespielt hat. Sprich ihn mit "du" an. Schema: { "prose": string }`,
-    taskMoment: `TASK: Beschreibe diesen Schlüsselmoment. Sprich den Spieler mit "du" an. Felder:
+    taskPhase: (phase) => `TASK: Beschreibe in 2-3 Sätzen, wie der Spieler die Phase „${phase}“ gespielt hat. Duze ihn, aber ohne Begrüßung und ohne "du" als Anrede. Schema: { "prose": string }`,
+    taskMoment: `TASK: Beschreibe diesen Schlüsselmoment. Duze den Spieler, aber ohne Begrüßung und ohne "du" als Anrede. Felder:
 - title: ≤6 Wörter, kein Punkt am Ende.
 - what_happened: 1 Satz — was der Spieler gemacht hat und das Urteil der Engine.
 - why_it_matters: 1 Satz — was es gekostet hat oder welches Prinzip dahintersteckt.
 - what_to_learn: 1 Satz — die Lehre daraus.
 Schema: { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`,
-    taskSummary: `TASK: Fasse die Partie für den Spieler zusammen. Sprich ihn mit "du" an. Schema: { "summary": string (3-4 Sätze), "skill_assessment": string (1 Satz zur Spielstärke), "opening_prose": string (≤2 Sätze zur Eröffnung) }`,
+    taskSummary: `TASK: Fasse die Partie für den Spieler zusammen. Duze ihn, aber ohne Begrüßung und ohne "du" als Anrede. Schema: { "summary": string (3-4 Sätze), "skill_assessment": string (1 Satz zur Spielstärke), "opening_prose": string (≤2 Sätze zur Eröffnung) }`,
     fallbackPhase: (phase, accuracy, plies) => `In der Phase „${phase}“ lag deine Genauigkeit bei ${accuracy} % über ${plies} Halbzüge.`,
     fallbackMoment: (ply, verdict, cpLoss) => `Im Halbzug ${ply} kippte die Partie. ${verdict}. Das kostete etwa ${cpLoss} Centipawns.`,
     fallbackSummary: (acc, brilliant, mistakes, blunders) => `Deine Genauigkeit lag bei ${acc} %. Du hattest ${brilliant} brillante Züge, ${mistakes} Fehler und ${blunders} Patzer.`,

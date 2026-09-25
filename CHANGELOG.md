@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **German (`de`).** The whole app — UI, setup wizard, coach persona and hard
-  rules, move narration, Game Review prose — in German. German is the first
+  rules, move narration, Game Review prose — in German. The coach prompt is
+  tuned for small local models: it asks for the informal "du" without using
+  it as a form of address (mistral:7b otherwise ended most answers' first
+  sentence with "…, du!"), and it has no example sentences, which such
+  models copied word for word — "Solide Entwicklung" even for a blunder.
+  German is also the first
   coach language whose piece names need an article and a grammatical case
   ("der Springer zieht", but "schlägt den Bauern", "du hast einen Turm
   mehr"), so move and material phrasing decline properly instead of gluing
