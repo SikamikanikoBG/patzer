@@ -130,7 +130,8 @@ it `<code>` below. Spanish (`es`, PR #17) is a complete worked example to diff a
    - `server/src/coach/review.ts` — add a `<code>` entry to `REVIEW_TEXT` (Game Review task prompts and fallback sentences).
 5. **Lesson texts.** Copy `web/src/locales/learn/en.json` to `web/src/locales/learn/<code>.json`, translate
    it (keep the keys and the `{{side}}` token) and add the file to `TEXTS` in `web/src/learn/content.ts`.
-   Until then the Learn section reads English.
+   Until then the Learn section reads English. `web/src/locales/locales.test.ts` shows how to pin a
+   language's lesson texts to full parity with English.
 6. **Database default.** The `profiles.language` column is a free-form `TEXT NOT NULL DEFAULT 'en'` (see `server/src/db.ts`), so no migration is needed — existing users keep their language.
 
 To test locally: `npm run dev`, switch to your language in *Settings*, play a couple of moves with the coach on, and confirm the coach output stays in your language across kid / beginner / intermediate / advanced audience tiers.

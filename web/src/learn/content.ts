@@ -47,9 +47,10 @@ export function loadCurriculum(): Promise<Curriculum> {
 }
 
 // Lesson texts per language. A language without its own file reads English
-// (i18next's fallback) — German follows in its own pull request.
+// (i18next's fallback).
 const TEXTS: Partial<Record<Language, () => Promise<{ default: unknown }>>> = {
   en: () => import('../locales/learn/en.json'),
+  de: () => import('../locales/learn/de.json'),
 };
 
 const loadedTexts = new Map<Language, Promise<void>>();

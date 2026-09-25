@@ -25,8 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   task is checked twice: by the test suite (legal moves, real mates, star
   tasks solvable in the stated number of moves) and by
   `npm run verify:lessons`, which asks Stockfish whether each answer really is
-  the one clearly best move. Lesson texts are English for now; German follows
-  in its own pull request. Marked beta while it is being refined. (Roadmap #7)
+  the one clearly best move. Lesson texts in English and German. Marked beta
+  while it is being refined. (Roadmap #7)
 
 ### Changed
 - **Opening trainer is marked beta.** It works, but it is still being
