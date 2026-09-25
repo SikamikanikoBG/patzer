@@ -1,0 +1,201 @@
+{
+  "id": "basics",
+  "courses": [
+    {
+      "id": "pieces",
+      "icon": "N",
+      "lessons": [
+        {
+          "id": "board",
+          "icon": "board",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "8/8/8/8/8/8/8/8 w - - 0 1", "marks": ["h1"] },
+            { "id": "names", "type": "info", "fen": "8/8/8/8/8/8/8/8 w - - 0 1", "arrows": ["e1e8:blue", "a4h4:blue"], "marks": ["e4"] },
+            { "id": "find1", "type": "square", "answer": ["c6"] },
+            { "id": "find2", "type": "square", "answer": ["g2"] },
+            { "id": "corners", "type": "square", "answer": ["a1", "h1", "a8", "h8"] },
+            { "id": "setup", "type": "info", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" },
+            { "id": "queen", "type": "square", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "answer": ["d1"] },
+            { "id": "king", "type": "square", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "answer": ["e8"] }
+          ]
+        },
+        {
+          "id": "rook",
+          "icon": "R",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "8/8/8/8/3R4/8/8/8 w - - 0 1", "arrows": ["d4d8", "d4d1", "d4a4", "d4h4"] },
+            { "id": "s1", "type": "stars", "fen": "8/8/8/8/8/8/8/R7 w - - 0 1", "stars": ["a6"], "par": 1 },
+            { "id": "s2", "type": "stars", "fen": "8/8/8/8/8/8/8/R7 w - - 0 1", "stars": ["a6", "f6"], "par": 2 },
+            { "id": "s3", "type": "stars", "fen": "8/8/8/1P6/8/8/1R2P3/8 w - - 0 1", "piece": "b2", "stars": ["b4", "g7"], "par": 3 }
+          ]
+        },
+        {
+          "id": "bishop",
+          "icon": "B",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "8/8/8/8/3B4/8/8/8 w - - 0 1", "arrows": ["d4a7", "d4h8", "d4a1", "d4g1"] },
+            { "id": "s1", "type": "stars", "fen": "8/8/8/8/8/8/8/2B5 w - - 0 1", "stars": ["h6"], "par": 1 },
+            { "id": "s2", "type": "stars", "fen": "8/8/8/8/8/8/8/2B5 w - - 0 1", "stars": ["h6", "f8"], "par": 2 },
+            { "id": "s3", "type": "stars", "fen": "8/8/8/8/8/8/8/5B2 w - - 0 1", "stars": ["b5", "e8", "h5"], "par": 3 },
+            { "id": "color", "type": "quiz", "fen": "8/8/8/8/8/8/8/5B2 w - - 0 1", "marks": ["d4"], "options": ["yes", "no"], "answer": "no" }
+          ]
+        },
+        {
+          "id": "queen",
+          "icon": "Q",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "8/8/8/8/3Q4/8/8/8 w - - 0 1", "arrows": ["d4d8", "d4d1", "d4a4", "d4h4", "d4a7", "d4h8", "d4a1", "d4g1"] },
+            { "id": "s1", "type": "stars", "fen": "8/8/8/8/8/8/8/3Q4 w - - 0 1", "stars": ["d7", "h3"], "par": 2 },
+            { "id": "s2", "type": "stars", "fen": "8/8/8/8/8/8/8/Q7 w - - 0 1", "stars": ["e5", "b8", "h2", "h8"], "par": 4 },
+            { "id": "s3", "type": "stars", "fen": "8/2P5/8/8/2P1P3/8/8/2Q5 w - - 0 1", "piece": "c1", "stars": ["c3", "g5", "a5"], "par": 3 }
+          ]
+        },
+        {
+          "id": "king",
+          "icon": "K",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "8/8/8/8/4K3/8/8/8 w - - 0 1", "marks": ["d5", "e5", "f5", "d4", "f4", "d3", "e3", "f3"] },
+            { "id": "s1", "type": "stars", "fen": "8/8/8/8/8/8/8/4K3 w - - 0 1", "stars": ["e3", "g3"], "par": 4 },
+            { "id": "danger", "type": "info", "fen": "8/8/8/r7/4K3/8/8/8 w - - 0 1", "arrows": ["a5h5:red"] },
+            { "id": "where", "type": "square", "fen": "8/8/8/r7/4K3/8/8/8 w - - 0 1", "movesOf": "e4", "answer": ["d3", "e3", "f3", "d4", "f4"] },
+            { "id": "s2", "type": "stars", "fen": "8/8/8/4n3/8/8/8/3K4 w - - 0 1", "stars": ["e4", "e6"], "par": 5 }
+          ]
+        },
+        {
+          "id": "knight",
+          "icon": "N",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "8/8/8/8/3N4/8/8/8 w - - 0 1", "arrows": ["d4c6", "d4e6", "d4f5", "d4f3", "d4e2", "d4c2", "d4b3", "d4b5"] },
+            { "id": "where", "type": "square", "fen": "8/8/8/2PPP3/2PNP3/2PPP3/8/8 w - - 0 1", "movesOf": "d4", "answer": ["b3", "b5", "c2", "c6", "e2", "e6", "f3", "f5"] },
+            { "id": "s1", "type": "stars", "fen": "8/8/8/8/8/8/8/6N1 w - - 0 1", "stars": ["f3", "e5"], "par": 2 },
+            { "id": "s2", "type": "stars", "fen": "8/8/8/8/8/8/PPPPPPPP/1N6 w - - 0 1", "piece": "b1", "stars": ["c3", "b5", "d6"], "par": 3 },
+            { "id": "s3", "type": "stars", "fen": "8/8/8/8/8/8/8/N7 w - - 0 1", "stars": ["b2"], "par": 4 }
+          ]
+        },
+        {
+          "id": "pawn",
+          "icon": "P",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "8/8/8/8/8/8/4P3/8 w - - 0 1", "arrows": ["e2e3", "e2e4"] },
+            { "id": "s1", "type": "stars", "fen": "8/8/8/8/8/8/4P3/8 w - - 0 1", "stars": ["e4", "e6"], "par": 3 },
+            { "id": "capture", "type": "info", "fen": "8/8/8/3ppp2/4P3/8/8/8 w - - 0 1", "arrows": ["e4d5", "e4f5"], "marks": ["e5:red"] },
+            { "id": "s2", "type": "stars", "fen": "8/8/8/8/2p5/1pp5/2P5/8 w - - 0 1", "stars": ["b3", "c4"], "par": 2 },
+            { "id": "where", "type": "square", "fen": "8/8/8/8/8/2p1n3/3P4/8 w - - 0 1", "movesOf": "d2", "answer": ["c3", "d3", "d4", "e3"] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rules",
+      "icon": "K",
+      "lessons": [
+        {
+          "id": "capture",
+          "icon": "capture",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "8/8/3n4/8/8/8/8/3Q4 w - - 0 1", "demo": ["d1d6"] },
+            { "id": "s1", "type": "stars", "fen": "8/8/n4b2/8/8/8/5p2/R7 w - - 0 1", "stars": ["a6", "f6", "f2"], "par": 3 },
+            { "id": "s2", "type": "stars", "fen": "8/8/8/3p4/5p2/2p5/8/1N6 w - - 0 1", "stars": ["c3", "d5", "f4"], "par": 3 },
+            { "id": "safe", "type": "move", "fen": "6k1/5ppp/4p3/3b4/6n1/8/5PPP/3Q2K1 w - - 0 1", "line": ["d1g4"] }
+          ]
+        },
+        {
+          "id": "check",
+          "icon": "check",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "4k3/8/8/8/8/8/8/4R1K1 b - - 0 1", "arrows": ["e1e8:red"] },
+            { "id": "give1", "type": "move", "goal": "check", "fen": "4k3/8/8/8/8/8/8/R5K1 w - - 0 1", "line": ["a1a8"] },
+            { "id": "give2", "type": "move", "goal": "check", "fen": "4k3/8/8/8/6N1/8/8/6K1 w - - 0 1", "line": ["g4f6"] },
+            { "id": "give3", "type": "move", "goal": "check", "fen": "4k3/8/3P4/8/8/8/8/4K3 w - - 0 1", "line": ["d6d7"] }
+          ]
+        },
+        {
+          "id": "escape",
+          "icon": "escape",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "4r1k1/8/8/8/8/8/8/4K3 w - - 0 1", "arrows": ["e8e1:red"] },
+            { "id": "run", "type": "move", "fen": "4r1k1/8/8/8/8/8/8/4K3 w - - 0 1", "line": ["e1d2"], "accept": ["e1d1", "e1f1", "e1f2"], "exact": true },
+            { "id": "block", "type": "move", "fen": "6k1/5ppp/8/8/8/4B3/6PP/r6K w - - 0 1", "line": ["e3g1"], "accept": ["e3c1"], "exact": true },
+            { "id": "take", "type": "move", "fen": "6k1/5ppp/8/8/8/8/3Q1nPP/6RK w - - 0 1", "line": ["d2f2"], "exact": true }
+          ]
+        },
+        {
+          "id": "checkmate",
+          "icon": "mate",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "3R2k1/5ppp/8/8/8/8/8/6K1 b - - 0 1", "arrows": ["d8g8:red"] },
+            { "id": "q1", "type": "quiz", "fen": "3R2k1/5pp1/8/8/8/8/8/6K1 b - - 0 1", "options": ["yes", "no"], "answer": "no" },
+            { "id": "q2", "type": "quiz", "fen": "7k/6Q1/6K1/8/8/8/8/8 b - - 0 1", "options": ["yes", "no"], "answer": "yes" },
+            { "id": "m1", "type": "move", "goal": "mate", "fen": "6k1/5ppp/8/8/8/8/8/R5K1 w - - 0 1", "line": ["a1a8"] },
+            { "id": "m2", "type": "move", "goal": "mate", "fen": "k7/8/1K6/8/8/8/8/7Q w - - 0 1", "line": ["h1h8"] },
+            { "id": "m3", "type": "move", "goal": "mate", "fen": "7k/8/5K2/8/8/8/8/6Q1 w - - 0 1", "line": ["g1g7"] }
+          ]
+        },
+        {
+          "id": "castling",
+          "icon": "castle",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1", "demo": ["e1g1"] },
+            { "id": "short", "type": "move", "rule": true, "fen": "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", "line": ["e1g1"] },
+            { "id": "long", "type": "move", "rule": true, "fen": "rn1qk2r/ppp1bppp/4pn2/3p1bB1/3P4/2N2P2/PPPQP1PP/R3KBNR w KQkq - 2 6", "line": ["e1c1"] },
+            { "id": "rules", "type": "info", "fen": "r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1", "demo": ["e1c1"] },
+            { "id": "why", "type": "quiz", "fen": "4k3/8/8/8/2b5/8/5PPP/4K2R w K - 0 1", "options": ["check", "through", "blocked", "moved"], "answer": "through" }
+          ]
+        },
+        {
+          "id": "en-passant",
+          "icon": "enpassant",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "4k3/3p4/8/4P3/8/8/8/4K3 b - - 0 1", "demo": ["d7d5", "e5d6"] },
+            { "id": "ep1", "type": "move", "rule": true, "fen": "4k3/3p4/8/4P3/8/8/8/4K3 b - - 0 1", "pre": "d7d5", "line": ["e5d6"] },
+            { "id": "ep2", "type": "move", "rule": true, "fen": "4k3/8/8/8/3p4/8/2P5/4K3 w - - 0 1", "pre": "c2c4", "line": ["d4c3"] },
+            { "id": "when", "type": "quiz", "fen": "4k3/8/8/3pP3/8/8/8/4K3 w - - 0 1", "options": ["yes", "no"], "answer": "no" }
+          ]
+        },
+        {
+          "id": "promotion",
+          "icon": "promote",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "8/4P3/8/8/8/8/8/8 w - - 0 1", "demo": ["e7e8q"] },
+            { "id": "queen", "type": "move", "rule": true, "fen": "4k3/1P6/8/8/8/8/8/4K3 w - - 0 1", "line": ["b7b8q"] },
+            { "id": "mate", "type": "move", "goal": "mate", "fen": "7k/1P4pp/8/8/8/8/8/6K1 w - - 0 1", "line": ["b7b8q"] }
+          ]
+        },
+        {
+          "id": "draw",
+          "icon": "draw",
+          "steps": [
+            { "id": "stalemate", "type": "info", "fen": "7k/5Q2/6K1/8/8/8/8/8 b - - 0 1", "marks": ["h8", "g8:red", "g7:red", "h7:red"] },
+            { "id": "q1", "type": "quiz", "fen": "k7/8/1Q6/8/8/8/8/7K b - - 0 1", "options": ["mate", "stalemate", "neither"], "answer": "stalemate" },
+            { "id": "q2", "type": "quiz", "fen": "k7/1Q6/1K6/8/8/8/8/8 b - - 0 1", "options": ["mate", "stalemate", "neither"], "answer": "mate" },
+            { "id": "avoid", "type": "move", "goal": "mate", "fen": "k7/8/1K6/8/8/8/8/2Q5 w - - 0 1", "line": ["c1c8"] },
+            { "id": "other", "type": "info", "fen": "8/8/8/4k3/8/2B5/8/4K3 w - - 0 1" }
+          ]
+        },
+        {
+          "id": "values",
+          "icon": "values",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" },
+            { "id": "q1", "type": "quiz", "fen": "8/8/8/8/2R2B2/8/8/8 w - - 0 1", "options": ["rook", "bishop"], "answer": "rook" },
+            { "id": "q2", "type": "quiz", "fen": "8/8/8/8/2N2r2/8/8/8 w - - 0 1", "options": ["yes", "no"], "answer": "yes" },
+            { "id": "q3", "type": "quiz", "fen": "8/8/8/8/2BB1q2/8/8/8 w - - 0 1", "options": ["queen", "bishops"], "answer": "queen" },
+            { "id": "take", "type": "move", "fen": "6k1/5ppp/8/1r6/4p3/2N5/5PPP/6K1 w - - 0 1", "line": ["c3b5"] }
+          ]
+        },
+        {
+          "id": "notation",
+          "icon": "notation",
+          "steps": [
+            { "id": "intro", "type": "info", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "demo": ["e2e4", "e7e5", "g1f3"] },
+            { "id": "target", "type": "square", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "answer": ["c3"] },
+            { "id": "symbols", "type": "info", "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", "demo": ["f3e5", "c6e5"] },
+            { "id": "q1", "type": "quiz", "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", "options": ["takes", "moves", "check"], "answer": "takes" },
+            { "id": "q2", "type": "quiz", "fen": "r1bqkb1r/pppp1Qpp/2n2n2/4p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4", "options": ["check", "mate", "moves"], "answer": "mate" },
+            { "id": "play", "type": "move", "rule": true, "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", "line": ["g1f3"] }
+          ]
+        }
+      ]
+    }
+  ]
+}

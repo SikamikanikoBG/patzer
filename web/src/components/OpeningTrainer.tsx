@@ -50,14 +50,24 @@ type Mode =
   | { kind: 'drill'; line: DrillLine; run: number; phase: Phase }
   | { kind: 'review'; run: number };
 
-export default function OpeningTrainer({ repertoirePrefix, onClearRepertoire }: {
+export default function OpeningTrainer({ repertoirePrefix, onClearRepertoire, startLine, onStartLineUsed }: {
   /** Moves up to the tree node the user chose to practice, or null. */
   repertoirePrefix: string[] | null;
   onClearRepertoire: () => void;
+  /** A built-in line to open right away (a link from the Learn section). */
+  startLine?: string | null;
+  onStartLineUsed?: () => void;
 }) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>({ kind: 'pick' });
   const { data: info, isLoading, isError } = useQuery({ queryKey: TRAINER_QUERY_KEY, queryFn: fetchTrainer });
+
+  useEffect(() => {
+    if (!startLine || !info) return;
+    const line = info.lines.find((l) => l.id === startLine);
+    if (line) setMode({ kind: 'drill', line, run: Date.now(), phase: 'ask' });
+    onStartLineUsed?.();
+  }, [startLine, info, onStartLineUsed]);
 
   // "Practice this line" in the tree always lands on the picker.
   useEffect(() => { if (repertoirePrefix) setMode({ kind: 'pick' }); }, [repertoirePrefix]);

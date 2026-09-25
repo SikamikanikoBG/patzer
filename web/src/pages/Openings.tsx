@@ -39,6 +39,8 @@ export default function Openings() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get('tab') === 'trainer' ? 'trainer' : 'tree';
+  // ?line=<id> — straight into one of the built-in lines (the Learn section links here).
+  const startLine = searchParams.get('line');
   const { data, isLoading } = useQuery({
     queryKey: ['openings-tree'],
     queryFn: () => api.get<TreeResponse>('/api/openings/tree'),
@@ -84,7 +86,12 @@ export default function Openings() {
       </div>
 
       {tab === 'trainer' ? (
-        <OpeningTrainer repertoirePrefix={practice} onClearRepertoire={() => setPractice(null)} />
+        <OpeningTrainer
+          repertoirePrefix={practice}
+          onClearRepertoire={() => setPractice(null)}
+          startLine={startLine}
+          onStartLineUsed={() => setSearchParams({ tab: 'trainer' }, { replace: true })}
+        />
       ) : isLoading ? (
         <Skeleton />
       ) : (

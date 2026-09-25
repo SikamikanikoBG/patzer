@@ -539,6 +539,7 @@
     "goReview": "Zur Partieanalyse",
     "goInsights": "Zu Statistiken",
     "goTrain": "Zum Taktiktrainer",
+    "goLearn": "Zum Lernbereich",
     "closeDialog": "Dialog schließen",
     "review": "Partieanalyse",
     "prevNext": "Vorheriger / nächster Zug",
@@ -570,6 +571,114 @@
     "correct": "Richtig!",
     "wrong": "Nicht ganz — die Engine bevorzugt"
   },
+  "learn": {
+    "nav": "Lernen",
+    "title": "Lernen",
+    "subtitle": "Interaktive Lektionen – von den Gangarten der Figuren bis zu Taktik und Endspielen. Sammle Sterne und steig im Level auf.",
+    "loadError": "Die Lektionen konnten nicht geladen werden. Lade die Seite neu, um es noch einmal zu versuchen.",
+    "yourLevel": "Dein Level",
+    "level": "Level {{n}}",
+    "levelShort": "Lv {{n}}",
+    "levelUp": "Level {{n}} erreicht!",
+    "toNextLevel_one": "Noch {{count}} Stern bis Level {{n}}",
+    "toNextLevel_other": "Noch {{count}} Sterne bis Level {{n}}",
+    "lessonsDone": "{{done}}/{{total}} Lektionen",
+    "startHere": "Hier geht's los",
+    "nextUp": "Nächste Lektion",
+    "resumeLesson": "Weitermachen",
+    "allDone": "Alle Lektionen geschafft – stark!",
+    "allCourses": "Alle Kurse",
+    "tasks_one": "{{count}} Aufgabe",
+    "tasks_other": "{{count}} Aufgaben",
+    "atStep": "bei Schritt {{n}} von {{total}}",
+    "start": "Starten",
+    "resume": "Weiter",
+    "repeat": "Wiederholen",
+    "levels": {
+      "basics": {
+        "title": "Neu im Schach",
+        "desc": "Das Brett, die Figuren und alle Regeln, die du zum Spielen brauchst."
+      },
+      "beginner": {
+        "title": "Einsteiger",
+        "desc": "Grundmatts, erste Taktiken und wie man eine Partie beginnt."
+      },
+      "intermediate": {
+        "title": "Fortgeschritten",
+        "desc": "Schärfere Taktik, Mattbilder und Bauernendspiele."
+      },
+      "advanced": {
+        "title": "Könner",
+        "desc": "Stille Züge, Zugzwang, tiefere Kombinationen und Turmendspiele."
+      }
+    },
+    "readAloud": "Vorlesen",
+    "backToCourse": "Zurück zum Kurs",
+    "resumed": "Es geht bei Schritt {{n}} weiter.",
+    "fromStart": "Von vorn beginnen",
+    "showExplanation": "Erklärung noch einmal zeigen",
+    "hideExplanation": "Erklärung ausblenden",
+    "continue": "Weiter",
+    "finish": "Lektion abschließen",
+    "hint": "Tipp",
+    "moreHint": "Zug zeigen",
+    "showSolution": "Lösung zeigen",
+    "solutionShown": "Das ist die Lösung. Beim nächsten Mal findest du sie selbst!",
+    "wrongMove": "Nicht ganz – das ist nicht der Zug. Versuch es noch einmal.",
+    "wrongStalemate": "Das ist Patt – Remis (unentschieden)! Der König kann nicht ziehen, steht aber nicht im Schach. Versuch es noch einmal.",
+    "wrongOnlyCheck": "Schach – aber der König kann noch entkommen. Such das Matt!",
+    "wrongNoCheck": "Dieser Zug gibt kein Schach. Versuch es noch einmal.",
+    "right": "Richtig!",
+    "mate": "Schachmatt! Gut gemacht.",
+    "goodKeepGoing": "Gut! Weiter so.",
+    "opponentMoves": "Dein Gegner antwortet …",
+    "opponentThinks": "Patzer überlegt …",
+    "hintPiece": "Diese Figur macht den Zug.",
+    "hintArrow": "Spiel den Zug, den der Pfeil zeigt.",
+    "white": "Weiß",
+    "black": "Schwarz",
+    "fromLichess": "Aufgabe aus der Lichess-Datenbank (CC0)",
+    "starsCount": "Züge: {{n}} · Sterne übrig: {{left}} · Ziel: {{par}} Züge",
+    "starsPerfect_one": "Alle Sterne in {{count}} Zug – perfekt!",
+    "starsPerfect_other": "Alle Sterne in {{count}} Zügen – perfekt!",
+    "starsOver": "Alle Sterne in {{n}} Zügen. Es geht auch in {{par}} – noch ein Versuch?",
+    "tryPar": "Mit weniger Zügen versuchen",
+    "restartTask": "Neu starten",
+    "notThisSquare": "Nein, das ist {{sq}}.",
+    "cannotGoThere": "Nein – nach {{sq}} kann die Figur nicht ziehen.",
+    "foundCount": "{{n}} von {{total}} gefunden",
+    "wrongAnswer": "Nicht ganz. Versuch eine andere Antwort.",
+    "lessonDone": "Lektion geschafft",
+    "starsResult": {
+      "1": "Geschafft! Mit weniger Fehlern gibt es beim nächsten Mal mehr Sterne.",
+      "2": "Gut gemacht – nur ein paar kleine Ausrutscher.",
+      "3": "Perfekt – kein einziger Fehler!"
+    },
+    "starsRule": "3 Sterne: jede Aufgabe ohne Fehler, ohne Tipp und ohne Lösung.",
+    "starsEarned": "{{n}} von 3 Sternen",
+    "starsGained_one": "+{{count}} Stern",
+    "starsGained_other": "+{{count}} Sterne",
+    "nextLesson": "Weiter",
+    "practiceInTrainer": "Im Eröffnungstrainer üben",
+    "again": "Nochmal",
+    "toCourse": "Kursübersicht",
+    "play": {
+      "movesLeft": "Deine Züge: {{n}} von {{limit}}",
+      "wonMate_one": "Schachmatt in {{count}} Zug – geschafft!",
+      "wonMate_other": "Schachmatt in {{count}} Zügen – geschafft!",
+      "wonPromote_one": "Umgewandelt, und die neue Figur ist sicher – geschafft in {{count}} Zug!",
+      "wonPromote_other": "Umgewandelt, und die neue Figur ist sicher – geschafft in {{count}} Zügen!",
+      "stalemate": "Patt! Der König kann nicht ziehen, steht aber nicht im Schach – das ist Remis. Versuch es noch einmal.",
+      "draw": "Das ist jetzt Remis. Versuch es noch einmal.",
+      "lost": "Dein Gegner hat eine Figur gewonnen – der Sieg ist weg. Versuch es noch einmal.",
+      "limit": "Du hast alle {{limit}} Züge verbraucht. Versuch es noch einmal – es geht schneller.",
+      "engineDown": "Patzers Engine hat nicht geantwortet.",
+      "retryEngine": "Nochmal fragen",
+      "skip": "Übung überspringen",
+      "skipped": "Übersprungen – ohne die Engine lässt sich diese Übung nicht spielen. Mach mit der Lektion weiter.",
+      "again": "Nochmal versuchen"
+    }
+  },
   "insights": {
     "title": "Statistiken",
     "subv2": "Muster aus deinen letzten {{n}} analysierten Partien.",
@@ -599,7 +708,8 @@
       "milestone": "Meilensteine",
       "mastery": "Meisterschaft",
       "tactics": "Taktik",
-      "streaks": "Serien"
+      "streaks": "Serien",
+      "learning": "Lernen"
     },
     "tax": {
       "hung": "Hängende Figuren",
@@ -864,7 +974,10 @@
     },
     "puzzleEmpty": "Noch keine Aufgaben — spiel ein paar Partien",
     "puzzleEmptyDesc": "Die Aufgaben entstehen aus deinen eigenen analysierten Patzern.",
-    "unreviewed": "nicht analysiert"
+    "unreviewed": "nicht analysiert",
+    "learnNext": "Deine nächste Lektion",
+    "learnResume": "Mach weiter, wo du aufgehört hast",
+    "learnDesc": "Interaktive Lektionen mit Sternen und Levels."
   },
   "auth": {
     "passwordHint": "Mindestens 10 Zeichen",
@@ -1084,6 +1197,18 @@
     "streaker_10": {
       "title": "Unaufhaltsam",
       "description": "Gewinne 10 Partien in Folge."
+    },
+    "first_lesson": {
+      "title": "Erste Lektion",
+      "description": "Deine erste Lektion im Lernbereich geschafft."
+    },
+    "eager_student": {
+      "title": "Fleißig",
+      "description": "10 Lektionen im Lernbereich geschafft."
+    },
+    "star_collector": {
+      "title": "Sternensammler",
+      "description": "100 Sterne im Lernbereich gesammelt."
     }
   }
 }

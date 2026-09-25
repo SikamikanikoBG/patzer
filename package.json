@@ -24,7 +24,8 @@
     "test:e2e": "tsx server/test/e2e/pvp-negotiation.ts",
     "test:resume": "tsx server/test/e2e/resume.ts",
     "test:ui": "tsx server/test/e2e/pvp-ui.ts",
-    "test:resume-ui": "tsx server/test/e2e/resume-ui.ts"
+    "test:resume-ui": "tsx server/test/e2e/resume-ui.ts",
+    "verify:lessons": "node scripts/verify-lessons.mjs"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",

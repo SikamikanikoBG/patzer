@@ -539,6 +539,7 @@
     "goReview": "Go to Review",
     "goInsights": "Go to Insights",
     "goTrain": "Go to Tactic Trainer",
+    "goLearn": "Go to Learn",
     "closeDialog": "Close any dialog",
     "review": "Game Review",
     "prevNext": "Previous / Next move",
@@ -570,6 +571,114 @@
     "correct": "Correct!",
     "wrong": "Not quite — the engine prefers"
   },
+  "learn": {
+    "nav": "Learn",
+    "title": "Learn",
+    "subtitle": "Interactive lessons — from how the pieces move to tactics and endgames. Collect stars and level up.",
+    "loadError": "Couldn't load the lessons. Reload the page to try again.",
+    "yourLevel": "Your level",
+    "level": "Level {{n}}",
+    "levelShort": "Lv {{n}}",
+    "levelUp": "Level {{n}} reached!",
+    "toNextLevel_one": "{{count}} more star to level {{n}}",
+    "toNextLevel_other": "{{count}} more stars to level {{n}}",
+    "lessonsDone": "{{done}}/{{total}} lessons",
+    "startHere": "Start here",
+    "nextUp": "Next lesson",
+    "resumeLesson": "Continue",
+    "allDone": "Every lesson finished — well done!",
+    "allCourses": "All courses",
+    "tasks_one": "{{count}} task",
+    "tasks_other": "{{count}} tasks",
+    "atStep": "at step {{n}} of {{total}}",
+    "start": "Start",
+    "resume": "Continue",
+    "repeat": "Repeat",
+    "levels": {
+      "basics": {
+        "title": "New to chess",
+        "desc": "The board, the pieces and every rule you need to play."
+      },
+      "beginner": {
+        "title": "Beginner",
+        "desc": "Basic checkmates, first tactics and how to start a game."
+      },
+      "intermediate": {
+        "title": "Intermediate",
+        "desc": "Sharper tactics, mating patterns and pawn endgames."
+      },
+      "advanced": {
+        "title": "Advanced",
+        "desc": "Quiet moves, zugzwang, deeper combinations and rook endgames."
+      }
+    },
+    "readAloud": "Read aloud",
+    "backToCourse": "Back to the course",
+    "resumed": "Picking up at step {{n}}.",
+    "fromStart": "Start over",
+    "showExplanation": "Show the explanation again",
+    "hideExplanation": "Hide the explanation",
+    "continue": "Continue",
+    "finish": "Finish lesson",
+    "hint": "Hint",
+    "moreHint": "Show the move",
+    "showSolution": "Show solution",
+    "solutionShown": "That's the solution. Next time you'll find it yourself!",
+    "wrongMove": "Not quite — that's not the move. Try again.",
+    "wrongStalemate": "That's stalemate — a draw! The king can't move, but it isn't in check. Try again.",
+    "wrongOnlyCheck": "Check — but the king can still get away. Look for checkmate!",
+    "wrongNoCheck": "That move doesn't give check. Try again.",
+    "right": "Correct!",
+    "mate": "Checkmate! Well done.",
+    "goodKeepGoing": "Good! Keep going.",
+    "opponentMoves": "Your opponent replies …",
+    "opponentThinks": "Patzer is thinking …",
+    "hintPiece": "This piece makes the move.",
+    "hintArrow": "Play the move the arrow shows.",
+    "white": "White",
+    "black": "Black",
+    "fromLichess": "Puzzle from the Lichess database (CC0)",
+    "starsCount": "Moves: {{n}} · stars left: {{left}} · goal: {{par}} moves",
+    "starsPerfect_one": "All stars in {{count}} move — perfect!",
+    "starsPerfect_other": "All stars in {{count}} moves — perfect!",
+    "starsOver": "All stars in {{n}} moves. It can be done in {{par}} — one more try?",
+    "tryPar": "Try with fewer moves",
+    "restartTask": "Start over",
+    "notThisSquare": "No, that's {{sq}}.",
+    "cannotGoThere": "No — the piece can't go to {{sq}}.",
+    "foundCount": "{{n}} of {{total}} found",
+    "wrongAnswer": "Not quite. Try another answer.",
+    "lessonDone": "Lesson complete",
+    "starsResult": {
+      "1": "Done! With fewer mistakes there are more stars next time.",
+      "2": "Well done — just a few slips.",
+      "3": "Perfect — not a single mistake!"
+    },
+    "starsRule": "3 stars: every task without a mistake, a hint or the solution.",
+    "starsEarned": "{{n}} of 3 stars",
+    "starsGained_one": "+{{count}} star",
+    "starsGained_other": "+{{count}} stars",
+    "nextLesson": "Next",
+    "practiceInTrainer": "Practise it in the opening trainer",
+    "again": "Again",
+    "toCourse": "Course overview",
+    "play": {
+      "movesLeft": "Your moves: {{n}} of {{limit}}",
+      "wonMate_one": "Checkmate in {{count}} move — you did it!",
+      "wonMate_other": "Checkmate in {{count}} moves — you did it!",
+      "wonPromote_one": "Promoted, and the new piece is safe — done in {{count}} move!",
+      "wonPromote_other": "Promoted, and the new piece is safe — done in {{count}} moves!",
+      "stalemate": "Stalemate! The king can't move but isn't in check — that's a draw. Try again.",
+      "draw": "That's a draw now. Try again.",
+      "lost": "Your opponent won a piece — the win is gone. Try again.",
+      "limit": "You've used all {{limit}} moves. Try again — it can be done faster.",
+      "engineDown": "Patzer's engine didn't answer.",
+      "retryEngine": "Ask again",
+      "skip": "Skip this exercise",
+      "skipped": "Skipped — without the engine this exercise can't be played. Carry on with the lesson.",
+      "again": "Try again"
+    }
+  },
   "insights": {
     "title": "Insights",
     "subv2": "Patterns across your last {{n}} analyzed games.",
@@ -599,7 +708,8 @@
       "milestone": "Milestones",
       "mastery": "Mastery",
       "tactics": "Tactics",
-      "streaks": "Streaks"
+      "streaks": "Streaks",
+      "learning": "Learning"
     },
     "tax": {
       "hung": "Hung pieces",
@@ -864,7 +974,10 @@
     },
     "puzzleEmpty": "No puzzles yet — play a few games",
     "puzzleEmptyDesc": "Puzzles come from your own analyzed blunders.",
-    "unreviewed": "unreviewed"
+    "unreviewed": "unreviewed",
+    "learnNext": "Your next lesson",
+    "learnResume": "Continue where you left off",
+    "learnDesc": "Interactive lessons with stars and levels."
   },
   "auth": {
     "passwordHint": "At least 10 characters",
@@ -1084,6 +1197,18 @@
     "streaker_10": {
       "title": "Unstoppable",
       "description": "Win 10 games in a row."
+    },
+    "first_lesson": {
+      "title": "First Lesson",
+      "description": "Finished your first lesson in Learn."
+    },
+    "eager_student": {
+      "title": "Eager Student",
+      "description": "Finished 10 lessons in Learn."
+    },
+    "star_collector": {
+      "title": "Star Collector",
+      "description": "Collected 100 stars in Learn."
     }
   }
 }
