@@ -70,7 +70,7 @@ export default function OpeningTrainer({ repertoirePrefix, onClearRepertoire }: 
   }
 
   if (isLoading) return <div className="card p-10 text-center text-sm text-chesscom-500">{t('common.loading')}</div>;
-  if (isError || !info) return <div className="card p-10 text-center text-sm text-mistake">{t('openings.trainer.loadError')}</div>;
+  if (isError || !info) return <div className="card p-10 text-center text-sm text-move-mistake">{t('openings.trainer.loadError')}</div>;
 
   return (
     <Picker
@@ -174,7 +174,7 @@ function RepertoireCard({ prefix, onClose, onStart }: {
       </div>
 
       {isLoading && <div className="mt-3 text-sm text-chesscom-500">{t('common.loading')}</div>}
-      {isError && <div className="mt-3 text-sm text-mistake">{t('openings.trainer.loadError')}</div>}
+      {isError && <div className="mt-3 text-sm text-move-mistake">{t('openings.trainer.loadError')}</div>}
       {data && side && (
         <>
           <div className="mt-2 text-sm font-medium text-chesscom-900 dark:text-chesscom-100">
@@ -206,7 +206,7 @@ function RepertoireCard({ prefix, onClose, onStart }: {
           {side.games === 0 && own > 0 && (
             <div className="mt-2 text-xs text-chesscom-500">{t('openings.trainer.notReached')}</div>
           )}
-          {own === 0 && <div className="mt-2 text-xs text-mistake">{t('openings.trainer.tooShort')}</div>}
+          {own === 0 && <div className="mt-2 text-xs text-move-mistake">{t('openings.trainer.tooShort')}</div>}
 
           <button
             disabled={own === 0}
@@ -343,7 +343,7 @@ function Drill({ line, due, onRestart, onExit, onReview }: {
         <LineHeader name={line.name} eco={line.eco ?? null} color={line.color}>
           <div className="mt-3 flex items-center justify-between text-xs text-chesscom-500">
             <span>{t('openings.trainer.progress', { done: ownDone, total: ownTotal })}</span>
-            {missed.size > 0 && <span className="text-mistake">{t('openings.trainer.missedCount', { count: missed.size })}</span>}
+            {missed.size > 0 && <span className="text-move-mistake">{t('openings.trainer.missedCount', { count: missed.size })}</span>}
           </div>
           <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-chesscom-100 dark:bg-chesscom-700">
             <div className="h-full rounded-full bg-board-dark transition-all" style={{ width: `${ownTotal ? (ownDone / ownTotal) * 100 : 0}%` }} />
@@ -371,10 +371,10 @@ function Drill({ line, due, onRestart, onExit, onReview }: {
             </div>
           </div>
         ) : userTurn ? (
-          <div className={`card p-4 ${wrong ? 'border-mistake bg-mistake/5' : ''}`}>
+          <div className={`card p-4 ${wrong ? 'border-move-mistake bg-move-mistake/5' : ''}`}>
             <div className="flex items-start gap-2 text-sm text-chesscom-700 dark:text-chesscom-200">
               {wrong
-                ? <><X className="mt-0.5 h-4 w-4 shrink-0 text-mistake" /> {hint ? t('openings.trainer.playArrow') : t('openings.trainer.wrong')}</>
+                ? <><X className="mt-0.5 h-4 w-4 shrink-0 text-move-mistake" /> {hint ? t('openings.trainer.playArrow') : t('openings.trainer.wrong')}</>
                 : hint
                   ? <><Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-gold-600" /> {t('openings.trainer.playArrow')}</>
                   : t('openings.trainer.yourMove')}
@@ -488,7 +488,7 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
   }
 
   if (isLoading) return <div className="card p-10 text-center text-sm text-chesscom-500">{t('common.loading')}</div>;
-  if (isError) return <div className="card p-10 text-center text-sm text-mistake">{t('openings.trainer.loadError')}</div>;
+  if (isError) return <div className="card p-10 text-center text-sm text-move-mistake">{t('openings.trainer.loadError')}</div>;
 
   if (!item || !shown) {
     return (
@@ -547,11 +547,11 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
             </button>
           </div>
         ) : (
-          <div className={`card p-4 ${revealed ? 'border-gold-500/60 bg-gold-500/5' : 'border-mistake bg-mistake/5'}`}>
+          <div className={`card p-4 ${revealed ? 'border-gold-500/60 bg-gold-500/5' : 'border-move-mistake bg-move-mistake/5'}`}>
             <div className="flex items-start gap-2 text-sm font-semibold">
               {revealed
                 ? <><Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-gold-600" /> {t('openings.trainer.reviewRevealed', { san: answer.expected_san })}</>
-                : <><X className="mt-0.5 h-4 w-4 shrink-0 text-mistake" /> {t('openings.trainer.reviewWrong', { san: answer.expected_san })}</>}
+                : <><X className="mt-0.5 h-4 w-4 shrink-0 text-move-mistake" /> {t('openings.trainer.reviewWrong', { san: answer.expected_san })}</>}
             </div>
             {!replayed && (
               <div className="mt-1 text-sm text-chesscom-700 dark:text-chesscom-200">{t('openings.trainer.reviewPlayIt')}</div>
