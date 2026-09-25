@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { Chess } from 'chess.js';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
-import { StockfishEngine } from '../chess/stockfish.js';
+import { createAnalysisEngine } from '../chess/engine.js';
 import {
   classifyByWpDrop, refineClassification, normalizeEval, cpToWinPct,
   cpLossForPly, cpLossForAcpl, moveAccuracy, estimateElo, estimateGamePerformance, BOOK_PLIES,
@@ -38,7 +38,7 @@ const positionSchema = z.object({
   lines: z.number().int().min(1).max(5).default(3),
 });
 
-interface AnalysisRow {
+export interface AnalysisRow {
   depth: number;
   accuracy_white: number;
   accuracy_black: number;
@@ -64,7 +64,7 @@ interface GameRow {
   result: 'win' | 'loss' | 'draw' | string | null;
 }
 
-function rowToAnalysis(row: AnalysisRow): AnalysisResult {
+export function rowToAnalysis(row: AnalysisRow): AnalysisResult {
   return {
     depth: row.depth,
     accuracy_white: row.accuracy_white,
@@ -122,39 +122,7 @@ router.post('/', async (c) => {
       // estimateGamePerformance defaults to RD=350 (low confidence).
       opponentRd: null,
     });
-    db.prepare(`
-      INSERT INTO analyses (game_id, depth, accuracy_white, accuracy_black,
-        estimated_elo_white, estimated_elo_black,
-        performance_white, performance_black,
-        opening_eco, opening_name,
-        key_moments_json, phase_split_json,
-        moves_json, scoring_version)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(game_id) DO UPDATE SET
-        depth = excluded.depth,
-        accuracy_white = excluded.accuracy_white, accuracy_black = excluded.accuracy_black,
-        estimated_elo_white = excluded.estimated_elo_white, estimated_elo_black = excluded.estimated_elo_black,
-        performance_white = excluded.performance_white, performance_black = excluded.performance_black,
-        opening_eco = excluded.opening_eco, opening_name = excluded.opening_name,
-        key_moments_json = excluded.key_moments_json, phase_split_json = excluded.phase_split_json,
-        moves_json = excluded.moves_json, scoring_version = excluded.scoring_version,
-        created_at = datetime('now')
-    `).run(
-      game_id, depth,
-      result.accuracy_white, result.accuracy_black,
-      result.estimated_elo_white, result.estimated_elo_black,
-      result.performance_white, result.performance_black,
-      result.opening_eco, result.opening_name,
-      JSON.stringify(result.key_moments),
-      result.phase_split ? JSON.stringify(result.phase_split) : null,
-      JSON.stringify(result.moves), SCORING_VERSION,
-    );
-    // Backfill `games.eco` + `games.opening_name` so list endpoints can show
-    // openings without joining the analyses row.
-    if (result.opening_eco || result.opening_name) {
-      db.prepare(`UPDATE games SET eco = ?, opening_name = ? WHERE id = ?`)
-        .run(result.opening_eco, result.opening_name, game_id);
-    }
+    saveAnalysis(game_id, result);
     return result;
   })();
 
@@ -192,7 +160,7 @@ router.post('/position', async (c) => {
   if (positionInflight.has(user.id)) return c.json({ error: 'already_analyzing' }, 429);
 
   const work = (async () => {
-    const engine = new StockfishEngine();
+    const engine = createAnalysisEngine();
     try {
       await engine.start();
       await engine.setOption('Threads', '2');
@@ -243,7 +211,7 @@ router.post('/position', async (c) => {
   }
 });
 
-function scoreFromResultForUser(result: string | null, color: 'white' | 'black'): 0 | 0.5 | 1 | null {
+export function scoreFromResultForUser(result: string | null, color: 'white' | 'black'): 0 | 0.5 | 1 | null {
   if (!result) return null;
   if (result === 'win') return 1;
   if (result === 'loss') return 0;
@@ -281,7 +249,7 @@ export async function analyzePgnFull(
   chess.loadPgn(pgn, { strict: false });
   const history = chess.history({ verbose: true });
 
-  const engine = new StockfishEngine();
+  const engine = createAnalysisEngine();
   await engine.start();
   await engine.setOption('Skill Level', 20);
   // Operational tunables — bigger boxes can spend more. Defaults match v6.
@@ -301,6 +269,9 @@ export async function analyzePgnFull(
   // Pre-evaluate starting position with MultiPV=3 so we can detect "Great"
   // (only-good-move) and gap-aware "Brilliant" via the second-best candidate.
   let prevEval = await engine.evaluateMulti(replay.fen(), depth, 3);
+  // Depth each search actually reached. The local engine always reaches the
+  // requested depth; a time-capped remote one (chess-api.com) stops short.
+  const reachedDepths: number[] = [prevEval.depth];
   let prevWhiteCp = normalizeEval(prevEval.cp, prevEval.mate, replay.turn());
 
   // Per-side per-move accuracy + win-pct timeline for the new aggregator.
@@ -349,6 +320,7 @@ export async function analyzePgnFull(
     const fenAfter = replay.fen();
 
     const nextEval = await engine.evaluateMulti(fenAfter, depth, 3);
+    reachedDepths.push(nextEval.depth);
     const nextWhiteCp = normalizeEval(nextEval.cp, nextEval.mate, replay.turn());
 
     const wpBefore = cpToWinPct(prevWhiteCp);
@@ -448,6 +420,7 @@ export async function analyzePgnFull(
     prevWhiteCp = nextWhiteCp;
   }
 
+  const engineKind = engine.kind;
   await engine.quit();
 
   // CAPS-style game accuracy (volatility-weighted + harmonic mean).
@@ -504,7 +477,10 @@ export async function analyzePgnFull(
   }));
 
   return {
-    depth,
+    // Record what the engine really did, so the stored depth isn't a claim the
+    // remote backend never met — and so switching back to local re-analyzes
+    // (the cache only reuses an analysis at >= the requested depth).
+    depth: engineKind === 'local' ? depth : Math.min(depth, medianDepth(reachedDepths)),
     moves,
     accuracy_white,
     accuracy_black,
@@ -517,6 +493,48 @@ export async function analyzePgnFull(
     key_moments,
     phase_split,
   };
+}
+
+function medianDepth(depths: number[]): number {
+  // Terminal positions (mate / stalemate) report depth 0 — they aren't searches.
+  const d = depths.filter((x) => x > 0).sort((a, b) => a - b);
+  return d.length ? d[Math.floor(d.length / 2)]! : 0;
+}
+
+/** Upsert a full analysis row for a game, and backfill the game's opening so
+ *  list endpoints can show it without joining `analyses`. */
+export function saveAnalysis(gameId: number, result: AnalysisResult): void {
+  db.prepare(`
+    INSERT INTO analyses (game_id, depth, accuracy_white, accuracy_black,
+      estimated_elo_white, estimated_elo_black,
+      performance_white, performance_black,
+      opening_eco, opening_name,
+      key_moments_json, phase_split_json,
+      moves_json, scoring_version)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(game_id) DO UPDATE SET
+      depth = excluded.depth,
+      accuracy_white = excluded.accuracy_white, accuracy_black = excluded.accuracy_black,
+      estimated_elo_white = excluded.estimated_elo_white, estimated_elo_black = excluded.estimated_elo_black,
+      performance_white = excluded.performance_white, performance_black = excluded.performance_black,
+      opening_eco = excluded.opening_eco, opening_name = excluded.opening_name,
+      key_moments_json = excluded.key_moments_json, phase_split_json = excluded.phase_split_json,
+      moves_json = excluded.moves_json, scoring_version = excluded.scoring_version,
+      created_at = datetime('now')
+  `).run(
+    gameId, result.depth,
+    result.accuracy_white, result.accuracy_black,
+    result.estimated_elo_white, result.estimated_elo_black,
+    result.performance_white, result.performance_black,
+    result.opening_eco, result.opening_name,
+    JSON.stringify(result.key_moments),
+    result.phase_split ? JSON.stringify(result.phase_split) : null,
+    JSON.stringify(result.moves), SCORING_VERSION,
+  );
+  if (result.opening_eco || result.opening_name) {
+    db.prepare(`UPDATE games SET eco = ?, opening_name = ? WHERE id = ?`)
+      .run(result.opening_eco, result.opening_name, gameId);
+  }
 }
 
 // Phase split: opening = first N plies (ECO depth, fallback BOOK_PLIES);

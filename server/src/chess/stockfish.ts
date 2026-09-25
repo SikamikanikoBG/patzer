@@ -57,6 +57,7 @@ export interface EngineMultiEval extends EngineEval {
 }
 
 export class StockfishEngine {
+  readonly kind = 'local' as const;
   private proc: ChildProcessWithoutNullStreams | null = null;
   private buffer = '';
   private waiters: ((line: string) => void)[] = [];

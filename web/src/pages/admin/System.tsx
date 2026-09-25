@@ -4,11 +4,15 @@ import { CheckCircle2, AlertCircle, Save, Sparkles, Cpu, Loader2, FlaskConical, 
 import { api } from '../../api';
 
 interface SysSettings {
-  llm_provider?: 'ollama' | 'vllm';
+  llm_provider?: 'ollama' | 'vllm' | 'deepseek';
   ollama_url: string | null;
   ollama_model: string | null;
   vllm_url?: string | null;
   vllm_model?: string | null;
+  deepseek_url?: string | null;
+  deepseek_model?: string | null;
+  deepseek_key_set?: boolean;
+  deepseek_env_override?: boolean;
   stockfish_path: string | null;
   last_model_used?: string | null;
   last_error?: string | null;
@@ -71,13 +75,21 @@ export default function AdminSystem() {
   const [testTo, setTestTo] = useState('');
   const [testStatus, setTestStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [testing, setTesting] = useState(false);
+  // DeepSeek (cloud LLM) — the API key is a secret, handled like the SMTP
+  // password: never returned by the API, only "is one set" + "env override".
+  const [deepseekKey, setDeepseekKey] = useState('');
+  const [deepseekKeySet, setDeepseekKeySet] = useState(false);
+  const [deepseekEnvOverride, setDeepseekEnvOverride] = useState(false);
 
   function loadSettings() {
     return api.get<SysSettings>('/api/admin/system').then((d) => {
       setS({
-        llm_provider: d.llm_provider === 'vllm' ? 'vllm' : 'ollama',
+        llm_provider: d.llm_provider === 'vllm' ? 'vllm' : d.llm_provider === 'deepseek' ? 'deepseek' : 'ollama',
         ollama_url: d.ollama_url ?? '', ollama_model: d.ollama_model ?? '',
         vllm_url: d.vllm_url ?? '', vllm_model: d.vllm_model ?? '',
+        deepseek_url: d.deepseek_url ?? '', deepseek_model: d.deepseek_model ?? '',
+        deepseek_key_set: !!d.deepseek_key_set,
+        deepseek_env_override: !!d.deepseek_env_override,
         stockfish_path: d.stockfish_path ?? '',
       });
       setRuntime({
@@ -102,6 +114,9 @@ export default function AdminSystem() {
       setSmtpEnvOverride(!!d.smtp_env_override);
       setEmailEnabled(!!d.email_enabled);
       setSmtpPass('');
+      setDeepseekKeySet(!!d.deepseek_key_set);
+      setDeepseekEnvOverride(!!d.deepseek_env_override);
+      setDeepseekKey('');
       setHydrated(true);
     });
   }
@@ -140,13 +155,20 @@ export default function AdminSystem() {
   }
 
   const provider = s.llm_provider ?? 'ollama';
-  const activeUrl = provider === 'vllm' ? (s.vllm_url ?? '') : (s.ollama_url ?? '');
-  const activeModel = provider === 'vllm' ? (s.vllm_model ?? '') : (s.ollama_model ?? '');
+  const activeUrl = provider === 'vllm' ? (s.vllm_url ?? '') : provider === 'deepseek' ? (s.deepseek_url ?? '') : (s.ollama_url ?? '');
+  const activeModel = provider === 'vllm' ? (s.vllm_model ?? '') : provider === 'deepseek' ? (s.deepseek_model ?? '') : (s.ollama_model ?? '');
+  // DeepSeek's URL is optional — empty means the official https://api.deepseek.com.
+  const activeUrlForTest = provider === 'deepseek' ? (activeUrl || 'https://api.deepseek.com') : activeUrl;
+  const providerLabel = (p: string) => (p === 'ollama' ? 'Ollama' : p === 'vllm' ? 'vLLM' : 'DeepSeek');
+  const urlLabel = provider === 'vllm' ? 'vLLM URL' : provider === 'deepseek' ? 'DeepSeek URL (optional)' : t('admin.ollamaUrl');
+  const urlPlaceholder = provider === 'vllm' ? 'http://localhost:8000' : provider === 'deepseek' ? 'https://api.deepseek.com' : 'http://localhost:11434';
+  const modelLabel = provider === 'vllm' ? 'vLLM model' : provider === 'deepseek' ? 'DeepSeek model' : t('admin.ollamaModel');
+  const modelPlaceholder = provider === 'vllm' ? 'Qwen3.8-27B' : provider === 'deepseek' ? 'deepseek-chat' : 'gemma3:27b';
   function setActiveUrl(v: string) {
-    setS((cur) => provider === 'vllm' ? { ...cur, vllm_url: v } : { ...cur, ollama_url: v });
+    setS((cur) => provider === 'vllm' ? { ...cur, vllm_url: v } : provider === 'deepseek' ? { ...cur, deepseek_url: v } : { ...cur, ollama_url: v });
   }
   function setActiveModel(v: string) {
-    setS((cur) => provider === 'vllm' ? { ...cur, vllm_model: v } : { ...cur, ollama_model: v });
+    setS((cur) => provider === 'vllm' ? { ...cur, vllm_model: v } : provider === 'deepseek' ? { ...cur, deepseek_model: v } : { ...cur, ollama_model: v });
   }
 
   useEffect(() => { void loadSettings(); }, []);
@@ -190,16 +212,22 @@ export default function AdminSystem() {
   }
 
   async function save() {
-    await api.patch('/api/admin/system', s);
+    await api.patch('/api/admin/system', {
+      ...s,
+      // Only send the API key when the admin typed a new one — empty leaves the
+      // stored secret untouched (same contract as the SMTP password).
+      ...(deepseekKey ? { deepseek_api_key: deepseekKey } : {}),
+    });
+    if (deepseekKey) { setDeepseekKeySet(true); setDeepseekKey(''); }
     setSaved(true); setTimeout(() => setSaved(false), 1500);
   }
 
   async function testAllModels() {
-    if (!activeUrl) return;
+    if (!activeUrlForTest) return;
     setAllTesting(true); setAllResults(null);
     try {
       const r = await api.post<{ ok: boolean; results?: Array<{ model: string; ok: boolean; latencyMs: number; sample?: string; error?: string }>; error?: string }>(
-        '/api/admin/test/ollama-models', { url: activeUrl, provider }
+        '/api/admin/test/ollama-models', { url: activeUrlForTest, provider }
       );
       if (r.ok && r.results) setAllResults(r.results);
       else setAllResults([{ model: 'all', ok: false, latencyMs: 0, error: r.error ?? 'failed' }]);
@@ -220,12 +248,12 @@ export default function AdminSystem() {
           </div>
           <div>
             <h2 className="font-semibold">{t('admin.ollamaConfig')}</h2>
-            <p className="text-xs text-ink-500">Local LLM for the AI Coach — Ollama or an OpenAI-compatible vLLM server. Each is configured independently, so switching providers doesn't lose the other's settings.</p>
+            <p className="text-xs text-ink-500">AI Coach LLM — local Ollama / vLLM, or the hosted DeepSeek API. Each is configured independently, so switching providers doesn't lose the other's settings.</p>
           </div>
         </div>
         <div className="space-y-4 p-5">
           <div className="inline-flex rounded-xl border border-ink-200 p-1 dark:border-ink-700">
-            {(['ollama', 'vllm'] as const).map((p) => (
+            {(['ollama', 'vllm', 'deepseek'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setS({ ...s, llm_provider: p })}
@@ -233,15 +261,15 @@ export default function AdminSystem() {
                   provider === p ? 'bg-accent-500 text-white' : 'text-ink-500 hover:text-ink-700 dark:hover:text-ink-200'
                 }`}
               >
-                {p === 'ollama' ? 'Ollama' : 'vLLM'}
+                {providerLabel(p)}
               </button>
             ))}
           </div>
           <div>
-            <label className="label mb-1 block">{provider === 'vllm' ? 'vLLM URL' : t('admin.ollamaUrl')}</label>
+            <label className="label mb-1 block">{urlLabel}</label>
             <div className="flex gap-2">
-              <input className="input" value={activeUrl} onChange={(e) => setActiveUrl(e.target.value)} placeholder={provider === 'vllm' ? 'http://localhost:8000' : 'http://localhost:11434'} />
-              <button onClick={() => fetchModels(activeUrl)} className="btn-secondary text-sm" disabled={!activeUrl || loadingModels}>
+              <input className="input" value={activeUrl} onChange={(e) => setActiveUrl(e.target.value)} placeholder={urlPlaceholder} />
+              <button onClick={() => fetchModels(activeUrlForTest)} className="btn-secondary text-sm" disabled={!activeUrlForTest || loadingModels}>
                 {loadingModels ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Test'}
               </button>
             </div>
@@ -252,9 +280,23 @@ export default function AdminSystem() {
               </div>
             )}
           </div>
+          {provider === 'deepseek' && (
+            <div>
+              <label className="label mb-1 block">DeepSeek API key</label>
+              <input className="input" type="password" autoComplete="new-password" value={deepseekKey}
+                onChange={(e) => setDeepseekKey(e.target.value)} placeholder={deepseekKeySet ? '••••••••' : 'sk-…'} />
+              {deepseekEnvOverride ? (
+                <p className="mt-1 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"><AlertCircle className="h-3.5 w-3.5" /> Supplied by the DEEPSEEK_API_KEY environment variable — this field is ignored.</p>
+              ) : deepseekKeySet && !deepseekKey ? (
+                <p className="mt-1 text-xs text-ink-400">A key is saved. Type a new one to replace it, or leave blank to keep it.</p>
+              ) : (
+                <p className="mt-1 text-xs text-ink-400">Saved in this server's settings. Save before clicking Test.</p>
+              )}
+            </div>
+          )}
           <div>
-            <label className="label mb-1 block">{provider === 'vllm' ? 'vLLM model' : t('admin.ollamaModel')}</label>
-            <button onClick={testAllModels} disabled={!activeUrl || allTesting} className="btn-secondary text-xs">
+            <label className="label mb-1 block">{modelLabel}</label>
+            <button onClick={testAllModels} disabled={!activeUrlForTest || allTesting} className="btn-secondary text-xs">
             {allTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FlaskConical className="h-3.5 w-3.5" />}
             Test ALL models
           </button>
@@ -287,7 +329,7 @@ export default function AdminSystem() {
           )}
           {loadingModels ? (
               <div className="flex h-10 items-center gap-2 rounded-xl bg-ink-100 px-3 text-sm text-ink-500 dark:bg-ink-800">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading models from {provider === 'vllm' ? 'vLLM' : 'Ollama'}…
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading models from {providerLabel(provider)}…
               </div>
             ) : models.length > 0 ? (
               <select className="input" value={activeModel} onChange={(e) => setActiveModel(e.target.value)}>
@@ -295,7 +337,7 @@ export default function AdminSystem() {
               </select>
             ) : (
               <div className="space-y-1">
-                <input className="input" value={activeModel} onChange={(e) => setActiveModel(e.target.value)} placeholder={provider === 'vllm' ? 'Qwen3.8-27B' : 'gemma3:27b'} />
+                <input className="input" value={activeModel} onChange={(e) => setActiveModel(e.target.value)} placeholder={modelPlaceholder} />
                 <p className="text-xs text-ink-400">No models loaded — set the URL above and click Test, or type a model name manually.</p>
               </div>
             )}

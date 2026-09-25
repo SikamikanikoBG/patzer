@@ -4,7 +4,7 @@ services:
     # push to main by .github/workflows/docker-publish.yml). To build from
     # local source instead, uncomment `build: .` and run `docker compose build`.
     image: sikamikaniko123/patzer:latest
-    # build: .
+    build: .
     container_name: patzer
     restart: unless-stopped
     ports:
