@@ -3,6 +3,7 @@ import { api } from '../api';
 
 export interface AuthConfig {
   signup_enabled: boolean;
+  signup_mode: 'open' | 'invite' | 'closed';
   email_enabled: boolean;
 }
 
@@ -11,7 +12,7 @@ export interface AuthConfig {
 // Fails closed (both false) so a probe error never advertises a route the
 // server would reject anyway.
 export function useAuthConfig(): { config: AuthConfig; loaded: boolean } {
-  const [config, setConfig] = useState<AuthConfig>({ signup_enabled: false, email_enabled: false });
+  const [config, setConfig] = useState<AuthConfig>({ signup_enabled: false, signup_mode: 'closed', email_enabled: false });
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     let alive = true;

@@ -34,7 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   recording on Freesound and only load once *Real board* is picked; until
   they have loaded — or if they can't — moves fall back to the synthesized
   knocks. (#36)
-
 - **Import games from Lichess.** Next to the Chess.com importer: set a
   Lichess username in **Settings** and *Import from Lichess* appears in Game
   Review. Uses Lichess's public export API (no token), sends a real
@@ -44,6 +43,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   twice doesn't duplicate anything. Correspondence games land in the same
   *daily* pool as chess.com's. Import errors (unknown player, Lichess down)
   are shown now instead of failing silently, for Chess.com too. (#28)
+
+- **Invite-only sign-up.** Admin → System now has three answers to "who can
+  create an account": anyone, invite only, nobody. Admin → Users gets an
+  Invites list: each invite is a code and a `/signup?invite=…` link, limited
+  to a number of accounts and a lifetime (one account, one week unless you
+  pick otherwise), and can preset the language and coach level of the
+  accounts made with it — so a coach can hand a class a "Spanish, beginner"
+  link. Copy the link again later, withdraw it, and see who signed up with
+  it. The sign-up page checks an invite as soon as it's entered, so a dead
+  link is reported before anyone fills in the form. Existing installs keep
+  what they had: on becomes "anyone", off becomes "nobody". (#26)
 
 ### Changed
 - **`games.source` accepts `lichess`.** SQLite can't alter a CHECK
@@ -55,6 +65,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   import.
 
 ### Fixed
+- **Admin → System's Save button didn't save the sign-up settings.** It only
+  saved the coach and engine fields; the sign-up switches were saved by
+  "Save email settings" further down, so changing them and pressing Save
+  quietly did nothing. Save now saves the whole page.
 - **English text on translated screens.** Around 140 strings were hard-coded
   in components (Settings descriptions, the greeting, phase names, the game
   list, key moments, admin pages…) or used a translation key that existed in

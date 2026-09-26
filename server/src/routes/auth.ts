@@ -1,11 +1,19 @@
 import { Hono } from 'hono';
-import type { Context } from 'hono';
 import { setCookie, getCookie, deleteCookie } from 'hono/cookie';
 import { z } from 'zod';
 import { db, getSetting, userCount } from '../db.js';
 import { config } from '../config.js';
 import { hashPassword, verifyPassword } from '../auth/passwords.js';
 import { issueToken, consumeToken } from '../auth/tokens.js';
+import {
+  signupMode,
+  findInvite,
+  inviteStatus,
+  consumeInvite,
+  normalizeInviteCode,
+  type InviteRow,
+} from '../auth/invites.js';
+import { publicBaseUrl } from '../publicUrl.js';
 import {
   isMailerConfigured,
   sendMail,
@@ -163,29 +171,23 @@ router.get('/me', (c) => {
 
 // ---- Self-service signup + email flows -----------------------------------
 
-function signupEnabled(): boolean {
-  // Seeded to '1' on first boot; an admin flipping it to '0' disables signup.
-  return getSetting('allow_signup') !== '0';
-}
-
-// Public base URL used to build absolute links inside emails. Prefer an
-// explicit operator setting (handles reverse-proxy / public-hostname deploys
-// where the request's Host header is the internal one), then env, then the
-// incoming request. Trailing slash trimmed.
-function publicBaseUrl(c: Context): string {
-  const fromSetting = getSetting('public_base_url');
-  if (fromSetting) return fromSetting.replace(/\/+$/, '');
-  if (process.env.PUBLIC_BASE_URL) return process.env.PUBLIC_BASE_URL.replace(/\/+$/, '');
-  const proto = c.req.header('x-forwarded-proto') || 'http';
-  const host = c.req.header('x-forwarded-host') || c.req.header('host');
-  if (host) return `${proto}://${host}`;
-  return new URL(c.req.url).origin;
-}
-
 // Public capability probe so the login/signup pages can show or hide the
 // "Sign up" and "Forgot password?" affordances without guessing.
+// signup_enabled stays for older front-ends: true for 'open' and 'invite'.
 router.get('/config', (c) => {
-  return c.json({ signup_enabled: signupEnabled(), email_enabled: isMailerConfigured() });
+  const mode = signupMode();
+  return c.json({ signup_enabled: mode !== 'closed', signup_mode: mode, email_enabled: isMailerConfigured() });
+});
+
+// Lets the signup page say "this invite has expired" before anyone fills in
+// the form, and switch to the invite's preset language. The admin's note is
+// never returned — it is for the admin only.
+router.get('/invite', (c) => {
+  const invite = findInvite(c.req.query('code') ?? '');
+  if (!invite) return c.json({ valid: false, reason: 'invalid' });
+  const status = inviteStatus(invite);
+  if (status !== 'active') return c.json({ valid: false, reason: status });
+  return c.json({ valid: true, language: invite.language });
 });
 
 const registerSchema = z.object({
@@ -196,17 +198,26 @@ const registerSchema = z.object({
   // "absent" so the front-end can always send the field.
   email: z.union([z.string().trim().email().max(200), z.literal('')]).optional(),
   language: z.enum(['en', 'bg', 'es', 'de']).default('en'),
+  // Required when signup is invite-only; optional (but still checked) when it
+  // is open, where it only presets language and audience.
+  invite: z.string().max(40).optional(),
 });
+
+// Thrown inside the signup transaction to roll the new account back.
+class InviteSpent extends Error {}
 
 router.post('/register', async (c) => {
   if (userCount() === 0) return c.json({ error: 'setup_required' }, 409);
-  if (!signupEnabled()) return c.json({ error: 'signup_disabled' }, 403);
+  const mode = signupMode();
+  if (mode === 'closed') return c.json({ error: 'signup_disabled' }, 403);
 
   const body = await c.req.json().catch(() => null);
   const parsed = registerSchema.safeParse(body);
   if (!parsed.success) return c.json({ error: 'invalid_input', details: parsed.error.flatten() }, 400);
-  const { username, password, display_name, language } = parsed.data;
+  const { username, password, display_name } = parsed.data;
   const email = parsed.data.email ? parsed.data.email : null;
+  const inviteCode = normalizeInviteCode(parsed.data.invite ?? '');
+  if (mode === 'invite' && !inviteCode) return c.json({ error: 'invite_required' }, 403);
 
   // Reuse the login limiter buckets — registration is just as abusable for
   // resource exhaustion (each call runs a ~250ms bcrypt hash).
@@ -216,6 +227,17 @@ router.post('/register', async (c) => {
     c.header('Retry-After', String(limit.retryAfter));
     return c.json({ error: 'rate_limited', retry_after: limit.retryAfter }, 429);
   }
+
+  let invite: InviteRow | undefined;
+  if (inviteCode) {
+    invite = findInvite(inviteCode);
+    const status = invite ? inviteStatus(invite) : 'invalid';
+    if (status !== 'active') return c.json({ error: `invite_${status}` }, 403);
+  }
+  // An invite's presets beat what the browser sent: a coach handing out
+  // "beginner, Spanish" links to a class wants exactly that.
+  const language = invite?.language ?? parsed.data.language;
+  const audience = invite?.audience ?? 'beginner';
 
   if (db.prepare('SELECT id FROM users WHERE username = ?').get(username)) {
     return c.json({ error: 'username_taken' }, 409);
@@ -233,18 +255,21 @@ router.post('/register', async (c) => {
   let userId: number;
   try {
     userId = db.transaction(() => {
+      // Someone else can take the last use during the bcrypt hash above.
+      if (invite && !consumeInvite(invite.id)) throw new InviteSpent();
       const r = db
-        .prepare(`INSERT INTO users (username, password_hash, role, email, email_verified) VALUES (?, ?, 'user', ?, ?)`)
-        .run(username, passwordHash, email, emailVerified);
+        .prepare(`INSERT INTO users (username, password_hash, role, email, email_verified, invite_id) VALUES (?, ?, 'user', ?, ?, ?)`)
+        .run(username, passwordHash, email, emailVerified, invite?.id ?? null);
       const id = Number(r.lastInsertRowid);
       // Self-signups default to the friendliest profile; they can change it in
       // Settings. 'beginner' audience keeps the coach approachable out of the box.
       db.prepare(
-        `INSERT INTO profiles (user_id, display_name, language, audience, coach_behavior) VALUES (?, ?, ?, 'beginner', 'on_demand')`,
-      ).run(id, display_name, language);
+        `INSERT INTO profiles (user_id, display_name, language, audience, coach_behavior) VALUES (?, ?, ?, ?, 'on_demand')`,
+      ).run(id, display_name, language, audience);
       return id;
     })();
   } catch (err) {
+    if (err instanceof InviteSpent) return c.json({ error: 'invite_used_up' }, 403);
     // UNIQUE violations can still slip through the pre-checks under a race.
     const msg = (err as Error).message || '';
     if (/users\.username/i.test(msg)) return c.json({ error: 'username_taken' }, 409);
@@ -280,7 +305,7 @@ router.post('/register', async (c) => {
   // Otherwise log them straight in, same as a normal login.
   const cookie = createSession(userId);
   setCookie(c, SESSION_COOKIE_NAME, cookie, sessionCookieOpts());
-  console.log(`[auth] register_ok ip=${ip} user=${username} email=${email ? 'yes' : 'no'}`);
+  console.log(`[auth] register_ok ip=${ip} user=${username} email=${email ? 'yes' : 'no'} invite=${invite ? invite.id : 'none'}`);
   const profile = db.prepare('SELECT * FROM profiles WHERE user_id = ?').get(userId) as Profile;
   return c.json({ user: { id: userId, username, role: 'user' as Role, profile }, verification_required: false });
 });

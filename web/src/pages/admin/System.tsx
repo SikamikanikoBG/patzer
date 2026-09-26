@@ -16,7 +16,7 @@ interface SysSettings {
   call_count?: number;
   // signup + email (v7.7.0)
   update_check_enabled?: boolean;
-  allow_signup?: boolean;
+  signup_mode?: SignupMode;
   require_email_verification?: boolean;
   notify_admin_on_signup?: boolean;
   public_base_url?: string;
@@ -30,9 +30,12 @@ interface SysSettings {
   email_enabled?: boolean;
 }
 
+type SignupMode = 'open' | 'invite' | 'closed';
+const SIGNUP_MODES: readonly SignupMode[] = ['open', 'invite', 'closed'];
+
 interface MailState {
   update_check_enabled: boolean;
-  allow_signup: boolean;
+  signup_mode: SignupMode;
   require_email_verification: boolean;
   notify_admin_on_signup: boolean;
   public_base_url: string;
@@ -59,7 +62,7 @@ export default function AdminSystem() {
   // Signup + email (v7.7.0)
   const [mail, setMail] = useState<MailState>({
     update_check_enabled: true,
-    allow_signup: true, require_email_verification: false, notify_admin_on_signup: true,
+    signup_mode: 'open', require_email_verification: false, notify_admin_on_signup: true,
     public_base_url: '', smtp_host: '', smtp_port: '', smtp_secure: false, smtp_user: '', smtp_from: '',
   });
   const [smtpPass, setSmtpPass] = useState('');
@@ -88,7 +91,7 @@ export default function AdminSystem() {
       });
       setMail({
         update_check_enabled: d.update_check_enabled ?? true,
-        allow_signup: d.allow_signup ?? true,
+        signup_mode: d.signup_mode ?? 'open',
         require_email_verification: d.require_email_verification ?? false,
         notify_admin_on_signup: d.notify_admin_on_signup ?? true,
         public_base_url: d.public_base_url ?? '',
@@ -111,7 +114,7 @@ export default function AdminSystem() {
     try {
       await api.patch('/api/admin/system', {
         update_check_enabled: mail.update_check_enabled,
-        allow_signup: mail.allow_signup,
+        signup_mode: mail.signup_mode,
         require_email_verification: mail.require_email_verification,
         notify_admin_on_signup: mail.notify_admin_on_signup,
         public_base_url: mail.public_base_url,
@@ -191,6 +194,10 @@ export default function AdminSystem() {
 
   async function save() {
     await api.patch('/api/admin/system', s);
+    // This is the button people reach for. It used to save only the coach and
+    // engine fields, so a changed signup mode was silently lost unless "Save
+    // email settings" further down was clicked instead.
+    await saveMail();
     setSaved(true); setTimeout(() => setSaved(false), 1500);
   }
 
@@ -367,8 +374,25 @@ export default function AdminSystem() {
           <ToggleRow checked={mail.update_check_enabled} onChange={(v) => setMail({ ...mail, update_check_enabled: v })}
             label={t('update.checkTitle', { defaultValue: 'Check for updates' })}
             hint={t('update.checkHelp', { defaultValue: 'Once every six hours, Patzer asks GitHub whether a newer release exists.' })} />
-          <ToggleRow checked={mail.allow_signup} onChange={(v) => setMail({ ...mail, allow_signup: v })}
-            label={t('admin.allowSignup')} hint={t('admin.allowSignupHint')} />
+          <fieldset>
+            <legend className="text-sm font-medium">{t('admin.signupMode')}</legend>
+            <div className="mt-2 grid gap-2 sm:grid-cols-3">
+              {SIGNUP_MODES.map((m) => (
+                <label key={m} className={`cursor-pointer rounded-xl border p-3 transition-colors ${
+                  mail.signup_mode === m
+                    ? 'border-accent-500 bg-accent-500/10'
+                    : 'border-ink-200 hover:border-ink-300 dark:border-ink-700 dark:hover:border-ink-600'
+                }`}>
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    <input type="radio" name="signup_mode" value={m} checked={mail.signup_mode === m}
+                      onChange={() => setMail({ ...mail, signup_mode: m })} />
+                    {t(`admin.signupModes.${m}`)}
+                  </span>
+                  <span className="mt-1 block text-xs text-ink-400">{t(`admin.signupModes.${m}Hint`)}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <ToggleRow checked={mail.require_email_verification} onChange={(v) => setMail({ ...mail, require_email_verification: v })}
             label={t('admin.requireVerification')} hint={emailEnabled ? t('admin.requireVerificationHint') : t('admin.requireVerificationNeedsSmtp')}
             disabled={!emailEnabled} />

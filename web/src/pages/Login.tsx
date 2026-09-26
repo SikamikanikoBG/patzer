@@ -85,7 +85,9 @@ export default function Login() {
           {(config.signup_enabled || config.email_enabled) && (
             <div className="flex items-center justify-between pt-1 text-sm">
               {config.signup_enabled
-                ? <Link to="/signup" className="font-medium text-accent-600 hover:underline">{t('auth.createAccount')}</Link>
+                ? <Link to="/signup" className="font-medium text-accent-600 hover:underline">
+                    {config.signup_mode === 'invite' ? t('auth.haveInvite') : t('auth.createAccount')}
+                  </Link>
                 : <span />}
               {config.email_enabled && (
                 <Link to="/forgot-password" className="text-ink-500 hover:underline">{t('auth.forgotPassword')}</Link>
