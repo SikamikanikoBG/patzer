@@ -25,6 +25,7 @@ import trainRoutes from './routes/train.js';
 import openingsRoutes from './routes/openings.js';
 import planRoutes from './routes/plan.js';
 import achievementsRoutes from './routes/achievements.js';
+import { startChessComSync } from './autoImport.js';
 import { attachPlayWebSocket } from './ws/play.js';
 import { attachLobbyWebSocket } from './ws/lobby.js';
 
@@ -148,3 +149,7 @@ const server = serve({ fetch: app.fetch, port: config.port, hostname: config.hos
 
 attachPlayWebSocket(server as unknown as Server);
 attachLobbyWebSocket(server as unknown as Server);
+
+// Background Chess.com auto-import (and the analysis/review of the imported
+// games). Idempotent — safe to run alongside the manual Import button.
+startChessComSync();

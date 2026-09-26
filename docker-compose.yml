@@ -13,6 +13,11 @@ services:
       - patzer-data:/app/data
     environment:
       - NODE_ENV=production
+      # Analysis engine backend. `local` (default) uses the bundled Stockfish
+      # binary; set ENGINE_BACKEND=chessapi (e.g. via a .env file) to opt in to
+      # the hosted chess-api.com engine — the knob for a public try-it instance
+      # (DEMO_MODE, #27).
+      - ENGINE_BACKEND=${ENGINE_BACKEND:-local}
       # PORT/HOST/DB_PATH/STOCKFISH_PATH have sensible defaults baked into the image.
     labels:
       # Opt this container in to the (label-enabled) Watchtower on the host, so

@@ -336,6 +336,11 @@ db.exec(`CREATE TABLE IF NOT EXISTS live_bot_games (
 // short enough that the table stays small.
 db.prepare(`DELETE FROM live_bot_games WHERE updated_at < datetime('now','-14 days')`).run();
 
+// Automatic review. When a game finishes, ws/play.ts calls kickAutoReview()
+// (see autoReview.ts), which writes the AI Game Review prose for every game
+// that has an analysis row but no cached review yet. No dedicated column is
+// needed: `analyses.prose_json` is the cache and its absence is the work queue.
+
 // Open signup defaults ON — the operator explicitly wants family members to
 // self-register. Admins can flip it off from the Admin → System console. Seeded
 // only when absent so a deliberate later 'off' survives restarts.

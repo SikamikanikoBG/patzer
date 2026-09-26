@@ -8,11 +8,12 @@ import { persistLiveBotGame, clearLiveBotGame, loadLiveBotGame } from '../chess/
 import { lookupUser, SESSION_COOKIE_NAME } from '../auth/sessions.js';
 import { StockfishEngine } from '../chess/stockfish.js';
 import { db } from '../db.js';
-import { analyzePgn, analyzePgnFull } from '../routes/analyze.js';
+import { analyzePgn, analyzePgnFull, saveAnalysis } from '../routes/analyze.js';
+import { kickAutoReview } from '../autoReview.js';
 import { classifyByWpDrop, refineClassification, normalizeEval, cpToWinPct, SCORING_VERSION } from '../chess/classifier.js';
 import { classifyTimeControl, type TimeClass } from '../chess/timeClass.js';
 import { GLICKO_DEFAULTS, inflateRd, updatePair } from '../chess/glicko.js';
-import { chatStream, llmUrl } from '../coach/llm.js';
+import { chatStream, llmConfigured } from '../coach/llm.js';
 import { systemPrompt, explainMovePrompt } from '../coach/prompts.js';
 import type { AuthedUser, Difficulty, Classification } from '../types.js';
 import { notifyUser } from './lobby.js';
@@ -467,7 +468,7 @@ async function handleBotConnection(ws: WebSocket, user: AuthedUser) {
             // LLM being configured + user setting; never fires for routine moves.
             if (
               user.profile.coach_behavior === 'always_on_pedagogical' &&
-              llmUrl() !== null &&
+              llmConfigured() &&
               (result.classification === 'blunder' || result.classification === 'mistake')
             ) {
               try {
@@ -642,16 +643,10 @@ async function endBotGame(ws: WebSocket, session: BotSession, result: '1-0' | '0
   setImmediate(async () => {
     try {
       const analysis = await analyzePgn(pgn, 14);
-      // Stamp scoring_version so the games list does not flag this analysis as
-      // stale and re-trigger a free re-analysis on first view.
-      db.prepare(`
-        INSERT INTO analyses (game_id, depth, accuracy_white, accuracy_black, estimated_elo_white, estimated_elo_black, moves_json, scoring_version)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(game_id) DO UPDATE SET depth = excluded.depth,
-          accuracy_white = excluded.accuracy_white, accuracy_black = excluded.accuracy_black,
-          estimated_elo_white = excluded.estimated_elo_white, estimated_elo_black = excluded.estimated_elo_black,
-          moves_json = excluded.moves_json, scoring_version = excluded.scoring_version
-      `).run(gameId, 14, analysis.accuracy_white, analysis.accuracy_black, analysis.estimated_elo_white, analysis.estimated_elo_black, JSON.stringify(analysis.moves), SCORING_VERSION);
+      // The full row — key moments and phase split included — so the written
+      // Game Review has what it needs without a second analysis.
+      saveAnalysis(gameId, analysis);
+      kickAutoReview();
     } catch (err) {
       console.error('[auto-analyze]', err);
     }
@@ -1022,37 +1017,9 @@ async function endPvpGame(session: PvpSession, result: '1-0' | '0-1' | '1/2-1/2'
           opponentRating: r.opponent_rating_before,
           opponentRd: r.user_rd_before,
         });
-        db.prepare(`
-          INSERT INTO analyses (game_id, depth, accuracy_white, accuracy_black,
-            estimated_elo_white, estimated_elo_black,
-            performance_white, performance_black,
-            opening_eco, opening_name,
-            key_moments_json, phase_split_json,
-            moves_json, scoring_version)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          ON CONFLICT(game_id) DO UPDATE SET
-            depth = excluded.depth,
-            accuracy_white = excluded.accuracy_white, accuracy_black = excluded.accuracy_black,
-            estimated_elo_white = excluded.estimated_elo_white, estimated_elo_black = excluded.estimated_elo_black,
-            performance_white = excluded.performance_white, performance_black = excluded.performance_black,
-            opening_eco = excluded.opening_eco, opening_name = excluded.opening_name,
-            key_moments_json = excluded.key_moments_json, phase_split_json = excluded.phase_split_json,
-            moves_json = excluded.moves_json, scoring_version = excluded.scoring_version
-        `).run(
-          r.id, 14,
-          analysis.accuracy_white, analysis.accuracy_black,
-          analysis.estimated_elo_white, analysis.estimated_elo_black,
-          analysis.performance_white, analysis.performance_black,
-          analysis.opening_eco, analysis.opening_name,
-          JSON.stringify(analysis.key_moments),
-          analysis.phase_split ? JSON.stringify(analysis.phase_split) : null,
-          JSON.stringify(analysis.moves), SCORING_VERSION,
-        );
-        if (analysis.opening_eco || analysis.opening_name) {
-          db.prepare(`UPDATE games SET eco = ?, opening_name = ? WHERE id = ?`)
-            .run(analysis.opening_eco, analysis.opening_name, r.id);
-        }
+        saveAnalysis(r.id, analysis);
       }
+      kickAutoReview();
       // Notify the still-connected sockets that analysis is ready
       for (const color of ['white', 'black'] as const) {
         const player = color === 'white' ? session.white : session.black;

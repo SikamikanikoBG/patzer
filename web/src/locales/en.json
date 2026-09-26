@@ -484,7 +484,7 @@
     "sendTestEmailHint": "Save first — the test uses the saved settings.",
     "send": "Send",
     "testEmailSent": "Test email sent.",
-    "llmDesc": "Local LLM for the AI Coach — Ollama or an OpenAI-compatible vLLM server. Each is configured independently, so switching providers doesn't lose the other's settings.",
+    "llmDesc": "LLM for the AI Coach — a local Ollama or OpenAI-compatible vLLM server, or the hosted DeepSeek API. Each is configured independently, so switching providers doesn't lose the other's settings.",
     "vllmUrl": "vLLM URL",
     "vllmModel": "vLLM model",
     "testAllModels": "Test ALL models",

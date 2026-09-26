@@ -1,6 +1,6 @@
 import { getSetting } from '../db.js';
 
-export type LlmProvider = 'ollama' | 'vllm';
+export type LlmProvider = 'ollama' | 'vllm' | 'deepseek';
 
 // Reasoning models (Qwen3 and friends) emit a chain-of-thought that isn't
 // part of `content` but does eat into `max_tokens`, so a tight budget leaves
@@ -9,23 +9,50 @@ export type LlmProvider = 'ollama' | 'vllm';
 // to the tokenizer's chat template; non-thinking models/templates ignore it.
 const VLLM_NO_THINK = { chat_template_kwargs: { enable_thinking: false } };
 
+// DeepSeek is a hosted OpenAI-compatible API. It's the "cloud LLM" option
+// alongside local Ollama / self-hosted vLLM. Unlike the local providers, its
+// URL has a sensible default and the API key is the real "configured" signal.
+const DEEPSEEK_BASE = 'https://api.deepseek.com';
+
 export interface LlmModel { name: string; size: number; details?: { parameter_size?: string } }
 
 export function llmProvider(): LlmProvider {
-  return getSetting('llm_provider') === 'vllm' ? 'vllm' : 'ollama';
+  const p = getSetting('llm_provider');
+  if (p === 'vllm') return 'vllm';
+  if (p === 'deepseek') return 'deepseek';
+  return 'ollama';
 }
 
-// Ollama and vLLM are configured independently (own URL + model each), so
-// switching the provider toggle doesn't clobber whichever one you aren't
-// currently using — e.g. an Ollama box for quick local models and a vLLM
-// server for a bigger one, configured once each.
+// DeepSeek API key — env wins (Docker secrets), DB setting as fallback. Never
+// returned to the client; the admin surface only reports whether one is set.
+export function deepseekApiKey(): string | null {
+  return process.env.DEEPSEEK_API_KEY || getSetting('deepseek_api_key') || null;
+}
+
+// Ollama, vLLM and DeepSeek are configured independently (own URL + model
+// each), so switching the provider toggle doesn't clobber whichever one you
+// aren't currently using — e.g. an Ollama box for quick local models, a vLLM
+// server for a bigger one, and DeepSeek for a cloud model, configured once each.
 export function llmUrl(): string | null {
-  const url = llmProvider() === 'vllm' ? getSetting('vllm_url') : getSetting('ollama_url');
+  const p = llmProvider();
+  const url = p === 'vllm' ? getSetting('vllm_url')
+    : p === 'deepseek' ? (getSetting('deepseek_url') || DEEPSEEK_BASE)
+    : getSetting('ollama_url');
   return url ? url.replace(/\/$/, '') : null;
 }
 
+// Whether the currently-selected LLM is actually usable. For DeepSeek the URL
+// always resolves to a default, so the API key is what makes it "configured";
+// the other two are configured once they have a URL.
+export function llmConfigured(): boolean {
+  if (llmProvider() === 'deepseek') return !!deepseekApiKey();
+  return !!llmUrl();
+}
+
 export function llmModel(): string {
-  if (llmProvider() === 'vllm') return getSetting('vllm_model') || '';
+  const p = llmProvider();
+  if (p === 'vllm') return getSetting('vllm_model') || '';
+  if (p === 'deepseek') return getSetting('deepseek_model') || 'deepseek-chat';
   return getSetting('ollama_model') || 'gemma3:1b';
 }
 
@@ -58,15 +85,31 @@ export function llmStats(): { count: number; p95Ms: number | null; lastError: st
 let lastError: string | null = null;
 let lastModelUsed: string | null = null;
 
+// OpenAI-compatible providers (vLLM, DeepSeek) speak the same dialect; these
+// helpers centralize the two places they differ — the endpoint suffix and the
+// auth header (DeepSeek needs a Bearer key, vLLM is usually unauthenticated).
+type OpenAiLike = 'vllm' | 'deepseek';
+function openAiEndpoint(base: string, provider: OpenAiLike): string {
+  return `${base}${provider === 'deepseek' ? '/chat/completions' : '/v1/chat/completions'}`;
+}
+function openAiHeaders(provider: OpenAiLike): Record<string, string> {
+  const h: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (provider === 'deepseek') h.Authorization = `Bearer ${deepseekApiKey() ?? ''}`;
+  return h;
+}
+
 /** List models available on the configured host, normalized across providers.
- *  Ollama exposes its native `/api/tags`; vLLM's OpenAI-compatible server
- *  exposes `/v1/models` (one entry per `--served-model-name`, usually just
- *  the one model that instance is running). */
+ *  Ollama exposes its native `/api/tags`; vLLM and DeepSeek expose an
+ *  OpenAI-compatible `/models` (one entry per served model). */
 export async function testConnection(url: string, provider: LlmProvider = llmProvider()): Promise<{ ok: true; models: LlmModel[] } | { ok: false; error: string }> {
   const base = url.replace(/\/$/, '');
   try {
-    if (provider === 'vllm') {
-      const res = await fetch(`${base}/v1/models`, { signal: AbortSignal.timeout(8000) });
+    if (provider === 'vllm' || provider === 'deepseek') {
+      if (provider === 'deepseek' && !deepseekApiKey()) return { ok: false, error: 'deepseek_api_key_missing' };
+      const res = await fetch(`${base}/models`, {
+        headers: provider === 'deepseek' ? { Authorization: `Bearer ${deepseekApiKey() ?? ''}` } : undefined,
+        signal: AbortSignal.timeout(8000),
+      });
       if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
       const data = (await res.json()) as { data?: { id: string }[] };
       return { ok: true, models: (data.data ?? []).map((m) => ({ name: m.id, size: 0 })) };
@@ -118,8 +161,8 @@ interface ChatOpts {
 // Hard timeout (default 120s) and idle timeout (default 30s) ensure silent
 // failures (model loading forever, network hung) become loud errors.
 export async function chatStream(messages: ChatMessage[], onChunk: (text: string) => void, opts: ChatOpts = {}): Promise<void> {
-  const url = llmUrl();
-  if (!url) throw new Error('llm_not_configured');
+  if (!llmConfigured()) throw new Error('llm_not_configured');
+  const url = llmUrl()!;
   const provider = llmProvider();
   const model = (opts.fallback === false) ? (opts.model ?? llmModel()) : await resolveModel(opts.model);
   lastModelUsed = model;
@@ -139,17 +182,18 @@ export async function chatStream(messages: ChatMessage[], onChunk: (text: string
   bumpIdle();
 
   try {
-    if (provider === 'vllm') {
-      const res = await fetch(`${url}/v1/chat/completions`, {
+    if (provider === 'vllm' || provider === 'deepseek') {
+      const body: Record<string, unknown> = {
+        model, messages, stream: true,
+        temperature: opts.temperature ?? 0.3,
+        top_p: opts.topP ?? 0.9,
+        max_tokens: opts.numPredict ?? 220,
+      };
+      if (provider === 'vllm') Object.assign(body, VLLM_NO_THINK);
+      const res = await fetch(openAiEndpoint(url, provider), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model, messages, stream: true,
-          temperature: opts.temperature ?? 0.3,
-          top_p: opts.topP ?? 0.9,
-          max_tokens: opts.numPredict ?? 220,
-          ...VLLM_NO_THINK,
-        }),
+        headers: openAiHeaders(provider),
+        body: JSON.stringify(body),
         signal: ac.signal,
       });
       if (!res.ok || !res.body) throw new Error(`llm_http_${res.status}`);
@@ -239,15 +283,15 @@ export async function chatStream(messages: ChatMessage[], onChunk: (text: string
 
 // Non-streaming JSON-mode call. Used for batched game review where we need
 // structured output (per-move comments + summary) in one response. Ollama's
-// `format: "json"` and vLLM's OpenAI-compatible `response_format:
+// `format: "json"` and the OpenAI-compatible `response_format:
 // {type:"json_object"}` both constrain the model to valid JSON; we still
 // parse defensively.
 export async function chatJson<T = unknown>(
   messages: ChatMessage[],
   opts: { model?: string; temperature?: number; numPredict?: number; signal?: AbortSignal; timeoutMs?: number; fallback?: boolean } = {},
 ): Promise<T> {
-  const url = llmUrl();
-  if (!url) throw new Error('llm_not_configured');
+  if (!llmConfigured()) throw new Error('llm_not_configured');
+  const url = llmUrl()!;
   const provider = llmProvider();
   const model = (opts.fallback === false) ? (opts.model ?? llmModel()) : await resolveModel(opts.model);
   lastModelUsed = model;
@@ -260,17 +304,18 @@ export async function chatJson<T = unknown>(
   const timer = setTimeout(() => ac.abort(new Error('llm_hard_timeout')), timeoutMs);
   try {
     let raw: string;
-    if (provider === 'vllm') {
-      const res = await fetch(`${url}/v1/chat/completions`, {
+    if (provider === 'vllm' || provider === 'deepseek') {
+      const body: Record<string, unknown> = {
+        model, messages, stream: false,
+        response_format: { type: 'json_object' },
+        temperature: opts.temperature ?? 0.2,
+        max_tokens: opts.numPredict ?? 1500,
+      };
+      if (provider === 'vllm') Object.assign(body, VLLM_NO_THINK);
+      const res = await fetch(openAiEndpoint(url, provider), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model, messages, stream: false,
-          response_format: { type: 'json_object' },
-          temperature: opts.temperature ?? 0.2,
-          max_tokens: opts.numPredict ?? 1500,
-          ...VLLM_NO_THINK,
-        }),
+        headers: openAiHeaders(provider),
+        body: JSON.stringify(body),
         signal: ac.signal,
       });
       if (!res.ok) throw new Error(`llm_http_${res.status}`);
@@ -338,17 +383,18 @@ export async function testModel(url: string, model: string, timeoutMs = 30_000, 
   const base = url.replace(/\/$/, '');
   const start = Date.now();
   try {
-    if (provider === 'vllm') {
-      const res = await fetch(`${base}/v1/chat/completions`, {
+    if (provider === 'vllm' || provider === 'deepseek') {
+      const body: Record<string, unknown> = {
+        model,
+        messages: [{ role: 'user', content: 'Reply with exactly the word OK and nothing else.' }],
+        stream: false,
+        temperature: 0.1,
+      };
+      if (provider === 'vllm') Object.assign(body, VLLM_NO_THINK);
+      const res = await fetch(openAiEndpoint(base, provider), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model,
-          messages: [{ role: 'user', content: 'Reply with exactly the word OK and nothing else.' }],
-          stream: false,
-          temperature: 0.1,
-          ...VLLM_NO_THINK,
-        }),
+        headers: openAiHeaders(provider),
+        body: JSON.stringify(body),
         signal: AbortSignal.timeout(timeoutMs),
       });
       const latencyMs = Date.now() - start;
