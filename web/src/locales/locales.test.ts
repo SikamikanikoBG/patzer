@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import en from './en.json';
 import de from './de.json';
+import learnEn from './learn/en.json';
+import learnDe from './learn/de.json';
 import { goalText } from '../lib/goalText';
 
 type Tree = { [k: string]: string | Tree };
@@ -30,6 +32,25 @@ describe('de locale', () => {
   it('keeps every interpolation placeholder', () => {
     for (const key of Object.keys(enFlat)) {
       expect(placeholders(deFlat[key] ?? ''), key).toEqual(placeholders(enFlat[key]!));
+    }
+  });
+});
+
+// The lesson texts are their own namespace; same rule. A missing German key
+// would put an English sentence into a German lesson.
+describe('de lesson texts', () => {
+  const enFlat = flatten(learnEn as Tree);
+  const deFlat = flatten(learnDe as Tree);
+
+  it('has every key that en has, and nothing else', () => {
+    expect(Object.keys(deFlat).sort()).toEqual(Object.keys(enFlat).sort());
+  });
+
+  it('keeps every placeholder and every bold mark', () => {
+    for (const key of Object.keys(enFlat)) {
+      expect(placeholders(deFlat[key] ?? ''), key).toEqual(placeholders(enFlat[key]!));
+      // **bold** pairs must stay pairs, or the markers would show as text.
+      expect((deFlat[key]!.match(/\*\*/g) ?? []).length % 2, key).toBe(0);
     }
   });
 });

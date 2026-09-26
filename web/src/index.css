@@ -103,6 +103,15 @@ cg-board square.last-move.premove-dest {
   background-position: 0 0 !important;
 }
 
+/* Chess pieces as icons outside a board (Learn section badges). chessground
+   styles every <piece> for an 8×8 grid; here one piece fills its box. */
+.learn-piece { position: relative; }
+.learn-piece piece {
+  width: 100%;
+  height: 100%;
+  transform: none;
+}
+
 @layer components {
   /* Buttons — rounded-md (6px) per chess.com spec. */
   .btn {

@@ -69,3 +69,10 @@ export function formatMoves(moves: string[]): string {
     .map((san, i) => (i % 2 === 0 ? `${i / 2 + 1}. ${san}` : san))
     .join(' ');
 }
+
+/** Today in the user's own time zone as YYYY-MM-DD — the review queue turns
+ *  over at the user's midnight, not the server's. */
+export function localDay(now = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}

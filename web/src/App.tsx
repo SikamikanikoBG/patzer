@@ -19,6 +19,7 @@ import GameAnalyzer from './pages/GameAnalyzer';
 import Insights from './pages/Insights';
 import Train from './pages/Train';
 import Openings from './pages/Openings';
+import Learn from './pages/Learn';
 import Plan from './pages/Plan';
 import Lab from './pages/Lab';
 import Players from './pages/Players';
@@ -107,7 +108,7 @@ export default function App() {
       }
       const since = Date.now() - gPrefixRef.current;
       if (since < 1200) {
-        const map: Record<string, string> = { h: '/', p: '/play', r: '/review', i: '/insights', t: '/train', s: '/settings', o: '/openings', n: '/plan', l: '/lab', u: '/players' };
+        const map: Record<string, string> = { h: '/', p: '/play', r: '/review', i: '/insights', t: '/train', e: '/learn', s: '/settings', o: '/openings', n: '/plan', l: '/lab', u: '/players' };
         const target = map[e.key.toLowerCase()];
         if (target) {
           e.preventDefault();
@@ -186,6 +187,7 @@ export default function App() {
           <Route path="/review/:id" element={<GameAnalyzer />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/train" element={<Train />} />
+          <Route path="/learn" element={<Learn />} />
           <Route path="/openings" element={<Openings />} />
           <Route path="/plan" element={<Plan />} />
           <Route path="/lab" element={<Lab />} />

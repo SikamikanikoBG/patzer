@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMoves, isExpectedMove, isUserPly, moveSquares, positionAfter, userMoveCount } from './openingTrainer';
+import { formatMoves, isExpectedMove, isUserPly, localDay, moveSquares, positionAfter, userMoveCount } from './openingTrainer';
 
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -36,5 +36,10 @@ describe('opening trainer helpers', () => {
   it('writes a line in the usual notation', () => {
     expect(formatMoves(['e4', 'e5', 'Nf3'])).toBe('1. e4 e5 2. Nf3');
     expect(formatMoves([])).toBe('');
+  });
+
+  it('gives the local calendar day, zero-padded', () => {
+    expect(localDay(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
+    expect(localDay(new Date(2026, 11, 31, 0, 1))).toBe('2026-12-31');
   });
 });

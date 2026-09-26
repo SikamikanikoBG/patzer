@@ -1,0 +1,177 @@
+{
+  "id": "beginner",
+  "courses": [
+    {
+      "id": "basic-mates",
+      "icon": "Q",
+      "lessons": [
+        {
+          "id": "mate-in-one",
+          "icon": "mate",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "k7/8/1K6/8/8/8/8/7Q w - - 0 1", "arrows": ["h1h8"]},
+            {"id": "p1", "type": "move", "fen": "N1b2rk1/pp3pp1/3p1q1p/2b1p3/2P1P2N/6P1/PPP2P1P/R2QK2R w KQ - 1 14", "pre": "a8c7", "line": ["f6f2"], "goal": "mate", "src": "uAQzr"},
+            {"id": "p2", "type": "move", "fen": "1k1r4/3q4/8/7p/Q4B2/6PP/5P1K/8 b - - 2 65", "pre": "b8c8", "line": ["a4a8"], "goal": "mate", "src": "CzEOB"},
+            {"id": "p3", "type": "move", "fen": "2r2rk1/pp1b2pp/1qnpp3/5p1n/4PP1b/P1N4P/1PP1B1PN/R1BQ1RK1 w - - 4 17", "pre": "g1h1", "line": ["h5g3"], "goal": "mate", "src": "6BIFz"},
+            {"id": "p4", "type": "move", "fen": "rn1qk2r/1pp1n1p1/3p3p/p1bPp3/2P1P3/3B1pPb/PP3P1P/RNBQ1RNK w kq - 2 11", "pre": "f1e1", "line": ["h3g2"], "goal": "mate", "src": "8NsrL"},
+            {"id": "p5", "type": "move", "fen": "8/5p2/4p1pk/8/5P2/5KP1/2rp4/3R4 b - - 1 40", "pre": "h6h5", "line": ["d1h1"], "goal": "mate", "src": "Cal8F"},
+            {"id": "p6", "type": "move", "fen": "r3k2r/pp3ppp/1qn5/3NPbB1/Q7/5N2/PP3bPP/R3K2R w KQkq - 1 17", "pre": "e1f1", "line": ["f5d3"], "goal": "mate", "src": "z1380"},
+            {"id": "p7", "type": "move", "fen": "3r4/1Bb5/2P3k1/p4p2/P1RB4/3p4/3P2p1/3K1rR1 w - - 2 40", "pre": "g1f1", "line": ["g2f1q"], "goal": "mate", "src": "l3oYI"}
+          ]
+        },
+        {
+          "id": "back-rank",
+          "icon": "flag",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1", "demo": ["e1e8"]},
+            {"id": "m1", "type": "move", "goal": "mate", "fen": "6k1/5ppp/8/8/8/8/5PPP/4R1K1 w - - 0 1", "line": ["e1e8"]},
+            {"id": "luft", "type": "info", "fen": "6k1/5pp1/7p/8/8/8/5PPP/4R1K1 w - - 0 1", "marks": ["h7"]},
+            {"id": "p1", "type": "move", "fen": "2rk4/1b2bppp/p2p1n2/3Pp1B1/B3P3/P6Q/1P3PPP/6K1 w - - 8 24", "pre": "g5f6", "line": ["c8c1", "a4d1", "c1d1"], "goal": "mate", "src": "97cz2"},
+            {"id": "p2", "type": "move", "fen": "2r5/pq3pk1/1p4p1/3r3p/4pQ2/1P2P3/PR3PPP/3R2K1 w - - 0 26", "pre": "d1d5", "line": ["c8c1", "d5d1", "c1d1"], "goal": "mate", "src": "V7duF"},
+            {"id": "p3", "type": "move", "fen": "6k1/pp4pp/8/3N4/3np3/4b3/4r1PP/1K3R2 b - - 3 26", "pre": "e3d2", "line": ["d5e7", "g8h8", "f1f8"], "goal": "mate", "src": "22UpY"},
+            {"id": "p4", "type": "move", "fen": "5rk1/6pp/3Np3/p3P3/8/P1Q1b3/1PP2qPP/3R2K1 w - - 0 26", "pre": "g1h1", "line": ["f2f1", "d1f1", "f8f1"], "goal": "mate", "src": "GWU8y"},
+            {"id": "p5", "type": "move", "fen": "4r2k/5Qpp/1R1p2r1/p7/8/6PP/4qR1K/8 b - - 2 47", "pre": "e2e3", "line": ["f7f8", "e8f8", "f2f8"], "goal": "mate", "src": "zEA21"},
+            {"id": "p6", "type": "move", "fen": "2r3k1/1p4pp/5p1q/8/4p1Q1/BP4PP/P4P1K/5b2 b - - 2 33", "pre": "c8c2", "line": ["g4e6", "g8h8", "e6e8"], "goal": "mate", "src": "i1HDP"}
+          ]
+        },
+        {
+          "id": "ladder",
+          "icon": "R",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "8/8/8/3k4/7R/8/8/6RK w - - 0 1", "demo": ["g1g5", "d5d6", "h4h6", "d6d7", "g5g7", "d7d8", "h6h8"]},
+            {"id": "m1", "type": "move", "goal": "mate", "fen": "6k1/R7/8/8/8/8/8/1R4K1 w - - 0 1", "line": ["b1b8"]},
+            {"id": "play", "type": "play", "goal": "mate", "limit": 12, "fen": "8/8/8/3k4/8/8/8/R3K2R w - - 0 1"}
+          ]
+        },
+        {
+          "id": "queen-mate",
+          "icon": "Q",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "8/8/8/4k3/8/8/8/3QK3 w - - 0 1"},
+            {"id": "m1", "type": "move", "goal": "mate", "fen": "7k/8/6K1/8/8/8/8/Q7 w - - 0 1", "line": ["a1a8"]},
+            {"id": "patt", "type": "quiz", "fen": "7k/4Q3/6K1/8/8/8/8/8 w - - 0 1", "arrows": ["e7f7:red"], "options": ["mate", "stalemate", "check"], "answer": "stalemate"},
+            {"id": "play", "type": "play", "goal": "mate", "limit": 20, "fen": "8/8/8/4k3/8/8/8/3QK3 w - - 0 1"}
+          ]
+        },
+        {
+          "id": "rook-mate",
+          "icon": "K",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "4k3/8/4K3/8/8/8/8/7R w - - 0 1", "demo": ["h1h8"]},
+            {"id": "m1", "type": "move", "goal": "mate", "fen": "k7/8/1K6/8/8/8/8/7R w - - 0 1", "line": ["h1h8"]},
+            {"id": "play", "type": "play", "goal": "mate", "limit": 35, "fen": "8/8/8/4k3/8/8/8/R3K3 w - - 0 1"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tactics-1",
+      "icon": "fork",
+      "lessons": [
+        {
+          "id": "hanging",
+          "icon": "hanging",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "4k3/8/8/3n4/8/8/8/3RK3 w - - 0 1", "demo": ["d1d5"]},
+            {"id": "p1", "type": "move", "fen": "8/1p6/p1k5/2p5/3p4/1P1K4/P1PR2rr/4B3 b - - 5 41", "pre": "g2g3", "line": ["e1g3", "h2d2", "d3d2"], "src": "4rQ7F"},
+            {"id": "p2", "type": "move", "fen": "8/1p3kpp/4pp2/2Np4/2nPP1P1/7P/1rn2P2/R3R1K1 w - - 1 30", "pre": "e1e2", "line": ["c2a1", "e2b2", "c4b2"], "src": "5D1WZ"},
+            {"id": "p3", "type": "move", "fen": "2kn4/ppp4p/6pq/5pN1/2P2Q2/P6P/5P2/1K6 b - - 0 31", "pre": "d8e6", "line": ["g5e6", "h6f4", "e6f4"], "src": "cBlFx"},
+            {"id": "p4", "type": "move", "fen": "r3k2r/1pp1n1pp/3b1p2/2n1p3/8/4PN2/PB1P1PPP/RN3RK1 b kq - 3 13", "pre": "c5b3", "line": ["a2b3", "a8a1", "b2a1"], "src": "h4KBG"},
+            {"id": "p5", "type": "move", "fen": "r7/pbr3pk/4p1N1/3q2RP/1Ppn4/P1Q5/1P2B3/2K3R1 w - - 2 32", "pre": "g5d5", "line": ["d4e2", "c1c2", "e2c3"], "src": "6czgO"},
+            {"id": "p6", "type": "move", "fen": "rn1qkb1r/pp3ppp/2p2p2/7b/2P5/5N1P/PP1P1PP1/R1BQKB1R w KQkq - 1 8", "pre": "f1d3", "line": ["d8d3", "d1e2", "d3e2"], "src": "SGzKD"}
+          ]
+        },
+        {
+          "id": "fork",
+          "icon": "fork",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "4k3/8/8/7q/4N3/8/8/4K3 w - - 0 1", "demo": ["e4f6", "e8e7", "f6h5"]},
+            {"id": "p1", "type": "move", "fen": "4r3/p5pp/k4p2/2p5/3pN3/1P1K1BP1/5P1P/8 b - - 0 32", "pre": "a6b5", "line": ["e4d6", "b5b4", "d6e8"], "src": "aPtao"},
+            {"id": "p2", "type": "move", "fen": "2b3k1/p1pq2np/1p1p2p1/3P4/2P3N1/PP4PP/6B1/5QK1 b - - 0 27", "pre": "g7f5", "line": ["g4f6", "g8g7", "f6d7"], "src": "Z1cI4"},
+            {"id": "p3", "type": "move", "fen": "8/1p2B1kp/4p1p1/6P1/7P/5PK1/1r6/8 b - - 0 39", "pre": "b7b5", "line": ["e7f6", "g7f7", "f6b2"], "src": "zKmVs"},
+            {"id": "p4", "type": "move", "fen": "rn1qkb1r/pp2pppp/5n2/1Np1N3/8/8/PPPP1PPP/R1BQK2R b KQkq - 0 7", "pre": "d8d5", "line": ["b5c7", "e8d8", "c7d5"], "src": "Zw8d4"},
+            {"id": "p5", "type": "move", "fen": "r4rk1/pp2ppBp/2p3p1/8/N1P3n1/1P2PKP1/P4P1q/R2Q1R2 b - - 1 16", "pre": "g8g7", "line": ["d1d4", "e7e5", "d4g4"], "src": "62iQf"},
+            {"id": "p6", "type": "move", "fen": "7B/3K3p/3P2p1/pk6/7R/1p6/8/5r2 w - - 0 49", "pre": "d7c8", "line": ["f1f8", "c8c7", "f8h8"], "src": "rRpT1"}
+          ]
+        },
+        {
+          "id": "pin",
+          "icon": "pin",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "4k3/8/2n5/8/8/8/8/4KB2 w - - 0 1", "demo": ["f1b5"]},
+            {"id": "use", "type": "info", "fen": "7k/6p1/8/4B3/8/8/8/6K1 b - - 0 1", "arrows": ["e5h8:red"]},
+            {"id": "p1", "type": "move", "fen": "rnbqk2r/ppp1bp1p/6p1/3pP3/8/2P3Q1/PPP3PP/R1B1KBNR w KQkq - 0 8", "pre": "c1h6", "line": ["e7h4", "e1c1", "h4g3"], "src": "sPyy0"},
+            {"id": "p2", "type": "move", "fen": "r3k2r/p1p1qpp1/1ppbbn1p/4p3/2N1P3/3PBN1P/PPPQ1PP1/R3K2R w KQkq - 2 11", "pre": "d2c3", "line": ["d6b4", "c3b4", "e7b4"], "src": "6caM3"},
+            {"id": "p3", "type": "move", "fen": "1k1r3r/ppq2pp1/2p1pn2/4bbBp/3P3P/1BP2P2/PP2Q1P1/R4K1R w - - 0 20", "pre": "d4e5", "line": ["f5d3", "e2d3", "d8d3"], "src": "Wip8p"},
+            {"id": "p4", "type": "move", "fen": "5rk1/p3N1pp/1p6/8/2r5/8/PP3bK1/3R3R b - - 1 30", "pre": "g8h8", "line": ["e7g6", "h8g8", "g6f8"], "src": "HV0DE"},
+            {"id": "p5", "type": "move", "fen": "8/3b1k2/3p1q2/2pP4/1pP2p2/pP3P2/P6Q/4BK2 b - - 3 44", "pre": "f7e7", "line": ["e1h4", "e7f7", "h4f6"], "src": "GVa8M"},
+            {"id": "p6", "type": "move", "fen": "5r1k/6p1/1p1R2bp/p3B2n/B1p5/8/PP5P/6K1 b - - 1 38", "pre": "g6d3", "line": ["d6h6", "h8g8", "h6h5"], "src": "7ZkzT"}
+          ]
+        },
+        {
+          "id": "skewer",
+          "icon": "skewer",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "3q4/8/8/3k4/8/8/8/R3K3 w - - 0 1", "demo": ["a1d1", "d5e5", "d1d8"]},
+            {"id": "p1", "type": "move", "fen": "8/p2N2k1/bp2p2R/6P1/3KP3/5r2/P7/8 w - - 0 35", "pre": "h6e6", "line": ["f3d3", "d4e5", "d3d7"], "src": "PcWBO"},
+            {"id": "p2", "type": "move", "fen": "1r4k1/5pp1/4p1p1/4P1N1/3P1P1Q/7P/q2p2PK/8 b - - 3 30", "pre": "g8f8", "line": ["h4h8", "f8e7", "h8b8"], "src": "ZiCtK"},
+            {"id": "p3", "type": "move", "fen": "5r2/8/4p2p/4P1k1/R2PK1P1/7P/8/8 w - - 3 50", "pre": "d4d5", "line": ["f8f4", "e4e3", "f4a4"], "src": "R071K"},
+            {"id": "p4", "type": "move", "fen": "2kr3r/ppp1nppp/2n5/1B2P1B1/4P1b1/8/PPP3PP/RN2K2R w KQ - 7 12", "pre": "b5c6", "line": ["d8d1", "e1f2", "d1h1"], "src": "Fp4tP"},
+            {"id": "p5", "type": "move", "fen": "r7/3b2p1/5p1p/n2kp2P/3P2P1/3BPP2/5K2/7R b - - 1 33", "pre": "e5d4", "line": ["d3e4", "d5d6", "e4a8"], "src": "QOyK9"},
+            {"id": "p6", "type": "move", "fen": "r4k2/pp5p/3q1rp1/3p4/3Q1P2/2PP3P/PP4P1/4R1K1 b - - 3 27", "pre": "f6f4", "line": ["d4h8", "f8f7", "h8a8"], "src": "9I5v1"}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "openings-1",
+      "icon": "center",
+      "lessons": [
+        {
+          "id": "center",
+          "icon": "center",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "marks": ["d4", "e4", "d5", "e5"]},
+            {"id": "squares", "type": "square", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "answer": ["d4", "e4", "d5", "e5"]},
+            {"id": "first", "type": "move", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "line": ["e2e4"], "accept": ["d2d4"]},
+            {"id": "why", "type": "quiz", "fen": "8/8/8/8/3N4/8/8/N7 w - - 0 1", "options": ["reach", "rule", "safe"], "answer": "reach"}
+          ]
+        },
+        {
+          "id": "develop",
+          "icon": "develop",
+          "trainer": "italian",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", "arrows": ["g1f3", "b1c3", "f1c4"]},
+            {"id": "knight", "type": "move", "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", "line": ["g1f3"], "accept": ["b1c3"]},
+            {"id": "rim", "type": "quiz", "fen": "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2", "arrows": ["g1h3:red", "g1f3"], "options": ["rim", "slow", "illegal"], "answer": "rim"},
+            {"id": "bishop", "type": "move", "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", "line": ["f1c4"], "accept": ["f1b5"]},
+            {"id": "twice", "type": "quiz", "fen": "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3", "options": ["yes", "no"], "answer": "no"}
+          ]
+        },
+        {
+          "id": "king-safety",
+          "icon": "castle",
+          "trainer": "ruy-lopez",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", "arrows": ["e1g1"]},
+            {"id": "castle1", "type": "move", "rule": true, "fen": "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4", "line": ["e1g1"]},
+            {"id": "queen", "type": "quiz", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "options": ["queen", "knights", "castle"], "answer": "queen"},
+            {"id": "castle2", "type": "move", "rule": true, "fen": "r2qkbnr/ppp2ppp/2n1p3/3p1b2/3P1B2/2N5/PPPQPPPP/R3KBNR w KQkq - 0 5", "line": ["e1c1"]}
+          ]
+        },
+        {
+          "id": "traps",
+          "icon": "trap",
+          "trainer": "two-knights",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "demo": ["e2e4", "e7e5", "d1h5", "b8c6", "f1c4", "g8f6", "h5f7"]},
+            {"id": "defend", "type": "move", "fen": "r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3", "line": ["g7g6"], "accept": ["d8e7", "d8f6", "g8h6"]},
+            {"id": "fool", "type": "move", "goal": "mate", "fen": "rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2", "line": ["d8h4"]},
+            {"id": "f7", "type": "quiz", "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", "marks": ["f7", "f2"], "options": ["king", "queen", "knight"], "answer": "king"}
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -19,7 +19,7 @@ interface Props {
   resetKey?: number;
 }
 
-type PieceLetter = 'q' | 'r' | 'b' | 'n';
+export type PieceLetter = 'q' | 'r' | 'b' | 'n';
 
 export default function ChessBoard({
   fen, orientation = 'white', movable = false, turnColor, onMove,
@@ -178,7 +178,7 @@ export default function ChessBoard({
   );
 }
 
-function PromotionPicker({ color, square, orientation, onPick, onCancel }:
+export function PromotionPicker({ color, square, orientation, onPick, onCancel }:
   { color: 'white' | 'black'; square: string; orientation: 'white' | 'black'; onPick: (p: PieceLetter) => void; onCancel: () => void }) {
   const file = square.charCodeAt(0) - 97;
   const rank = parseInt(square[1]!, 10) - 1;

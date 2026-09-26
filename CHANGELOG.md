@@ -4,6 +4,44 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Learn section (beta).** A new *Learn* page with 54 interactive lessons in four
+  levels — New to chess, Beginner, Intermediate, Advanced: how the pieces
+  move and every rule, how moves are written down, basic checkmates, forks,
+  pins and the other tactics, mating patterns, opening principles, pawn and
+  rook endgames. A lesson is a short explanation with animated examples, then
+  tasks: collect stars, tap squares, find the move (Patzer answers), play an
+  ending out against Stockfish, or answer a question. A wrong move gets a
+  reason where the position shows one (stalemate, a check that isn't mate);
+  "Show the solution" draws the arrows and you play the moves yourself; the
+  explanation can be looked up again during the tasks. Each lesson earns one
+  to three stars, stars add up to levels, and there are three new
+  achievements. Progress is stored per profile on the server, an unfinished
+  lesson resumes where you left it, kid mode shows the same lessons in
+  simpler words, and a Home tile suggests the next lesson. The tactic, mate
+  and endgame tasks are puzzles from the Lichess puzzle database (CC0). Every
+  task is checked twice: by the test suite (legal moves, real mates, star
+  tasks solvable in the stated number of moves) and by
+  `npm run verify:lessons`, which asks Stockfish whether each answer really is
+  the one clearly best move. Lesson texts in English and German. Marked beta
+  while it is being refined. (Roadmap #7)
+
+### Changed
+- **Opening trainer is marked beta.** It works, but it is still being
+  refined, so the *Trainer* tab carries a small "Beta" badge.
+- **Opening trainer: easier first steps, fairer misses.** A new line starts
+  with "Do you know this line already?": watch it first (arrows on every
+  move, nothing counted) or practise right away. One wrong try no longer
+  lands in the review — the second one (or "Show me the move") does. "Practice
+  this line" from your repertoire stops before one of your own moves that the
+  analysis calls a mistake in most of your games. The review queue turns over
+  at your own midnight instead of UTC's, and a move you no longer play can be
+  removed from it. Built-in line names are translated. In the review, a
+  first wrong try gets a hint and one more go; after the answer it moves on
+  by itself.
+
 ## [7.15.0] — 2026-09-26
 
 ### German, Lichess, invites, an opening trainer — and two new contributors

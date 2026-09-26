@@ -1,0 +1,603 @@
+{
+  "courses": {
+    "pieces": {
+      "title": "Die Figuren",
+      "desc": "Lerne das Brett kennen und wie jede Figur zieht."
+    },
+    "rules": {
+      "title": "Die Regeln",
+      "desc": "Schlagen, Schach, Schachmatt, Rochade und die anderen Sonderregeln."
+    },
+    "basic-mates": {
+      "title": "Mattsetzen – die Grundlagen",
+      "desc": "Matt in einem Zug, das Grundreihenmatt und die Grundmatts mit Dame und Türmen."
+    },
+    "tactics-1": {
+      "title": "Erste Taktik",
+      "desc": "Hängende Figuren, Gabel, Fesselung und Spieß – die Tricks, die Material gewinnen."
+    },
+    "openings-1": {
+      "title": "Eröffnungsgrundsätze",
+      "desc": "So beginnst du eine Partie: Zentrum, Entwicklung, Königssicherheit – und die Fallen, die du kennen solltest."
+    },
+    "tactics-2": {
+      "title": "Taktik II",
+      "desc": "Abzugsangriff, Doppelschach, Ablenkung, Hinlenkung, Beseitigung des Verteidigers, Zwischenzug und gefangene Figuren."
+    },
+    "mates-2": {
+      "title": "Mattbilder",
+      "desc": "Matt in zwei und die klassischen Muster: ersticktes Matt, Anastasia-Matt und arabisches Matt."
+    },
+    "pawn-endings": {
+      "title": "Bauernendspiele",
+      "desc": "Die Quadratregel, die Opposition und wie man mit König und Bauer gewinnt."
+    },
+    "tactics-3": {
+      "title": "Meistertaktik",
+      "desc": "Matt in drei, stille Züge, Zugzwang, Räumung, Verstellung, Röntgenangriff und Unterverwandlung."
+    },
+    "rook-endings": {
+      "title": "Turmendspiele",
+      "desc": "Das häufigste Endspiel: aktive Türme, die Lucena- und die Philidor-Stellung."
+    }
+  },
+  "board": {
+    "title": "Das Schachbrett",
+    "desc": "64 Felder und ihre Namen.",
+    "intro": "Das Schachbrett hat **64 Felder**, abwechselnd hell und dunkel. Es liegt immer so, dass das Feld **rechts unten hell** ist – hier ist es markiert.",
+    "intro_kid": "Das ist ein Schachbrett! Es hat 64 Felder – helle und dunkle, immer abwechselnd. Schau in die Ecke rechts unten: Die ist hell. So liegt das Brett immer.",
+    "names": "Die senkrechten Spalten heißen **Linien** (**a** bis **h**), die waagerechten **Reihen** (**1** bis **8**). Jedes Feld hat einen Namen aus Linie und Reihe: Das markierte Feld heißt **e4** – Linie e, Reihe 4. Die Buchstaben und Zahlen stehen am Rand des Bretts.",
+    "names_kid": "Jedes Feld hat einen Namen, wie ein Platz im Kino! Der Buchstabe (a bis h) sagt dir die Spalte, die Zahl (1 bis 8) die Reihe. Das markierte Feld heißt e4. Schau dir die Buchstaben und Zahlen am Rand an.",
+    "find1": "Tippe auf das Feld **c6**.",
+    "find2": "Jetzt tippe auf **g2**.",
+    "corners": "Tippe auf alle **vier Eckfelder**.",
+    "setup": "So beginnt eine Partie. Weiß steht unten und macht immer den **ersten Zug**. Vorn stehen die Bauern, dahinter von links nach rechts: Turm, Springer, Läufer, Dame, König, Läufer, Springer, Turm.",
+    "setup_kid": "So stehen alle Figuren am Anfang. Weiß ist unten und fängt immer an. Die kleinen Bauern stehen in der ersten Reihe, die großen Figuren dahinter.",
+    "queen": "Eine praktische Regel: Die Dame steht am Anfang auf **ihrer eigenen Farbe** – die weiße Dame auf einem hellen Feld, die schwarze auf einem dunklen. Tippe auf die weiße Dame.",
+    "queen_kid": "Die Dame mag ihre eigene Farbe: Die weiße Dame steht auf einem hellen Feld. Findest du sie? Tippe sie an!",
+    "king": "Die beiden Könige stehen sich auf derselben Linie gegenüber. Tippe auf den **schwarzen König**."
+  },
+  "rook": {
+    "title": "Der Turm",
+    "desc": "Gerade Linien, so weit er will.",
+    "intro": "Der **Turm** zieht geradeaus: nach vorn, nach hinten, nach links oder rechts – so viele Felder er will. Über andere Figuren springen darf er nicht.",
+    "intro_kid": "Der Turm ist wie ein Rennauto auf geraden Straßen: vor, zurück, links, rechts – so weit er will! Aber über andere Figuren springen kann er nicht.",
+    "s1": "Zieh den Turm zum Stern, um ihn einzusammeln.",
+    "s1_kid": "Fahr mit dem Turm zum Stern!",
+    "s2": "Sammle beide Sterne ein. Schaffst du es mit möglichst wenigen Zügen?",
+    "s3": "Deine eigenen Bauern stehen im Weg, und der Turm kann nicht über sie springen. Sammle beide Sterne ein.",
+    "s3_kid": "Die Bauern sind Mauern – der Turm muss um sie herumfahren. Hol dir beide Sterne!"
+  },
+  "bishop": {
+    "title": "Der Läufer",
+    "desc": "Schräge Linien – und immer dieselbe Farbe.",
+    "intro": "Der **Läufer** zieht schräg (diagonal), so weit er will. Darum bleibt er immer auf Feldern **einer Farbe**: Dieser Läufer steht auf einem dunklen Feld und wird nie ein helles erreichen.",
+    "intro_kid": "Der Läufer geht nur schräg, wie auf einer Rutsche. Darum bleibt er immer auf seiner Farbe: Dieser hier wohnt auf den dunklen Feldern.",
+    "s1": "Sammle den Stern mit dem Läufer ein.",
+    "s2": "Sammle beide Sterne ein.",
+    "s3": "Dieser Läufer wohnt auf den hellen Feldern. Sammle alle drei Sterne ein.",
+    "color": "Kann dieser Läufer jemals das markierte Feld **d4** erreichen?",
+    "color_yes": "Ja",
+    "color_no": "Nein",
+    "color_done": "Richtig! Dieser Läufer steht auf einem hellen Feld und bleibt immer auf hellen Feldern – d4 ist dunkel."
+  },
+  "queen": {
+    "title": "Die Dame",
+    "desc": "Die stärkste Figur: Turm und Läufer in einer.",
+    "intro": "Die **Dame** ist die stärkste Figur. Sie zieht wie Turm und Läufer zusammen: gerade **und** schräg, so weit sie will.",
+    "intro_kid": "Die Dame ist die Superheldin im Schach! Sie kann gerade gehen wie der Turm und schräg wie der Läufer – in alle Richtungen, so weit sie will.",
+    "s1": "Sammle beide Sterne mit der Dame ein.",
+    "s2": "Vier Sterne – finde den kürzesten Weg!",
+    "s3": "Achte auf deine eigenen Bauern. Sammle alle drei Sterne ein."
+  },
+  "king": {
+    "title": "Der König",
+    "desc": "Die wichtigste Figur – Schritt für Schritt.",
+    "intro": "Der **König** ist die wichtigste Figur: Wird er gefangen, ist die Partie verloren. Er zieht nur **ein Feld** weit, dafür in jede Richtung.",
+    "intro_kid": "Der König ist die wichtigste Figur – du musst ihn beschützen! Er ist ein bisschen langsam: Er geht immer nur einen Schritt, aber in jede Richtung.",
+    "s1": "Lauf mit dem König zu beiden Sternen.",
+    "danger": "Der König darf **nie** auf ein Feld ziehen, das eine gegnerische Figur angreift – dort würde er geschlagen. Der schwarze Turm greift die ganze 5. Reihe an.",
+    "danger_kid": "Vorsicht! Der König darf nie auf ein Feld gehen, auf das eine gegnerische Figur zielt. Der schwarze Turm bewacht die ganze rote Linie.",
+    "where": "Tippe auf alle Felder, auf die der weiße König ziehen **darf**.",
+    "s2": "Der schwarze Springer bewacht ein paar Felder, dort darf der König nicht hin. Sammle trotzdem beide Sterne ein."
+  },
+  "knight": {
+    "title": "Der Springer",
+    "desc": "Der Hüpfer: in L-Form über alles hinweg.",
+    "intro": "Der **Springer** zieht in **L-Form**: zwei Felder geradeaus, dann eins zur Seite. Er ist die einzige Figur, die über andere Figuren **springen** darf.",
+    "intro_kid": "Der Springer hüpft wie ein Pferd in L-Form: zwei Schritte geradeaus, ein Schritt zur Seite – hopp! Er ist die einzige Figur, die über andere springen kann.",
+    "where": "Der Springer ist umzingelt – aber er springt einfach drüber. Tippe auf alle Felder, auf denen er landen kann.",
+    "s1": "Spring zu beiden Sternen.",
+    "s2": "Der Springer springt einfach über die Bauern. Sammle alle drei Sterne ein.",
+    "s3": "Manchmal braucht der Springer einen Umweg. Bring ihn so schnell wie möglich zum Stern!",
+    "s3_kid": "Der Stern ist gleich nebenan, aber der Springer muss herumhüpfen. Findest du den Weg?"
+  },
+  "pawn": {
+    "title": "Der Bauer",
+    "desc": "Nur vorwärts – und schräg schlagen.",
+    "intro": "Der **Bauer** zieht nur vorwärts, immer ein Feld. Von seinem Startfeld aus darf er auch **zwei Felder** auf einmal ziehen. Rückwärts geht es nie.",
+    "intro_kid": "Der Bauer ist klein, aber mutig: Er geht nur nach vorn, immer einen Schritt. Nur bei seinem allerersten Zug darf er einen großen Doppelschritt machen.",
+    "s1": "Sammle beide Sterne mit dem Bauern ein.",
+    "capture": "Bauern schlagen anders, als sie ziehen: **ein Feld schräg nach vorn**. Steht direkt vor dem Bauern eine Figur, kommt er nicht weiter – geradeaus schlagen kann er nicht.",
+    "capture_kid": "Bauern gehen geradeaus, aber schlagen schräg! Und wenn direkt vor einem Bauern etwas steht, steckt er fest.",
+    "s2": "Der Weg nach vorn ist versperrt. Schlag dich zu beiden Sternen durch!",
+    "where": "Wohin kann dieser Bauer ziehen? Tippe auf alle Felder, auf die er ziehen oder auf denen er schlagen kann."
+  },
+  "capture": {
+    "title": "Schlagen",
+    "desc": "Gegnerische Figuren vom Brett nehmen.",
+    "intro": "Jede Figur **außer dem Bauern** schlägt so, wie sie zieht: Sie zieht auf das Feld einer gegnerischen Figur und nimmt sie vom Brett. (Der Bauer schlägt schräg, wie du gesehen hast.) Eigene Figuren darfst du nie schlagen.",
+    "intro_kid": "Schlagen heißt: Deine Figur zieht auf das Feld einer gegnerischen Figur und schubst sie vom Brett!",
+    "s1": "Schlage mit dem Turm alle schwarzen Figuren.",
+    "s2": "Jetzt mit dem Springer: Schlage alle drei Bauern.",
+    "safe": "Du kannst den Läufer oder den Springer schlagen. Eine der beiden Figuren ist **gedeckt**: Eine andere schwarze Figur könnte zurückschlagen, wenn du sie nimmst. Schlage die **ungedeckte**!",
+    "safe_kid": "Du kannst den Läufer oder den Springer schlagen. Aber einer von beiden hat einen Beschützer! Nimm den, der ganz allein ist.",
+    "safe_done": "Richtig! Den Springer hat niemand gedeckt. Hättest du den Läufer genommen, hätte der Bauer e6 deine Dame geschlagen."
+  },
+  "check": {
+    "title": "Schach",
+    "desc": "Wenn der König angegriffen wird.",
+    "intro": "Greift eine Figur den König an, steht er im **Schach**. Wer im Schach steht, muss das sofort beenden – ein anderer Zug ist nicht erlaubt. Hier gibt der weiße Turm auf der e-Linie Schach.",
+    "intro_kid": "Wenn eine Figur auf den König zielt, heißt das Schach! Dann muss der König sofort aus der Gefahr.",
+    "give1": "Gib dem schwarzen König Schach!",
+    "give2": "Gib Schach mit dem Springer.",
+    "give3": "Auch ein Bauer kann Schach geben. Probier es aus!"
+  },
+  "escape": {
+    "title": "Raus aus dem Schach",
+    "desc": "Drei Auswege: wegziehen, dazwischenstellen, schlagen.",
+    "intro": "Es gibt drei Wege aus dem Schach:\n1. Der König **zieht** auf ein sicheres Feld.\n2. Eine Figur stellt sich **dazwischen**.\n3. Die angreifende Figur wird **geschlagen**.\nWelcher Weg klappt, hängt von der Stellung ab.",
+    "intro_kid": "Dein König steht im Schach – was jetzt? Drei Ideen: weglaufen, etwas dazwischenstellen oder den Angreifer schlagen!",
+    "run": "Dein König steht im Schach und hat keine Helfer. Zieh ihn auf ein sicheres Feld.",
+    "block": "Der König kann nicht weg – aber du kannst eine Figur dazwischenstellen.",
+    "take": "Ein Springer gibt Schach. Gegen ein Springerschach kann man nichts dazwischenstellen – schlag ihn!"
+  },
+  "checkmate": {
+    "title": "Schachmatt",
+    "desc": "Schach ohne Ausweg gewinnt die Partie.",
+    "intro": "Steht der König im Schach und es gibt **keinen Ausweg** – kein freies Feld, nichts zum Dazwischenstellen, nichts zu schlagen –, ist er **schachmatt**. Die Partie ist vorbei, und wer mattsetzt, gewinnt. Hier ist Schwarz matt: Die eigenen Bauern versperren dem König die Flucht.",
+    "intro_kid": "Schachmatt ist das Ziel des Spiels! Der König steht im Schach und kann nirgendwohin fliehen. Dann ist die Partie aus – und wer mattsetzt, gewinnt!",
+    "q1": "Ist Schwarz schachmatt?",
+    "q1_yes": "Ja, das ist Matt",
+    "q1_no": "Nein, der König kann fliehen",
+    "q1_done": "Richtig – kein Matt. Der König kann nach h7 fliehen.",
+    "q2": "Und hier – ist Schwarz schachmatt?",
+    "q2_yes": "Ja, das ist Matt",
+    "q2_no": "Nein, der König kann fliehen",
+    "q2_done": "Richtig! Die Dame gibt Schach, der weiße König deckt sie, und jedes Feld um den schwarzen König ist bewacht.",
+    "m1": "Setze den schwarzen König in einem Zug matt!",
+    "m2": "Matt in einem Zug mit der Dame.",
+    "m3": "Noch einmal: Matt in einem Zug."
+  },
+  "castling": {
+    "title": "Rochade",
+    "desc": "König in Sicherheit, Turm ins Spiel – in einem Zug.",
+    "intro": "Einmal pro Partie darfst du **rochieren**: Der König zieht **zwei Felder** in Richtung eines Turms, und der Turm stellt sich auf die andere Seite des Königs, direkt neben ihn. So bringst du den König in Sicherheit und einen Turm ins Spiel. Das hier ist die **kurze Rochade**, zum **Königsflügel** – der Seite, auf der der König anfängt.",
+    "intro_kid": "Die Rochade ist ein Spezialzug: Der König macht zwei Schritte zur Seite, und der Turm läuft um ihn herum auf seine andere Seite. Jetzt sitzt der König sicher in seiner Burg!",
+    "short": "Mach die kurze Rochade! Zieh den König zwei Felder nach rechts (oder setz ihn auf den Turm) – der Turm kommt von selbst mit.",
+    "long": "Jetzt die **lange Rochade**, zum **Damenflügel** – der Seite, auf der die Dame anfängt: Der König zieht zwei Felder nach links.",
+    "rules": "Das ist die **lange** Rochade. Rochieren darfst du nur, wenn:\n• König und dieser Turm noch **nicht gezogen** haben,\n• **nichts** zwischen ihnen steht,\n• der König **nicht im Schach** steht und weder über ein **angegriffenes Feld** zieht noch auf einem landet.",
+    "why": "Warum darf Weiß hier **nicht** kurz rochieren?",
+    "why_check": "Der König steht im Schach",
+    "why_through": "Der König müsste über ein angegriffenes Feld ziehen",
+    "why_blocked": "Eine Figur steht im Weg",
+    "why_moved": "Der König hat schon gezogen",
+    "why_done": "Richtig! Der schwarze Läufer greift f1 an – genau das Feld, über das der König ziehen müsste. Deshalb ist die kurze Rochade verboten."
+  },
+  "en-passant": {
+    "title": "En passant",
+    "desc": "Das besondere Bauernschlagen.",
+    "intro": "Eine Sonderregel: Zieht ein gegnerischer Bauer **zwei Felder** vor und landet **direkt neben** deinem Bauern, darfst du ihn schlagen, als wäre er nur ein Feld gezogen. Das heißt **en passant** (französisch für „im Vorbeigehen“). Schau zu: Schwarz zieht d7–d5, und Weiß schlägt auf d6.",
+    "intro_kid": "Ein geheimer Bauerntrick! Springt ein gegnerischer Bauer zwei Felder und landet direkt neben deinem Bauern, darf dein Bauer ihn trotzdem schlagen – so, als wäre er nur einen Schritt gegangen.",
+    "ep1": "Schwarz hat gerade d7–d5 gezogen. Schlage en passant!",
+    "ep2": "Jetzt spielst du Schwarz. Weiß hat gerade c2–c4 gezogen – schlage en passant!",
+    "when": "Angenommen, du hast den Moment verpasst und zuerst einen anderen Zug gemacht. Darfst du danach noch en passant schlagen?",
+    "when_yes": "Ja, jederzeit",
+    "when_no": "Nein, nur sofort",
+    "when_done": "Richtig! En passant ist nur direkt im nächsten Zug erlaubt – danach ist die Gelegenheit vorbei."
+  },
+  "promotion": {
+    "title": "Umwandlung",
+    "desc": "Ein Bauer auf der letzten Reihe wird eine neue Figur.",
+    "intro": "Erreicht ein Bauer die **letzte Reihe**, wird er sofort umgewandelt: in eine Dame, einen Turm, Läufer oder Springer – du darfst wählen. Fast immer nimmt man eine **Dame**.",
+    "intro_kid": "Wenn ein Bauer bis ganz nach hinten läuft, verwandelt er sich – zum Beispiel in eine Dame! Aus dem kleinen Bauern wird die stärkste Figur.",
+    "queen": "Zieh den Bauern nach vorn und mach ihn zur Dame!",
+    "mate": "Wandle um – und setze dabei gleich matt!"
+  },
+  "draw": {
+    "title": "Remis und Patt",
+    "desc": "Wenn niemand gewinnt.",
+    "stalemate": "Hat der Spieler am Zug **keinen legalen Zug**, steht aber **nicht im Schach**, ist das **Patt** – und Patt ist **Remis** (unentschieden), auch wenn eine Seite viel mehr Material hat! Hier ist Schwarz am Zug: Der König wird nicht angegriffen, aber jedes Feld neben ihm schon.",
+    "stalemate_kid": "Patt ist eine Falle für den Gewinner! Der König steht nicht im Schach, kann aber nirgendwohin – dann ist die Partie unentschieden, und keiner gewinnt.",
+    "q1": "Schwarz ist am Zug. Matt, Patt oder keins von beiden?",
+    "q1_mate": "Matt",
+    "q1_stalemate": "Patt",
+    "q1_neither": "Keins von beiden",
+    "q1_done": "Richtig – Patt. Der schwarze König steht nicht im Schach, aber alle seine Felder sind bewacht.",
+    "q2": "Und hier? Schwarz ist am Zug.",
+    "q2_mate": "Matt",
+    "q2_stalemate": "Patt",
+    "q2_neither": "Keins von beiden",
+    "q2_done": "Richtig – Matt! Der König steht im Schach, und der weiße König deckt die Dame.",
+    "avoid": "Matt in einem Zug – aber Vorsicht: Viele Züge wären hier Patt!",
+    "avoid_done": "Schachmatt! Wäre die Dame stattdessen nach c7 gezogen, wäre es Patt gewesen – prüfe immer, ob der gegnerische König noch einen Zug hat.",
+    "other": "Remis ist eine Partie auch, wenn:\n• dieselbe **Stellung dreimal** vorkommt,\n• **50 Züge** lang kein Bauer zieht und nichts geschlagen wird,\n• keine Seite genug Material zum Mattsetzen hat – wie hier, König und Läufer gegen König,\n• oder sich beide auf Remis **einigen**."
+  },
+  "values": {
+    "title": "Was sind die Figuren wert?",
+    "desc": "Was deine Figuren wert sind – dein Material.",
+    "intro": "Alle deine Figuren zusammen sind dein **Material**. Um einen Tausch zu beurteilen, zählt man sie in Punkten:\n• Bauer **1**\n• Springer **3**\n• Läufer **3**\n• Turm **5**\n• Dame **9**\nDer König hat keinen Preis – verlierst du ihn, verlierst du die Partie.",
+    "intro_kid": "Figuren sind wie Münzen mit verschiedenem Wert: Bauer 1, Springer 3, Läufer 3, Turm 5, Dame 9. Der König ist unbezahlbar!",
+    "q1": "Was ist mehr wert?",
+    "q1_rook": "Der Turm",
+    "q1_bishop": "Der Läufer",
+    "q1_done": "Richtig: Ein Turm ist 5 wert, ein Läufer 3.",
+    "q2": "Du kannst deinen Springer gegen den schwarzen Turm tauschen. Lohnt sich das?",
+    "q2_yes": "Ja",
+    "q2_no": "Nein",
+    "q2_done": "Ja! Du gibst 3 Punkte und bekommst 5.",
+    "q3": "Zwei Läufer gegen eine Dame – wer hat mehr Material?",
+    "q3_queen": "Die Dame",
+    "q3_bishops": "Die zwei Läufer",
+    "q3_done": "Richtig: Die Dame ist 9 wert, die zwei Läufer zusammen 6.",
+    "take": "Dein Springer kann einen Bauern oder einen Turm schlagen. Nimm die wertvollere Figur!",
+    "take_done": "Richtig – ein Turm ist 5 Punkte wert, ein Bauer nur 1."
+  },
+  "notation": {
+    "title": "Züge lesen",
+    "desc": "Wie Schachzüge aufgeschrieben werden.",
+    "intro": "Schachspieler schreiben jeden Zug auf. Ein Zug ist der **Buchstabe der Figur** plus das **Feld**, auf das sie zieht: **K** König, **D** Dame, **T** Turm, **L** Läufer, **S** Springer. Bauern bekommen keinen Buchstaben. Schau zu: **e4** (Bauer nach e4), **e5**, **Sf3** (Springer nach f3).\nIn Patzers Zuglisten stehen die englischen Buchstaben: **Q** Dame, **R** Turm, **B** Läufer, **N** Springer (K bleibt K) – Sf3 heißt dort Nf3.",
+    "intro_kid": "Jeder Schachzug hat einen kurzen Namen, wie ein Geheimcode! Ein großer Buchstabe sagt, welche Figur zieht (S Springer, L Läufer, T Turm, D Dame, K König), dann kommt das Feld. Bauern bekommen keinen Buchstaben: e4 heißt einfach, ein Bauer geht nach e4.",
+    "target": "Beim Zug **Sc3** zieht ein Springer auf ein Feld. Tippe auf dieses Feld.",
+    "target_kid": "Sc3: Der Springer springt auf … welches Feld? Tippe es an!",
+    "symbols": "Ein paar Zeichen dazu:\n• **x** = schlägt: **Sxe5** – der Springer schlägt auf e5\n• **+** = Schach, **#** = Schachmatt\n• **0-0** = kurze Rochade, **0-0-0** = lange Rochade\n• **e8=D** = der Bauer wird zur Dame\n• **1.** zählt die Züge; **…** vor einem Zug heißt: Schwarz hat ihn gespielt (**1…e5**).",
+    "q1": "Weiß spielt **Sxe5**. Was bedeutet das?",
+    "q1_takes": "Der Springer schlägt die Figur auf e5",
+    "q1_moves": "Der Springer zieht nach e5, ohne zu schlagen",
+    "q1_check": "Der Springer gibt auf e5 Schach",
+    "q1_done": "Richtig – **x** heißt schlägt.",
+    "q2": "Der letzte Zug war **Dxf7#**. Was ist passiert?",
+    "q2_check": "Die Dame hat auf f7 geschlagen – Schach, aber der König kann entkommen",
+    "q2_mate": "Die Dame hat auf f7 geschlagen – Schachmatt",
+    "q2_moves": "Die Dame ist nach f7 gezogen, ohne zu schlagen",
+    "q2_done": "Richtig – **#** heißt Schachmatt. Der König kann nicht entkommen: Der Läufer auf c4 deckt die Dame.",
+    "play": "Jetzt spiel selbst **Sf3**!",
+    "play_done": "Das ist Sf3 – jetzt kannst du Schachzüge lesen."
+  },
+  "mate-in-one": {
+    "title": "Matt in einem Zug",
+    "desc": "Finde das Schachmatt in einem einzigen Zug.",
+    "intro": "Die meisten Partien enden mit Schachmatt – also schule deinen Blick dafür! In jeder Aufgabe dieser Lektion gibt es ein Matt in einem Zug. Tipp: Schau dir **jedes Schach** an, das du geben kannst, und frage dich, ob der König noch entkommt. Hier ist Dh8 matt.\nAb jetzt stammen viele Aufgaben aus echten Partien: Zuerst zieht dein Gegner (du siehst den Zug), dann dreht sich das Brett auf deine Seite, und du bist dran.",
+    "intro_kid": "Jetzt bist du der Jäger! In jeder Aufgabe kannst du in einem Zug mattsetzen. Probier jedes Schach aus und schau, ob der König noch weglaufen kann.",
+    "task": "{{side}} am Zug. Matt in einem Zug!",
+    "task_kid": "{{side}} am Zug. Ein Zug, und der König ist gefangen – finde ihn!"
+  },
+  "back-rank": {
+    "title": "Grundreihenmatt",
+    "desc": "Wenn die eigenen Bauern zur Falle werden.",
+    "intro": "Ein rochierter König steht oft hinter seinen eigenen Bauern. Das ist sicher – bis ein Turm oder die Dame die **Grundreihe** erreicht (die Reihe, auf der der König steht). Dann versperren die Bauern jede Flucht, und es ist Matt. Schau dir Te8 an.",
+    "intro_kid": "Der König versteckt sich hinter seinen Bauern – aber die sind auch eine Mauer, über die er nicht kommt! Ein Turm auf der hintersten Reihe setzt matt.",
+    "m1": "Jetzt du: Setze auf der Grundreihe matt!",
+    "luft": "Die Verteidigung: Gib deinem König **Luft**. Hier hat Schwarz …h6 gespielt – jetzt ist Te8 nur Schach, denn der König kann nach **h7** ausweichen. Denk daran auch bei deinem eigenen König!",
+    "task": "{{side}} am Zug. Brich auf die Grundreihe durch und setze in **zwei Zügen** matt – manchmal musst du dafür erst etwas **opfern** (absichtlich eine Figur hergeben)!",
+    "task_kid": "{{side}} am Zug. Zwei Züge, und der König sitzt hinter seinen eigenen Bauern fest – manchmal musst du erst eine Figur verschenken!"
+  },
+  "ladder": {
+    "title": "Das Treppenmatt",
+    "desc": "Zwei Türme treiben den König an den Rand.",
+    "intro": "Mit zwei Türmen ist Mattsetzen leicht: Ein Turm **sperrt** eine Reihe ab, der andere gibt auf der nächsten Reihe **Schach**. Der König muss jedes Mal zurückweichen, und die Türme steigen ihm hinterher wie auf einer Treppe – bis zum Matt am Rand.",
+    "intro_kid": "Zwei Türme sind wie eine Treppe: Einer sperrt, der andere gibt Schach – Schritt für Schritt muss der König zurück, bis er am Rand festsitzt. Schachmatt!",
+    "m1": "Mach es fertig: Matt in einem Zug mit den zwei Türmen.",
+    "play": "Jetzt spiel es gegen Patzer aus: Setze den schwarzen König mit deinen zwei Türmen matt. Tipp: Halte die Türme weit weg vom König, damit er sie nicht angreifen kann."
+  },
+  "queen-mate": {
+    "title": "Matt mit Dame und König",
+    "desc": "Den einsamen König mattsetzen – ohne Patt.",
+    "intro": "Dame und König gegen einen einzelnen König gewinnt immer. Der Plan:\n1. Mach den Käfig des Königs mit der Dame kleiner – ein **Springerzug** Abstand ist sicher.\n2. Hol **deinen König** heran.\n3. Setze am Rand matt, während dein König die Dame deckt oder die Fluchtfelder bewacht.\nUnd pass immer auf **Patt** auf!",
+    "intro_kid": "Die Dame treibt den König an den Rand, dein eigener König kommt zu Hilfe, und dann – Schachmatt! Aber Vorsicht: Lass den schwarzen König nie ohne Zug stehen, wenn er nicht im Schach steht. Das wäre Patt!",
+    "m1": "Matt in einem Zug!",
+    "patt": "Was wäre Df7 hier?",
+    "patt_mate": "Schachmatt",
+    "patt_stalemate": "Patt – also Remis",
+    "patt_check": "Nur Schach",
+    "patt_done": "Richtig – Patt! Der König steht nicht im Schach, hat aber keinen Zug. De8 oder Df8 wäre Matt gewesen.",
+    "play": "Jetzt du: Setze den schwarzen König mit Dame und König matt – Patzer verteidigt sich. Lass dir die Dame nicht nehmen und vermeide das Patt!"
+  },
+  "rook-mate": {
+    "title": "Matt mit Turm und König",
+    "desc": "Die Grundtechnik mit einem einzelnen Turm.",
+    "intro": "Mit nur einem Turm muss dein König mithelfen. Der Turm **sperrt** den schwarzen König ab, dein König läuft heran, bis sich die beiden Könige **gegenüberstehen** – dann gibt der Turm am Rand Schach. Hier ist Th8 matt.",
+    "intro_kid": "Ein Turm allein schafft es nicht – dein König muss helfen! Wenn sich die Könige gegenüberstehen und der Turm am Rand Schach gibt: Schachmatt!",
+    "m1": "Matt in einem Zug.",
+    "play": "Jetzt das Ganze: Setze mit Turm und König matt. Dränge den schwarzen König Reihe für Reihe an den Rand – lass dir Zeit, du hast genug Züge."
+  },
+  "hanging": {
+    "title": "Hängende Figuren",
+    "desc": "Nimm, was frei steht – und lass nichts von dir hängen.",
+    "intro": "Eine Figur, die angegriffen und **nicht gedeckt** ist, **hängt** – jeder kann sie umsonst schlagen. Hier deckt niemand den schwarzen Springer, also schlägt ihn der Turm einfach. Gewöhn dir an, vor jedem Zug zu fragen: Was hängt – auf **beiden** Seiten?",
+    "intro_kid": "Eine Figur ohne Beschützer „hängt“. Hier beschützt niemand den schwarzen Springer – also schnappt ihn sich der Turm! Schau immer: Was kann ich umsonst nehmen?",
+    "task": "{{side}} am Zug. Da hängt etwas – gewinne Material!",
+    "task_kid": "{{side}} am Zug. Da steht etwas ungeschützt – schnapp es dir!"
+  },
+  "fork": {
+    "title": "Die Gabel",
+    "desc": "Eine Figur, zwei Ziele.",
+    "intro": "Bei einer **Gabel** greift eine Figur zwei (oder mehr) gegnerische Figuren gleichzeitig an – der Gegner kann nur eine retten. Springer sind die großen Gabel-Künstler: Hier greift Sf6+ den König **und** die Dame an. Der König muss weg, und die Dame ist verloren.",
+    "intro_kid": "Eine Gabel ist ein Doppelangriff: Eine Figur greift zwei Sachen auf einmal an! Der Springer gibt Schach und greift gleichzeitig die Dame an – der König muss weg, und die Dame ist futsch.",
+    "task": "{{side}} am Zug. Finde die Gabel!",
+    "task_kid": "{{side}} am Zug. Greif zwei Sachen auf einmal an!"
+  },
+  "pin": {
+    "title": "Die Fesselung",
+    "desc": "Eine Figur, die nicht weg kann.",
+    "intro": "Eine **Fesselung** greift eine Figur an, hinter der eine wertvollere steht. Ist die Figur dahinter der **König**, darf die gefesselte Figur gar nicht ziehen. Hier fesselt Lb5 den schwarzen Springer an seinen König.",
+    "intro_kid": "Eine Fesselung klebt eine Figur fest! Der Springer würde gern wegziehen, aber dann würde der Läufer den König angreifen – also darf er nicht.",
+    "use": "Eine gefesselte Figur kann auch nicht verteidigen. Dieser Bauer auf g7 kann weder ziehen noch schlagen, denn dann würde der Läufer den König auf h8 angreifen. Achte in den Aufgaben auf gefesselte Verteidiger!",
+    "task": "{{side}} am Zug. Fessle eine Figur – oder nutze eine Fesselung – und gewinne Material!",
+    "task_kid": "{{side}} am Zug. Kleb eine Figur fest – und gewinn etwas!"
+  },
+  "skewer": {
+    "title": "Der Spieß",
+    "desc": "Die große Figur angreifen, die dahinter gewinnen.",
+    "intro": "Ein **Spieß** ist eine umgekehrte Fesselung: Du greifst eine wertvolle Figur an – oft den König –, und wenn sie ausweicht, schlägst du die Figur **dahinter**. Hier vertreibt Td1+ den König von der d-Linie, und der Turm schlägt die Dame.",
+    "intro_kid": "Ein Spieß ist wie ein Grillspieß: Gib dem König Schach, er muss zur Seite springen – und dann schnappst du dir die Figur hinter ihm!",
+    "task": "{{side}} am Zug. Finde den Spieß!",
+    "task_kid": "{{side}} am Zug. Gib der großen Figur Schach – und schnapp dir die dahinter!"
+  },
+  "center": {
+    "title": "Das Zentrum beherrschen",
+    "desc": "Warum die Mitte des Bretts so wichtig ist.",
+    "intro": "Die vier Felder in der Mitte – **d4, e4, d5 und e5** – sind das **Zentrum**. Figuren im Zentrum erreichen mehr Felder und können schnell auf beide Seiten wechseln. Darum beginnen gute Eröffnungen mit dem Kampf ums Zentrum.",
+    "intro_kid": "Die vier Felder in der Mitte sind das Zentrum – die wichtigsten Felder! Von dort kommen deine Figuren überallhin.",
+    "squares": "Tippe auf die vier Zentrumsfelder.",
+    "first": "Dein erster Zug: Stell einen Bauern ins Zentrum!",
+    "first_done": "Gut gemacht! 1.e4 und 1.d4 sind die beliebtesten ersten Züge – sie besetzen das Zentrum und öffnen Linien für deine Figuren.",
+    "why": "Der Springer in der Mitte erreicht 8 Felder, der in der Ecke nur 2. Warum kämpft man ums Zentrum?",
+    "why_reach": "Figuren erreichen dort mehr Felder",
+    "why_rule": "Die Regeln schreiben es vor",
+    "why_safe": "Der König ist dort am sichersten",
+    "why_done": "Richtig! Im Zentrum sind deine Figuren am stärksten. (Der König dagegen steht an der Seite hinter seinen Bauern sicherer – dazu gleich mehr.)"
+  },
+  "develop": {
+    "title": "Figuren entwickeln",
+    "desc": "Springer und Läufer raus – und zwar schnell.",
+    "intro": "**Entwickeln** heißt, deine Figuren von der Grundreihe ins Spiel zu bringen. Zuerst kommen Springer und Läufer, Richtung Zentrum. In der Eröffnung sollte jeder Zug eine neue Figur ins Spiel bringen.",
+    "intro_kid": "Am Anfang schlafen deine Figuren noch auf der hintersten Reihe. Weck sie auf! Hol zuerst die Springer und Läufer heraus.",
+    "knight": "Entwickle einen Springer – Richtung Zentrum.",
+    "knight_done": "Gut! Ein Springer auf f3 oder c3 kontrolliert Zentrumsfelder.",
+    "rim": "Warum ist Sh3 meistens schlechter als Sf3?",
+    "rim_rim": "Am Rand kontrolliert der Springer weniger Felder",
+    "rim_slow": "Der Springer kann nie mehr zurück",
+    "rim_illegal": "Sh3 ist nicht erlaubt",
+    "rim_done": "Richtig! „Springer am Rand bringt Kummer und Schand“: Von h3 erreicht er höchstens 4 Felder, von f3 bis zu 8 – auch im Zentrum.",
+    "bishop": "Entwickle jetzt deinen Läufer – auf ein Feld, von dem aus er ins gegnerische Lager zielt.",
+    "bishop_done": "Gut! Lc4 zielt auf f7, Lb5 setzt den Springer auf c6 unter Druck – beides sind klassische Züge.",
+    "twice": "Solltest du in der Eröffnung ohne guten Grund dieselbe Figur zweimal ziehen?",
+    "twice_yes": "Ja, das ist egal",
+    "twice_no": "Nein – lieber eine neue Figur entwickeln",
+    "twice_done": "Richtig! Jeder zusätzliche Zug mit derselben Figur ist ein Zug, in dem deine anderen Figuren weiterschlafen."
+  },
+  "king-safety": {
+    "title": "Königssicherheit",
+    "desc": "Früh rochieren und die Dame zu Hause lassen.",
+    "intro": "In der Eröffnung ist ein König in der Mitte in Gefahr – dort öffnen sich schnell Linien. Darum: **früh rochieren**, meist in den ersten zehn Zügen. Hier ist Weiß bereit: Der König kann kurz rochieren.",
+    "intro_kid": "In der Mitte des Bretts ist der König in Gefahr. Rochiere früh und bring ihn in seine sichere Burg!",
+    "castle1": "Bring deinen König in Sicherheit – rochiere!",
+    "queen": "Was davon ist in der Eröffnung meistens keine gute Idee?",
+    "queen_queen": "Die Dame früh herausbringen",
+    "queen_knights": "Die Springer entwickeln",
+    "queen_castle": "Früh rochieren",
+    "queen_done": "Richtig! Eine frühe Dame wird von den gegnerischen Figuren gejagt – und jedes Mal, wenn sie fliehen muss, entwickelt dein Gegner eine Figur umsonst.",
+    "castle2": "Deine Dame und die Figuren am Damenflügel sind draußen. Diesmal rochierst du **lang**!"
+  },
+  "traps": {
+    "title": "Eröffnungsfallen",
+    "desc": "Schäfermatt, Narrenmatt – und wie du sie vermeidest.",
+    "intro": "Am Anfang ist das schwächste Feld **f7** (bei Weiß **f2**): Nur der König deckt es. Schau dir das **Schäfermatt** an: Dame und Läufer greifen f7 gemeinsam an, Schwarz merkt es nicht – Matt in vier Zügen!",
+    "intro_kid": "Pass auf diesen Trick auf: Dame und Läufer tun sich gegen den kleinen Bauern auf f7 zusammen – und wenn Schwarz es nicht merkt, ist schon Schachmatt!",
+    "defend": "Weiß droht Dxf7 matt. Verteidige dich!",
+    "defend_done": "Gut gemacht! …g6 verjagt die Dame. Auch …De7, …Df6 oder …Sh6 hätten f7 gedeckt.",
+    "fool": "Weiß hat die Stellung seines Königs schlimm geschwächt. Finde das schnellste Matt, das es gibt!",
+    "fool_done": "Das Narrenmatt – Matt im zweiten Zug! Deshalb solltest du f- und g-Bauern nicht früh vorziehen.",
+    "f7": "Welche Figur deckt am Anfang als einzige f7 (bei Weiß f2)?",
+    "f7_king": "Der König",
+    "f7_queen": "Die Dame",
+    "f7_knight": "Der Springer",
+    "f7_done": "Richtig – nur der König. Deshalb sind f7 und f2 die Lieblingsziele früher Angriffe."
+  },
+  "discovered": {
+    "title": "Abzugsangriff",
+    "desc": "Eine Figur zieht weg – und enthüllt eine andere.",
+    "intro": "Beim **Abzugsangriff** zieht eine Figur aus dem Weg und gibt den Angriff der Figur dahinter frei. Greift die ziehende Figur selbst auch etwas an – oder ist der freigelegte Angriff ein Schach –, kann der Gegner nicht beides abwehren. Ein Beispiel aus einer echten Partie: Der Springer auf e2 steht zwischen der schwarzen Dame und dem weißen König. **Sc3+** zieht ihn weg – jetzt gibt die Dame auf d3 Schach, und der Springer greift die Dame auf d1 an. Nach Kg1 gewinnt **Sxd1** die Dame.",
+    "intro_kid": "Ein fieser Trick: Eine Figur geht zur Seite, und plötzlich greift die Figur dahinter an! Hier springt der Springer weg – jetzt gibt die Dame Schach, und gleichzeitig greift der Springer die weiße Dame an.",
+    "task": "{{side}} am Zug. Finde den Abzugsangriff!"
+  },
+  "double-check": {
+    "title": "Doppelschach",
+    "desc": "Zwei Schachs auf einmal – nur der König kann weg.",
+    "intro": "Beim **Doppelschach** geben zwei Figuren gleichzeitig Schach. Zwei Schachs kann man nicht mit einem Zug verstellen oder schlagen – der König **muss** ziehen. Hier gibt **Sf3+** mit dem Springer Schach und öffnet gleichzeitig die Diagonale der Dame von b6 nach g1. Der König geht nach h1, und der Springer schlägt die Dame: **Sxd2**.",
+    "intro_kid": "Doppelschach heißt: Zwei Figuren rufen gleichzeitig „Schach!“. Dann kann sich der König hinter nichts verstecken – er muss weglaufen!",
+    "task": "{{side}} am Zug. Finde das Doppelschach!"
+  },
+  "deflection": {
+    "title": "Ablenkung",
+    "desc": "Einen Verteidiger von seiner Aufgabe weglocken.",
+    "intro": "**Ablenkung** heißt: Du zwingst einen Verteidiger weg von dem, was er schützt. Hier ist der weiße König auf e2 der einzige Beschützer des Läufers auf f3. **Ta2+** greift den König an; nach Kd3 ist der Läufer ungedeckt, und der Turm auf f8 schlägt ihn: **Txf3**.",
+    "intro_kid": "Jag den Beschützer weg – und schnapp dir dann, was er beschützt hat!",
+    "task": "{{side}} am Zug. Lenk einen Verteidiger ab!"
+  },
+  "attraction": {
+    "title": "Hinlenkung",
+    "desc": "Eine Figur auf ein verhängnisvolles Feld zwingen.",
+    "intro": "Bei der **Hinlenkung** zwingst du eine gegnerische Figur – oft den König – auf ein Feld, auf dem sie in eine Taktik läuft, meist mit einem Opfer. Hier gibt **Txh3+!** einen Turm her, um den König nach h3 zu locken. Nach Kxh3 folgt **Th4#** – die Dame auf g5 bewacht jedes Fluchtfeld.",
+    "intro_kid": "Lock den König in eine Falle! Ein Opfer zieht ihn auf ein Feld, wo er mattgesetzt wird.",
+    "task": "{{side}} am Zug. Lock eine Figur in die Falle!"
+  },
+  "defender": {
+    "title": "Beseitigung des Verteidigers",
+    "desc": "Erst den Wächter schlagen, dann die Beute.",
+    "intro": "Ist eine Figur nur einmal gedeckt, **schlag ihren Verteidiger** – dann fällt sie. Hier deckt nur der Springer auf d1 den weißen Turm auf f2. **Txd1** schlägt den Springer; nach Lxd1 gewinnt die Dame den Turm: **Dxf2**.",
+    "intro_kid": "Erst den Beschützer ausschalten – dann ist die Figur, die er beschützt hat, frei zum Schlagen!",
+    "task": "{{side}} am Zug. Beseitige den Verteidiger und gewinne Material!"
+  },
+  "intermezzo": {
+    "title": "Der Zwischenzug",
+    "desc": "Nicht automatisch zurückschlagen.",
+    "intro": "Wird eine Figur geschlagen, scheint das Zurückschlagen selbstverständlich. Manchmal gibt es aber vorher etwas Besseres: einen **Zwischenzug**, oft ein Schach oder ein Schlagzug. Hier hat Weiß gerade auf c6 geschlagen, und …Txc6 läge nahe. Doch zuerst gewinnt **Lxe3+** den Turm auf e3 mit Schach – und erst nach Kf1 schlägt Schwarz zurück: **Txc6**.",
+    "intro_kid": "Bevor du zurückschlägst: Halt kurz an und schau, ob es vorher noch etwas Besseres gibt! Hier schnappt sich Schwarz zuerst mit Schach einen Turm – und schlägt erst danach zurück.",
+    "task": "{{side}} am Zug. Finde den Zwischenzug!"
+  },
+  "trapped": {
+    "title": "Gefangene Figuren",
+    "desc": "Greif eine Figur an, die nirgendwohin kann.",
+    "intro": "Eine Figur ohne sichere Felder kann **gefangen** werden: Greif sie an, und sie ist verloren. Damen, die tief im gegnerischen Lager Bauern holen, sind klassische Opfer. Hier hat die schwarze Dame gerade auf g2 geschlagen. **Lf3** greift sie an, und jedes Feld, auf das sie fliehen könnte, ist bewacht – das Beste ist noch, den Turm auf h1 zu schlagen, und **Lxh1** gewinnt sie.",
+    "intro_kid": "Hat eine Figur keinen Ausweg mehr, kannst du sie fangen! Die Dame ist auf Bauernjagd gegangen – und jetzt sitzt sie in der Falle.",
+    "task": "{{side}} am Zug. Fang eine Figur!"
+  },
+  "mate-in-two": {
+    "title": "Matt in zwei Zügen",
+    "desc": "Erst die Schachs – dann der Todesstoß.",
+    "intro": "Schau dir bei einem Matt in zwei zuerst die erzwingenden Züge an: **Schachs**, dann **Schlagzüge**, dann **Drohungen**. Hier lässt **Dg6+** (der Turm auf g3 deckt die Dame) dem König nur h8, und **Dxh6** ist matt.",
+    "intro_kid": "Zwei Züge bis zum Matt! Probier zuerst die Schachs aus – die lassen dem Gegner keine Wahl.",
+    "task": "{{side}} am Zug. Matt in zwei Zügen!"
+  },
+  "smothered": {
+    "title": "Ersticktes Matt",
+    "desc": "Ein Springer setzt einen König matt, der von eigenen Figuren eingesperrt ist.",
+    "intro": "Beim **erstickten Matt** ist der König von seinen eigenen Figuren umzingelt, und ein Springer setzt matt. Der berühmte Weg dorthin: **Sh3+** (ein Doppelschach) – der König muss nach h1. **Dg1+!!** – die Dame opfert sich, und der Turm muss sie schlagen. **Sf2#**.",
+    "intro_kid": "Der König ist so von seinen eigenen Figuren umzingelt, dass er sich nicht bewegen kann – und der Springer springt hinein: Schachmatt!",
+    "task": "{{side}} am Zug. Setze erstickt matt!"
+  },
+  "anastasia": {
+    "title": "Anastasia-Matt",
+    "desc": "Springer und Turm oder Dame gegen den König am Rand.",
+    "intro": "Beim **Anastasia-Matt** nimmt ein Springer dem König die Fluchtfelder, und ein Turm oder die Dame setzt auf der Randlinie matt. Hier kommt zuerst **Se7+** – das ist Schach, und von e7 aus bewacht der Springer g8 und g6. Nach Kh7 ist **Dxh5** matt auf der h-Linie.",
+    "intro_kid": "Springer und Dame arbeiten zusammen: Der Springer versperrt die Fluchtfelder, die Dame setzt am Rand matt.",
+    "task": "{{side}} am Zug. Finde das Matt!"
+  },
+  "arabian": {
+    "title": "Das arabische Matt",
+    "desc": "Turm und Springer in der Ecke.",
+    "intro": "Das **arabische Matt** ist eines der ältesten bekannten Mattbilder: Ein Turm setzt den König in der Ecke matt, während ein Springer den Turm deckt und das Fluchtfeld bewacht. Hier: **Sf6+** Kh8 und **Th7#** – der Springer auf f6 deckt den Turm und bewacht g8.",
+    "intro_kid": "Turm und Springer sind hier beste Freunde: Der Springer beschützt den Turm, und der Turm setzt in der Ecke matt!",
+    "task": "{{side}} am Zug. Setze mit Turm und Springer matt!"
+  },
+  "square": {
+    "title": "Die Quadratregel",
+    "desc": "Holt der König den Bauern noch ein?",
+    "intro": "Kann ein König einen davonlaufenden Bauern noch einholen? Stell dir ein **Quadrat** vor, vom Bauern bis zu seinem Umwandlungsfeld – hier von b4 bis f8. Steht der verteidigende König im Quadrat oder kann er am Zug hineintreten, holt er den Bauern ein. Ist der Bauer am Zug, denk ihn dir vorher ein Feld weiter. (Ein Bauer auf seinem Startfeld darf zwei Felder ziehen – dann zählst du von einer Reihe weiter.)",
+    "intro_kid": "Mal in Gedanken ein Quadrat vom Bauern bis ans Ende des Bretts. Kann der gegnerische König ins Quadrat hüpfen, fängt er den Bauern. Wenn nicht – wird der Bauer eine Dame!",
+    "q1": "Weiß am Zug. Holt der schwarze König den Bauern ein?",
+    "q1_yes": "Ja",
+    "q1_no": "Nein",
+    "q1_done": "Richtig: Nach b5 ist das Quadrat b5–e8, und der König tritt mit …Ke6 direkt hinein.",
+    "q2": "Und hier, mit dem König auf g6? Wieder ist Weiß am Zug.",
+    "q2_yes": "Ja",
+    "q2_no": "Nein",
+    "q2_done": "Richtig: Nach b5 ist das Quadrat b5–e8, und von g6 erreicht der König es nicht mit einem Schritt – der Bauer läuft durch und wird Dame.",
+    "run": "Was spielt Weiß hier also?",
+    "run_done": "Genau – sofort b5! Jeder Königszug würde Schwarz die Zeit geben, ins Quadrat zu treten."
+  },
+  "opposition": {
+    "title": "Die Opposition",
+    "desc": "Stehen sich die Könige gegenüber, muss weichen, wer am Zug ist.",
+    "intro": "Stehen sich die beiden Könige mit **einem Feld dazwischen** gegenüber, sind sie in **Opposition**. Keiner darf neben den anderen treten, also muss weichen, wer am Zug ist. Hier ist Weiß am Zug – also **hat Schwarz die Opposition**.",
+    "intro_kid": "Zwei Könige stehen Nase an Nase, ein Feld dazwischen – keiner darf näher kommen. Wer am Zug ist, muss zur Seite gehen!",
+    "who": "Schwarz am Zug. Wer hat die Opposition?",
+    "who_white": "Weiß",
+    "who_black": "Schwarz",
+    "who_done": "Richtig – Weiß. Schwarz muss ziehen und damit weichen.",
+    "tempo": "In Bauernendspielen mit König und Bauer entscheidet die Opposition alles. Hier steht der weiße König vor seinem Bauern, aber Weiß ist am Zug. Der Trick ist ein **Reservezug des Bauern**: Nach **e3** ist Schwarz am Zug und muss weichen – und der weiße König rückt vor.",
+    "draw": "Weiß am Zug. Kann Weiß das gewinnen?",
+    "draw_yes": "Ja",
+    "draw_no": "Nein, das ist Remis",
+    "draw_done": "Richtig – bei bestem Spiel Remis. Schwarz hat die Opposition, und diesmal hat der Bauer keinen Reservezug: Der weiße König auf e3 steht ihm im Weg.",
+    "play": "Jetzt gewinn es selbst: Bring deinen König vor den Bauern, nimm die Opposition und wandle um. Patzer verteidigt sich."
+  },
+  "pawn-endgames": {
+    "title": "Bauernendspiele",
+    "desc": "Zählen, rechnen – jeder Zug zählt.",
+    "intro": "Im Bauernendspiel wird der König zum Kämpfer, und jedes **Tempo** (jeder einzelne Zug) zählt. Hier greift der schwarze König mit **Kc4** an: Der Bauer auf d4 will mit d5 flüchten, aber der König folgt ihm einfach und schlägt ihn: **Kxd5**.",
+    "intro_kid": "Am Ende der Partie wird der König zum Krieger! Hier geht er auf Bauernjagd.",
+    "task": "{{side}} am Zug. Finde den Gewinnplan!"
+  },
+  "mate-in-three": {
+    "title": "Matt in drei Zügen",
+    "desc": "Längere Kombinationen – Schach für Schach.",
+    "intro": "Ein Matt in drei braucht einen Plan. Oft ist jeder Zug ein Schach, das dem Gegner keine Wahl lässt. Schau zu: **Td1+** Kf2, **Lc5+** Kg3, **Tg1#** – der König wird ins Mattnetz getrieben.",
+    "intro_kid": "Drei Züge bis zum Matt! Gib immer weiter Schach, damit der König nie verschnaufen kann.",
+    "task": "{{side}} am Zug. Matt in drei Zügen!"
+  },
+  "quiet": {
+    "title": "Stille Züge",
+    "desc": "Kein Schach, kein Schlagen – und trotzdem entscheidend.",
+    "intro": "Am schwersten zu finden sind **stille Züge**: kein Schach, kein Schlagzug – und trotzdem entscheiden sie die Partie. Hier bewacht der schwarze Turm auf e2 das Umwandlungsfeld. **Le5!** verstellt einfach die e-Linie, und nach Kb4 wird der Bauer Dame: **e8=D**.",
+    "intro_kid": "Manchmal ist der beste Zug ein ganz ruhiger: kein Schach, kein Schlagen – einfach das richtige Feld!",
+    "task": "{{side}} am Zug. Such nach einem stillen Zug!"
+  },
+  "zugzwang": {
+    "title": "Zugzwang",
+    "desc": "Wenn das Ziehenmüssen das Problem ist.",
+    "intro": "**Zugzwang**: Jeder Zug macht es schlimmer – aber passen ist nicht erlaubt. Hier hat der schwarze König nach **Kf4!** kein Feld mehr, also muss Schwarz …g3 spielen – und **hxg3** ist matt.",
+    "intro_kid": "Zugzwang ist, wenn du am liebsten „Ich passe!“ sagen würdest – aber im Schach musst du immer ziehen, auch wenn jeder Zug schlecht ist.",
+    "task": "{{side}} am Zug. Jedes Tempo zählt – finde den besten Zug!"
+  },
+  "clearance": {
+    "title": "Räumung",
+    "desc": "Aus dem Weg gehen – mit Tempo.",
+    "intro": "Bei einer **Räumung** verlässt eine Figur ihr Feld oder ihre Linie, damit eine andere Figur sie nutzen kann – am besten **mit Tempo** (mit einer Drohung, auf die der Gegner antworten muss). Hier steht der weiße Läufer auf h7 genau auf dem Feld, das die Dame haben will. **Lg8+** räumt es mit einem Abzugsschach des Turms auf h3. Nach Lh4 landet die Dame auf dem frei gewordenen Feld: **Dh7#**.",
+    "intro_kid": "Manchmal steht deine eigene Figur im Weg! Zieh sie mit Schach weg – und das Feld ist frei für die Dame.",
+    "task": "{{side}} am Zug. Mach den Weg frei!"
+  },
+  "interference": {
+    "title": "Verstellung",
+    "desc": "Die Linie zwischen Verteidiger und Verteidigtem unterbrechen.",
+    "intro": "Eine **Verstellung** unterbricht die Linie zwischen einem Verteidiger und der Figur, die er schützt. Hier deckt der schwarze Läufer auf d4 den Turm auf h8 über die lange Diagonale. **Lg5+** wird mit …f6 beantwortet – und dieser Bauer versperrt jetzt die Linie des Läufers. **Dxh8** gewinnt den Turm.",
+    "intro_kid": "Stell etwas dazwischen! Der Läufer hat den Turm beschützt – jetzt versperrt ihm ein Bauer den Weg.",
+    "task": "{{side}} am Zug. Unterbrich eine Linie!"
+  },
+  "xray": {
+    "title": "Röntgenangriff",
+    "desc": "Angriffe, die durch eine Figur hindurchgehen.",
+    "intro": "Beim **Röntgenangriff** wirkt eine Figur durch eine andere hindurch, die in ihrer Linie steht. Hier steht der schwarze Turm auf a1 hinter dem weißen Turm auf b1. **De1+!** – schlägt der Turm die Dame, verlässt er b1, und der Turm auf a1 setzt matt: **Txe1#**.",
+    "intro_kid": "Der Turm schaut glatt durch den gegnerischen Turm hindurch, als hätte er Röntgenaugen! Sobald der wegzieht, ist der Weg frei.",
+    "task": "{{side}} am Zug. Schau durch die Figuren hindurch!"
+  },
+  "underpromotion": {
+    "title": "Unterverwandlung",
+    "desc": "Manchmal ist ein Springer besser als eine Dame.",
+    "intro": "Fast immer wird ein Bauer zur Dame – aber eben nicht immer! Hier gibt **e1=S+** Schach **und** greift die Dame auf f3 an: eine Gabel, die eine neue Dame auf e1 nicht hätte. Nach Kf2 schlägt der Springer die Dame: **Sxf3**.",
+    "intro_kid": "Überraschung! Statt einer Dame wird der Bauer zum Springer – denn nur ein Springer kann hier König und Dame gleichzeitig angreifen.",
+    "task": "{{side}} am Zug. Welche Figur soll der Bauer werden?"
+  },
+  "rook-endgames": {
+    "title": "Turmendspiele",
+    "desc": "Aktive Türme – und der Turm hinter dem Bauern.",
+    "intro": "Turmendspiele sind die häufigsten Endspiele. Zwei goldene Regeln: Halte deinen Turm **aktiv**, und stell ihn **hinter Freibauern** (Bauern, die kein gegnerischer Bauer mehr aufhalten kann) – hinter den eigenen, um ihn nach vorn zu schieben, hinter den gegnerischen, um ihn anzugreifen. Hier unterstützt der weiße Turm auf a1 den a-Bauern von hinten.",
+    "intro_kid": "Türme lieben offene Linien! Und sie stehen gern hinter einem Bauern, der zur anderen Seite läuft.",
+    "task": "{{side}} am Zug. Finde den besten Zug!"
+  },
+  "lucena": {
+    "title": "Die Lucena-Stellung",
+    "desc": "Mit Turm und Bauer gewinnen: eine Brücke bauen.",
+    "intro": "Die **Lucena-Stellung**: Dein Bauer steht auf der 7. Reihe, dein König vor ihm, und dein Turm auf der c-Linie hält den schwarzen König fern. Der schwarze Turm auf der a-Linie verhindert, dass dein König auf dieser Seite herauskommt. Wie kommt dein König also frei?",
+    "bridge": "Die Antwort heißt **Brückenbau**. 1.Td1+ drängt den schwarzen König eine Linie weiter weg. 2.**Td4!** stellt den Turm auf die 4. Reihe. Jetzt läuft der König heraus, der schwarze Turm gibt weiter Schach – und wenn der König b5 erreicht, stellt sich der Turm auf **b4** dazwischen und beendet die Schachs. Nichts hält den Bauern mehr auf.",
+    "play": "Jetzt du: Gewinne die Lucena-Stellung und wandle den Bauern um – Patzer verteidigt sich. Tipp: Dränge den König zuerst mit einem Schach weg, dann bau die Brücke."
+  },
+  "philidor": {
+    "title": "Die Philidor-Stellung",
+    "desc": "Die wichtigste Verteidigung mit Turm gegen Turm und Bauer.",
+    "intro": "Jetzt die andere Seite: wie man mit Turm gegen Turm und Bauer **verteidigt**. Die **Philidor-Methode**: Solange der Bauer auf der 5. Reihe steht, wartet der verteidigende Turm auf der **6. Reihe** (hier auf b6). So kann der weiße König nicht auf die 6. Reihe vorrücken, ohne Schach zu bekommen.",
+    "where": "Schwarz am Zug, der Bauer steht auf e5. Was sagt die Philidor-Methode – wohin gehört der schwarze Turm?",
+    "where_sixth": "Auf die 6. Reihe (…Tb6)",
+    "where_behind": "Hinunter auf die 1. Reihe",
+    "where_eighth": "Er bleibt auf der 8. Reihe",
+    "where_done": "Richtig – …Tb6! Von der 6. Reihe aus hält der Turm den weißen König fern. Auch andere Züge können halten, aber diese Aufstellung ist die zuverlässige, die man sich leicht merkt.",
+    "checks": "Sobald der Bauer auf die **6. Reihe** zieht, ändert sich die Aufgabe des Turms: Vor seinem Bauern findet der weiße König keinen Schutz mehr vor Schachs. Also geht der Turm ans andere Ende des Bretts und **gibt Schach von hinten**.",
+    "plan": "Der Bauer ist auf e6 angekommen. Was sagt die Philidor-Methode jetzt?",
+    "plan_behind": "Turm auf die 1. Reihe, dann Schach von hinten",
+    "plan_wait": "Den Turm auf der 6. Reihe lassen",
+    "plan_king": "Mit dem König zum Bauern laufen und ihn angreifen",
+    "plan_done": "Richtig! Von hinten kann der Turm dem weißen König immer wieder Schach geben – Remis."
+  }
+}

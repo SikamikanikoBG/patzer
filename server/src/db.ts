@@ -235,6 +235,22 @@ db.exec(`CREATE TABLE IF NOT EXISTS opening_misses (
 )`);
 db.exec(`CREATE INDEX IF NOT EXISTS idx_opening_misses_due ON opening_misses(user_id, due_on)`);
 
+// Learn section — one row per profile and lesson. The lessons themselves are
+// content files in the web app (web/src/learn), so the server only knows
+// their ids. `step` and `flawed` let you pick an unfinished lesson up where
+// you left it (flawed = tasks solved with a mistake or a hint so far);
+// `stars` is the best result (1–3), 0 while the lesson was never finished.
+db.exec(`CREATE TABLE IF NOT EXISTS learn_progress (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  lesson_id TEXT NOT NULL,
+  step INTEGER NOT NULL DEFAULT 0,
+  flawed INTEGER NOT NULL DEFAULT 0,
+  stars INTEGER NOT NULL DEFAULT 0 CHECK(stars BETWEEN 0 AND 3),
+  completed_at TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, lesson_id)
+)`);
+
 // v7.0.0 — Improvement Plan goals. Each goal is a one-week target with a kind
 // (puzzles_solve / opening_play / review_games / accuracy / win_streak), a
 // numeric target, and free-form metadata. Progress is computed live from
