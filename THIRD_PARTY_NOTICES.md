@@ -17,6 +17,14 @@ If GPL is a problem for you, you would need to swap chessground for an MIT-compa
 
 The container image apt-installs the upstream Stockfish package, which is GPL-3.0. We invoke it as a separate process over UCI; we do not link against it. Same redistribution caveat applies.
 
+## Board move sounds (CC0)
+
+`web/src/assets/sounds/board-move.wav` and `board-capture.wav` are cut from
+[“Chess Pieces Move (Close)”](https://freesound.org/people/JJTaynos/sounds/733927/) by **JJTaynos** on Freesound,
+released under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (public-domain dedication). CC0 needs no
+attribution; it is credited here so the origin stays traceable. Each file is one click from that recording (at 24.41 s
+and 40.95 s), 0.32 s long, high-passed at 60 Hz, faded out and loudness-matched — 48 kHz, 16-bit mono.
+
 ## Other notable dependencies
 
 | Package | License |

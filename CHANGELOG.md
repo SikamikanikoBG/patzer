@@ -25,6 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for check, and the same G → E → C cadence as before on marimba with a faint
   bell underneath for game end. Still fully synthesized, no audio files, with
   a preview button next to each option. (#36)
+- **Real-board move sounds.** A second choice under **Settings → Sound &
+  assistance**, *Move sounds*: *Classic* keeps the synthesized wood knocks
+  (default), *Real board* plays recordings of real pieces set down on a
+  wooden board for moves, captures and castling (the move click twice, king
+  then rook). Check, promotion and game end keep their sounds and still follow
+  the check & game-end choice. The two clicks (~30 KB each) are cut from a CC0
+  recording on Freesound and only load once *Real board* is picked; until
+  they have loaded — or if they can't — moves fall back to the synthesized
+  knocks. (#36)
 
 - **Import games from Lichess.** Next to the Chess.com importer: set a
   Lichess username in **Settings** and *Import from Lichess* appears in Game

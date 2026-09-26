@@ -367,6 +367,15 @@
     "noChanges": "Keine Änderungen",
     "lichess": "Lichess-Benutzername",
     "lichessHelp": "Wird zum Importieren von Partien für die Analyse verwendet",
+    "moveSoundSet": "Töne für Züge",
+    "moveSoundSetOption": {
+      "classic": "Klassisch",
+      "board": "Echtes Brett"
+    },
+    "moveSoundSetDesc": {
+      "classic": "Synthetisches Holzklopfen — die ursprünglichen Patzer-Töne.",
+      "board": "Aufnahmen echter Figuren, die auf ein Holzbrett gesetzt werden."
+    },
     "soundSet": "Töne für Schach & Partieende",
     "soundSetOption": {
       "classic": "Klassisch",

@@ -10,6 +10,7 @@ export type CoachBehavior = 'silent' | 'on_demand' | 'always_on_pedagogical';
 export type BoardTheme = 'wood' | 'green' | 'blue';
 export type SiteTheme = 'light' | 'dark' | 'auto';
 export type SoundSet = 'classic' | 'soft';
+export type MoveSoundSet = 'classic' | 'board';
 
 export interface Profile {
   user_id: number;
@@ -30,6 +31,7 @@ export interface Profile {
   blunder_warning: number;
   sound_enabled: number;
   sound_set: SoundSet;
+  move_sound_set: MoveSoundSet;
   kid_piece_emotions: number;
 }
 

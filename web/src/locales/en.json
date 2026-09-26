@@ -367,6 +367,15 @@
     "noChanges": "No changes",
     "lichess": "Lichess username",
     "lichessHelp": "Used to import games for review",
+    "moveSoundSet": "Move sounds",
+    "moveSoundSetOption": {
+      "classic": "Classic",
+      "board": "Real board"
+    },
+    "moveSoundSetDesc": {
+      "classic": "Synthesized wood knocks — the original Patzer sounds.",
+      "board": "Recordings of real pieces set down on a wooden board."
+    },
     "soundSet": "Check & game-end sounds",
     "soundSetOption": {
       "classic": "Classic",

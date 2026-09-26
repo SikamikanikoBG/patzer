@@ -303,6 +303,15 @@
     },
     "lichess": "Usuario de Lichess",
     "lichessHelp": "Se usa para importar partidas y analizarlas",
+    "moveSoundSet": "Sonidos de las jugadas",
+    "moveSoundSetOption": {
+      "classic": "Clásico",
+      "board": "Tablero real"
+    },
+    "moveSoundSetDesc": {
+      "classic": "Golpes de madera sintetizados: los sonidos originales de Patzer.",
+      "board": "Grabaciones de piezas reales colocadas sobre un tablero de madera."
+    },
     "soundSet": "Sonidos de jaque y fin de partida",
     "soundSetOption": {
       "classic": "Clásico",

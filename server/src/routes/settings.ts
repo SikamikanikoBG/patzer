@@ -25,6 +25,7 @@ const profileSchema = z.object({
   blunder_warning: z.boolean().optional(),
   sound_enabled: z.boolean().optional(),
   sound_set: z.enum(['classic', 'soft']).optional(),
+  move_sound_set: z.enum(['classic', 'board']).optional(),
   kid_piece_emotions: z.boolean().optional(),
 });
 
