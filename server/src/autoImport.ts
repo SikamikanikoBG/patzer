@@ -11,7 +11,7 @@ import { kickAutoReview } from './autoReview.js';
 
 // Poll interval in minutes; 0 disables the timer (a one-off sync still runs on
 // boot so a restart always catches up).
-const SYNC_MINUTES = Number(process.env.CHESSCOM_SYNC_MINUTES ?? 1);
+const SYNC_MINUTES = Number(process.env.CHESSCOM_SYNC_MINUTES ?? 15);
 const IMPORT_LIMIT = 20; // most recent games fetched per user per tick
 const MAX_ANALYZE_PER_RUN = 3; // bound chess-api.com load per tick
 

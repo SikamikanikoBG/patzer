@@ -87,7 +87,7 @@ only touches profiles that already have a Chess.com username.
   On an API failure it retries once, then finishes that game locally, so one
   review never mixes two engines. (#44)
 - **Automatic Chess.com sync and review.** Profiles with a Chess.com username
-  get their new games pulled in the background (every minute by default,
+  get their new games pulled in the background (every 15 minutes by default,
   `CHESSCOM_SYNC_MINUTES`, `0` turns the timer off), the newest ones analyzed
   (at most three per tick), and — when an LLM is configured — the AI Game
   Review written without a click. Finished bot and friend games get their
