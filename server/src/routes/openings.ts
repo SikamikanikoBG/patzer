@@ -17,9 +17,9 @@ import { lookupOpeningByEpd, fenToEpd } from '../chess/openings.js';
 import { masterStats } from '../chess/explorer.js';
 import {
   TRAINER_LINES, LEARNED_AFTER, MAX_LINE_PLIES, MAX_REPERTOIRE_PLIES,
-  replayLine, lineName, repertoireLine, recordMiss, queueSummary, dueReviews, answerReview,
+  replayLine, lineName, repertoireLine, recordMiss, removeMiss, queueSummary, dueReviews, answerReview, checkReview, dayOf,
 } from '../chess/openingTrainer.js';
-import type { Color } from '../types.js';
+import type { AnalyzedMove, Color } from '../types.js';
 
 const router = new Hono();
 router.use('*', requireAuth);
@@ -189,9 +189,15 @@ router.get('/explorer', async (c) => {
 
 // ---- Opening trainer (roadmap #6) — see chess/openingTrainer.ts ----------
 
+// The browser's calendar day (?today= or { today }), see dayOf.
+const todayOf = (v: unknown) => dayOf(typeof v === 'string' ? v : null);
+
+// Classifications that make a move a habit worth losing, not drilling.
+const FLAWS = new Set(['mistake', 'blunder', 'miss']);
+
 router.get('/trainer', (c) => {
   const me = c.get('user');
-  return c.json({ lines: TRAINER_LINES, learned_after: LEARNED_AFTER, ...queueSummary(me.id) });
+  return c.json({ lines: TRAINER_LINES, learned_after: LEARNED_AFTER, ...queueSummary(me.id, todayOf(c.req.query('today'))) });
 });
 
 // A line from your own repertoire: the moves up to a tree node, continued the
@@ -206,15 +212,31 @@ router.get('/trainer/repertoire', (c) => {
   if (!replayed) return c.json({ error: 'invalid_line' }, 400);
   const sans = replayed.map((m) => m.san);
 
-  const byColor: Record<Color, string[][]> = { white: [], black: [] };
-  for (const r of treeGames(me.id)) {
+  // The same games as the tree, with the analysis' verdict on every move.
+  const rows = db.prepare(`
+    SELECT g.pgn, g.user_color, a.moves_json
+    FROM analyses a JOIN games g ON g.id = a.game_id
+    WHERE g.user_id = ? AND a.scoring_version >= ?
+    ORDER BY g.end_time DESC, g.id DESC
+  `).all(me.id, SCORING_VERSION) as { pgn: string; user_color: Color | null; moves_json: string }[];
+  const byColor: Record<Color, { games: string[][]; flawed: boolean[][] }> = {
+    white: { games: [], flawed: [] },
+    black: { games: [], flawed: [] },
+  };
+  for (const r of rows) {
     if (r.user_color !== 'white' && r.user_color !== 'black') continue;
     const chess = new Chess();
     try { chess.loadPgn(r.pgn, { strict: false }); } catch { continue; }
-    byColor[r.user_color].push(chess.history().slice(0, MAX_REPERTOIRE_PLIES));
+    // A game from a custom position can't be a line from the start.
+    if (chess.getHeaders().SetUp === '1') continue;
+    const sans = chess.history().slice(0, MAX_REPERTOIRE_PLIES);
+    let analysed: AnalyzedMove[] = [];
+    try { analysed = JSON.parse(r.moves_json) as AnalyzedMove[]; } catch { /* no verdicts, then */ }
+    byColor[r.user_color].games.push(sans);
+    byColor[r.user_color].flawed.push(sans.map((san, i) => analysed[i]?.san === san && FLAWS.has(analysed[i]!.classification)));
   }
   const result = (color: Color) => {
-    const line = repertoireLine(byColor[color], sans);
+    const line = repertoireLine(byColor[color].games, sans, undefined, undefined, { color, flawed: byColor[color].flawed });
     return { ...line, name: lineName(line.moves) };
   };
   return c.json({ white: result('white'), black: result('black') });
@@ -224,6 +246,7 @@ const missSchema = z.object({
   moves: z.array(z.string().min(1).max(12)).min(1).max(MAX_LINE_PLIES),
   color: z.enum(['white', 'black']),
   line_name: z.string().max(200).nullish(),
+  today: z.string().max(10).optional(),
 });
 
 // The user missed the last move of `moves` — put it in the review queue.
@@ -231,20 +254,31 @@ router.post('/trainer/miss', async (c) => {
   const me = c.get('user');
   const parsed = missSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
-  const ok = recordMiss(me.id, { moves: parsed.data.moves, color: parsed.data.color, lineName: parsed.data.line_name });
-  if (!ok) return c.json({ error: 'invalid_line' }, 400);
+  const res = recordMiss(me.id, { moves: parsed.data.moves, color: parsed.data.color, lineName: parsed.data.line_name }, todayOf(parsed.data.today));
+  if (res === 'invalid') return c.json({ error: 'invalid_line' }, 400);
+  if (res === 'full') return c.json({ error: 'queue_full' }, 409);
   return c.json({ ok: true });
 });
 
 router.get('/trainer/review', (c) => {
   const me = c.get('user');
-  return c.json({ items: dueReviews(me.id) });
+  return c.json({ items: dueReviews(me.id, todayOf(c.req.query('today'))) });
 });
 
-// Either the move played, or { reveal: true } for "show me the move".
+// "Remove from review": the move leaves the queue for good.
+router.delete('/trainer/review/:id', (c) => {
+  const me = c.get('user');
+  const id = Number(c.req.param('id'));
+  if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'invalid_input' }, 400);
+  if (!removeMiss(me.id, id)) return c.json({ error: 'not_found' }, 404);
+  return c.json({ ok: true });
+});
+
+// Either the move played, or { reveal: true } for "show me the move". With
+// `first`, a wrong move only says so ({ retry: true }) and one more try follows.
 const answerSchema = z.union([
-  z.object({ uci: z.string().regex(/^[a-h][1-8][a-h][1-8][nbrq]?$/i) }),
-  z.object({ reveal: z.literal(true) }),
+  z.object({ uci: z.string().regex(/^[a-h][1-8][a-h][1-8][nbrq]?$/i), first: z.boolean().optional(), today: z.string().max(10).optional() }),
+  z.object({ reveal: z.literal(true), today: z.string().max(10).optional() }),
 ]);
 
 router.post('/trainer/review/:id', async (c) => {
@@ -253,7 +287,12 @@ router.post('/trainer/review/:id', async (c) => {
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'invalid_input' }, 400);
   const parsed = answerSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
-  const answer = answerReview(me.id, id, 'uci' in parsed.data ? parsed.data.uci.toLowerCase() : null);
+  if ('uci' in parsed.data && parsed.data.first) {
+    const right = checkReview(me.id, id, parsed.data.uci.toLowerCase());
+    if (right === null) return c.json({ error: 'not_found' }, 404);
+    if (!right) return c.json({ correct: false, retry: true });
+  }
+  const answer = answerReview(me.id, id, 'uci' in parsed.data ? parsed.data.uci.toLowerCase() : null, todayOf(parsed.data.today));
   if (!answer) return c.json({ error: 'not_found' }, 404);
   return c.json(answer);
 });
