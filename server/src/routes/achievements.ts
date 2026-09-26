@@ -9,11 +9,12 @@ import { Hono } from 'hono';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
+import { learnTotals } from '../learnProgress.js';
 
 const router = new Hono();
 router.use('*', requireAuth);
 
-type Category = 'milestone' | 'mastery' | 'tactics' | 'streaks';
+type Category = 'milestone' | 'mastery' | 'tactics' | 'streaks' | 'learning';
 
 interface CatalogEntry {
   id: string;
@@ -36,6 +37,9 @@ const CATALOG: CatalogEntry[] = [
   { id: 'streaker_3',      title: 'Heating Up',          description: 'Win 3 games in a row.',                           icon: 'Flame',     target: 3,   category: 'streaks' },
   { id: 'streaker_5',      title: 'On Fire',             description: 'Win 5 games in a row.',                           icon: 'Flame',     target: 5,   category: 'streaks' },
   { id: 'streaker_10',     title: 'Unstoppable',         description: 'Win 10 games in a row.',                          icon: 'Flame',     target: 10,  category: 'streaks' },
+  { id: 'first_lesson',    title: 'First Lesson',        description: 'Finished your first lesson in Learn.',            icon: 'GraduationCap', target: 1,   category: 'learning' },
+  { id: 'eager_student',   title: 'Eager Student',       description: 'Finished 10 lessons in Learn.',                   icon: 'BookOpen',  target: 10,  category: 'learning' },
+  { id: 'star_collector',  title: 'Star Collector',      description: 'Collected 100 stars in Learn.',                   icon: 'Star',      target: 100, category: 'learning' },
 ];
 
 interface Stats {
@@ -47,6 +51,8 @@ interface Stats {
   bestAccuracyHit: boolean;
   distinctEco: number;
   longestStreak: number;
+  lessons: number;
+  lessonStars: number;
 }
 
 function computeStats(userId: number): Stats {
@@ -92,6 +98,8 @@ function computeStats(userId: number): Stats {
     else run = 0;
   }
 
+  const learn = learnTotals(userId);
+
   return {
     games: g.games ?? 0,
     wins: g.wins ?? 0,
@@ -101,6 +109,8 @@ function computeStats(userId: number): Stats {
     bestAccuracyHit: !!acc,
     distinctEco: g.eco_count ?? 0,
     longestStreak: longest,
+    lessons: learn.lessons,
+    lessonStars: learn.stars,
   };
 }
 
@@ -124,6 +134,9 @@ function progressFor(id: string, s: Stats): number {
     case 'streaker_3':       return Math.min(s.longestStreak, 3);
     case 'streaker_5':       return Math.min(s.longestStreak, 5);
     case 'streaker_10':      return Math.min(s.longestStreak, 10);
+    case 'first_lesson':     return Math.min(s.lessons, 1);
+    case 'eager_student':    return Math.min(s.lessons, 10);
+    case 'star_collector':   return Math.min(s.lessonStars, 100);
   }
   return 0;
 }

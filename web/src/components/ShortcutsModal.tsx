@@ -28,6 +28,7 @@ export default function ShortcutsModal({ open, onClose }: Props) {
         ['G R', t('shortcuts.goReview', { defaultValue: 'Go to Review' })],
         ['G I', t('shortcuts.goInsights', { defaultValue: 'Go to Insights' })],
         ['G T', t('shortcuts.goTrain', { defaultValue: 'Go to Tactic Trainer' })],
+        ['G E', t('shortcuts.goLearn')],
         ['Esc', t('shortcuts.closeDialog', { defaultValue: 'Close any dialog' })],
       ],
     },

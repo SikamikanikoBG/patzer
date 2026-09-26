@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { BookMarked, ChevronRight, ChevronDown, Compass, GraduationCap, Target } from 'lucide-react';
 import ChessBoard from '../components/ChessBoard';
+import BetaBadge from '../components/BetaBadge';
 import OpeningTrainer, { TRAINER_QUERY_KEY, fetchTrainer } from '../components/OpeningTrainer';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
@@ -38,6 +39,8 @@ export default function Openings() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = searchParams.get('tab') === 'trainer' ? 'trainer' : 'tree';
+  // ?line=<id> — straight into one of the built-in lines (the Learn section links here).
+  const startLine = searchParams.get('line');
   const { data, isLoading } = useQuery({
     queryKey: ['openings-tree'],
     queryFn: () => api.get<TreeResponse>('/api/openings/tree'),
@@ -75,24 +78,34 @@ export default function Openings() {
         </button>
         <button role="tab" aria-selected={tab === 'trainer'} onClick={() => setTab('trainer')} className={tabClass(tab === 'trainer')}>
           <GraduationCap className="h-4 w-4" /> {t('openings.tabs.trainer')}
+          <BetaBadge />
           {!!trainer?.due && (
-            <span className="badge bg-gold-500/15 font-mono tabular-nums text-gold-700 dark:text-gold-400">{trainer.due}</span>
+            <span className="badge bg-gold-500/15 font-mono tabular-nums text-gold-700 dark:text-gold-300">{trainer.due}</span>
           )}
         </button>
       </div>
 
       {tab === 'trainer' ? (
-        <OpeningTrainer repertoirePrefix={practice} onClearRepertoire={() => setPractice(null)} />
+        <OpeningTrainer
+          repertoirePrefix={practice}
+          onClearRepertoire={() => setPractice(null)}
+          startLine={startLine}
+          onStartLineUsed={() => setSearchParams({ tab: 'trainer' }, { replace: true })}
+        />
       ) : isLoading ? (
         <Skeleton />
       ) : (
-        <RepertoireTree data={data} onPractice={(moves) => { setPractice(moves); setTab('trainer'); }} />
+        <RepertoireTree data={data} onPractice={(moves) => { setPractice(moves); setTab('trainer'); }} onTrainer={() => setTab('trainer')} />
       )}
     </div>
   );
 }
 
-function RepertoireTree({ data, onPractice }: { data: TreeResponse | undefined; onPractice: (moves: string[]) => void }) {
+function RepertoireTree({ data, onPractice, onTrainer }: {
+  data: TreeResponse | undefined;
+  onPractice: (moves: string[]) => void;
+  onTrainer: () => void;
+}) {
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -140,9 +153,14 @@ function RepertoireTree({ data, onPractice }: { data: TreeResponse | undefined; 
         <div className="max-w-md text-sm text-chesscom-500">
           {t('openings.emptyDesc', { defaultValue: 'Import or analyze a few games and your repertoire will branch out here.' })}
         </div>
-        <Link to="/review" className="btn-primary mt-2 text-sm">
-          {t('review.title')}
-        </Link>
+        <div className="mt-2 flex flex-wrap justify-center gap-2">
+          <Link to="/review" className="btn-primary text-sm">
+            {t('review.title')}
+          </Link>
+          <button onClick={onTrainer} className="btn-secondary text-sm">
+            <GraduationCap className="h-4 w-4" /> {t('openings.emptyTrainer')}
+          </button>
+        </div>
       </div>
     );
   }

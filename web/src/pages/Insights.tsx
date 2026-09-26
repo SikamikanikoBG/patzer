@@ -15,7 +15,7 @@ type Achievement = {
   title: string;
   description: string;
   icon: string;
-  category: 'milestone' | 'mastery' | 'tactics' | 'streaks';
+  category: 'milestone' | 'mastery' | 'tactics' | 'streaks' | 'learning';
   unlocked: boolean;
   unlocked_at: string | null;
   progress: number;
@@ -526,6 +526,7 @@ const AchievementsSection = ({ achievements, sectionRef }: { achievements: Achie
     { key: 'mastery', label: t('insights.ach.mastery', { defaultValue: 'Mastery' }) },
     { key: 'tactics', label: t('insights.ach.tactics', { defaultValue: 'Tactics' }) },
     { key: 'streaks', label: t('insights.ach.streaks', { defaultValue: 'Streaks' }) },
+    { key: 'learning', label: t('insights.ach.learning') },
   ];
   const grouped = order.map((g) => ({ ...g, items: list.filter((a) => a.category === g.key) })).filter((g) => g.items.length > 0);
   const unlocked = list.filter((a) => a.unlocked).length;

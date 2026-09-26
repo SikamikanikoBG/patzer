@@ -25,6 +25,10 @@ released under [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) (pu
 attribution; it is credited here so the origin stays traceable. Each file is one click from that recording (at 24.41 s
 and 40.95 s), 0.32 s long, high-passed at 60 Hz, faded out and loudness-matched — 48 kHz, 16-bit mono.
 
+## Lichess puzzle database (CC0)
+
+The tactic, mate and endgame tasks of the Learn section (`web/src/learn/content/*.json`, steps with a `src` field) are puzzles from the [Lichess puzzle database](https://database.lichess.org/#puzzles), released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/). No permission or attribution is required; we keep each puzzle's id anyway, and the lesson page links to it on lichess.org. The lesson texts and all other positions are written for Patzer.
+
 ## Other notable dependencies
 
 | Package | License |
