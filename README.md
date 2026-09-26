@@ -42,13 +42,14 @@
 
 Patzer is a tiny, self-hosted take on the Chess.com / Lichess workflow you actually use:
 
-- **Game Review** — pull your public Chess.com games (or paste a PGN), analyze with bundled Stockfish, get chess.com-style classifications (Brilliant / Great / Best / Excellent / Good / Book / Inaccuracy / Mistake / Miss / Blunder), accuracy %, estimated Elo, eval graph, key moments, top engine lines, a "What's the threat?" probe, and master-game statistics for the position.
+- **Game Review** — pull your public Chess.com or Lichess games (or paste a PGN; Chess.com games can sync on their own), analyze with bundled Stockfish, get chess.com-style classifications (Brilliant / Great / Best / Excellent / Good / Book / Inaccuracy / Mistake / Miss / Blunder), accuracy %, estimated Elo, eval graph, key moments, top engine lines, a "What's the threat?" probe, and master-game statistics for the position.
 - **Play vs Bot** — full games against Stockfish at seven named tiers (Kid → Stockfish max), all standard time controls, a queue of up to six premoves shown on the board, kid-mode blunder warnings.
 - **Play vs Friend** — real-time PvP between profiles on the same server over WebSocket, with draw offers, takebacks and one-click rematch. Playing across the internet is a tunnel away — see the [FAQ](docs/FAQ.md#can-i-play-a-friend-who-lives-somewhere-else).
 - **Players & profiles** — a directory of everyone on your server with a rating leaderboard, live presence and public profiles (record, per-time-class ratings, your head-to-head), challenge-from-profile, and a "missed invitations" rail.
-- **AI Coach (your LLM)** — point at any [Ollama](https://ollama.com) or [vLLM](https://docs.vllm.ai) host. Audience-tuned voices for Kid / Beginner / Intermediate / Advanced. Anti-hallucination by design — chess facts are computed server-side; the LLM only renders them.
-- **Family-ready** — multi-user with admin console, per-profile language, kid-mode blunder warnings, "horsey" piece names for the youngest profiles.
-- **Multilingual** — English, Bulgarian and Spanish out of the box, UI *and* coach prompts. Adding a language is one table entry per file — see CONTRIBUTING.
+- **AI Coach (your LLM)** — point at any [Ollama](https://ollama.com) or [vLLM](https://docs.vllm.ai) host (or, if you have no GPU to spare, the hosted DeepSeek API). Audience-tuned voices for Kid / Beginner / Intermediate / Advanced. Anti-hallucination by design — chess facts are computed server-side; the LLM only renders them.
+- **Family-ready** — multi-user with admin console, open / invite-only / closed sign-up, per-profile language, kid-mode blunder warnings, "horsey" piece names for the youngest profiles.
+- **Opening trainer** — drill 16 built-in main lines or any line from your own repertoire; the moves you miss come back in a daily review queue.
+- **Multilingual** — English, Bulgarian, Spanish and German out of the box, UI *and* coach prompts. Adding a language is one table entry per file — see CONTRIBUTING.
 - **Self-hosted, single container** — runs on a Pi, a NAS, an old laptop. Your games never leave home.
 - **Phone-friendly** — full-width board, sticky action bar and a swipe-up move list on small screens.
 - **Tells you when it's stale** — a self-hosted app can't update itself, but Patzer checks GitHub every six hours and shows a one-line notice when a newer release is out, so you know to pull. Sends nothing about you; switch it off in *Admin → System*.
@@ -132,13 +133,13 @@ volumes:
 > **What needs an LLM:** the AI Coach commentary voice. Until you point Patzer at an Ollama or
 > vLLM host, the *Coach* panel just shows the engine facts in plain text.
 >
-> **What needs a Chess.com username:** importing your public games for review. Without it
+> **What needs a Chess.com or Lichess username:** importing your public games for review. Without it
 > you can still load PGNs by paste or play live and review from the move list.
 
 You'll want, optionally:
 
-- **For the AI Coach:** an [Ollama](https://ollama.com) or [vLLM](https://docs.vllm.ai) server reachable from the Patzer container (pick the provider in *Admin → System*). The wizard validates the URL and lists available models for you. Patzer accepts loopback / RFC1918 / `*.local` Ollama hosts only — public-Internet model proxies aren't supported here.
-- **For Game Review on your own games:** a Chess.com username (entered later in *Settings*).
+- **For the AI Coach:** an [Ollama](https://ollama.com) or [vLLM](https://docs.vllm.ai) server reachable from the Patzer container (pick the provider in *Admin → System*). The wizard validates the URL and lists available models for you. Patzer accepts loopback / RFC1918 / `*.local` Ollama hosts only — public-Internet model proxies aren't supported here. The one hosted exception is DeepSeek, which you opt into with an API key in *Admin → System*.
+- **For Game Review on your own games:** a Chess.com and/or Lichess username (entered later in *Settings*).
 
 To use a different host port, run with `-p 9000:8800` (or set `HOST_PORT=9000` if you're using `docker compose`).
 
@@ -151,6 +152,7 @@ If you're terminating TLS at a reverse proxy, set `COOKIE_SECURE=true` in the co
 | Self-hosted            |   ✅   |       ❌        |        ❌         |    ❌    |
 | LLM coach (BYO model)  |   ✅   |       ❌        |        ❌         |    ❌    |
 | Imports Chess.com      |   ✅   |       ❌        |        ✅         |    ✅    |
+| Imports Lichess        |   ✅   |       ✅        |        ❌         |    ✅    |
 | Multi-user / family    |   ✅   |       ❌        |        ❌         |    ❌    |
 | Multilingual coach     |   ✅   |  partial UI    |        ❌         |    ❌    |
 | Free                   |   ✅   |       ✅        |        💳         |    💳    |
@@ -242,9 +244,12 @@ All user-facing configuration is done **through the UI** and persisted in SQLite
 | `UPDATE_CHECK` | `1` | Set to `0` to disable the six-hourly "a newer release exists" check for the whole deployment (there's also a toggle in *Admin → System*) |
 | `SESSION_SECRET` | (auto-generated) | Cookie signing secret. Persisted on first run. |
 | `COOKIE_SECURE`  | `false` | Set to `true` when terminating TLS at a reverse proxy so session cookies are flagged `Secure`. |
+| `ENGINE_BACKEND` | `local` | `chessapi` sends Game Review positions to the hosted chess-api.com engine instead of the bundled Stockfish (opt-in — for a Pi or a public demo instance) |
+| `CHESSCOM_SYNC_MINUTES` | `1` | How often linked Chess.com accounts are synced, analyzed and reviewed in the background; `0` turns the timer off |
+| `DEEPSEEK_API_KEY` | (none) | DeepSeek key for the coach; wins over the key saved in *Admin → System* (handy with Docker secrets) |
 
-System settings (Ollama URL, default coach model, Stockfish path override) live in *Admin → System*.
-Per-profile settings (language, audience, coach behavior, TTS voice, Chess.com username) live in *Settings*.
+System settings (coach provider and model, Stockfish path override, who can sign up) live in *Admin → System*; invites in *Admin → Users*.
+Per-profile settings (language, audience, coach behavior, TTS voice, sound sets, Chess.com / Lichess usernames) live in *Settings*.
 
 ## How move classification works
 
@@ -289,6 +294,8 @@ Estimated Elo comes from average centipawn loss on a piecewise curve calibrated 
 ## Contributing
 
 PRs welcome — please read [CONTRIBUTING.md](CONTRIBUTING.md) first. Translations especially encouraged.
+
+Patzer is better for the people who have already sent code — thank you to everyone in [CONTRIBUTORS.md](CONTRIBUTORS.md).
 
 ## Security
 

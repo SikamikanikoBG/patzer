@@ -4,7 +4,20 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [7.15.0] — 2026-09-26
+
+### German, Lichess, invites, an opening trainer — and two new contributors
+
+The biggest community release so far: seven pull requests from two first-time
+contributors. **Thank you, [@eric-gpu](https://github.com/eric-gpu)** (German,
+Lichess import, invite-only sign-up, both sound sets and the opening trainer —
+#39, #40, #41, #42, #43, #45) **and [@aminghuf](https://github.com/aminghuf)**
+(DeepSeek, the opt-in hosted engine and automatic Chess.com sync — #44).
+
+Nothing changes unless you ask for it: the new sounds default to *Classic*,
+sign-up keeps whatever mode you had, and Game Review stays on the bundled
+Stockfish. The one thing that runs on its own is the Chess.com sync below — it
+only touches profiles that already have a Chess.com username.
 
 ### Added
 - **German (`de`).** The whole app — UI, setup wizard, coach persona and hard
@@ -62,6 +75,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   back in a daily review queue until you've got it right on three different
   days. (Roadmap #6)
 
+- **DeepSeek as a coach provider.** A third tab next to Ollama and vLLM in
+  **Admin → System**, for machines too small to run a model. The API key comes
+  from `DEEPSEEK_API_KEY` (wins, Docker-secret friendly) or the Admin field,
+  and is never sent back to the browser — only whether one is set. Ollama and
+  vLLM stay the local-first default. (#44)
+- **Optional hosted analysis engine.** `ENGINE_BACKEND=chessapi` sends Game
+  Review positions to chess-api.com (Stockfish 18 NNUE) instead of the bundled
+  binary — meant for a Pi/NAS or a public try-it instance. **Off by default**:
+  `local` stays the default and nothing leaves your machine unless you set it.
+  On an API failure it retries once, then finishes that game locally, so one
+  review never mixes two engines. (#44)
+- **Automatic Chess.com sync and review.** Profiles with a Chess.com username
+  get their new games pulled in the background (every minute by default,
+  `CHESSCOM_SYNC_MINUTES`, `0` turns the timer off), the newest ones analyzed
+  (at most three per tick), and — when an LLM is configured — the AI Game
+  Review written without a click. Finished bot and friend games get their
+  review the same way. A failed review never blocks the import; it is retried
+  on the next sweep. (#44)
 ### Changed
 - **`games.source` accepts `lichess`.** SQLite can't alter a CHECK
   constraint, so existing installs rebuild the `games` table once on startup:
