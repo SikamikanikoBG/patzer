@@ -27,6 +27,8 @@ export interface TrainerInfo {
 interface RepertoireSide { games: number; moves: string[]; name: string | null; stoppedBefore?: string }
 interface ReviewItem { id: number; line_name: string; line_id: string | null; color: Side; moves: string[]; fen: string; misses: number; streak: number }
 interface ReviewAnswer { correct: boolean; expected_san: string; expected_uci: string; streak: number; learned: boolean }
+/** A first wrong try in the review: nothing given away, one more go. */
+interface ReviewRetry { correct: false; retry: true }
 
 export const TRAINER_QUERY_KEY = ['opening-trainer'];
 export const fetchTrainer = () => api.get<TrainerInfo>(`/api/openings/trainer?today=${localDay()}`);
@@ -510,6 +512,9 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
   const [revealed, setRevealed] = useState(false);
   // After a miss you play the move of the line once yourself, so it sticks.
   const [replayed, setReplayed] = useState(false);
+  // A first wrong try, like in the drill: said so, but one more go before
+  // the move is given away.
+  const [tried, setTried] = useState(false);
   const [busy, setBusy] = useState(false);
   const [right, setRight] = useState(0);
   const [boardKey, setBoardKey] = useState(0);
@@ -531,11 +536,16 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
     return [{ orig: uci.slice(0, 2), dest: uci.slice(2, 4), brush: 'green' }];
   }, [missed, replayed, answer]);
 
-  async function submit(body: { uci: string } | { reveal: true }) {
+  async function submit(body: { uci: string; first?: boolean } | { reveal: true }) {
     if (!item) return;
     setBusy(true);
     try {
-      const r = await api.post<ReviewAnswer>(`/api/openings/trainer/review/${item.id}`, { ...body, today: localDay() });
+      const r = await api.post<ReviewAnswer | ReviewRetry>(`/api/openings/trainer/review/${item.id}`, { ...body, today: localDay() });
+      if ('retry' in r) {
+        setTried(true);
+        setBoardKey((k) => k + 1);
+        return;
+      }
       setAnswer(r);
       setRevealed('reveal' in body);
       if (r.correct) {
@@ -554,7 +564,7 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
 
   function onMove(uci: string) {
     if (!item || busy) { setBoardKey((k) => k + 1); return; }
-    if (!answer) { void submit({ uci }); return; }
+    if (!answer) { void submit({ uci, first: !tried }); return; }
     if (missed && !replayed && isExpectedMove(item.fen, uci, answer.expected_san)) {
       setReplayed(true);
       soundForMove(inferMoveFlagsFromSan(answer.expected_san));
@@ -568,8 +578,18 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
     setAnswer(null);
     setRevealed(false);
     setReplayed(false);
+    setTried(false);
     setIndex((i) => i + 1);
   }
+
+  // Once the move of the line is on the board, the next one follows by itself
+  // after a moment to take it in ("Next" skips the wait).
+  const settled = !!answer && (answer.correct || replayed);
+  useEffect(() => {
+    if (!settled) return;
+    const id = window.setTimeout(next, answer?.learned ? 2200 : 1400);
+    return () => window.clearTimeout(id);
+  }, [settled, answer]);
 
   // "I don't play this any more": out of the queue for good.
   async function remove() {
@@ -623,9 +643,17 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
         </LineHeader>
 
         {!answer ? (
-          <div className="card p-4">
-            <div className="text-sm text-chesscom-700 dark:text-chesscom-200">{t('openings.trainer.reviewTask')}</div>
-            <div className="mt-1 text-xs text-chesscom-500">{t('openings.trainer.reviewTaskHint')}</div>
+          <div className={`card p-4 ${tried ? 'border-move-mistake bg-move-mistake/5' : ''}`}>
+            {tried ? (
+              <div className="flex items-start gap-2 text-sm text-chesscom-700 dark:text-chesscom-200">
+                <X className="mt-0.5 h-4 w-4 shrink-0 text-move-mistake" /> <span>{t('openings.trainer.wrong')}</span>
+              </div>
+            ) : (
+              <>
+                <div className="text-sm text-chesscom-700 dark:text-chesscom-200">{t('openings.trainer.reviewTask')}</div>
+                <div className="mt-1 text-xs text-chesscom-500">{t('openings.trainer.reviewTaskHint')}</div>
+              </>
+            )}
             <button onClick={() => void submit({ reveal: true })} disabled={busy} className="btn-secondary mt-3 w-full text-sm">
               <Lightbulb className="h-4 w-4" /> {t('openings.trainer.showMove')}
             </button>
@@ -644,6 +672,16 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
               {t('openings.trainer.next')} <ArrowRight className="h-4 w-4" />
             </button>
           </div>
+        ) : replayed ? (
+          <div className="card border-board-dark bg-board-dark/5 p-4">
+            <div className="flex items-start gap-2 text-sm font-semibold">
+              <Check className="mt-0.5 h-4 w-4 shrink-0 text-board-dark" /> {t('openings.trainer.reviewReplayed', { san: answer.expected_san })}
+            </div>
+            <div className="mt-1 text-xs text-chesscom-500">{t('openings.trainer.startsOver')}</div>
+            <button onClick={next} className="btn-primary mt-3 w-full text-sm">
+              {t('openings.trainer.next')} <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
         ) : (
           <div className={`card p-4 ${revealed ? 'border-gold-500/60 bg-gold-500/5' : 'border-move-mistake bg-move-mistake/5'}`}>
             <div className="flex items-start gap-2 text-sm font-semibold">
@@ -651,11 +689,8 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
                 ? <><Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-gold-600" /> {t('openings.trainer.reviewRevealed', { san: answer.expected_san })}</>
                 : <><X className="mt-0.5 h-4 w-4 shrink-0 text-move-mistake" /> {t('openings.trainer.reviewWrong', { san: answer.expected_san })}</>}
             </div>
-            {!replayed && (
-              <div className="mt-1 text-sm text-chesscom-700 dark:text-chesscom-200">{t('openings.trainer.reviewPlayIt')}</div>
-            )}
-            <div className="mt-1 text-xs text-chesscom-500">{t('openings.trainer.startsOver')}</div>
-            <button onClick={next} className={`${replayed ? 'btn-primary' : 'btn-secondary'} mt-3 w-full text-sm`}>
+            <div className="mt-1 text-sm text-chesscom-700 dark:text-chesscom-200">{t('openings.trainer.reviewPlayIt')}</div>
+            <button onClick={next} className="btn-secondary mt-3 w-full text-sm">
               {t('openings.trainer.next')} <ArrowRight className="h-4 w-4" />
             </button>
           </div>

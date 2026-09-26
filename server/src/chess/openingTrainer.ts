@@ -291,28 +291,41 @@ export interface ReviewAnswer {
   learned: boolean;
 }
 
-/** Check one answer from the review queue and reschedule the move. `uci`
- *  null means "show me the move" — that counts as not knowing it. Returns null
- *  when the move isn't the user's. An item that isn't due (answered twice, or
- *  from a stale page) is checked but not rescheduled. */
-export function answerReview(userId: number, id: number, uci: string | null, today = dayOf()): ReviewAnswer | null {
+function reviewRow(userId: number, id: number, today: string): (MissRow & { is_due: number; fen: string }) | null {
   const row = db.prepare(`
     SELECT id, line_name, user_color, moves, expected_san, expected_uci, misses, streak, due_on,
            (due_on IS NOT NULL AND due_on <= ?) AS is_due
     FROM opening_misses WHERE id = ? AND user_id = ?
   `).get(today, id, userId) as (MissRow & { is_due: number }) | undefined;
-  if (!row) return null;
-  const item = toItem(row);
-  if (!item) return null;
+  const item = row && toItem(row);
+  return item ? { ...row, fen: item.fen } : null;
+}
 
-  let played: string | null = null;
-  if (uci) {
-    try {
-      const chess = new Chess(item.fen);
-      played = chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4, 5) || undefined }).san;
-    } catch { /* illegal — counts as wrong */ }
+/** The SAN of board move `uci` in `fen`, or null when it's illegal. */
+function sanOf(fen: string, uci: string): string | null {
+  try {
+    return new Chess(fen).move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4, 5) || undefined }).san;
+  } catch {
+    return null;
   }
-  const correct = played === row.expected_san;
+}
+
+/** Is `uci` the move of review item `id`? Only checks — the review lets a
+ *  first wrong try pass without giving the move away or rescheduling, like the
+ *  drill does. Null when the item isn't the user's. */
+export function checkReview(userId: number, id: number, uci: string): boolean | null {
+  const row = reviewRow(userId, id, dayOf());
+  return row ? sanOf(row.fen, uci) === row.expected_san : null;
+}
+
+/** Check one answer from the review queue and reschedule the move. `uci`
+ *  null means "show me the move" — that counts as not knowing it. Returns null
+ *  when the move isn't the user's. An item that isn't due (answered twice, or
+ *  from a stale page) is checked but not rescheduled. */
+export function answerReview(userId: number, id: number, uci: string | null, today = dayOf()): ReviewAnswer | null {
+  const row = reviewRow(userId, id, today);
+  if (!row) return null;
+  const correct = !!uci && sanOf(row.fen, uci) === row.expected_san;
 
   if (!row.is_due) {
     return { correct, expected_san: row.expected_san, expected_uci: row.expected_uci, streak: row.streak, learned: row.due_on === null };

@@ -169,6 +169,14 @@ describe('missed moves and the daily review queue', () => {
     expect(trainer.answerReview(OTHER, id, 'f1b5')).toBeNull();
   });
 
+  it('checks a first try without giving the move away or rescheduling', () => {
+    const id = trainer.dueReviews(ME)[0]!.id;
+    expect(trainer.checkReview(ME, id, 'f1c4')).toBe(false);
+    expect(trainer.checkReview(ME, id, 'f1b5')).toBe(true);
+    expect(trainer.checkReview(OTHER, id, 'f1b5')).toBeNull();
+    expect(trainer.dueReviews(ME)[0]).toMatchObject({ id, misses: 2, streak: 0 });
+  });
+
   it('moves a wrong answer to tomorrow and starts it over', () => {
     const id = trainer.dueReviews(ME)[0]!.id;
     expect(trainer.answerReview(ME, id, 'f1c4')).toMatchObject({ correct: false, expected_san: 'Bb5', expected_uci: 'f1b5', streak: 0, learned: false });

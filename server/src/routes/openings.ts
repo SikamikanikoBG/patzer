@@ -17,7 +17,7 @@ import { lookupOpeningByEpd, fenToEpd } from '../chess/openings.js';
 import { masterStats } from '../chess/explorer.js';
 import {
   TRAINER_LINES, LEARNED_AFTER, MAX_LINE_PLIES, MAX_REPERTOIRE_PLIES,
-  replayLine, lineName, repertoireLine, recordMiss, removeMiss, queueSummary, dueReviews, answerReview, dayOf,
+  replayLine, lineName, repertoireLine, recordMiss, removeMiss, queueSummary, dueReviews, answerReview, checkReview, dayOf,
 } from '../chess/openingTrainer.js';
 import type { AnalyzedMove, Color } from '../types.js';
 
@@ -274,9 +274,10 @@ router.delete('/trainer/review/:id', (c) => {
   return c.json({ ok: true });
 });
 
-// Either the move played, or { reveal: true } for "show me the move".
+// Either the move played, or { reveal: true } for "show me the move". With
+// `first`, a wrong move only says so ({ retry: true }) and one more try follows.
 const answerSchema = z.union([
-  z.object({ uci: z.string().regex(/^[a-h][1-8][a-h][1-8][nbrq]?$/i), today: z.string().max(10).optional() }),
+  z.object({ uci: z.string().regex(/^[a-h][1-8][a-h][1-8][nbrq]?$/i), first: z.boolean().optional(), today: z.string().max(10).optional() }),
   z.object({ reveal: z.literal(true), today: z.string().max(10).optional() }),
 ]);
 
@@ -286,6 +287,11 @@ router.post('/trainer/review/:id', async (c) => {
   if (!Number.isInteger(id) || id <= 0) return c.json({ error: 'invalid_input' }, 400);
   const parsed = answerSchema.safeParse(await c.req.json().catch(() => ({})));
   if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
+  if ('uci' in parsed.data && parsed.data.first) {
+    const right = checkReview(me.id, id, parsed.data.uci.toLowerCase());
+    if (right === null) return c.json({ error: 'not_found' }, 404);
+    if (!right) return c.json({ correct: false, retry: true });
+  }
   const answer = answerReview(me.id, id, 'uci' in parsed.data ? parsed.data.uci.toLowerCase() : null, todayOf(parsed.data.today));
   if (!answer) return c.json({ error: 'not_found' }, 404);
   return c.json(answer);
