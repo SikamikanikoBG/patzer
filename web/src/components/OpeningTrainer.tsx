@@ -591,7 +591,8 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
     return () => window.clearTimeout(id);
   }, [settled, answer]);
 
-  // "I don't play this any more": out of the queue for good.
+  // "I don't play this any more": out of the queue for good. Not offered once
+  // the answer is settled — the auto-advance would move on a second time.
   async function remove() {
     if (!item) return;
     setBusy(true);
@@ -700,7 +701,7 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
 
         <div className="flex gap-2">
           <button onClick={onExit} className="btn-ghost flex-1 text-sm">{t('openings.trainer.back')}</button>
-          <button onClick={() => void remove()} disabled={busy} className="btn-ghost flex-1 text-sm" title={t('openings.trainer.removeHint')}>
+          <button onClick={() => void remove()} disabled={busy || settled} className="btn-ghost flex-1 text-sm" title={t('openings.trainer.removeHint')}>
             <Trash2 className="h-4 w-4" /> {t('openings.trainer.remove')}
           </button>
         </div>

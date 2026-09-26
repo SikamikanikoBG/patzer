@@ -78,7 +78,7 @@ export default function Openings() {
           <GraduationCap className="h-4 w-4" /> {t('openings.tabs.trainer')}
           <BetaBadge />
           {!!trainer?.due && (
-            <span className="badge bg-gold-500/15 font-mono tabular-nums text-gold-700 dark:text-gold-400">{trainer.due}</span>
+            <span className="badge bg-gold-500/15 font-mono tabular-nums text-gold-700 dark:text-gold-300">{trainer.due}</span>
           )}
         </button>
       </div>

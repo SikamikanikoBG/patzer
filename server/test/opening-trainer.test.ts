@@ -125,6 +125,7 @@ describe('dayOf', () => {
     expect(trainer.dayOf('2026-10-30', now)).toBe('2026-09-26');
     expect(trainer.dayOf('27.09.2026', now)).toBe('2026-09-26');
     expect(trainer.dayOf('2026-13-45', now)).toBe('2026-09-26');
+    expect(trainer.dayOf('2026-09-31', new Date('2026-09-30T12:00:00Z'))).toBe('2026-09-30');
   });
 });
 

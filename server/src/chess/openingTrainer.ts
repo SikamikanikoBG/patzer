@@ -195,8 +195,10 @@ export interface ReviewItem {
 export function dayOf(local?: string | null, now = new Date()): string {
   const utc = now.toISOString().slice(0, 10);
   if (!local || !/^\d{4}-\d{2}-\d{2}$/.test(local)) return utc;
-  const diff = Math.abs(Date.parse(`${local}T00:00:00Z`) - Date.parse(`${utc}T00:00:00Z`));
-  return Number.isFinite(diff) && diff <= 86_400_000 ? local : utc;
+  const ms = Date.parse(`${local}T00:00:00Z`);
+  // A date that doesn't exist (2026-09-31 parses as October 1st) is ignored.
+  if (!Number.isFinite(ms) || new Date(ms).toISOString().slice(0, 10) !== local) return utc;
+  return Math.abs(ms - Date.parse(`${utc}T00:00:00Z`)) <= 86_400_000 ? local : utc;
 }
 
 /** Remember that the user missed the last move of `moves` (their own move).
