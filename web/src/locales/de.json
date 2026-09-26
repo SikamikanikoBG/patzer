@@ -168,8 +168,8 @@
     "import": "Von Chess.com importieren",
     "importing": "Wird importiert…",
     "imported": "{{n}} neue Partien importiert",
-    "noGames": "Noch keine Partien. Importiere welche von Chess.com oder spiele eine Partie.",
-    "noUsername": "Trage in den Einstellungen deinen Chess.com-Benutzernamen ein, um Partien zu importieren.",
+    "noGames": "Noch keine Partien. Importiere welche von Chess.com oder Lichess, oder spiele eine Partie.",
+    "noUsername": "Trage in den Einstellungen deinen Chess.com- oder Lichess-Benutzernamen ein, um Partien zu importieren.",
     "analyze": "Analysieren",
     "reanalyze": "Neu analysieren",
     "analyzing": "Wird analysiert… ({{progress}} %)",
@@ -197,7 +197,7 @@
     "notesPlaceholder": "Deine privaten Notizen zu dieser Partie…",
     "notesPrivate": "Nur du kannst das sehen.",
     "notesUnsaved": "Zum Speichern außerhalb klicken",
-    "setUsername": "Chess.com-Benutzernamen eintragen",
+    "setUsername": "Chess.com- oder Lichess-Benutzernamen eintragen",
     "lines": "Engine-Varianten",
     "linesShow": "Beste Engine-Varianten zeigen",
     "linesHide": "Ausblenden",
@@ -218,7 +218,8 @@
     "source": {
       "chesscom": "Chess.com",
       "played": "Gegen Bot",
-      "pvp": "Gegen Menschen"
+      "pvp": "Gegen Menschen",
+      "lichess": "Lichess"
     },
     "hasNote": "Notiz",
     "clearSearch": "Leeren",
@@ -242,7 +243,14 @@
     "performance": "Leistung",
     "noKeyMoments": "Keine Schlüsselmomente — eine saubere Partie.",
     "noEval": "Noch keine Bewertung",
-    "bestLabel": "besser:"
+    "bestLabel": "besser:",
+    "importLichess": "Von Lichess importieren",
+    "importError": {
+      "player_not_found": "Kein Spieler mit diesem Benutzernamen gefunden.",
+      "lichess_rate_limited": "Lichess bittet um eine kurze Pause — versuch es in einer Minute erneut.",
+      "lichess_unavailable": "Lichess ist gerade nicht erreichbar. Versuch es später erneut.",
+      "generic": "Der Import ist fehlgeschlagen. Bitte versuch es später erneut."
+    }
   },
   "classification": {
     "brilliant": "Brillant",
@@ -356,7 +364,9 @@
     "ttsDesc": "Der Coach kann seine Erklärungen vorlesen. Dafür werden die Stimmen deines Betriebssystems verwendet.",
     "ttsNoVoices": "Keine Stimmen für diese Sprache gefunden. Installiere das Sprachpaket deines Betriebssystems, um mehr Auswahl zu haben.",
     "unsaved": "Ungespeicherte Änderungen",
-    "noChanges": "Keine Änderungen"
+    "noChanges": "Keine Änderungen",
+    "lichess": "Lichess-Benutzername",
+    "lichessHelp": "Wird zum Importieren von Partien für die Analyse verwendet"
   },
   "admin": {
     "users": "Benutzer",

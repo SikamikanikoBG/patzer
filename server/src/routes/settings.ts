@@ -13,6 +13,7 @@ const profileSchema = z.object({
   language: z.enum(['en', 'bg', 'es', 'de']).optional(),
   audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).optional(),
   chesscom_username: z.string().trim().regex(/^[A-Za-z0-9_-]{2,40}$/).nullable().or(z.literal('')).optional(),
+  lichess_username: z.string().trim().regex(/^[A-Za-z0-9_-]{2,30}$/).nullable().or(z.literal('')).optional(),
   coach_behavior: z.enum(['silent', 'on_demand', 'always_on_pedagogical']).optional(),
   tts_enabled: z.boolean().optional(),
   tts_voice: z.string().nullable().optional(),

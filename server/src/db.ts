@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import { config } from './config.js';
+import { widenGamesSourceCheck } from './dbMigrations.js';
 
 export const db = new Database(config.dbPath);
 db.pragma('journal_mode = WAL');
@@ -42,7 +43,7 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS games (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    source TEXT NOT NULL CHECK(source IN ('chesscom','played','imported','pvp')),
+    source TEXT NOT NULL CHECK(source IN ('chesscom','lichess','played','imported','pvp')),
     external_id TEXT,
     pgn TEXT NOT NULL,
     white TEXT,
@@ -172,6 +173,20 @@ ensureColumn('analyses', 'prose_audience', `TEXT`);
 // (one chess.com game imported by two users would have two rows already).
 ensureColumn('games', 'bookmarked', `INTEGER NOT NULL DEFAULT 0`);
 ensureColumn('games', 'notes', `TEXT`);
+
+// v7.15 — Lichess import (#28). Existing installs have a CHECK on games.source
+// that predates 'lichess'; widen it once. Runs after every ensureColumn on
+// games so the rebuilt table keeps all of them. A failure is logged, not
+// thrown: the transaction has rolled back, every game is still there, and
+// only the Lichess import is unavailable until the cause is fixed.
+try {
+  if (widenGamesSourceCheck(db)) console.log('[db] games.source now accepts lichess');
+} catch (e) {
+  console.error('[db] could not widen games.source for Lichess import:', (e as Error).message);
+}
+
+// Lichess username for the game importer, next to the Chess.com one.
+ensureColumn('profiles', 'lichess_username', 'TEXT');
 
 // v6.0.0 — Tactic Trainer attempts. Each row is one user attempt at a puzzle
 // extracted from one of their own blunders / missed mates.

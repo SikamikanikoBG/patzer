@@ -165,8 +165,8 @@
     "import": "Внеси от Chess.com",
     "importing": "Внася…",
     "imported": "Внесени {{n}} нови партии",
-    "noGames": "Все още няма партии. Внеси от Chess.com или изиграй една.",
-    "noUsername": "Задай Chess.com потребителско име в Настройките, за да внасяш партии.",
+    "noGames": "Все още няма партии. Внеси от Chess.com или Lichess, или изиграй една.",
+    "noUsername": "Задай Chess.com или Lichess потребителско име в Настройките, за да внасяш партии.",
     "analyze": "Анализирай",
     "reanalyze": "Анализирай отново",
     "analyzing": "Анализира… ({{progress}}%)",
@@ -194,13 +194,23 @@
     "notesPlaceholder": "Личните ти бележки за тази партия…",
     "notesPrivate": "Само ти ги виждаш.",
     "notesUnsaved": "Кликни извън за запазване",
-    "setUsername": "Задай Chess.com име",
+    "setUsername": "Задай Chess.com или Lichess име",
     "lines": "Линии на двигателя",
     "linesShow": "Покажи топ линиите",
     "linesHide": "Скрий",
     "linesFetching": "зарежда…",
     "linesRefreshing": "обновява…",
-    "linesPlayed": "изигран"
+    "linesPlayed": "изигран",
+    "importLichess": "Внеси от Lichess",
+    "importError": {
+      "player_not_found": "Не е намерен играч с това потребителско име.",
+      "lichess_rate_limited": "Lichess моли за кратка пауза — опитай отново след минута.",
+      "lichess_unavailable": "Lichess не е достъпен в момента. Опитай по-късно.",
+      "generic": "Внасянето не успя. Опитай отново по-късно."
+    },
+    "source": {
+      "lichess": "Lichess"
+    }
   },
   "classification": {
     "brilliant": "Брилянтен",
@@ -290,7 +300,9 @@
       "guardingDesc": "Защитава приятел, който е под атака.",
       "sleeping": "Спящ",
       "sleepingDesc": "Още е на началната си квадратче — събуди го!"
-    }
+    },
+    "lichess": "Lichess потребителско име",
+    "lichessHelp": "Използва се за внасяне на партии за анализ"
   },
   "admin": {
     "users": "Потребители",

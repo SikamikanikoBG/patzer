@@ -9,12 +9,14 @@ import { fmtAccuracy, fmtTimeControl } from '../lib/utils';
 import { cn } from '../lib/utils';
 import type { GameRow } from '../types';
 
+type ImportSource = 'chesscom' | 'lichess';
+
 export default function Review() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const qc = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [importMsg, setImportMsg] = useState<{ text: string; error?: boolean } | null>(null);
   const [q, setQ] = useState('');
 
   const bookmarkedOnly = searchParams.get('bookmarked') === '1';
@@ -30,13 +32,24 @@ export default function Review() {
   });
 
   const importMut = useMutation({
-    mutationFn: () => api.post<{ imported: number; total: number }>('/api/games/import/chesscom', { limit: 20 }),
+    mutationFn: (source: ImportSource) =>
+      api.post<{ imported: number; total: number }>(`/api/games/import/${source}`, { limit: 20 }),
     onSuccess: (r) => {
-      setImportMsg(t('review.imported', { n: r.imported }));
+      setImportMsg({ text: t('review.imported', { n: r.imported }) });
       qc.invalidateQueries({ queryKey: ['games'] });
       setTimeout(() => setImportMsg(null), 3000);
     },
+    onError: (e) => {
+      const code = (e as Error).message;
+      setImportMsg({ text: t(`review.importError.${code}`, { defaultValue: t('review.importError.generic') }), error: true });
+      setTimeout(() => setImportMsg(null), 6000);
+    },
   });
+  const sources: { source: ImportSource; username: string | null | undefined; label: string }[] = [
+    { source: 'chesscom', username: user?.profile.chesscom_username, label: t('review.import') },
+    { source: 'lichess', username: user?.profile.lichess_username, label: t('review.importLichess') },
+  ];
+  const linked = sources.filter((s) => s.username);
 
   const games = data?.games ?? [];
   const counts = useMemo(() => {
@@ -58,11 +71,15 @@ export default function Review() {
           <h1 className="page-h1">{t('review.title')}</h1>
           <p className="page-sub">{t('review.subtitle', { defaultValue: 'Browse, analyze and learn from your games.' })}</p>
         </div>
-        {user?.profile.chesscom_username ? (
-          <button onClick={() => importMut.mutate()} disabled={importMut.isPending} className="btn-primary self-start sm:self-auto">
-            <Download className="h-4 w-4" />
-            {importMut.isPending ? t('review.importing') : `${t('review.import')} (@${user.profile.chesscom_username})`}
-          </button>
+        {linked.length > 0 ? (
+          <div className="flex flex-wrap gap-2 self-start sm:self-auto">
+            {linked.map((s) => (
+              <button key={s.source} onClick={() => importMut.mutate(s.source)} disabled={importMut.isPending} className="btn-primary">
+                <Download className="h-4 w-4" />
+                {importMut.isPending && importMut.variables === s.source ? t('review.importing') : `${s.label} (@${s.username})`}
+              </button>
+            ))}
+          </div>
         ) : (
           <Link to="/settings" className="btn-secondary text-sm">
             <SettingsIcon className="h-4 w-4" /> {t('review.setUsername', { defaultValue: 'Set Chess.com username' })}
@@ -71,8 +88,10 @@ export default function Review() {
       </header>
 
       {importMsg && (
-        <div className="rounded-md border border-board-dark/30 bg-board-dark/10 px-4 py-2 text-sm text-board-dark dark:text-chesscom-100">
-          {importMsg}
+        <div className={cn('rounded-md border px-4 py-2 text-sm', importMsg.error
+          ? 'border-bad/30 bg-bad/10 text-bad'
+          : 'border-board-dark/30 bg-board-dark/10 text-board-dark dark:text-chesscom-100')}>
+          {importMsg.text}
         </div>
       )}
 
@@ -139,7 +158,7 @@ export default function Review() {
           {bookmarkedOnly ? (
             <button onClick={toggleBookmarkedOnly} className="btn-secondary text-sm">{t('review.showAll', { defaultValue: 'Show all games' })}</button>
           ) : (
-            !user?.profile.chesscom_username && (
+            linked.length === 0 && (
               <Link to="/settings" className="btn-secondary text-sm">
                 <SettingsIcon className="h-4 w-4" /> {t('review.noUsername')}
               </Link>
