@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { BookMarked, ChevronRight, ChevronDown, Compass, GraduationCap, Target } from 'lucide-react';
 import ChessBoard from '../components/ChessBoard';
+import BetaBadge from '../components/BetaBadge';
 import OpeningTrainer, { TRAINER_QUERY_KEY, fetchTrainer } from '../components/OpeningTrainer';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
@@ -75,6 +76,7 @@ export default function Openings() {
         </button>
         <button role="tab" aria-selected={tab === 'trainer'} onClick={() => setTab('trainer')} className={tabClass(tab === 'trainer')}>
           <GraduationCap className="h-4 w-4" /> {t('openings.tabs.trainer')}
+          <BetaBadge />
           {!!trainer?.due && (
             <span className="badge bg-gold-500/15 font-mono tabular-nums text-gold-700 dark:text-gold-400">{trainer.due}</span>
           )}

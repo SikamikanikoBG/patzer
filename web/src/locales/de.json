@@ -33,7 +33,9 @@
     "saved": "Gespeichert",
     "email": "E-Mail",
     "close": "Schließen",
-    "viewChangelog": "Änderungsprotokoll anzeigen"
+    "viewChangelog": "Änderungsprotokoll anzeigen",
+    "beta": "Beta",
+    "betaHint": "Wird noch verfeinert — Rückmeldungen sind willkommen."
   },
   "setup": {
     "title": "Willkommen bei Patzer",

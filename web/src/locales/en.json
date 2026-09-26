@@ -33,7 +33,9 @@
     "saved": "Saved",
     "email": "Email",
     "close": "Close",
-    "viewChangelog": "View changelog"
+    "viewChangelog": "View changelog",
+    "beta": "Beta",
+    "betaHint": "Still being refined — feedback is welcome."
   },
   "setup": {
     "title": "Welcome to Patzer",
