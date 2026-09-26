@@ -10,6 +10,8 @@
 // algorithm yet. A missed move is due the same day. A right answer in review
 // moves it to tomorrow; LEARNED_AFTER right answers in a row (so on that many
 // different days) take it out of the queue. A wrong answer starts it over.
+// "Today" is the user's own calendar day as the browser reports it (see
+// dayOf), so the queue turns over at the user's midnight, not at UTC's.
 
 import { Chess } from 'chess.js';
 import { db } from '../db.js';
@@ -23,6 +25,8 @@ export const MAX_LINE_PLIES = 30;
 export const MAX_REPERTOIRE_PLIES = 20;
 /** A repertoire line is only extended while at least this many games agree. */
 export const MIN_REPERTOIRE_GAMES = 2;
+/** Enough for every line anyone practises; stops a script from filling the disk. */
+export const MAX_MISSES_PER_USER = 5000;
 
 export interface TrainerLine {
   id: string;
@@ -118,29 +122,41 @@ export function lineName(sans: string[]): string | null {
 /** Turn a node of the opening tree into a line to practice: start with the
  *  moves up to that node, then keep following the continuation you reached
  *  most often (as long as MIN_REPERTOIRE_GAMES games agree). `games` are SAN
- *  lists, newest first — on a tie the more recent game wins. */
+ *  lists, newest first — on a tie the more recent game wins.
+ *
+ *  With `color` and `flawed` (per game and ply: did the analysis call that
+ *  move a mistake?), the line stops before one of your own moves that the
+ *  analysis marked as a mistake in most of the games that played it — the
+ *  trainer should not drill a habit you'd better lose. `stoppedBefore` then
+ *  names that move. */
 export function repertoireLine(
   games: string[][],
   prefix: string[],
   minGames = MIN_REPERTOIRE_GAMES,
   maxPlies = MAX_REPERTOIRE_PLIES,
-): { games: number; moves: string[] } {
-  let pool = games.filter((g) => prefix.every((san, i) => g[i] === san));
+  opts: { color?: Color; flawed?: boolean[][] } = {},
+): { games: number; moves: string[]; stoppedBefore?: string } {
+  let pool = games.map((_, g) => g).filter((g) => prefix.every((san, i) => games[g]![i] === san));
   const reached = pool.length;
   const moves = [...prefix];
   while (moves.length < maxPlies) {
     const i = moves.length;
     const tally = new Map<string, number>();
     for (const g of pool) {
-      const san = g[i];
+      const san = games[g]![i];
       if (san) tally.set(san, (tally.get(san) ?? 0) + 1);
     }
     let best: string | null = null;
     let bestN = 0;
     for (const [san, n] of tally) if (n > bestN) { best = san; bestN = n; }
     if (best === null || bestN < minGames) break;
+    const next = pool.filter((g) => games[g]![i] === best);
+    if (opts.color && opts.flawed && sideOfPly(i) === opts.color) {
+      const bad = next.filter((g) => opts.flawed![g]?.[i]).length;
+      if (bad * 2 > next.length) return { games: reached, moves, stoppedBefore: best };
+    }
     moves.push(best);
-    pool = pool.filter((g) => g[i] === best);
+    pool = next;
   }
   return { games: reached, moves };
 }
@@ -162,6 +178,9 @@ interface MissRow {
 export interface ReviewItem {
   id: number;
   line_name: string;
+  /** The built-in line this move belongs to, so the page can show its name
+   *  in the user's language; null for repertoire lines. */
+  line_id: string | null;
   color: Color;
   /** Moves leading to the position; the user has to find the next one. */
   moves: string[];
@@ -170,39 +189,69 @@ export interface ReviewItem {
   streak: number;
 }
 
+/** The user's "today" as YYYY-MM-DD. The browser sends its local date; it is
+ *  trusted only within a day of the server's UTC date (every time zone is),
+ *  anything else — or nothing — falls back to the UTC date. */
+export function dayOf(local?: string | null, now = new Date()): string {
+  const utc = now.toISOString().slice(0, 10);
+  if (!local || !/^\d{4}-\d{2}-\d{2}$/.test(local)) return utc;
+  const ms = Date.parse(`${local}T00:00:00Z`);
+  // A date that doesn't exist (2026-09-31 parses as October 1st) is ignored.
+  if (!Number.isFinite(ms) || new Date(ms).toISOString().slice(0, 10) !== local) return utc;
+  return Math.abs(ms - Date.parse(`${utc}T00:00:00Z`)) <= 86_400_000 ? local : utc;
+}
+
 /** Remember that the user missed the last move of `moves` (their own move).
- *  Returns false when the line is illegal or the last move is the opponent's. */
-export function recordMiss(userId: number, input: { moves: string[]; color: Color; lineName?: string | null }): boolean {
+ *  Returns 'invalid' when the line is illegal or the last move is the
+ *  opponent's, 'full' when the queue already holds MAX_MISSES_PER_USER moves. */
+export function recordMiss(
+  userId: number,
+  input: { moves: string[]; color: Color; lineName?: string | null },
+  today = dayOf(),
+): 'ok' | 'invalid' | 'full' {
   const replayed = replayLine(input.moves);
-  if (!replayed || replayed.length === 0 || replayed.length > MAX_LINE_PLIES) return false;
+  if (!replayed || replayed.length === 0 || replayed.length > MAX_LINE_PLIES) return 'invalid';
   const lastPly = replayed.length - 1;
-  if (sideOfPly(lastPly) !== input.color) return false;
+  if (sideOfPly(lastPly) !== input.color) return 'invalid';
   const expected = replayed[lastPly]!;
   const prefix = replayed.slice(0, lastPly).map((m) => m.san);
   const name = (input.lineName ?? '').trim().slice(0, 120) || lineName(input.moves) || '';
+  const position = fenToEpd(expected.fenBefore);
+
+  const known = db.prepare('SELECT 1 FROM opening_misses WHERE user_id = ? AND position = ? AND expected_uci = ?')
+    .get(userId, position, expected.uci);
+  if (!known) {
+    const { n } = db.prepare('SELECT COUNT(*) AS n FROM opening_misses WHERE user_id = ?').get(userId) as { n: number };
+    if (n >= MAX_MISSES_PER_USER) return 'full';
+  }
 
   db.prepare(`
     INSERT INTO opening_misses (user_id, line_name, user_color, moves, position, expected_san, expected_uci, due_on)
-    VALUES (?, ?, ?, ?, ?, ?, ?, date('now'))
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(user_id, position, expected_uci) DO UPDATE SET
       misses = opening_misses.misses + 1,
       streak = 0,
-      due_on = date('now'),
+      due_on = excluded.due_on,
       line_name = excluded.line_name,
       moves = excluded.moves,
       user_color = excluded.user_color
-  `).run(userId, name, input.color, prefix.join(' '), fenToEpd(expected.fenBefore), expected.san, expected.uci);
-  return true;
+  `).run(userId, name, input.color, prefix.join(' '), position, expected.san, expected.uci, today);
+  return 'ok';
 }
 
-export function queueSummary(userId: number): { due: number; learning: number; learned: number } {
+/** Take a move out of the review queue for good. False if it isn't the user's. */
+export function removeMiss(userId: number, id: number): boolean {
+  return db.prepare('DELETE FROM opening_misses WHERE id = ? AND user_id = ?').run(id, userId).changes > 0;
+}
+
+export function queueSummary(userId: number, today = dayOf()): { due: number; learning: number; learned: number } {
   const row = db.prepare(`
     SELECT
-      SUM(CASE WHEN due_on IS NOT NULL AND due_on <= date('now') THEN 1 ELSE 0 END) AS due,
+      SUM(CASE WHEN due_on IS NOT NULL AND due_on <= @today THEN 1 ELSE 0 END) AS due,
       SUM(CASE WHEN due_on IS NOT NULL THEN 1 ELSE 0 END) AS learning,
       SUM(CASE WHEN due_on IS NULL THEN 1 ELSE 0 END) AS learned
-    FROM opening_misses WHERE user_id = ?
-  `).get(userId) as { due: number | null; learning: number | null; learned: number | null };
+    FROM opening_misses WHERE user_id = @user
+  `).get({ user: userId, today }) as { due: number | null; learning: number | null; learned: number | null };
   return { due: row.due ?? 0, learning: row.learning ?? 0, learned: row.learned ?? 0 };
 }
 
@@ -215,6 +264,7 @@ function toItem(r: MissRow): ReviewItem | null {
   return {
     id: r.id,
     line_name: r.line_name,
+    line_id: TRAINER_LINES.find((l) => l.name === r.line_name)?.id ?? null,
     color: r.user_color,
     moves,
     fen: chess.fen(),
@@ -224,14 +274,14 @@ function toItem(r: MissRow): ReviewItem | null {
 }
 
 /** Today's queue, oldest first. */
-export function dueReviews(userId: number, limit = 50): ReviewItem[] {
+export function dueReviews(userId: number, today = dayOf(), limit = 50): ReviewItem[] {
   const rows = db.prepare(`
     SELECT id, line_name, user_color, moves, expected_san, expected_uci, misses, streak, due_on
     FROM opening_misses
-    WHERE user_id = ? AND due_on IS NOT NULL AND due_on <= date('now')
+    WHERE user_id = ? AND due_on IS NOT NULL AND due_on <= ?
     ORDER BY due_on, id
     LIMIT ?
-  `).all(userId, limit) as MissRow[];
+  `).all(userId, today, limit) as MissRow[];
   return rows.map(toItem).filter((x): x is ReviewItem => x !== null);
 }
 
@@ -243,28 +293,41 @@ export interface ReviewAnswer {
   learned: boolean;
 }
 
+function reviewRow(userId: number, id: number, today: string): (MissRow & { is_due: number; fen: string }) | null {
+  const row = db.prepare(`
+    SELECT id, line_name, user_color, moves, expected_san, expected_uci, misses, streak, due_on,
+           (due_on IS NOT NULL AND due_on <= ?) AS is_due
+    FROM opening_misses WHERE id = ? AND user_id = ?
+  `).get(today, id, userId) as (MissRow & { is_due: number }) | undefined;
+  const item = row && toItem(row);
+  return item ? { ...row, fen: item.fen } : null;
+}
+
+/** The SAN of board move `uci` in `fen`, or null when it's illegal. */
+function sanOf(fen: string, uci: string): string | null {
+  try {
+    return new Chess(fen).move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4, 5) || undefined }).san;
+  } catch {
+    return null;
+  }
+}
+
+/** Is `uci` the move of review item `id`? Only checks — the review lets a
+ *  first wrong try pass without giving the move away or rescheduling, like the
+ *  drill does. Null when the item isn't the user's. */
+export function checkReview(userId: number, id: number, uci: string): boolean | null {
+  const row = reviewRow(userId, id, dayOf());
+  return row ? sanOf(row.fen, uci) === row.expected_san : null;
+}
+
 /** Check one answer from the review queue and reschedule the move. `uci`
  *  null means "show me the move" — that counts as not knowing it. Returns null
  *  when the move isn't the user's. An item that isn't due (answered twice, or
  *  from a stale page) is checked but not rescheduled. */
-export function answerReview(userId: number, id: number, uci: string | null): ReviewAnswer | null {
-  const row = db.prepare(`
-    SELECT id, line_name, user_color, moves, expected_san, expected_uci, misses, streak, due_on,
-           (due_on IS NOT NULL AND due_on <= date('now')) AS is_due
-    FROM opening_misses WHERE id = ? AND user_id = ?
-  `).get(id, userId) as (MissRow & { is_due: number }) | undefined;
+export function answerReview(userId: number, id: number, uci: string | null, today = dayOf()): ReviewAnswer | null {
+  const row = reviewRow(userId, id, today);
   if (!row) return null;
-  const item = toItem(row);
-  if (!item) return null;
-
-  let played: string | null = null;
-  if (uci) {
-    try {
-      const chess = new Chess(item.fen);
-      played = chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4, 5) || undefined }).san;
-    } catch { /* illegal — counts as wrong */ }
-  }
-  const correct = played === row.expected_san;
+  const correct = !!uci && sanOf(row.fen, uci) === row.expected_san;
 
   if (!row.is_due) {
     return { correct, expected_san: row.expected_san, expected_uci: row.expected_uci, streak: row.streak, learned: row.due_on === null };
@@ -276,9 +339,9 @@ export function answerReview(userId: number, id: number, uci: string | null): Re
     UPDATE opening_misses SET
       streak = ?,
       misses = misses + ?,
-      due_on = CASE WHEN ? THEN NULL ELSE date('now', '+1 day') END,
+      due_on = CASE WHEN ? THEN NULL ELSE date(?, '+1 day') END,
       last_reviewed_at = datetime('now')
     WHERE id = ?
-  `).run(streak, correct ? 0 : 1, learned ? 1 : 0, row.id);
+  `).run(streak, correct ? 0 : 1, learned ? 1 : 0, today, row.id);
   return { correct, expected_san: row.expected_san, expected_uci: row.expected_uci, streak, learned };
 }

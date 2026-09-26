@@ -98,6 +98,35 @@ describe('repertoireLine', () => {
   it('stops at the depth limit', () => {
     expect(trainer.repertoireLine(games, [], 2, 3).moves).toEqual(['e4', 'e5', 'Nf3']);
   });
+
+  it('stops before your own move when the analysis calls it a mistake in most games', () => {
+    // Both games that play 5.Bc4 have it marked as a mistake (ply index 4).
+    const flawed = games.map((g, n) => g.map((_, i) => i === 4 && n < 2));
+    expect(trainer.repertoireLine(games, [], 2, 20, { color: 'white', flawed }))
+      .toEqual({ games: 5, moves: ['e4', 'e5', 'Nf3', 'Nc6'], stoppedBefore: 'Bc4' });
+    // Only a minority marked: the line goes on.
+    const once = games.map((g, n) => g.map((_, i) => i === 4 && n === 0));
+    expect(trainer.repertoireLine(games, [], 2, 20, { color: 'white', flawed: once }).moves)
+      .toEqual(['e4', 'e5', 'Nf3', 'Nc6', 'Bc4']);
+    // The opponent's mistakes are theirs to make — a Black line still stops only at Black's moves.
+    expect(trainer.repertoireLine(games, [], 2, 20, { color: 'black', flawed }).moves)
+      .toEqual(['e4', 'e5', 'Nf3', 'Nc6', 'Bc4']);
+  });
+});
+
+describe('dayOf', () => {
+  const now = new Date('2026-09-26T23:30:00Z');
+  it('takes the browser’s date when it is within a day of UTC', () => {
+    expect(trainer.dayOf('2026-09-27', now)).toBe('2026-09-27');
+    expect(trainer.dayOf('2026-09-25', now)).toBe('2026-09-25');
+  });
+  it('falls back to the UTC date for anything else', () => {
+    expect(trainer.dayOf(undefined, now)).toBe('2026-09-26');
+    expect(trainer.dayOf('2026-10-30', now)).toBe('2026-09-26');
+    expect(trainer.dayOf('27.09.2026', now)).toBe('2026-09-26');
+    expect(trainer.dayOf('2026-13-45', now)).toBe('2026-09-26');
+    expect(trainer.dayOf('2026-09-31', new Date('2026-09-30T12:00:00Z'))).toBe('2026-09-30');
+  });
 });
 
 describe('lineName', () => {
@@ -111,18 +140,18 @@ describe('missed moves and the daily review queue', () => {
   const ruy = ['e4', 'e5', 'Nf3', 'Nc6', 'Bb5'];
 
   it('refuses a miss on the opponent’s move or an illegal line', () => {
-    expect(trainer.recordMiss(ME, { moves: ruy, color: 'black' })).toBe(false);
-    expect(trainer.recordMiss(ME, { moves: ['e4', 'Ke7'], color: 'black' })).toBe(false);
-    expect(trainer.recordMiss(ME, { moves: [], color: 'white' })).toBe(false);
+    expect(trainer.recordMiss(ME, { moves: ruy, color: 'black' })).toBe('invalid');
+    expect(trainer.recordMiss(ME, { moves: ['e4', 'Ke7'], color: 'black' })).toBe('invalid');
+    expect(trainer.recordMiss(ME, { moves: [], color: 'white' })).toBe('invalid');
     expect(trainer.queueSummary(ME)).toEqual({ due: 0, learning: 0, learned: 0 });
   });
 
   it('puts a missed move into today’s queue', () => {
-    expect(trainer.recordMiss(ME, { moves: ruy, color: 'white', lineName: 'Ruy Lopez: Closed' })).toBe(true);
+    expect(trainer.recordMiss(ME, { moves: ruy, color: 'white', lineName: 'Ruy Lopez: Closed' })).toBe('ok');
     expect(trainer.queueSummary(ME)).toEqual({ due: 1, learning: 1, learned: 0 });
 
     const [item] = trainer.dueReviews(ME);
-    expect(item).toMatchObject({ line_name: 'Ruy Lopez: Closed', color: 'white', moves: ['e4', 'e5', 'Nf3', 'Nc6'], misses: 1, streak: 0 });
+    expect(item).toMatchObject({ line_name: 'Ruy Lopez: Closed', line_id: 'ruy-lopez', color: 'white', moves: ['e4', 'e5', 'Nf3', 'Nc6'], misses: 1, streak: 0 });
     expect(item!.fen.split(' ')[1]).toBe('w');
     // The answer itself is not handed to the browser before it answers.
     expect(JSON.stringify(item)).not.toContain('Bb5');
@@ -139,6 +168,14 @@ describe('missed moves and the daily review queue', () => {
     expect(trainer.dueReviews(OTHER)).toEqual([]);
     const id = trainer.dueReviews(ME)[0]!.id;
     expect(trainer.answerReview(OTHER, id, 'f1b5')).toBeNull();
+  });
+
+  it('checks a first try without giving the move away or rescheduling', () => {
+    const id = trainer.dueReviews(ME)[0]!.id;
+    expect(trainer.checkReview(ME, id, 'f1c4')).toBe(false);
+    expect(trainer.checkReview(ME, id, 'f1b5')).toBe(true);
+    expect(trainer.checkReview(OTHER, id, 'f1b5')).toBeNull();
+    expect(trainer.dueReviews(ME)[0]).toMatchObject({ id, misses: 2, streak: 0 });
   });
 
   it('moves a wrong answer to tomorrow and starts it over', () => {
@@ -175,9 +212,10 @@ describe('missed moves and the daily review queue', () => {
   });
 
   it('names a line from the ECO map when none is given, and records Black’s misses too', () => {
-    expect(trainer.recordMiss(ME, { moves: ['e4', 'e6', 'd4', 'd5', 'e5', 'c5'], color: 'black' })).toBe(true);
+    expect(trainer.recordMiss(ME, { moves: ['e4', 'e6', 'd4', 'd5', 'e5', 'c5'], color: 'black' })).toBe('ok');
     const french = trainer.dueReviews(ME).find((i) => i.color === 'black')!;
     expect(french.line_name).toBe('French: Advance');
+    expect(french.line_id).toBeNull();
     expect(french.fen.split(' ')[1]).toBe('b');
   });
 
@@ -193,5 +231,34 @@ describe('missed moves and the daily review queue', () => {
   it('accepts a promotion or an illegal move as an answer without crashing', () => {
     const id = trainer.dueReviews(ME)[0]!.id;
     expect(trainer.answerReview(ME, id, 'a7a8q')).toMatchObject({ correct: false });
+  });
+
+  it('uses the day it is given, so the queue turns over at the user’s midnight', () => {
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    const id = (db.prepare(`SELECT id FROM opening_misses WHERE user_id = ? AND due_on > date('now')`).get(ME) as { id: number }).id;
+    expect(trainer.dueReviews(ME).find((i) => i.id === id)).toBeUndefined();
+    expect(trainer.dueReviews(ME, tomorrow).find((i) => i.id === id)).toBeDefined();
+    trainer.answerReview(ME, id, null, tomorrow);
+    const row = db.prepare(`SELECT due_on FROM opening_misses WHERE id = ?`).get(id) as { due_on: string };
+    expect(row.due_on).toBe(new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10));
+  });
+
+  it('removes a move from the queue, but only your own', () => {
+    const id = (db.prepare(`SELECT id FROM opening_misses WHERE user_id = ?`).get(ME) as { id: number }).id;
+    expect(trainer.removeMiss(OTHER, id)).toBe(false);
+    expect(trainer.removeMiss(ME, id)).toBe(true);
+    expect(db.prepare(`SELECT 1 FROM opening_misses WHERE id = ?`).get(id)).toBeUndefined();
+  });
+
+  it('stops taking new moves once the queue is full, but still updates known ones', () => {
+    const insert = db.prepare(`INSERT INTO opening_misses (user_id, user_color, moves, position, expected_san, expected_uci) VALUES (?, 'white', '', ?, 'e4', 'e2e4')`);
+    const have = (db.prepare(`SELECT COUNT(*) AS n FROM opening_misses WHERE user_id = ?`).get(OTHER) as { n: number }).n;
+    db.transaction(() => { for (let i = have; i < trainer.MAX_MISSES_PER_USER; i++) insert.run(OTHER, `filler ${i}`); })();
+    expect(trainer.recordMiss(OTHER, { moves: ruy, color: 'white' })).toBe('full');
+    db.prepare(`DELETE FROM opening_misses WHERE user_id = ? AND position = 'filler 0'`).run(OTHER);
+    expect(trainer.recordMiss(OTHER, { moves: ruy, color: 'white' })).toBe('ok');
+    insert.run(OTHER, 'filler 0');
+    expect(trainer.recordMiss(OTHER, { moves: ruy, color: 'white' })).toBe('ok');
+    db.prepare(`DELETE FROM opening_misses WHERE user_id = ?`).run(OTHER);
   });
 });

@@ -33,7 +33,9 @@
     "saved": "Saved",
     "email": "Email",
     "close": "Close",
-    "viewChangelog": "View changelog"
+    "viewChangelog": "View changelog",
+    "beta": "Beta",
+    "betaHint": "Still being refined — feedback is welcome."
   },
   "setup": {
     "title": "Welcome to Patzer",
@@ -537,6 +539,7 @@
     "goReview": "Go to Review",
     "goInsights": "Go to Insights",
     "goTrain": "Go to Tactic Trainer",
+    "goLearn": "Go to Learn",
     "closeDialog": "Close any dialog",
     "review": "Game Review",
     "prevNext": "Previous / Next move",
@@ -568,6 +571,114 @@
     "correct": "Correct!",
     "wrong": "Not quite — the engine prefers"
   },
+  "learn": {
+    "nav": "Learn",
+    "title": "Learn",
+    "subtitle": "Interactive lessons — from how the pieces move to tactics and endgames. Collect stars and level up.",
+    "loadError": "Couldn't load the lessons. Reload the page to try again.",
+    "yourLevel": "Your level",
+    "level": "Level {{n}}",
+    "levelShort": "Lv {{n}}",
+    "levelUp": "Level {{n}} reached!",
+    "toNextLevel_one": "{{count}} more star to level {{n}}",
+    "toNextLevel_other": "{{count}} more stars to level {{n}}",
+    "lessonsDone": "{{done}}/{{total}} lessons",
+    "startHere": "Start here",
+    "nextUp": "Next lesson",
+    "resumeLesson": "Continue",
+    "allDone": "Every lesson finished — well done!",
+    "allCourses": "All courses",
+    "tasks_one": "{{count}} task",
+    "tasks_other": "{{count}} tasks",
+    "atStep": "at step {{n}} of {{total}}",
+    "start": "Start",
+    "resume": "Continue",
+    "repeat": "Repeat",
+    "levels": {
+      "basics": {
+        "title": "New to chess",
+        "desc": "The board, the pieces and every rule you need to play."
+      },
+      "beginner": {
+        "title": "Beginner",
+        "desc": "Basic checkmates, first tactics and how to start a game."
+      },
+      "intermediate": {
+        "title": "Intermediate",
+        "desc": "Sharper tactics, mating patterns and pawn endgames."
+      },
+      "advanced": {
+        "title": "Advanced",
+        "desc": "Quiet moves, zugzwang, deeper combinations and rook endgames."
+      }
+    },
+    "readAloud": "Read aloud",
+    "backToCourse": "Back to the course",
+    "resumed": "Picking up at step {{n}}.",
+    "fromStart": "Start over",
+    "showExplanation": "Show the explanation again",
+    "hideExplanation": "Hide the explanation",
+    "continue": "Continue",
+    "finish": "Finish lesson",
+    "hint": "Hint",
+    "moreHint": "Show the move",
+    "showSolution": "Show solution",
+    "solutionShown": "That's the solution. Next time you'll find it yourself!",
+    "wrongMove": "Not quite — that's not the move. Try again.",
+    "wrongStalemate": "That's stalemate — a draw! The king can't move, but it isn't in check. Try again.",
+    "wrongOnlyCheck": "Check — but the king can still get away. Look for checkmate!",
+    "wrongNoCheck": "That move doesn't give check. Try again.",
+    "right": "Correct!",
+    "mate": "Checkmate! Well done.",
+    "goodKeepGoing": "Good! Keep going.",
+    "opponentMoves": "Your opponent replies …",
+    "opponentThinks": "Patzer is thinking …",
+    "hintPiece": "This piece makes the move.",
+    "hintArrow": "Play the move the arrow shows.",
+    "white": "White",
+    "black": "Black",
+    "fromLichess": "Puzzle from the Lichess database (CC0)",
+    "starsCount": "Moves: {{n}} · stars left: {{left}} · goal: {{par}} moves",
+    "starsPerfect_one": "All stars in {{count}} move — perfect!",
+    "starsPerfect_other": "All stars in {{count}} moves — perfect!",
+    "starsOver": "All stars in {{n}} moves. It can be done in {{par}} — one more try?",
+    "tryPar": "Try with fewer moves",
+    "restartTask": "Start over",
+    "notThisSquare": "No, that's {{sq}}.",
+    "cannotGoThere": "No — the piece can't go to {{sq}}.",
+    "foundCount": "{{n}} of {{total}} found",
+    "wrongAnswer": "Not quite. Try another answer.",
+    "lessonDone": "Lesson complete",
+    "starsResult": {
+      "1": "Done! With fewer mistakes there are more stars next time.",
+      "2": "Well done — just a few slips.",
+      "3": "Perfect — not a single mistake!"
+    },
+    "starsRule": "3 stars: every task without a mistake, a hint or the solution.",
+    "starsEarned": "{{n}} of 3 stars",
+    "starsGained_one": "+{{count}} star",
+    "starsGained_other": "+{{count}} stars",
+    "nextLesson": "Next",
+    "practiceInTrainer": "Practise it in the opening trainer",
+    "again": "Again",
+    "toCourse": "Course overview",
+    "play": {
+      "movesLeft": "Your moves: {{n}} of {{limit}}",
+      "wonMate_one": "Checkmate in {{count}} move — you did it!",
+      "wonMate_other": "Checkmate in {{count}} moves — you did it!",
+      "wonPromote_one": "Promoted, and the new piece is safe — done in {{count}} move!",
+      "wonPromote_other": "Promoted, and the new piece is safe — done in {{count}} moves!",
+      "stalemate": "Stalemate! The king can't move but isn't in check — that's a draw. Try again.",
+      "draw": "That's a draw now. Try again.",
+      "lost": "Your opponent won a piece — the win is gone. Try again.",
+      "limit": "You've used all {{limit}} moves. Try again — it can be done faster.",
+      "engineDown": "Patzer's engine didn't answer.",
+      "retryEngine": "Ask again",
+      "skip": "Skip this exercise",
+      "skipped": "Skipped — without the engine this exercise can't be played. Carry on with the lesson.",
+      "again": "Try again"
+    }
+  },
   "insights": {
     "title": "Insights",
     "subv2": "Patterns across your last {{n}} analyzed games.",
@@ -597,7 +708,8 @@
       "milestone": "Milestones",
       "mastery": "Mastery",
       "tactics": "Tactics",
-      "streaks": "Streaks"
+      "streaks": "Streaks",
+      "learning": "Learning"
     },
     "tax": {
       "hung": "Hung pieces",
@@ -630,13 +742,14 @@
   "openings": {
     "nav": "Openings",
     "title": "Openings",
-    "subtitle": "Your repertoire as a tree.",
+    "subtitle": "Your repertoire as a tree — and a trainer to practise openings.",
     "tree": "Repertoire tree",
     "totalGames": "{{n}} games in repertoire",
     "startPosition": "Start position",
     "selectPrompt": "Click a node in the tree to inspect it.",
     "empty": "No opening data yet",
     "emptyDesc": "Import or analyze a few games and your repertoire will branch out here.",
+    "emptyTrainer": "Practise classic openings",
     "moreBranches": "+ more branches (rare lines hidden)",
     "wins": "Wins",
     "draws": "Draws",
@@ -653,7 +766,7 @@
       "trainer": "Trainer"
     },
     "trainer": {
-      "intro": "Pick a line. Patzer plays the other side, you find your moves. Every move you miss comes back in your daily review.",
+      "intro": "Pick a line. Patzer plays the other side, you find your moves. Only the move of the line counts — every move you don't find comes back in your daily review.",
       "loadError": "Couldn't load the opening trainer.",
       "reviewTitle": "Daily review",
       "dueToday": "due today",
@@ -661,6 +774,7 @@
       "reviewStartN": "Review ({{n}})",
       "reviewCounts": "{{learning}} in review · {{learned}} learned",
       "reviewEmpty": "Nothing here yet. Every move you miss lands here and comes back once a day until you've got it right on {{n}} different days.",
+      "nothingDue": "Nothing due today — the next ones come back tomorrow.",
       "repertoireHint": "Want to drill your own openings? In the Repertoire tab, pick any position in the tree and click “Practice this line”.",
       "fromRepertoire": "From your repertoire",
       "close": "Close",
@@ -672,6 +786,8 @@
       "games_other": "{{count}} games",
       "notReached": "You never reached this position with this color — the line is just the moves you picked.",
       "tooShort": "There's no move of yours in this line yet — pick a later position or the other color.",
+      "stoppedBefore": "Your games usually go on with {{san}} here, but the analysis calls that a mistake — so the line stops before it.",
+      "yourHabits": "This is how you usually play — not necessarily the best moves.",
       "start": "Start",
       "linesWhite": "Lines for White",
       "linesBlack": "Lines for Black",
@@ -679,12 +795,23 @@
       "movesToFind_other": "{{count}} moves to find",
       "youPlayWhite": "You play White",
       "youPlayBlack": "You play Black",
+      "askTitle": "Do you know this line already?",
+      "watchFirst": "Show me the line first",
+      "watchFirstDesc": "Arrows show every move. Nothing is counted.",
+      "practiseNow": "Practise it now",
+      "practiseNowDesc": "Find the moves yourself. The ones you miss come back in your review.",
+      "watching": "Watching — nothing is counted",
+      "watchArrow": "Play the move the arrow shows.",
+      "watchedTitle": "You've seen the whole line!",
+      "watchedText": "Now try it without the arrows — the moves you miss go into your daily review.",
+      "watchAgain": "Watch again",
       "progress": "{{done}} of {{total}} moves done",
       "missedCount_one": "{{count}} missed",
       "missedCount_other": "{{count}} missed",
       "yourMove": "Your move — how does the line go on?",
       "opponentMove": "Patzer is moving…",
-      "wrong": "That's not the move of this line. Try again.",
+      "wrong": "Not the move of this line — it may still be a good move, but this line goes on differently. One more try!",
+      "wrongAgain": "That's not it either. This move goes into your review — play the move the arrow shows.",
       "showMove": "Show me the move",
       "playArrow": "Play the move the arrow shows.",
       "restart": "Start over",
@@ -696,17 +823,39 @@
       "again": "Again",
       "reviewProgress": "Review {{i}} of {{n}}",
       "reviewTask": "Find the next move of this line.",
+      "reviewTaskHint": "Only the move of the line named above counts.",
       "correct": "Correct!",
-      "reviewWrong": "Not quite — the line goes {{san}}.",
+      "reviewWrong": "That's not it either — the line goes {{san}}.",
       "reviewRevealed": "The line goes {{san}}.",
       "reviewPlayIt": "Play it once on the board so it sticks.",
-      "learned": "Learned! This move leaves the queue.",
-      "backTomorrow": "Right {{streak}} of {{n}} times — see you tomorrow.",
-      "startsOver": "It comes back tomorrow and starts over.",
+      "reviewReplayed": "Right — that is how the line goes on ({{san}}).",
+      "learned": "Learned! This move won't come up in your review any more.",
+      "backTomorrow": "Right on {{streak}} of {{n}} days — it comes back tomorrow.",
+      "startsOver": "It comes back tomorrow, and the count starts again.",
+      "remove": "Remove",
+      "removeHint": "Take this move out of your review for good",
       "next": "Next",
       "reviewDone": "All done for today!",
       "reviewScore": "{{right}} of {{total}} right.",
-      "back": "Back to the lines"
+      "back": "Back to the lines",
+      "lineNames": {
+        "italian": "Italian Game: Giuoco Pianissimo",
+        "ruy-lopez": "Ruy Lopez: Closed",
+        "scotch": "Scotch Game: Mieses Variation",
+        "queens-gambit": "Queen's Gambit Declined",
+        "london": "London System",
+        "alapin": "Sicilian Defense: Alapin Variation",
+        "english": "English Opening: Four Knights",
+        "najdorf": "Sicilian Defense: Najdorf, English Attack",
+        "french-advance": "French Defense: Advance Variation",
+        "caro-kann": "Caro-Kann Defense: Classical Variation",
+        "scandinavian": "Scandinavian Defense: Main Line",
+        "two-knights": "Italian Game: Two Knights Defense",
+        "berlin": "Ruy Lopez: Berlin Defense",
+        "kings-indian": "King's Indian Defense: Classical",
+        "slav": "Slav Defense: Main Line",
+        "nimzo-indian": "Nimzo-Indian Defense: Rubinstein"
+      }
     }
   },
   "plan": {
@@ -825,7 +974,10 @@
     },
     "puzzleEmpty": "No puzzles yet — play a few games",
     "puzzleEmptyDesc": "Puzzles come from your own analyzed blunders.",
-    "unreviewed": "unreviewed"
+    "unreviewed": "unreviewed",
+    "learnNext": "Your next lesson",
+    "learnResume": "Continue where you left off",
+    "learnDesc": "Interactive lessons with stars and levels."
   },
   "auth": {
     "passwordHint": "At least 10 characters",
@@ -1045,6 +1197,18 @@
     "streaker_10": {
       "title": "Unstoppable",
       "description": "Win 10 games in a row."
+    },
+    "first_lesson": {
+      "title": "First Lesson",
+      "description": "Finished your first lesson in Learn."
+    },
+    "eager_student": {
+      "title": "Eager Student",
+      "description": "Finished 10 lessons in Learn."
+    },
+    "star_collector": {
+      "title": "Star Collector",
+      "description": "Collected 100 stars in Learn."
     }
   }
 }

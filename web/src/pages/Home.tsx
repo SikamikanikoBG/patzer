@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import * as Icons from 'lucide-react';
 import {
   Swords, BookOpen, ChevronRight, Target, Sparkles,
-  ListChecks, Award, ArrowRight,
+  ListChecks, Award, ArrowRight, GraduationCap, Star,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../state/auth';
@@ -12,6 +12,9 @@ import { api } from '../api';
 import { fmtAccuracy, fmtTimeControl } from '../lib/utils';
 import { goalText } from '../lib/goalText';
 import type { GameRow } from '../types';
+import { LEARN_QUERY_KEY } from '../components/learn/LessonPlayer';
+import { fetchLearnProgress, suggestedLesson, useLearnContent } from './Learn';
+import { levelOf } from '../learn/engine';
 
 // Home — quieter, more hierarchical than the v7.1 design.
 // One hero (greeting + stats inline + primary action), one "continue" row of
@@ -24,7 +27,7 @@ type Achievement = {
   title: string;
   description: string;
   icon: string;
-  category: 'milestone' | 'mastery' | 'tactics' | 'streaks';
+  category: 'milestone' | 'mastery' | 'tactics' | 'streaks' | 'learning';
   unlocked: boolean;
   unlocked_at: string | null;
   progress: number;
@@ -219,18 +222,48 @@ function ContinueRow({ puzzle, goals, achievements, playerName }: {
 
   return (
     <section>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <motion.div initial="hidden" animate="show" custom={0} variants={variants}>
-          <PuzzleTile puzzle={puzzle} playerName={playerName} />
+          <LearnTile />
         </motion.div>
         <motion.div initial="hidden" animate="show" custom={1} variants={variants}>
-          <PlanTile goals={goals} />
+          <PuzzleTile puzzle={puzzle} playerName={playerName} />
         </motion.div>
         <motion.div initial="hidden" animate="show" custom={2} variants={variants}>
+          <PlanTile goals={goals} />
+        </motion.div>
+        <motion.div initial="hidden" animate="show" custom={3} variants={variants}>
           <AchievementsTile achievements={achievements} />
         </motion.div>
       </div>
     </section>
+  );
+}
+
+function LearnTile() {
+  const { t } = useTranslation();
+  const { t: tl } = useTranslation('learn');
+  const { cur } = useLearnContent();
+  const { data } = useQuery({ queryKey: LEARN_QUERY_KEY, queryFn: fetchLearnProgress });
+  const progress = new Map((data?.lessons ?? []).map((r) => [r.lesson_id, r]));
+  const stars = [...progress.values()].reduce((s, r) => s + r.stars, 0);
+  const next = cur ? suggestedLesson(cur, progress) : null;
+  const started = next ? (progress.get(next.lesson.id)?.step ?? 0) > 0 : false;
+  return (
+    <Link to={next ? `/learn?lesson=${next.lesson.id}` : '/learn'} className="card-hover flex h-full items-start gap-3 p-4">
+      <Pill tone="board" Icon={GraduationCap} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-2">
+          <Kicker>{t('learn.nav')}</Kicker>
+          <span className="flex items-center gap-0.5 font-mono text-[11px] tabular-nums text-chesscom-500">
+            {t('learn.levelShort', { n: levelOf(stars).level })} · <Star className="h-3 w-3 fill-gold-500 text-gold-600" />{stars}
+          </span>
+        </div>
+        <Title>{next ? tl(`${next.lesson.id}.title`) : cur ? t('learn.allDone') : t('learn.nav')}</Title>
+        <Sub>{next ? (started ? t('home.learnResume') : t('home.learnNext')) : t('home.learnDesc')}</Sub>
+      </div>
+      <ChevronRight className="h-4 w-4 shrink-0 text-chesscom-400" />
+    </Link>
   );
 }
 
