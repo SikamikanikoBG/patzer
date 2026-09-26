@@ -33,6 +33,8 @@ describe('GitHubStar', () => {
     const { unmount } = render(<GitHubStar />);
     await waitFor(() => expect(screen.getByText('42')).toBeTruthy());
     expect(fetch).toHaveBeenCalledTimes(1);
+    // Sent without a Referer: sign-up and reset URLs carry codes and tokens.
+    expect(fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ referrerPolicy: 'no-referrer' }));
     unmount();
 
     render(<GitHubStar />);

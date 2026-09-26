@@ -40,7 +40,9 @@ app.use('*', logger());
 app.use('*', async (c, next) => {
   c.header('X-Frame-Options', 'DENY');
   c.header('X-Content-Type-Options', 'nosniff');
-  c.header('Referrer-Policy', 'no-referrer-when-downgrade');
+  // Other sites get the origin at most, never the path and query: sign-up,
+  // password-reset and email-verify links carry codes and tokens there.
+  c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   c.header(
     'Content-Security-Policy',
     [
