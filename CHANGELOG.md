@@ -4,6 +4,18 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Opening trainer: easier first steps, fairer misses.** A new line starts
+  with "Do you know this line already?": watch it first (arrows on every
+  move, nothing counted) or practise right away. One wrong try no longer
+  lands in the review — the second one (or "Show me the move") does. "Practice
+  this line" from your repertoire stops before one of your own moves that the
+  analysis calls a mistake in most of your games. The review queue turns over
+  at your own midnight instead of UTC's, and a move you no longer play can be
+  removed from it. Built-in line names are translated.
+
 ## [7.15.0] — 2026-09-26
 
 ### German, Lichess, invites, an opening trainer — and two new contributors

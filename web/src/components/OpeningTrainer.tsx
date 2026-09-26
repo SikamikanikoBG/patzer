@@ -6,14 +6,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Check, GraduationCap, Lightbulb, Repeat, RotateCcw, Trophy, X } from 'lucide-react';
+import { ArrowRight, Check, Eye, GraduationCap, Lightbulb, Repeat, RotateCcw, Target, Trash2, Trophy, X } from 'lucide-react';
 import ChessBoard from './ChessBoard';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
 import {
   type DrillLine, type Side,
-  formatMoves, isExpectedMove, isUserPly, moveSquares, positionAfter, sideOfPly, userMoveCount,
+  formatMoves, isExpectedMove, isUserPly, localDay, moveSquares, positionAfter, sideOfPly, userMoveCount,
 } from '../lib/openingTrainer';
 
 export interface TrainerInfo {
@@ -24,16 +24,28 @@ export interface TrainerInfo {
   learned: number;
 }
 
-interface RepertoireSide { games: number; moves: string[]; name: string | null }
-interface ReviewItem { id: number; line_name: string; color: Side; moves: string[]; fen: string; misses: number; streak: number }
+interface RepertoireSide { games: number; moves: string[]; name: string | null; stoppedBefore?: string }
+interface ReviewItem { id: number; line_name: string; line_id: string | null; color: Side; moves: string[]; fen: string; misses: number; streak: number }
 interface ReviewAnswer { correct: boolean; expected_san: string; expected_uci: string; streak: number; learned: boolean }
 
 export const TRAINER_QUERY_KEY = ['opening-trainer'];
-export const fetchTrainer = () => api.get<TrainerInfo>('/api/openings/trainer');
+export const fetchTrainer = () => api.get<TrainerInfo>(`/api/openings/trainer?today=${localDay()}`);
+
+/** A built-in line's name in the user's language (repertoire lines keep the
+ *  ECO name, like the tree does). */
+function useLineName() {
+  const { t } = useTranslation();
+  return (id: string | null | undefined, name: string) =>
+    id ? t(`openings.trainer.lineNames.${id}`, { defaultValue: name }) : name;
+}
+
+// A drill first asks whether you know the line; "watch" plays it with arrows
+// and counts nothing, "test" is the real thing.
+type Phase = 'ask' | 'watch' | 'test';
 
 type Mode =
   | { kind: 'pick' }
-  | { kind: 'drill'; line: DrillLine; run: number }
+  | { kind: 'drill'; line: DrillLine; run: number; phase: Phase }
   | { kind: 'review'; run: number };
 
 export default function OpeningTrainer({ repertoirePrefix, onClearRepertoire }: {
@@ -58,8 +70,9 @@ export default function OpeningTrainer({ repertoirePrefix, onClearRepertoire }: 
       <Drill
         key={mode.run}
         line={mode.line}
+        phase={mode.phase}
         due={info?.due ?? 0}
-        onRestart={() => setMode({ ...mode, run: mode.run + 1 })}
+        onRestart={(phase) => setMode({ ...mode, phase: phase ?? mode.phase, run: mode.run + 1 })}
         onExit={() => setMode({ kind: 'pick' })}
         onReview={startReview}
       />
@@ -77,7 +90,7 @@ export default function OpeningTrainer({ repertoirePrefix, onClearRepertoire }: 
       info={info}
       repertoirePrefix={repertoirePrefix}
       onClearRepertoire={onClearRepertoire}
-      onStart={(line) => setMode({ kind: 'drill', line, run: Date.now() })}
+      onStart={(line) => setMode({ kind: 'drill', line, run: Date.now(), phase: 'ask' })}
       onReview={startReview}
     />
   );
@@ -139,6 +152,7 @@ function ReviewCard({ info, onReview }: { info: TrainerInfo; onReview: () => voi
         {info.learning + info.learned > 0
           ? t('openings.trainer.reviewCounts', { learning: info.learning, learned: info.learned })
           : t('openings.trainer.reviewEmpty', { n: info.learned_after })}
+        {info.due === 0 && info.learning > 0 && <> {t('openings.trainer.nothingDue')}</>}
       </div>
     </section>
   );
@@ -206,6 +220,12 @@ function RepertoireCard({ prefix, onClose, onStart }: {
           {side.games === 0 && own > 0 && (
             <div className="mt-2 text-xs text-chesscom-500">{t('openings.trainer.notReached')}</div>
           )}
+          {side.stoppedBefore && (
+            <div className="mt-2 text-xs text-gold-700 dark:text-gold-300">{t('openings.trainer.stoppedBefore', { san: side.stoppedBefore })}</div>
+          )}
+          {side.games > 0 && own > 0 && (
+            <div className="mt-2 text-xs text-chesscom-500">{t('openings.trainer.yourHabits')}</div>
+          )}
           {own === 0 && <div className="mt-2 text-xs text-move-mistake">{t('openings.trainer.tooShort')}</div>}
 
           <button
@@ -227,17 +247,18 @@ function LineGroup({ title, lines, onStart }: {
   onStart: (line: DrillLine) => void;
 }) {
   const { t } = useTranslation();
+  const lineName = useLineName();
   return (
     <section>
       <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-chesscom-500">{title}</h2>
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {lines.map((line) => (
           <button key={line.id} onClick={() => onStart(line)} className="card-hover p-3 text-left">
-            <div className="flex items-center gap-2">
-              <span className="rounded bg-chesscom-100 px-1.5 py-0.5 font-mono text-[11px] text-chesscom-600 dark:bg-chesscom-900/60 dark:text-chesscom-300">
+            <div className="flex items-start gap-2">
+              <span className="mt-0.5 rounded bg-chesscom-100 px-1.5 py-0.5 font-mono text-[11px] text-chesscom-600 dark:bg-chesscom-900/60 dark:text-chesscom-300">
                 {line.eco}
               </span>
-              <span className="truncate text-sm font-semibold text-chesscom-900 dark:text-chesscom-100">{line.name}</span>
+              <span className="line-clamp-2 text-sm font-semibold text-chesscom-900 dark:text-chesscom-100">{lineName(line.id, line.name)}</span>
             </div>
             <div className="mt-1.5 truncate font-mono text-xs text-chesscom-500">
               {formatMoves(line.moves.slice(0, 6))} …
@@ -254,50 +275,58 @@ function LineGroup({ title, lines, onStart }: {
 
 // ---- Practising a line ---------------------------------------------------
 
-function Drill({ line, due, onRestart, onExit, onReview }: {
+function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
   line: DrillLine;
+  phase: Phase;
   due: number;
-  onRestart: () => void;
+  /** Start the line again — in `phase` when given, else in the same one. */
+  onRestart: (phase?: Phase) => void;
   onExit: () => void;
   onReview: () => void;
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const qc = useQueryClient();
+  const lineName = useLineName();
+  const [phase, setPhase] = useState<Phase>(startPhase);
+  const watching = phase === 'watch';
   const [ply, setPly] = useState(0);
+  // Moves that went into the review queue, and moves not found at the first try.
   const [missed, setMissed] = useState<Set<number>>(() => new Set());
-  const [wrong, setWrong] = useState(false);
+  const [slipped, setSlipped] = useState<Set<number>>(() => new Set());
+  const [wrongAt, setWrongAt] = useState<number | null>(null);
   const [hint, setHint] = useState(false);
   const [boardKey, setBoardKey] = useState(0);
 
   const total = line.moves.length;
   const done = ply >= total;
-  const userTurn = !done && isUserPly(ply, line.color);
+  const userTurn = phase !== 'ask' && !done && isUserPly(ply, line.color);
   const { fen, lastMove } = useMemo(() => positionAfter(line.moves, ply), [line.moves, ply]);
   const ownTotal = userMoveCount(line.moves, line.color);
   const ownDone = userMoveCount(line.moves.slice(0, ply), line.color);
+  const wrong = wrongAt === ply;
 
   // Patzer plays the other side after a short pause, so you see each move arrive.
   useEffect(() => {
-    if (done || userTurn) return;
+    if (phase === 'ask' || done || userTurn) return;
     const id = window.setTimeout(() => {
       soundForMove(inferMoveFlagsFromSan(line.moves[ply]!));
       setPly(ply + 1);
     }, ply === 0 ? 700 : 450);
     return () => window.clearTimeout(id);
-  }, [ply, done, userTurn, line.moves]);
+  }, [phase, ply, done, userTurn, line.moves]);
 
   const arrows = useMemo(() => {
-    if (!hint || !userTurn) return [];
+    if (!(hint || watching) || !userTurn) return [];
     const sq = moveSquares(fen, line.moves[ply]!);
-    return sq ? [{ orig: sq[0], dest: sq[1], brush: 'paleBlue' }] : [];
-  }, [hint, userTurn, fen, line.moves, ply]);
+    return sq ? [{ orig: sq[0], dest: sq[1], brush: watching ? 'green' : 'paleBlue' }] : [];
+  }, [hint, watching, userTurn, fen, line.moves, ply]);
 
   function miss(at: number) {
     if (missed.has(at)) return;
     setMissed(new Set(missed).add(at));
     // Into the review queue. The drill carries on even if this fails.
-    api.post('/api/openings/trainer/miss', { moves: line.moves.slice(0, at + 1), color: line.color, line_name: line.name })
+    api.post('/api/openings/trainer/miss', { moves: line.moves.slice(0, at + 1), color: line.color, line_name: line.name, today: localDay() })
       .then(() => qc.invalidateQueries({ queryKey: TRAINER_QUERY_KEY }))
       .catch(() => { /* not worth interrupting the drill for */ });
   }
@@ -307,22 +336,109 @@ function Drill({ line, due, onRestart, onExit, onReview }: {
     const expected = line.moves[ply]!;
     if (isExpectedMove(fen, uci, expected)) {
       soundForMove(inferMoveFlagsFromSan(expected));
-      setWrong(false);
+      setWrongAt(null);
       setHint(false);
       setPly(ply + 1);
-    } else {
-      setWrong(true);
-      miss(ply);
-      setBoardKey((k) => k + 1);
+      return;
     }
+    setBoardKey((k) => k + 1);
+    if (watching) return;
+    setSlipped(new Set(slipped).add(ply));
+    // One wrong try may be a slip of the finger or a good move of another
+    // line; the second one means you don't know it — into the review, and
+    // the arrow shows the way on.
+    if (wrong) { miss(ply); setHint(true); }
+    setWrongAt(ply);
   }
 
   function showMove() {
     setHint(true);
+    setSlipped(new Set(slipped).add(ply));
     miss(ply);
   }
 
-  const firstTry = ownTotal - missed.size;
+  const firstTry = ownTotal - slipped.size;
+  const name = lineName(line.id, line.name);
+
+  let status: React.ReactNode;
+  if (phase === 'ask') {
+    status = (
+      <div className="card space-y-3 p-4">
+        <div className="text-sm font-semibold text-chesscom-900 dark:text-chesscom-100">{t('openings.trainer.askTitle')}</div>
+        <button onClick={() => setPhase('watch')} className="btn-secondary w-full justify-start text-left text-sm">
+          <Eye className="h-4 w-4 shrink-0" />
+          <span><span className="font-semibold">{t('openings.trainer.watchFirst')}</span><br /><span className="text-xs font-normal text-chesscom-500">{t('openings.trainer.watchFirstDesc')}</span></span>
+        </button>
+        <button onClick={() => setPhase('test')} className="btn-secondary w-full justify-start text-left text-sm">
+          <Target className="h-4 w-4 shrink-0" />
+          <span><span className="font-semibold">{t('openings.trainer.practiseNow')}</span><br /><span className="text-xs font-normal text-chesscom-500">{t('openings.trainer.practiseNowDesc')}</span></span>
+        </button>
+      </div>
+    );
+  } else if (done && watching) {
+    status = (
+      <div className="card border-board-dark bg-board-dark/5 p-4">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <Eye className="h-4 w-4 text-board-dark" /> {t('openings.trainer.watchedTitle')}
+        </div>
+        <div className="mt-1 text-sm text-chesscom-700 dark:text-chesscom-200">{t('openings.trainer.watchedText')}</div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={() => onRestart('test')} className="btn-primary flex-1 whitespace-nowrap text-sm">
+            <Target className="h-4 w-4" /> {t('openings.trainer.practiseNow')}
+          </button>
+          <button onClick={() => onRestart('watch')} className="btn-secondary flex-1 whitespace-nowrap text-sm">
+            <RotateCcw className="h-4 w-4" /> {t('openings.trainer.watchAgain')}
+          </button>
+        </div>
+      </div>
+    );
+  } else if (done) {
+    status = (
+      <div className="card border-board-dark bg-board-dark/5 p-4">
+        <div className="flex items-center gap-2 text-sm font-semibold">
+          <Trophy className="h-4 w-4 text-gold-500" /> {t('openings.trainer.doneTitle')}
+        </div>
+        <div className="mt-1 text-sm text-chesscom-700 dark:text-chesscom-200">
+          {t('openings.trainer.doneScore', { first: firstTry, total: ownTotal })}
+        </div>
+        {missed.size > 0 && <div className="mt-1 text-xs text-chesscom-500">{t('openings.trainer.doneMissed')}</div>}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={() => onRestart()} className="btn-secondary flex-1 text-sm">
+            <RotateCcw className="h-4 w-4" /> {t('openings.trainer.again')}
+          </button>
+          {due > 0 && (
+            <button onClick={onReview} className="btn-primary flex-1 whitespace-nowrap text-sm">
+              <Repeat className="h-4 w-4" /> {t('openings.trainer.reviewStartN', { n: due })}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  } else if (userTurn) {
+    const text = watching
+      ? t('openings.trainer.watchArrow')
+      : wrong && hint ? t('openings.trainer.wrongAgain')
+        : wrong ? t('openings.trainer.wrong')
+          : hint ? t('openings.trainer.playArrow')
+            : t('openings.trainer.yourMove');
+    status = (
+      <div className={`card p-4 ${wrong ? 'border-move-mistake bg-move-mistake/5' : ''}`}>
+        <div className="flex items-start gap-2 text-sm text-chesscom-700 dark:text-chesscom-200">
+          {wrong
+            ? <X className="mt-0.5 h-4 w-4 shrink-0 text-move-mistake" />
+            : (hint || watching) && <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-gold-600" />}
+          <span>{text}</span>
+        </div>
+        {!hint && !watching && (
+          <button onClick={showMove} className="btn-secondary mt-3 w-full text-sm">
+            <Lightbulb className="h-4 w-4" /> {t('openings.trainer.showMove')}
+          </button>
+        )}
+      </div>
+    );
+  } else {
+    status = <div className="card p-4 text-sm text-chesscom-500">{t('openings.trainer.opponentMove')}</div>;
+  }
 
   return (
     <div className="flex flex-col gap-4 lg:flex-row">
@@ -340,60 +456,27 @@ function Drill({ line, due, onRestart, onExit, onReview }: {
       </div>
 
       <aside className="space-y-3 lg:w-[340px]">
-        <LineHeader name={line.name} eco={line.eco ?? null} color={line.color}>
-          <div className="mt-3 flex items-center justify-between text-xs text-chesscom-500">
-            <span>{t('openings.trainer.progress', { done: ownDone, total: ownTotal })}</span>
-            {missed.size > 0 && <span className="text-move-mistake">{t('openings.trainer.missedCount', { count: missed.size })}</span>}
-          </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-chesscom-100 dark:bg-chesscom-700">
-            <div className="h-full rounded-full bg-board-dark transition-all" style={{ width: `${ownTotal ? (ownDone / ownTotal) * 100 : 0}%` }} />
-          </div>
+        <LineHeader name={name} eco={line.eco ?? null} color={line.color}>
+          {phase !== 'ask' && (
+            <>
+              <div className="mt-3 flex items-center justify-between text-xs text-chesscom-500">
+                <span>{watching ? t('openings.trainer.watching') : t('openings.trainer.progress', { done: ownDone, total: ownTotal })}</span>
+                {missed.size > 0 && <span className="text-move-mistake">{t('openings.trainer.missedCount', { count: missed.size })}</span>}
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-chesscom-100 dark:bg-chesscom-700">
+                <div className="h-full rounded-full bg-board-dark transition-all" style={{ width: `${ownTotal ? (ownDone / ownTotal) * 100 : 0}%` }} />
+              </div>
+            </>
+          )}
         </LineHeader>
 
-        {done ? (
-          <div className="card border-board-dark bg-board-dark/5 p-4">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <Trophy className="h-4 w-4 text-gold-500" /> {t('openings.trainer.doneTitle')}
-            </div>
-            <div className="mt-1 text-sm text-chesscom-700 dark:text-chesscom-200">
-              {t('openings.trainer.doneScore', { first: firstTry, total: ownTotal })}
-            </div>
-            {missed.size > 0 && <div className="mt-1 text-xs text-chesscom-500">{t('openings.trainer.doneMissed')}</div>}
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button onClick={onRestart} className="btn-secondary flex-1 text-sm">
-                <RotateCcw className="h-4 w-4" /> {t('openings.trainer.again')}
-              </button>
-              {due > 0 && (
-                <button onClick={onReview} className="btn-primary flex-1 whitespace-nowrap text-sm">
-                  <Repeat className="h-4 w-4" /> {t('openings.trainer.reviewStartN', { n: due })}
-                </button>
-              )}
-            </div>
-          </div>
-        ) : userTurn ? (
-          <div className={`card p-4 ${wrong ? 'border-move-mistake bg-move-mistake/5' : ''}`}>
-            <div className="flex items-start gap-2 text-sm text-chesscom-700 dark:text-chesscom-200">
-              {wrong
-                ? <><X className="mt-0.5 h-4 w-4 shrink-0 text-move-mistake" /> {hint ? t('openings.trainer.playArrow') : t('openings.trainer.wrong')}</>
-                : hint
-                  ? <><Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-gold-600" /> {t('openings.trainer.playArrow')}</>
-                  : t('openings.trainer.yourMove')}
-            </div>
-            {!hint && (
-              <button onClick={showMove} className="btn-secondary mt-3 w-full text-sm">
-                <Lightbulb className="h-4 w-4" /> {t('openings.trainer.showMove')}
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="card p-4 text-sm text-chesscom-500">{t('openings.trainer.opponentMove')}</div>
-        )}
+        {status}
 
-        <MovesSoFar moves={line.moves.slice(0, ply)} />
+        {phase !== 'ask' && <MovesSoFar moves={line.moves.slice(0, ply)} />}
 
         <div className="flex gap-2">
-          {!done && (
-            <button onClick={onRestart} className="btn-ghost flex-1 text-sm">
+          {phase !== 'ask' && !done && (
+            <button onClick={() => onRestart()} className="btn-ghost flex-1 text-sm">
               <RotateCcw className="h-4 w-4" /> {t('openings.trainer.restart')}
             </button>
           )}
@@ -410,11 +493,12 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
   const { t } = useTranslation();
   const { user } = useAuth();
   const qc = useQueryClient();
+  const lineName = useLineName();
   // One snapshot of today's queue per session — answering reschedules items,
   // and a refetch mid-way would reshuffle the list under your feet.
   const { data, isLoading, isError } = useQuery({
     queryKey: ['opening-trainer-review'],
-    queryFn: () => api.get<{ items: ReviewItem[] }>('/api/openings/trainer/review'),
+    queryFn: () => api.get<{ items: ReviewItem[] }>(`/api/openings/trainer/review?today=${localDay()}`),
     staleTime: Infinity,
     gcTime: 0,
     refetchOnWindowFocus: false,
@@ -451,7 +535,7 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
     if (!item) return;
     setBusy(true);
     try {
-      const r = await api.post<ReviewAnswer>(`/api/openings/trainer/review/${item.id}`, body);
+      const r = await api.post<ReviewAnswer>(`/api/openings/trainer/review/${item.id}`, { ...body, today: localDay() });
       setAnswer(r);
       setRevealed('reveal' in body);
       if (r.correct) {
@@ -487,6 +571,19 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
     setIndex((i) => i + 1);
   }
 
+  // "I don't play this any more": out of the queue for good.
+  async function remove() {
+    if (!item) return;
+    setBusy(true);
+    try {
+      await api.del(`/api/openings/trainer/review/${item.id}`);
+      void qc.invalidateQueries({ queryKey: TRAINER_QUERY_KEY });
+      next();
+    } catch { /* stays in the queue; nothing else to do */ } finally {
+      setBusy(false);
+    }
+  }
+
   if (isLoading) return <div className="card p-10 text-center text-sm text-chesscom-500">{t('common.loading')}</div>;
   if (isError) return <div className="card p-10 text-center text-sm text-move-mistake">{t('openings.trainer.loadError')}</div>;
 
@@ -519,7 +616,7 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
       </div>
 
       <aside className="space-y-3 lg:w-[340px]">
-        <LineHeader name={item.line_name || t('openings.trainer.myLine')} eco={null} color={item.color}>
+        <LineHeader name={item.line_name ? lineName(item.line_id, item.line_name) : t('openings.trainer.myLine')} eco={null} color={item.color}>
           <div className="mt-3 text-xs text-chesscom-500">
             {t('openings.trainer.reviewProgress', { i: index + 1, n: items.length })}
           </div>
@@ -528,6 +625,7 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
         {!answer ? (
           <div className="card p-4">
             <div className="text-sm text-chesscom-700 dark:text-chesscom-200">{t('openings.trainer.reviewTask')}</div>
+            <div className="mt-1 text-xs text-chesscom-500">{t('openings.trainer.reviewTaskHint')}</div>
             <button onClick={() => void submit({ reveal: true })} disabled={busy} className="btn-secondary mt-3 w-full text-sm">
               <Lightbulb className="h-4 w-4" /> {t('openings.trainer.showMove')}
             </button>
@@ -565,7 +663,12 @@ function Review({ learnedAfter, onExit }: { learnedAfter: number; onExit: () => 
 
         <MovesSoFar moves={item.moves} />
 
-        <button onClick={onExit} className="btn-ghost w-full text-sm">{t('openings.trainer.back')}</button>
+        <div className="flex gap-2">
+          <button onClick={onExit} className="btn-ghost flex-1 text-sm">{t('openings.trainer.back')}</button>
+          <button onClick={() => void remove()} disabled={busy} className="btn-ghost flex-1 text-sm" title={t('openings.trainer.removeHint')}>
+            <Trash2 className="h-4 w-4" /> {t('openings.trainer.remove')}
+          </button>
+        </div>
       </aside>
     </div>
   );

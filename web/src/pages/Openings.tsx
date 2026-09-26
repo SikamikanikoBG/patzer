@@ -86,13 +86,17 @@ export default function Openings() {
       ) : isLoading ? (
         <Skeleton />
       ) : (
-        <RepertoireTree data={data} onPractice={(moves) => { setPractice(moves); setTab('trainer'); }} />
+        <RepertoireTree data={data} onPractice={(moves) => { setPractice(moves); setTab('trainer'); }} onTrainer={() => setTab('trainer')} />
       )}
     </div>
   );
 }
 
-function RepertoireTree({ data, onPractice }: { data: TreeResponse | undefined; onPractice: (moves: string[]) => void }) {
+function RepertoireTree({ data, onPractice, onTrainer }: {
+  data: TreeResponse | undefined;
+  onPractice: (moves: string[]) => void;
+  onTrainer: () => void;
+}) {
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -140,9 +144,14 @@ function RepertoireTree({ data, onPractice }: { data: TreeResponse | undefined; 
         <div className="max-w-md text-sm text-chesscom-500">
           {t('openings.emptyDesc', { defaultValue: 'Import or analyze a few games and your repertoire will branch out here.' })}
         </div>
-        <Link to="/review" className="btn-primary mt-2 text-sm">
-          {t('review.title')}
-        </Link>
+        <div className="mt-2 flex flex-wrap justify-center gap-2">
+          <Link to="/review" className="btn-primary text-sm">
+            {t('review.title')}
+          </Link>
+          <button onClick={onTrainer} className="btn-secondary text-sm">
+            <GraduationCap className="h-4 w-4" /> {t('openings.emptyTrainer')}
+          </button>
+        </div>
       </div>
     );
   }
