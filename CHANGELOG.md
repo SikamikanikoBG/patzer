@@ -4,6 +4,17 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+- **The GitHub star count no longer sends the page address to GitHub.** The
+  star badge also shows on the sign-up and password-reset pages, whose URLs
+  carry an invite code or a reset token; the request to api.github.com now
+  goes out without a Referer. On top of that the server now sends
+  `Referrer-Policy: strict-origin-when-cross-origin` instead of
+  `no-referrer-when-downgrade`, so no link or request to another site
+  carries a page's path and query any more.
+
 ## [7.15.0] — 2026-09-26
 
 ### German, Lichess, invites, an opening trainer — and two new contributors

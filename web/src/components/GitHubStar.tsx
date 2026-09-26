@@ -34,7 +34,9 @@ function useStarCount(): number | null {
   useEffect(() => {
     if (count !== null) return;
     let alive = true;
-    fetch('https://api.github.com/repos/SikamikanikoBG/patzer')
+    // No Referer: this also runs on the sign-up and password-reset pages,
+    // whose URLs carry invite codes and reset tokens.
+    fetch('https://api.github.com/repos/SikamikanikoBG/patzer', { referrerPolicy: 'no-referrer' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { stargazers_count?: number } | null) => {
         if (!alive || typeof d?.stargazers_count !== 'number') return;
