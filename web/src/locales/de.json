@@ -366,7 +366,17 @@
     "unsaved": "Ungespeicherte Änderungen",
     "noChanges": "Keine Änderungen",
     "lichess": "Lichess-Benutzername",
-    "lichessHelp": "Wird zum Importieren von Partien für die Analyse verwendet"
+    "lichessHelp": "Wird zum Importieren von Partien für die Analyse verwendet",
+    "soundSet": "Töne für Schach & Partieende",
+    "soundSetOption": {
+      "classic": "Klassisch",
+      "soft": "Weich"
+    },
+    "soundSetDesc": {
+      "classic": "Helle Glocken — die ursprünglichen Patzer-Töne.",
+      "soft": "Warme Holz-Marimba-Töne, passend zu den Zug-Tönen."
+    },
+    "soundSetPreview": "Anhören"
   },
   "admin": {
     "users": "Benutzer",

@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ("der Springer zieht", but "schlägt den Bauern", "du hast einen Turm
   mehr"), so move and material phrasing decline properly instead of gluing
   bare nouns together. (#18)
+- **Soft check and game-end sounds.** A new *Check & game-end sounds* choice
+  under **Settings → Sound & assistance**: *Classic* keeps the original bells
+  (and stays the default), *Soft* swaps those two for marimba-style wooden
+  bars that sit closer to the wood-knock move sounds — two short rising notes
+  for check, and the same G → E → C cadence as before on marimba with a faint
+  bell underneath for game end. Still fully synthesized, no audio files, with
+  a preview button next to each option. (#36)
 
 - **Import games from Lichess.** Next to the Chess.com importer: set a
   Lichess username in **Settings** and *Import from Lichess* appears in Game

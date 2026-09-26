@@ -302,7 +302,17 @@
       "sleepingDesc": "Sigue en su casilla inicial — ¡despiértala!"
     },
     "lichess": "Usuario de Lichess",
-    "lichessHelp": "Se usa para importar partidas y analizarlas"
+    "lichessHelp": "Se usa para importar partidas y analizarlas",
+    "soundSet": "Sonidos de jaque y fin de partida",
+    "soundSetOption": {
+      "classic": "Clásico",
+      "soft": "Suave"
+    },
+    "soundSetDesc": {
+      "classic": "Campanas brillantes: los sonidos originales de Patzer.",
+      "soft": "Cálidas notas de marimba de madera, a juego con los sonidos de las jugadas."
+    },
+    "soundSetPreview": "Escuchar"
   },
   "admin": {
     "users": "Usuarios",

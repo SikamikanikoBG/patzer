@@ -366,7 +366,17 @@
     "unsaved": "Unsaved changes",
     "noChanges": "No changes",
     "lichess": "Lichess username",
-    "lichessHelp": "Used to import games for review"
+    "lichessHelp": "Used to import games for review",
+    "soundSet": "Check & game-end sounds",
+    "soundSetOption": {
+      "classic": "Classic",
+      "soft": "Soft"
+    },
+    "soundSetDesc": {
+      "classic": "Bright bells — the original Patzer sounds.",
+      "soft": "Warm wooden marimba notes that match the move sounds."
+    },
+    "soundSetPreview": "Preview"
   },
   "admin": {
     "users": "Users",

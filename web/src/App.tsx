@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './state/auth';
 import { useLobby } from './state/lobby';
-import { setSoundEnabled, unlockAudio } from './lib/sounds';
+import { setSoundEnabled, setSoundSet, unlockAudio } from './lib/sounds';
 import Layout from './components/Layout';
 import Setup from './pages/Setup';
 import Login from './pages/Login';
@@ -44,12 +44,13 @@ export default function App() {
     if (user) {
       lobby.connect();
       setSoundEnabled(!!user.profile.sound_enabled);
+      setSoundSet(user.profile.sound_set);
     } else {
       lobby.disconnect();
     }
     return () => { /* keep connection during navigation; disconnect on logout */ };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, user?.profile.sound_enabled]);
+  }, [user?.id, user?.profile.sound_enabled, user?.profile.sound_set]);
 
   // Unlock Web Audio on first user interaction (browser policy)
   useEffect(() => {
