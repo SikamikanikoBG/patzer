@@ -43,7 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   twice doesn't duplicate anything. Correspondence games land in the same
   *daily* pool as chess.com's. Import errors (unknown player, Lichess down)
   are shown now instead of failing silently, for Chess.com too. (#28)
-
 - **Invite-only sign-up.** Admin → System now has three answers to "who can
   create an account": anyone, invite only, nobody. Admin → Users gets an
   Invites list: each invite is a code and a `/signup?invite=…` link, limited
@@ -54,6 +53,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   it. The sign-up page checks an invite as soon as it's entered, so a dead
   link is reported before anyone fills in the form. Existing installs keep
   what they had: on becomes "anyone", off becomes "nobody". (#26)
+- **Opening trainer.** The Openings page has a second tab, *Trainer*. Pick a
+  line — one of 16 built-in main lines for White or Black, or any position in
+  your own repertoire tree ("Practice this line", continued the way most of
+  your games went on) — and Patzer plays the other side while you find your
+  moves. A wrong move is taken back so you can try again; "Show me the move"
+  draws the arrow. Every move you miss is stored on your profile and comes
+  back in a daily review queue until you've got it right on three different
+  days. (Roadmap #6)
 
 ### Changed
 - **`games.source` accepts `lichess`.** SQLite can't alter a CHECK

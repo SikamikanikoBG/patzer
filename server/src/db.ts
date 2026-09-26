@@ -211,6 +211,30 @@ db.exec(`CREATE TABLE IF NOT EXISTS puzzle_attempts (
 db.exec(`CREATE INDEX IF NOT EXISTS idx_puzzle_attempts_user ON puzzle_attempts(user_id, created_at DESC)`);
 db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_puzzle_attempts_unique ON puzzle_attempts(user_id, game_id, ply)`);
 
+// Opening trainer — every move the user missed while practising a line, and
+// when it is due in the daily review queue (see chess/openingTrainer.ts).
+// `moves` is the line up to the position (space-separated SAN) so a review can
+// show how you got there; `position` (EPD) is what makes two lines that reach
+// the same position and expect the same move one entry. due_on is a UTC date;
+// NULL means learned — out of the queue, kept for the count.
+db.exec(`CREATE TABLE IF NOT EXISTS opening_misses (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  line_name TEXT NOT NULL DEFAULT '',
+  user_color TEXT NOT NULL CHECK(user_color IN ('white','black')),
+  moves TEXT NOT NULL,
+  position TEXT NOT NULL,
+  expected_san TEXT NOT NULL,
+  expected_uci TEXT NOT NULL,
+  misses INTEGER NOT NULL DEFAULT 1,
+  streak INTEGER NOT NULL DEFAULT 0,
+  due_on TEXT,
+  last_reviewed_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, position, expected_uci)
+)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_opening_misses_due ON opening_misses(user_id, due_on)`);
+
 // v7.0.0 — Improvement Plan goals. Each goal is a one-week target with a kind
 // (puzzles_solve / opening_play / review_games / accuracy / win_streak), a
 // numeric target, and free-form metadata. Progress is computed live from
