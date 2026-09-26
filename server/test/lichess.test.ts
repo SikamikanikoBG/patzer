@@ -71,12 +71,36 @@ describe('toImportRow', () => {
     expect(toImportRow(game({ status: 'noStart' }), 'x')).toBeNull();
     expect(toImportRow(game({ pgn: undefined }), 'x')).toBeNull();
   });
+
+  it('skips a game that is missing parts instead of throwing', () => {
+    const broken = [
+      { ...game(), players: undefined },
+      { ...game(), players: { white: game().players.white } },
+      { ...game(), pgn: 42 },
+      { ...game(), pgn: '   ' },
+      { ...game(), id: undefined },
+      { ...game(), lastMoveAt: undefined, createdAt: undefined },
+      { ...game(), lastMoveAt: 9e15 },
+    ] as unknown as LichessGame[];
+    for (const g of broken) expect(toImportRow(g, 'x')).toBeNull();
+  });
+
+  it('never stores a player name that is not text', () => {
+    const g = game();
+    const odd = { ...g, players: { ...g.players, white: { ...g.players.white, user: { id: 'odd', name: {} } } } } as unknown as LichessGame;
+    expect(typeof toImportRow(odd, 'x')?.white).toBe('string');
+  });
 });
 
 describe('parseNdjson', () => {
   it('reads one game per line and tolerates blank and torn lines', () => {
     const body = `${JSON.stringify(game())}\n\n${JSON.stringify(game({ id: 'second' }))}\n{"id": "torn`;
     expect(parseNdjson(body).map((g) => g.id)).toEqual(['kAdOQKeh', 'second']);
+  });
+
+  it('keeps only lines that are JSON objects', () => {
+    const body = `null\n42\n"text"\n[1,2]\n${JSON.stringify(game())}`;
+    expect(parseNdjson(body).map((g) => g.id)).toEqual(['kAdOQKeh']);
   });
 });
 

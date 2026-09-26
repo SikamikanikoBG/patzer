@@ -4,6 +4,14 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **Lichess import: one broken game no longer fails the whole import.** A
+  line of the export that is not a whole game is skipped instead of answering
+  500, and an account that already has an import waiting gets "an import is
+  already running" instead of queueing more requests behind it.
+
 ## [7.15.0] — 2026-09-26
 
 ### German, Lichess, invites, an opening trainer — and two new contributors

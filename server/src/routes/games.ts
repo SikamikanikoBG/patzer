@@ -178,6 +178,11 @@ const lichessImportSchema = z.object({
   since: z.number().int().positive().optional(),
 });
 
+// Requests to Lichess go out one at a time for the whole server, so one
+// account may only have one import waiting — a user clicking "Import" over and
+// over must not hold up everyone else's.
+const lichessImportsRunning = new Set<number>();
+
 router.post('/import/lichess', async (c) => {
   const user = c.get('user');
   const body = await c.req.json().catch(() => ({}));
@@ -185,8 +190,10 @@ router.post('/import/lichess', async (c) => {
   if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
   const username = parsed.data.username ?? user.profile.lichess_username;
   if (!username) return c.json({ error: 'no_lichess_username' }, 400);
+  if (lichessImportsRunning.has(user.id)) return c.json({ error: 'import_in_progress' }, 429);
 
   let games;
+  lichessImportsRunning.add(user.id);
   try {
     games = await fetchLichessGames(username, { max: parsed.data.limit, since: parsed.data.since });
   } catch (e) {
@@ -195,6 +202,8 @@ router.post('/import/lichess', async (c) => {
     if (code === 'rate_limited') return c.json({ error: 'lichess_rate_limited' }, 429);
     if (code === 'invalid_username') return c.json({ error: 'invalid_input' }, 400);
     return c.json({ error: 'lichess_unavailable' }, 502);
+  } finally {
+    lichessImportsRunning.delete(user.id);
   }
 
   // Same rules as the chess.com importer: never rated in Patzer's pool, and

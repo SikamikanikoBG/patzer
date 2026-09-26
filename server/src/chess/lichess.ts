@@ -57,7 +57,7 @@ export interface ImportRow {
 const UNPLAYED = new Set(['created', 'started', 'aborted', 'noStart', 'unknownFinish']);
 
 function playerName(p: LichessPlayer): string {
-  if (p.user?.name) return p.user.name;
+  if (typeof p.user?.name === 'string' && p.user.name) return p.user.name;
   if (p.aiLevel) return `Stockfish level ${p.aiLevel}`;
   return 'Anonymous';
 }
@@ -69,7 +69,13 @@ export function toImportRow(g: LichessGame, username: string): ImportRow | null 
   // is standard rules from a custom start; the PGN carries its FEN, but the
   // analyzer starts from the initial position, so it's skipped too.
   if (g.variant !== 'standard') return null;
-  if (UNPLAYED.has(g.status) || !g.pgn) return null;
+  if (UNPLAYED.has(g.status) || typeof g.pgn !== 'string' || !g.pgn.trim()) return null;
+  // A line that isn't a whole game (the export changed, or got cut off) is
+  // skipped rather than failing the import.
+  if (typeof g.id !== 'string' || !g.players?.white || !g.players?.black) return null;
+  const endedAt = Number(g.lastMoveAt || g.createdAt);
+  // Beyond 8.64e15 ms a Date can't be formatted, which would throw below.
+  if (!Number.isFinite(endedAt) || endedAt <= 0 || endedAt > 8.64e15) return null;
 
   const lc = username.toLowerCase();
   const userColor: 'white' | 'black' | null =
@@ -105,7 +111,7 @@ export function toImportRow(g: LichessGame, username: string): ImportRow | null 
     result,
     time_control: timeControl,
     time_class: timeClass,
-    end_time: new Date(g.lastMoveAt || g.createdAt).toISOString(),
+    end_time: new Date(endedAt).toISOString(),
     user_color: userColor,
   };
 }
@@ -116,7 +122,10 @@ export function parseNdjson(body: string): LichessGame[] {
   for (const line of body.split('\n')) {
     const s = line.trim();
     if (!s) continue;
-    try { out.push(JSON.parse(s) as LichessGame); } catch { /* skip a torn line */ }
+    try {
+      const v: unknown = JSON.parse(s);
+      if (v && typeof v === 'object' && !Array.isArray(v)) out.push(v as LichessGame);
+    } catch { /* skip a torn line */ }
   }
   return out;
 }

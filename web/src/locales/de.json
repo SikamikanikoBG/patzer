@@ -249,6 +249,7 @@
       "player_not_found": "Kein Spieler mit diesem Benutzernamen gefunden.",
       "lichess_rate_limited": "Lichess bittet um eine kurze Pause — versuch es in einer Minute erneut.",
       "lichess_unavailable": "Lichess ist gerade nicht erreichbar. Versuch es später erneut.",
+      "import_in_progress": "Es läuft schon ein Import — warte, bis er fertig ist.",
       "generic": "Der Import ist fehlgeschlagen. Bitte versuch es später erneut."
     }
   },
