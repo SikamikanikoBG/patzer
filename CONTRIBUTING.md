@@ -6,7 +6,7 @@ Thanks for considering a contribution. Patzer is a small, opinionated project �
 
 - **Bug fixes** of any size — open a PR, no need to ask first.
 - **Small, well-scoped features** that fit the "self-hosted Chess.com Game Review alternative for a household" pitch.
-- **Translations.** EN + BG ship today; see [Adding a language](#adding-a-language) below.
+- **Translations.** EN, BG, ES and DE ship today; see [Adding a language](#adding-a-language) below.
 - **Coach prompt improvements** for reducing hallucinations or improving voice in a specific audience (kid / beginner / etc.).
 
 ## What we'll probably push back on
@@ -99,7 +99,7 @@ entry per table — no `if (language === …)` branches to chase. Pick an ISO 63
 it `<code>` below. Spanish (`es`, PR #17) is a complete worked example to diff against.
 
 1. **UI strings.** Copy `web/src/locales/en.json` to `web/src/locales/<code>.json` and translate every string. Don't change the keys. Plurals use `i18next`'s `{{count}}` syntax — leave those tokens alone.
-2. **Register it once** in `web/src/lib/languages.ts` (`LANGUAGES`: code, short badge, name key, native name, BCP-47 tag for text-to-speech) and import the JSON in `web/src/i18n.ts`. Every toggle, select, TTS voice filter and signup default reads that list.
+2. **Register it once** in `web/src/lib/languages.ts` (`LANGUAGES`: code, short badge, native name — the language's name in itself, which every language picker shows — and BCP-47 tag for text-to-speech) and import the JSON in `web/src/i18n.ts`. Every toggle, select, TTS voice filter and signup default reads that list.
 3. **Server enums.** Add `<code>` to the `z.enum(['en', 'bg', 'es'])` language schemas (`grep -rn "'es'" server/src/routes`) and to the `Language` type in `server/src/types.ts`.
 4. **Coach text.** The coach speaks the player's language:
    - `server/src/coach/prompts.ts` — add a `<code>` entry to each `Record<Language, …>` table (`PIECE_NAMES`, `AUDIENCE_DATA`, `PERSONA`, `HARD_RULES`, `CASTLE_*`, `MOVE_DESCRIPTIONS`, `CLASS_PHRASES`, and the evaluation/material phrase tables further down).

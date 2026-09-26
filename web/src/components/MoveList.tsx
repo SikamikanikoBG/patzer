@@ -1,4 +1,5 @@
 import { Fragment } from 'react';
+import { useTranslation } from 'react-i18next';
 import MoveRow from './MoveRow';
 import type { PhaseSplit } from '../types';
 
@@ -19,6 +20,7 @@ interface Props {
 // the current half-move is highlighted, and the row's left edge is tinted by
 // the worst classification in the pair (matching chess.com Game Review).
 export default function MoveList({ moves, current, onSelect, phaseSplit, maxHeight = 420 }: Props) {
+  const { t } = useTranslation();
   const rows: { num: number; white?: Move; black?: Move }[] = [];
   for (let i = 0; i < moves.length; i += 2) {
     rows.push({ num: i / 2 + 1, white: moves[i], black: moves[i + 1] });
@@ -42,18 +44,18 @@ export default function MoveList({ moves, current, onSelect, phaseSplit, maxHeig
     >
       <div className="sticky top-0 z-10 grid grid-cols-[2.25rem_1fr_1fr] border-b border-chesscom-200 bg-chesscom-50 px-0 py-1 text-[11px] font-semibold uppercase tracking-wide text-chesscom-500 dark:border-chesscom-700 dark:bg-chesscom-900 dark:text-chesscom-300">
         <div />
-        <div className="px-2">White</div>
-        <div className="px-2">Black</div>
+        <div className="px-2">{t('review.white')}</div>
+        <div className="px-2">{t('review.black')}</div>
       </div>
       {phaseSplit?.opening && (
-        <PhaseDivider label="Opening" />
+        <PhaseDivider label={t('review.opening')} />
       )}
       {rows.map((r) => {
         const phaseHere = phaseAtPair.get(r.num);
         return (
           <Fragment key={r.num}>
             {phaseHere && (
-              <PhaseDivider label={phaseHere === 'middlegame' ? 'Middlegame' : 'Endgame'} />
+              <PhaseDivider label={phaseHere === 'middlegame' ? t('review.middlegame') : t('review.endgame')} />
             )}
             <MoveRow
               num={r.num}

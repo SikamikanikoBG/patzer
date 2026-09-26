@@ -140,10 +140,10 @@ function PhaseStat({ label, value }: { label: string; value: number }) {
 function TimeClassCard({ data }: { data: InsightsV2['time_class_stats'] }) {
   const { t } = useTranslation();
   const order: { key: string; label: string }[] = [
-    { key: 'bullet', label: 'Bullet' },
-    { key: 'blitz', label: 'Blitz' },
-    { key: 'rapid', label: 'Rapid' },
-    { key: 'daily', label: 'Daily' },
+    { key: 'bullet', label: t('players.tc.bullet') },
+    { key: 'blitz', label: t('players.tc.blitz') },
+    { key: 'rapid', label: t('players.tc.rapid') },
+    { key: 'daily', label: t('players.tc.daily') },
   ];
   return (
     <section className="card p-4">
@@ -166,7 +166,7 @@ function TimeClassCard({ data }: { data: InsightsV2['time_class_stats'] }) {
               <div className="mb-1 flex items-baseline justify-between text-xs">
                 <span className="font-medium text-chesscom-700 dark:text-chesscom-200">{label}</span>
                 <span className="font-mono tabular-nums text-chesscom-500">
-                  {s.games}g · {s.wins}W {s.draws}D {s.losses}L
+                  {t('insights.tcLine', { games: s.games, wins: s.wins, draws: s.draws, losses: s.losses })}
                   {s.avg_accuracy != null && <> · {s.avg_accuracy.toFixed(1)}%</>}
                 </span>
               </div>
@@ -259,7 +259,7 @@ function ActivityHeatmap({ data }: { data: InsightsV2['activity_heatmap'] }) {
                 rx={2}
                 className={tone(c.games, grid.max)}
               >
-                <title>{`${c.date} — ${c.games} game${c.games === 1 ? '' : 's'}${c.games > 0 ? `, ${c.wins} won` : ''}`}</title>
+                <title>{t('insights.dayGames', { date: c.date, count: c.games }) + (c.games > 0 ? t('insights.dayWins', { wins: c.wins }) : '')}</title>
               </rect>
             );
           })}
@@ -328,7 +328,7 @@ function RatingTrajectoryCard({ data }: { data: InsightsV2['rating_trajectory'] 
           {series.map((s) => (
             <span key={s.key} className="inline-flex items-center gap-1">
               <span className="h-2 w-2 rounded-full" style={{ backgroundColor: colors[s.key] }} />
-              <span className="capitalize">{s.key}</span>
+              <span>{t(`players.tc.${s.key}`)}</span>
             </span>
           ))}
         </div>
@@ -348,7 +348,7 @@ function RatingTrajectoryCard({ data }: { data: InsightsV2['rating_trajectory'] 
               <path d={path} fill="none" stroke={colors[s.key]} strokeWidth={1.5} />
               {s.points.map((p, i) => (
                 <circle key={i} cx={xScale(new Date(p.t).getTime())} cy={yScale(p.r)} r={1.6} fill={colors[s.key]}>
-                  <title>{`${s.key} ${p.r} · ${new Date(p.t).toLocaleDateString()}`}</title>
+                  <title>{`${t(`players.tc.${s.key}`)} ${p.r} · ${new Date(p.t).toLocaleDateString()}`}</title>
                 </circle>
               ))}
             </g>
@@ -399,7 +399,7 @@ function AccuracyTrendCard({ data }: { data: InsightsV2['accuracy_trend'] }) {
         <path d={path} fill="none" stroke="#769656" strokeWidth={1.5} />
         {data.map((p, i) => (
           <circle key={i} cx={xScale(i)} cy={yScale(p.acc)} r={1.8} fill={p.result === 'win' ? '#769656' : p.result === 'loss' ? '#c63b3a' : '#6c7a89'}>
-            <title>{`${p.acc.toFixed(1)}% · ${p.result ?? '—'} · ${new Date(p.t).toLocaleDateString()}`}</title>
+            <title>{`${p.acc.toFixed(1)}% · ${p.result ? t(`insights.result.${p.result}`) : '—'} · ${new Date(p.t).toLocaleDateString()}`}</title>
           </circle>
         ))}
         <text x={padX - 4} y={yScale(0) + 3} textAnchor="end" fontSize={9} className="fill-chesscom-400">0</text>
@@ -481,7 +481,7 @@ function OpeningRepertoireCard({ data }: { data: OpeningRow[] }) {
         <thead className="bg-chesscom-50/50 text-[11px] uppercase tracking-wide text-chesscom-500 dark:bg-chesscom-900/40">
           <tr>
             <th className="px-3 py-1.5 text-left">{t('insights.opening', { defaultValue: 'Opening' })}</th>
-            <th className="whitespace-nowrap px-2 py-1.5 text-center" title="As white / as black"><span className="sr-only">side</span>♔/♚</th>
+            <th className="whitespace-nowrap px-2 py-1.5 text-center" title={t('insights.sideTitle')}><span className="sr-only">{t('insights.side')}</span>♔/♚</th>
             <th className="whitespace-nowrap px-2 py-1.5 text-right">{t('insights.played', { defaultValue: 'Games' })}</th>
             <th className="whitespace-nowrap px-2 py-1.5 text-right">{t('insights.score', { defaultValue: 'Score' })}</th>
             <th className="whitespace-nowrap px-2 py-1.5 text-right">{t('insights.acc', { defaultValue: 'Acc' })}</th>
@@ -562,6 +562,7 @@ const AchievementsSection = ({ achievements, sectionRef }: { achievements: Achie
 };
 
 function AchievementBadge({ a }: { a: Achievement }) {
+  const { t } = useTranslation();
   const Icon = resolveLucide(a.icon);
   const pct = Math.min(100, Math.round((a.progress / Math.max(1, a.target)) * 100));
   return (
@@ -577,8 +578,8 @@ function AchievementBadge({ a }: { a: Achievement }) {
           {a.unlocked ? <Icon className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-xs font-semibold">{a.title}</div>
-          <div className="mt-0.5 line-clamp-2 text-[11px] text-chesscom-500">{a.description}</div>
+          <div className="truncate text-xs font-semibold">{t(`achievements.${a.id}.title`, { defaultValue: a.title })}</div>
+          <div className="mt-0.5 line-clamp-2 text-[11px] text-chesscom-500">{t(`achievements.${a.id}.description`, { defaultValue: a.description })}</div>
         </div>
       </div>
       <div className="mt-2 flex items-center gap-2">

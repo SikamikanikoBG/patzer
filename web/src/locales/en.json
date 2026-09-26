@@ -19,9 +19,6 @@
     "password": "Password",
     "displayName": "Display name",
     "language": "Language",
-    "english": "English",
-    "bulgarian": "Bulgarian",
-    "spanish": "Spanish",
     "logout": "Log out",
     "settings": "Settings",
     "admin": "Admin",
@@ -35,7 +32,8 @@
     "download": "Download",
     "saved": "Saved",
     "email": "Email",
-    "close": "Close"
+    "close": "Close",
+    "viewChangelog": "View changelog"
   },
   "setup": {
     "title": "Welcome to Patzer",
@@ -51,7 +49,8 @@
     "ollamaFailed": "Could not connect: {{error}}",
     "finish": "Finish setup",
     "creating": "Creating…",
-    "passwordHint": "At least 10 characters."
+    "passwordHint": "At least 10 characters.",
+    "next": "Next"
   },
   "login": {
     "title": "Welcome back",
@@ -160,7 +159,8 @@
       "action": "Resume",
       "discard": "Discard"
     },
-    "reconnecting": "Reconnecting… your game is saved."
+    "reconnecting": "Reconnecting… your game is saved.",
+    "subtitle": "Pick a bot or challenge a friend."
   },
   "review": {
     "title": "Game Review",
@@ -203,7 +203,46 @@
     "linesHide": "Hide",
     "linesFetching": "fetching…",
     "linesRefreshing": "refreshing…",
-    "linesPlayed": "played"
+    "linesPlayed": "played",
+    "phases": "Phases",
+    "opening": "Opening",
+    "middlegame": "Middlegame",
+    "endgame": "Endgame",
+    "gameReportDesc": "A written breakdown of the game by the AI coach. Highlights phases, key moments, and a skill estimate.",
+    "generateReport": "Write AI report",
+    "generating": "Writing AI report…",
+    "runEngine": "Run engine analysis",
+    "gameReport": "AI report",
+    "keyMoments": "Key moments",
+    "coachIdleHint": "Step into a move to see what the coach has to say.",
+    "source": {
+      "chesscom": "Chess.com",
+      "played": "Played",
+      "pvp": "PvP"
+    },
+    "hasNote": "note",
+    "clearSearch": "Clear",
+    "startingPosition": "starting position",
+    "best": "best: {{san}}",
+    "sideShort": {
+      "white": "W",
+      "black": "B"
+    },
+    "depthFast": "fast (8)",
+    "depthQuality": "quality (16)",
+    "depthDeep": "deep (22)",
+    "first": "First",
+    "prev": "Previous",
+    "next": "Next",
+    "last": "Last",
+    "copyFenTitle": "Copy FEN of current position",
+    "copyPgnTitle": "Copy full PGN",
+    "downloadPgnTitle": "Download .pgn",
+    "estRating": "Est. Rating",
+    "performance": "Performance",
+    "noKeyMoments": "No key moments — a clean game.",
+    "noEval": "No evaluation yet",
+    "bestLabel": "best:"
   },
   "classification": {
     "brilliant": "Brilliant",
@@ -230,7 +269,12 @@
       "silent": "Silent",
       "on_demand": "On demand",
       "always_on_pedagogical": "Always on (pedagogical)"
-    }
+    },
+    "resume": "Resume coach",
+    "mute": "Mute coach",
+    "showFacts": "Show the FACTS sent to the model",
+    "muted": "— muted —",
+    "contextSent": "Context sent to the model"
   },
   "challenge": {
     "incoming": "New challenge",
@@ -293,7 +337,26 @@
       "guardingDesc": "Defending a friend who's under attack.",
       "sleeping": "Sleeping",
       "sleepingDesc": "Still on its starting square — wake it up!"
-    }
+    },
+    "subtitle": "Personalize how chess looks, sounds, and how the coach talks to you.",
+    "profileDesc": "Your display info and language for the interface.",
+    "appearanceDesc": "Pick a site theme and a board you'll enjoy looking at.",
+    "coachDesc": "How the AI Coach interacts during games and reviews.",
+    "behaviorDesc": {
+      "silent": "Coach won't speak or appear during games.",
+      "on_demand": "Coach is silent until you ask for a hint or explanation.",
+      "always_on_pedagogical": "Coach narrates the game in a teaching voice. Best for learners."
+    },
+    "soundAssist": "Sound & assistance",
+    "soundAssistDesc": "Audio feedback and learning aids during play.",
+    "soundEffects": "Sound effects",
+    "soundEffectsDesc": "Play piece-move, capture, check, castle and game-end sounds.",
+    "blunderWarning": "Blunder warning before move",
+    "blunderWarningDesc": "When playing, the engine quickly checks your move. If it looks like a mistake or blunder, ask before committing. Recommended for kids and beginners.",
+    "ttsDesc": "Coach can read its explanations aloud. Uses your operating system's voices.",
+    "ttsNoVoices": "No voices found for this language. Install the OS language pack to see more options.",
+    "unsaved": "Unsaved changes",
+    "noChanges": "No changes"
   },
   "admin": {
     "users": "Users",
@@ -345,7 +408,32 @@
     "sendTestEmail": "Send a test email",
     "sendTestEmailHint": "Save first — the test uses the saved settings.",
     "send": "Send",
-    "testEmailSent": "Test email sent."
+    "testEmailSent": "Test email sent.",
+    "llmDesc": "Local LLM for the AI Coach — Ollama or an OpenAI-compatible vLLM server. Each is configured independently, so switching providers doesn't lose the other's settings.",
+    "vllmUrl": "vLLM URL",
+    "vllmModel": "vLLM model",
+    "testAllModels": "Test ALL models",
+    "colModel": "Model",
+    "colStatus": "Status",
+    "colLatency": "Latency",
+    "colSample": "Sample / error",
+    "ok": "OK",
+    "fail": "FAIL",
+    "loadingModels": "Loading models from {{provider}}…",
+    "noModels": "No models loaded — set the URL above and click Test, or type a model name manually.",
+    "runtime": "Runtime",
+    "refresh": "refresh",
+    "lastModel": "Last model used",
+    "noCoachCall": "— no coach call yet —",
+    "coachCalls": "Coach calls",
+    "lastError": "Last error",
+    "stockfishDesc": "Native chess engine for analysis and bot play.",
+    "autoDetect": "(auto-detect)",
+    "colUser": "User",
+    "modelsFound_one": "{{count}} model found",
+    "modelsFound_other": "{{count}} models found",
+    "connectionFailed": "connection failed",
+    "failed": "failed"
   },
   "palette": {
     "switchLanguage": "Switch to",
@@ -357,7 +445,12 @@
     "tip": "⌘K / Ctrl+K to open · ? for shortcuts",
     "bookmarks": "Starred games",
     "themeLight": "Light theme",
-    "themeDark": "Dark theme"
+    "themeDark": "Dark theme",
+    "open": "Command palette (⌘K)",
+    "navGroup": "Navigate",
+    "actionGroup": "Actions",
+    "gameGroup": "Recent games",
+    "esc": "esc"
   },
   "shortcuts": {
     "title": "Keyboard shortcuts",
@@ -375,7 +468,8 @@
     "firstLast": "First / Last position",
     "flipBoard": "Flip board",
     "bookmark": "Toggle bookmark",
-    "share": "Copy link to position"
+    "share": "Copy link to position",
+    "homeEnd": "Home  End"
   },
   "train": {
     "nav": "Train",
@@ -445,6 +539,17 @@
       "endgameDriftDesc": "Errors in technical positions",
       "promisingLosing": "Squandered advantages",
       "promisingLosingDesc": "+1.5 → flat in one move"
+    },
+    "tcLine": "{{games}}g · {{wins}}W {{draws}}D {{losses}}L",
+    "dayGames_one": "{{date}} — {{count}} game",
+    "dayGames_other": "{{date}} — {{count}} games",
+    "dayWins": ", {{wins}} won",
+    "sideTitle": "As white / as black",
+    "side": "side",
+    "result": {
+      "win": "win",
+      "loss": "loss",
+      "draw": "draw"
     }
   },
   "openings": {
@@ -491,6 +596,28 @@
       "review_games": "Review",
       "accuracy": "Play",
       "win_streak": "Play"
+    },
+    "goal": {
+      "puzzles_solve": {
+        "title": "Solve {{target}} puzzles this week",
+        "description": "Sharpen your tactics with personalized puzzles from your own games."
+      },
+      "opening_play": {
+        "title": "Play {{target}} games in {{name}}",
+        "description": "You've been struggling with {{name}} as {{color}}. Play it {{target}} more times this week to break the pattern."
+      },
+      "review_games": {
+        "title": "Analyze {{target}} games this week",
+        "description": "Run Stockfish over your latest games to spot recurring mistakes."
+      },
+      "accuracy": {
+        "title": "Score {{minAccuracy}}%+ accuracy in {{target}} games",
+        "description": "Focus on accuracy: play {{target}} games where you stay above {{minAccuracy}}% on your side."
+      },
+      "win_streak": {
+        "title": "Get a {{target}}-game win streak",
+        "description": "Stack three wins in a row to lock in your form."
+      }
     }
   },
   "lab": {
@@ -549,7 +676,20 @@
     "achievementsRecent": "Recently unlocked",
     "achievementsEmpty": "Earn your first badge by playing a game",
     "achievementsEmptyDesc": "0 of {{n}} unlocked",
-    "whatsNew": "What's new: plans, achievements, and a top-3 lines panel in Review."
+    "whatsNew": "What's new: plans, achievements, and a top-3 lines panel in Review.",
+    "greet": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "streak": {
+      "win": "win streak",
+      "loss": "loss streak",
+      "draw": "draw streak"
+    },
+    "puzzleEmpty": "No puzzles yet — play a few games",
+    "puzzleEmptyDesc": "Puzzles come from your own analyzed blunders.",
+    "unreviewed": "unreviewed"
   },
   "auth": {
     "passwordHint": "At least 10 characters",
@@ -654,7 +794,8 @@
       "blitz": "Blitz",
       "rapid": "Rapid",
       "daily": "Daily"
-    }
+    },
+    "onlineTitle": "online"
   },
   "threat": {
     "title": "What's the threat?",
@@ -712,5 +853,51 @@
     "thanks": "Thanks for starring Patzer!",
     "starTitle": "Star Patzer on GitHub — it is the whole thank-you the project asks for",
     "changelogCta": "Patzer is free and self-hosted."
+  },
+  "achievements": {
+    "first_game": {
+      "title": "First Move",
+      "description": "Played your first game."
+    },
+    "first_win": {
+      "title": "First Win",
+      "description": "Won your first game."
+    },
+    "centurion": {
+      "title": "Centurion",
+      "description": "Played 100 games."
+    },
+    "analyst": {
+      "title": "Analyst",
+      "description": "Analyzed 10 games."
+    },
+    "accurate_player": {
+      "title": "Accurate Player",
+      "description": "Scored 90% accuracy or higher in a single game."
+    },
+    "opening_explorer": {
+      "title": "Opening Explorer",
+      "description": "Played 10 different openings."
+    },
+    "puzzle_master": {
+      "title": "Puzzle Master",
+      "description": "Solved 50 puzzles."
+    },
+    "tactician": {
+      "title": "Tactician",
+      "description": "80% puzzle accuracy with at least 20 attempts."
+    },
+    "streaker_3": {
+      "title": "Heating Up",
+      "description": "Win 3 games in a row."
+    },
+    "streaker_5": {
+      "title": "On Fire",
+      "description": "Win 5 games in a row."
+    },
+    "streaker_10": {
+      "title": "Unstoppable",
+      "description": "Win 10 games in a row."
+    }
   }
 }

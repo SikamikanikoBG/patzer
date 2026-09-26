@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { styleFor } from '../lib/classification';
 
 interface Eval { ply: number; cp: number | null }
@@ -42,6 +43,7 @@ function fmtCp(cp: number | null): string {
 // Mistake/blunder/brilliancy markers are circles colored by class. Hovering
 // shows a vertical hairline + chip with the ply's cp value.
 export default function EvalGraph({ evals, current, onClick, markers = [], height = 96 }: Props) {
+  const { t } = useTranslation();
   const [hoverPly, setHoverPly] = useState<number | null>(null);
   const points = useMemo(() => {
     if (!evals.length) return [] as Array<{ x: number; y: number; share: number; cp: number; ply: number }>;
@@ -55,7 +57,7 @@ export default function EvalGraph({ evals, current, onClick, markers = [], heigh
   }, [evals]);
 
   if (!points.length) {
-    return <div style={{ height }} className="grid w-full place-items-center text-xs text-chesscom-400">No evaluation yet</div>;
+    return <div style={{ height }} className="grid w-full place-items-center text-xs text-chesscom-400">{t('review.noEval')}</div>;
   }
 
   const linePath = points.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');

@@ -95,7 +95,7 @@ export default function Setup() {
                   <label className="label mb-1 block">{t('common.language')}</label>
                   <div className="flex gap-2">
                     {LANGUAGES.map((l) => (
-                      <LangBtn key={l.code} current={language} value={l.code} onClick={() => { setLanguage(l.code); void i18n.changeLanguage(l.code); }}>{t(l.nameKey)}</LangBtn>
+                      <LangBtn key={l.code} current={language} value={l.code} onClick={() => { setLanguage(l.code); void i18n.changeLanguage(l.code); }} lang={l.code}>{l.native}</LangBtn>
                     ))}
                   </div>
                 </div>
@@ -115,7 +115,7 @@ export default function Setup() {
                   <p className="mt-1 text-xs text-ink-400">{t('setup.passwordHint')}</p>
                 </div>
                 <button onClick={() => setStep(2)} disabled={!username || password.length < 10} className="btn-primary w-full">
-                  Next <ChevronRight className="h-4 w-4" />
+                  {t('setup.next')} <ChevronRight className="h-4 w-4" />
                 </button>
               </motion.div>
             )}
@@ -179,9 +179,9 @@ function Dot({ active, done, children }: { active?: boolean; done?: boolean; chi
   );
 }
 
-function LangBtn({ current, value, onClick, children }: { current: string; value: string; onClick: () => void; children: React.ReactNode }) {
+function LangBtn({ current, value, onClick, lang, children }: { current: string; value: string; onClick: () => void; lang?: string; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick}
+    <button type="button" onClick={onClick} lang={lang}
       className={`btn flex-1 ${current === value ? 'btn-primary' : 'btn-secondary'}`}>{children}</button>
   );
 }

@@ -80,6 +80,7 @@ export default function GameReportCard({
 }
 
 function PlayerColumn({ name, accuracy, elo, perf, side, highlighted }: { name: string; accuracy: number; elo: number | null; perf: number | null; side: 'white' | 'black'; highlighted?: boolean }) {
+  const { t } = useTranslation();
   const sideDot = side === 'white' ? 'bg-white border border-chesscom-300' : 'bg-chesscom-900';
   // Gold left border for highlighted player — chess.com's subtle indicator.
   return (
@@ -95,13 +96,13 @@ function PlayerColumn({ name, accuracy, elo, perf, side, highlighted }: { name: 
           {elo != null && (
             <div className="flex items-center gap-1 text-chesscom-500">
               <Trophy className="h-3 w-3" />
-              <span>Est. Rating</span>
+              <span>{t('review.estRating')}</span>
               <span className="ml-auto rounded-sm bg-chesscom-100 px-1.5 py-0.5 font-mono font-bold tabular-nums text-chesscom-900 dark:bg-chesscom-700 dark:text-white">{elo}</span>
             </div>
           )}
           {perf != null && perf !== elo && (
             <div className="flex items-center gap-1 text-chesscom-500">
-              <span>Performance</span>
+              <span>{t('review.performance')}</span>
               <span className="ml-auto rounded-sm bg-chesscom-100 px-1.5 py-0.5 font-mono font-bold tabular-nums text-chesscom-900 dark:bg-chesscom-700 dark:text-white">{perf}</span>
             </div>
           )}

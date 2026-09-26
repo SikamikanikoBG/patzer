@@ -133,7 +133,7 @@ export default function AdminSystem() {
     setTesting(true); setTestStatus(null);
     try {
       const r = await api.post<{ ok: boolean; error?: string }>('/api/admin/test/email', { to: testTo });
-      setTestStatus({ ok: r.ok, msg: r.ok ? t('admin.testEmailSent') : (r.error ?? 'failed') });
+      setTestStatus({ ok: r.ok, msg: r.ok ? t('admin.testEmailSent') : (r.error ?? t('admin.failed')) });
     } catch (e) {
       setTestStatus({ ok: false, msg: (e as Error).message });
     } finally { setTesting(false); }
@@ -169,11 +169,11 @@ export default function AdminSystem() {
       if (r.ok) {
         const ns = (r.models ?? []).map((m) => m.name).sort();
         setModels(ns);
-        setOllamaStatus({ ok: true, msg: `${ns.length} model${ns.length === 1 ? '' : 's'} found` });
+        setOllamaStatus({ ok: true, msg: t('admin.modelsFound', { count: ns.length }) });
         if (!activeModel && ns[0]) setActiveModel(ns[0]!);
       } else {
         setModels([]);
-        setOllamaStatus({ ok: false, msg: r.error ?? 'connection failed' });
+        setOllamaStatus({ ok: false, msg: r.error ?? t('admin.connectionFailed') });
       }
     } catch (e) {
       setModels([]);
@@ -186,7 +186,7 @@ export default function AdminSystem() {
   async function testStockfish() {
     setStockfishStatus(null);
     const r = await api.post<{ ok: boolean; name?: string; error?: string }>('/api/admin/test/stockfish', { path: s.stockfish_path });
-    setStockfishStatus({ ok: r.ok, msg: r.ok ? (r.name ?? 'ok') : (r.error ?? 'failed') });
+    setStockfishStatus({ ok: r.ok, msg: r.ok ? (r.name ?? t('admin.ok')) : (r.error ?? t('admin.failed')) });
   }
 
   async function save() {
@@ -220,7 +220,7 @@ export default function AdminSystem() {
           </div>
           <div>
             <h2 className="font-semibold">{t('admin.ollamaConfig')}</h2>
-            <p className="text-xs text-ink-500">Local LLM for the AI Coach — Ollama or an OpenAI-compatible vLLM server. Each is configured independently, so switching providers doesn't lose the other's settings.</p>
+            <p className="text-xs text-ink-500">{t('admin.llmDesc')}</p>
           </div>
         </div>
         <div className="space-y-4 p-5">
@@ -238,11 +238,11 @@ export default function AdminSystem() {
             ))}
           </div>
           <div>
-            <label className="label mb-1 block">{provider === 'vllm' ? 'vLLM URL' : t('admin.ollamaUrl')}</label>
+            <label className="label mb-1 block">{provider === 'vllm' ? t('admin.vllmUrl') : t('admin.ollamaUrl')}</label>
             <div className="flex gap-2">
               <input className="input" value={activeUrl} onChange={(e) => setActiveUrl(e.target.value)} placeholder={provider === 'vllm' ? 'http://localhost:8000' : 'http://localhost:11434'} />
               <button onClick={() => fetchModels(activeUrl)} className="btn-secondary text-sm" disabled={!activeUrl || loadingModels}>
-                {loadingModels ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Test'}
+                {loadingModels ? <Loader2 className="h-4 w-4 animate-spin" /> : t('common.test')}
               </button>
             </div>
             {ollamaStatus && (
@@ -253,20 +253,20 @@ export default function AdminSystem() {
             )}
           </div>
           <div>
-            <label className="label mb-1 block">{provider === 'vllm' ? 'vLLM model' : t('admin.ollamaModel')}</label>
+            <label className="label mb-1 block">{provider === 'vllm' ? t('admin.vllmModel') : t('admin.ollamaModel')}</label>
             <button onClick={testAllModels} disabled={!activeUrl || allTesting} className="btn-secondary text-xs">
             {allTesting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FlaskConical className="h-3.5 w-3.5" />}
-            Test ALL models
+            {t('admin.testAllModels')}
           </button>
           {allResults && (
             <div className="overflow-hidden rounded-xl border border-ink-200 dark:border-ink-700">
               <table className="w-full text-xs">
                 <thead className="bg-ink-50 text-[11px] uppercase tracking-wider text-ink-500 dark:bg-ink-900">
                   <tr>
-                    <th className="px-3 py-2 text-left">Model</th>
-                    <th className="px-3 py-2 text-left">Status</th>
-                    <th className="px-3 py-2 text-right">Latency</th>
-                    <th className="px-3 py-2 text-left">Sample / error</th>
+                    <th className="px-3 py-2 text-left">{t('admin.colModel')}</th>
+                    <th className="px-3 py-2 text-left">{t('admin.colStatus')}</th>
+                    <th className="px-3 py-2 text-right">{t('admin.colLatency')}</th>
+                    <th className="px-3 py-2 text-left">{t('admin.colSample')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -274,8 +274,8 @@ export default function AdminSystem() {
                     <tr key={r.model} className="border-t border-ink-100 dark:border-ink-800">
                       <td className="px-3 py-2 font-mono">{r.model}</td>
                       <td className="px-3 py-2">
-                        {r.ok ? <span className="inline-flex items-center gap-1 text-accent-600"><CheckCircle2 className="h-3 w-3" />OK</span>
-                          : <span className="inline-flex items-center gap-1 text-bad"><AlertCircle className="h-3 w-3" />FAIL</span>}
+                        {r.ok ? <span className="inline-flex items-center gap-1 text-accent-600"><CheckCircle2 className="h-3 w-3" />{t('admin.ok')}</span>
+                          : <span className="inline-flex items-center gap-1 text-bad"><AlertCircle className="h-3 w-3" />{t('admin.fail')}</span>}
                       </td>
                       <td className="px-3 py-2 text-right font-mono text-ink-500">{r.latencyMs}ms</td>
                       <td className="px-3 py-2 truncate text-ink-500" title={r.sample ?? r.error ?? ''}>{r.sample ?? r.error ?? ''}</td>
@@ -287,7 +287,7 @@ export default function AdminSystem() {
           )}
           {loadingModels ? (
               <div className="flex h-10 items-center gap-2 rounded-xl bg-ink-100 px-3 text-sm text-ink-500 dark:bg-ink-800">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading models from {provider === 'vllm' ? 'vLLM' : 'Ollama'}…
+                <Loader2 className="h-4 w-4 animate-spin" /> {t('admin.loadingModels', { provider: provider === 'vllm' ? 'vLLM' : 'Ollama' })}
               </div>
             ) : models.length > 0 ? (
               <select className="input" value={activeModel} onChange={(e) => setActiveModel(e.target.value)}>
@@ -296,7 +296,7 @@ export default function AdminSystem() {
             ) : (
               <div className="space-y-1">
                 <input className="input" value={activeModel} onChange={(e) => setActiveModel(e.target.value)} placeholder={provider === 'vllm' ? 'Qwen3.8-27B' : 'gemma3:27b'} />
-                <p className="text-xs text-ink-400">No models loaded — set the URL above and click Test, or type a model name manually.</p>
+                <p className="text-xs text-ink-400">{t('admin.noModels')}</p>
               </div>
             )}
           </div>
@@ -306,16 +306,16 @@ export default function AdminSystem() {
           {runtime && (
             <div className="rounded-xl border border-ink-200 bg-ink-50/50 p-3 text-xs dark:border-ink-700 dark:bg-ink-900/30">
               <div className="mb-2 flex items-center justify-between">
-                <span className="font-semibold uppercase tracking-wide text-ink-500">Runtime</span>
-                <button onClick={() => void loadSettings()} className="text-ink-500 hover:text-ink-700 dark:hover:text-ink-200">refresh</button>
+                <span className="font-semibold uppercase tracking-wide text-ink-500">{t('admin.runtime')}</span>
+                <button onClick={() => void loadSettings()} className="text-ink-500 hover:text-ink-700 dark:hover:text-ink-200">{t('admin.refresh')}</button>
               </div>
               <div className="grid grid-cols-[7rem_1fr] gap-y-1">
-                <span className="text-ink-500">Last model used</span>
-                <span className="font-mono">{runtime.last_model_used ?? <span className="text-ink-400">— no coach call yet —</span>}</span>
-                <span className="text-ink-500">Coach calls</span>
+                <span className="text-ink-500">{t('admin.lastModel')}</span>
+                <span className="font-mono">{runtime.last_model_used ?? <span className="text-ink-400">{t('admin.noCoachCall')}</span>}</span>
+                <span className="text-ink-500">{t('admin.coachCalls')}</span>
                 <span className="font-mono">{runtime.call_count} {runtime.p95_ms != null && <span className="text-ink-400">(p95 {runtime.p95_ms}ms)</span>}</span>
                 {runtime.last_error && (<>
-                  <span className="text-ink-500">Last error</span>
+                  <span className="text-ink-500">{t('admin.lastError')}</span>
                   <span className="font-mono text-bad">{runtime.last_error}</span>
                 </>)}
               </div>
@@ -331,15 +331,15 @@ export default function AdminSystem() {
           </div>
           <div>
             <h2 className="font-semibold">{t('admin.stockfishConfig')}</h2>
-            <p className="text-xs text-ink-500">Native chess engine for analysis and bot play.</p>
+            <p className="text-xs text-ink-500">{t('admin.stockfishDesc')}</p>
           </div>
         </div>
         <div className="space-y-4 p-5">
           <div>
             <label className="label mb-1 block">{t('admin.stockfishPath')}</label>
             <div className="flex gap-2">
-              <input className="input" value={s.stockfish_path ?? ''} onChange={(e) => setS({ ...s, stockfish_path: e.target.value })} placeholder="(auto-detect)" />
-              <button onClick={testStockfish} className="btn-secondary text-sm">Test</button>
+              <input className="input" value={s.stockfish_path ?? ''} onChange={(e) => setS({ ...s, stockfish_path: e.target.value })} placeholder={t('admin.autoDetect')} />
+              <button onClick={testStockfish} className="btn-secondary text-sm">{t('common.test')}</button>
             </div>
             <p className="mt-1 text-xs text-ink-400">{t('admin.stockfishPathHelp')}</p>
             {stockfishStatus && (

@@ -4,6 +4,36 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **German (`de`).** The whole app — UI, setup wizard, coach persona and hard
+  rules, move narration, Game Review prose — in German. The coach prompt is
+  tuned for small local models: it asks for the informal "du" without using
+  it as a form of address (mistral:7b otherwise ended most answers' first
+  sentence with "…, du!"), and it has no example sentences, which such
+  models copied word for word — "Solide Entwicklung" even for a blunder.
+  German is also the first
+  coach language whose piece names need an article and a grammatical case
+  ("der Springer zieht", but "schlägt den Bauern", "du hast einen Turm
+  mehr"), so move and material phrasing decline properly instead of gluing
+  bare nouns together. (#18)
+
+### Fixed
+- **English text on translated screens.** Around 140 strings were hard-coded
+  in components (Settings descriptions, the greeting, phase names, the game
+  list, key moments, admin pages…) or used a translation key that existed in
+  no locale file, so they showed English in every language. They are locale
+  keys now. Achievement titles and weekly plan goals come from the server in
+  English; they are now translated in the browser from their id/kind, with
+  the server text as fallback. Bulgarian and Spanish fall back to English for
+  the new keys, exactly as before, until someone translates them.
+- **Language pickers showed every language in the current one.** After
+  switching to Bulgarian, the Settings select read "Немски" for German — no
+  way back for someone who can't read Cyrillic. Settings, the setup wizard
+  and Admin → Users now list each language in itself (English, Български,
+  Español, Deutsch), like the command palette already did.
+
 ## [7.14.0] — 2026-09-23
 
 ### Your game is still there when you come back

@@ -9,7 +9,8 @@ import {
 import { motion } from 'framer-motion';
 import { useAuth } from '../state/auth';
 import { api } from '../api';
-import { fmtAccuracy } from '../lib/utils';
+import { fmtAccuracy, fmtTimeControl } from '../lib/utils';
+import { goalText } from '../lib/goalText';
 import type { GameRow } from '../types';
 
 // Home — quieter, more hierarchical than the v7.1 design.
@@ -302,7 +303,7 @@ function PlanTile({ goals }: { goals: PlanGoal[] | null }) {
         </div>
         {imminent && (
           <>
-            <Title>{imminent.title}</Title>
+            <Title>{goalText(t, imminent).title}</Title>
             <div className="mt-2 flex items-center gap-2">
               <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-chesscom-100 dark:bg-chesscom-900">
                 <motion.div
@@ -344,14 +345,14 @@ function AchievementsTile({ achievements }: { achievements: Achievement[] | null
         </div>
         {recent.length > 0 ? (
           <>
-            <Title>{recent[0]!.title}</Title>
+            <Title>{t(`achievements.${recent[0]!.id}.title`, { defaultValue: recent[0]!.title })}</Title>
             <div className="mt-2 flex items-center gap-1.5">
               {recent.map((a) => {
                 const Icon = resolveIcon(a.icon);
                 return (
                   <span
                     key={a.id}
-                    title={a.title}
+                    title={t(`achievements.${a.id}.title`, { defaultValue: a.title })}
                     className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gold-500/15 text-gold-600 ring-1 ring-gold-500/30"
                   >
                     <Icon className="h-3.5 w-3.5" />
@@ -420,13 +421,13 @@ function RecentGames({ games }: { games: GameRow[] }) {
                   {g.user_color === 'white' ? (
                     <>
                       <span className="text-chesscom-900 dark:text-chesscom-100">{g.white}</span>
-                      <span className="mx-1.5 text-chesscom-400">vs</span>
+                      <span className="mx-1.5 text-chesscom-400">{t('players.vs')}</span>
                       <span className="text-chesscom-500">{g.black}</span>
                     </>
                   ) : (
                     <>
                       <span className="text-chesscom-500">{g.white}</span>
-                      <span className="mx-1.5 text-chesscom-400">vs</span>
+                      <span className="mx-1.5 text-chesscom-400">{t('players.vs')}</span>
                       <span className="text-chesscom-900 dark:text-chesscom-100">{g.black}</span>
                     </>
                   )}
@@ -434,7 +435,7 @@ function RecentGames({ games }: { games: GameRow[] }) {
                 <div className="text-xs text-chesscom-500">
                   <span>{new Date(g.end_time).toLocaleDateString()}</span>
                   <span className="mx-1.5 text-chesscom-400">·</span>
-                  <span>{g.time_control}</span>
+                  <span>{fmtTimeControl(g.time_control, t)}</span>
                   {g.opening_name && (
                     <span className="hidden sm:inline">
                       <span className="mx-1.5 text-chesscom-400">·</span>

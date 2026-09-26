@@ -42,7 +42,7 @@ export default function AdminUsers() {
         <table className="w-full text-sm">
           <thead className="bg-ink-50 text-xs uppercase tracking-wide text-ink-500 dark:bg-ink-900">
             <tr>
-              <th className="px-4 py-2 text-left">User</th>
+              <th className="px-4 py-2 text-left">{t('admin.colUser')}</th>
               <th className="px-4 py-2 text-left">{t('admin.role')}</th>
               <th className="px-4 py-2 text-left">{t('common.language')}</th>
               <th className="px-4 py-2 text-left">{t('admin.audience')}</th>
@@ -145,7 +145,7 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
               <option value="admin">{t('admin.roleAdmin')}</option>
             </select>
             <select className="input" value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value as Language })}>
-              {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{t(l.nameKey)}</option>)}
+              {LANGUAGES.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
             </select>
             <select className="input" value={form.audience} onChange={(e) => setForm({ ...form, audience: e.target.value as never })}>
               <option value="kid">{t('settings.audienceLevel.kid')}</option>

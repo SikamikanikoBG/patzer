@@ -726,7 +726,7 @@ export default function Play() {
       <div className="mx-auto max-w-3xl space-y-4">
         <header>
           <h1 className="page-h1">{t('play.newGame')}</h1>
-          <p className="page-sub">Pick a bot or challenge a friend.</p>
+          <p className="page-sub">{t('play.subtitle')}</p>
         </header>
         {/* Games you walked away from. Before v7.14.0 there was no way back into
             one at all — a bot game was simply destroyed, and a friend game could

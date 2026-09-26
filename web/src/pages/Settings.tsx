@@ -58,7 +58,7 @@ export default function Settings() {
     <div className="mx-auto max-w-3xl space-y-6 pb-24">
       <header>
         <h1 className="page-h1">{t('settings.title')}</h1>
-        <p className="page-sub">Personalize how chess looks, sounds, and how the coach talks to you.</p>
+        <p className="page-sub">{t('settings.subtitle')}</p>
       </header>
 
       {user?.role === 'admin' && (
@@ -74,7 +74,7 @@ export default function Settings() {
           <div className="section-icon bg-accent-500/15 text-accent-600"><UserIcon className="h-4 w-4" /></div>
           <div>
             <div className="section-title">{t('settings.profile')}</div>
-            <div className="section-desc">Your display info and language for the interface.</div>
+            <div className="section-desc">{t('settings.profileDesc')}</div>
           </div>
         </div>
         <div className="grid gap-4 p-5 sm:grid-cols-2">
@@ -102,7 +102,7 @@ export default function Settings() {
           <div>
             <label className="label mb-1 block">{t('settings.language')}</label>
             <select className="input" value={form.language} onChange={(e) => set('language', e.target.value as Language)}>
-              {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{t(l.nameKey)}</option>)}
+              {LANGUAGES.map((l) => <option key={l.code} value={l.code} lang={l.code}>{l.native}</option>)}
             </select>
           </div>
           <div>
@@ -129,7 +129,7 @@ export default function Settings() {
           <div className="section-icon bg-purple-500/15 text-purple-600"><Palette className="h-4 w-4" /></div>
           <div>
             <div className="section-title">{t('settings.appearance')}</div>
-            <div className="section-desc">Pick a site theme and a board you'll enjoy looking at.</div>
+            <div className="section-desc">{t('settings.appearanceDesc')}</div>
           </div>
         </div>
         <div className="space-y-6 p-5">
@@ -158,7 +158,7 @@ export default function Settings() {
           <div className="section-icon bg-emerald-500/15 text-emerald-600"><Sparkles className="h-4 w-4" /></div>
           <div>
             <div className="section-title">{t('coach.title')}</div>
-            <div className="section-desc">How the AI Coach interacts during games and reviews.</div>
+            <div className="section-desc">{t('settings.coachDesc')}</div>
           </div>
         </div>
         <div className="space-y-3 p-5">
@@ -172,9 +172,7 @@ export default function Settings() {
                     : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}>
                 <div className="font-medium">{t(`coach.behavior.${b}`)}</div>
                 <div className={`mt-1 text-xs ${form.coach_behavior === b ? 'opacity-80' : 'text-ink-500'}`}>
-                  {b === 'silent' && 'Coach won\'t speak or appear during games.'}
-                  {b === 'on_demand' && 'Coach is silent until you ask for a hint or explanation.'}
-                  {b === 'always_on_pedagogical' && 'Coach narrates the game in a teaching voice. Best for learners.'}
+                  {t(`settings.behaviorDesc.${b}`)}
                 </div>
               </button>
             ))}
@@ -187,23 +185,23 @@ export default function Settings() {
         <div className="section-header">
           <div className="section-icon bg-blue-500/15 text-blue-600"><Sparkles className="h-4 w-4" /></div>
           <div>
-            <div className="section-title">Sound & assistance</div>
-            <div className="section-desc">Audio feedback and learning aids during play.</div>
+            <div className="section-title">{t('settings.soundAssist')}</div>
+            <div className="section-desc">{t('settings.soundAssistDesc')}</div>
           </div>
         </div>
         <div className="space-y-3 p-5">
           <label className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-ink-50 dark:hover:bg-ink-700/50">
             <input type="checkbox" className="mt-1" checked={!!form.sound_enabled} onChange={(e) => set('sound_enabled', e.target.checked ? 1 : 0)} />
             <div>
-              <div className="text-sm font-medium">Sound effects</div>
-              <div className="text-xs text-ink-500">Play piece-move, capture, check, castle and game-end sounds.</div>
+              <div className="text-sm font-medium">{t('settings.soundEffects')}</div>
+              <div className="text-xs text-ink-500">{t('settings.soundEffectsDesc')}</div>
             </div>
           </label>
           <label className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-ink-50 dark:hover:bg-ink-700/50">
             <input type="checkbox" className="mt-1" checked={!!form.blunder_warning} onChange={(e) => set('blunder_warning', e.target.checked ? 1 : 0)} />
             <div>
-              <div className="text-sm font-medium">Blunder warning before move</div>
-              <div className="text-xs text-ink-500">When playing, the engine quickly checks your move. If it looks like a mistake or blunder, ask before committing. Recommended for kids and beginners.</div>
+              <div className="text-sm font-medium">{t('settings.blunderWarning')}</div>
+              <div className="text-xs text-ink-500">{t('settings.blunderWarningDesc')}</div>
             </div>
           </label>
         </div>
@@ -251,7 +249,7 @@ export default function Settings() {
           <div className="section-icon bg-amber-500/15 text-amber-600"><Type className="h-4 w-4" /></div>
           <div>
             <div className="section-title">{t('settings.tts')}</div>
-            <div className="section-desc">Coach can read its explanations aloud. Uses your operating system's voices.</div>
+            <div className="section-desc">{t('settings.ttsDesc')}</div>
           </div>
         </div>
         <div className="space-y-4 p-5">
@@ -270,7 +268,7 @@ export default function Settings() {
                   ))}
                 </select>
                 {langVoices.length === 0 && (
-                  <p className="mt-1 text-xs text-ink-400">No voices found for this language. Install the OS language pack to see more options.</p>
+                  <p className="mt-1 text-xs text-ink-400">{t('settings.ttsNoVoices')}</p>
                 )}
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -303,7 +301,7 @@ export default function Settings() {
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <div className="text-sm text-ink-500" aria-live="polite">
             {saved ? <span className="inline-flex items-center gap-1 text-accent-600"><Check className="h-4 w-4" />{t('settings.saved')}</span>
-              : dirty ? 'Unsaved changes' : 'No changes'}
+              : dirty ? t('settings.unsaved') : t('settings.noChanges')}
           </div>
           <button onClick={save} disabled={!dirty} className="btn-primary">
             <Save className="h-4 w-4" /> {t('common.save')}
