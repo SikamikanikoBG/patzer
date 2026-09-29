@@ -225,7 +225,8 @@
       "chesscom": "Chess.com",
       "played": "Gegen Bot",
       "pvp": "Gegen Menschen",
-      "lichess": "Lichess"
+      "lichess": "Lichess",
+      "imported": "PGN"
     },
     "hasNote": "Notiz",
     "clearSearch": "Leeren",
@@ -256,7 +257,35 @@
       "lichess_rate_limited": "Lichess bittet um eine kurze Pause — versuch es in einer Minute erneut.",
       "lichess_unavailable": "Lichess ist gerade nicht erreichbar. Versuch es später erneut.",
       "import_in_progress": "Es läuft schon ein Import — warte, bis er fertig ist.",
-      "generic": "Der Import ist fehlgeschlagen. Bitte versuch es später erneut."
+      "generic": "Der Import ist fehlgeschlagen. Bitte versuch es später erneut.",
+      "chesscom_unavailable": "Chess.com ist gerade nicht erreichbar. Versuche es später erneut."
+    },
+    "importedOf": "{{n}} neue Partien importiert ({{total}} gefunden)",
+    "importAllSlow": "Deine gesamte Historie wird importiert — bei Tausenden Partien kann das einige Minuten dauern. Du kannst Patzer währenddessen weiter nutzen.",
+    "importScope": {
+      "label": "Wie viele Partien importieren",
+      "last": "Letzte {{n}}",
+      "all": "Alle Partien"
+    },
+    "loadMore": "Mehr laden (noch {{n}})",
+    "loadingMore": "Lädt…",
+    "pgn": {
+      "open": "PGN importieren",
+      "title": "PGN importieren",
+      "hint": "Füge eine Partie oder eine ganze PGN-Datei aus einer beliebigen Seite oder App ein.",
+      "placeholder": "PGN-Text hier einfügen",
+      "upload": "PGN-Datei hochladen",
+      "drop": "…oder eine .pgn-Datei hierher ziehen",
+      "submit": "Importieren",
+      "close": "Schließen",
+      "importedMany": "{{n}} Partien importiert — {{dup}} waren schon da, {{skipped}} übersprungen.",
+      "error": {
+        "empty": "Füge zuerst eine PGN ein oder wähle eine Datei.",
+        "too_large": "Die Datei ist zu groß — das Limit liegt bei 10 MB.",
+        "no_valid_games": "Keine Partie konnte importiert werden. Nur Standardschach ab der Grundstellung kann analysiert werden.",
+        "invalid_input": "Das sieht nicht nach PGN aus.",
+        "generic": "Der Import ist fehlgeschlagen. Bitte versuche es erneut."
+      }
     }
   },
   "classification": {

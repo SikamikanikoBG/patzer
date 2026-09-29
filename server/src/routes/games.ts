@@ -5,6 +5,7 @@ import { requireAuth } from '../auth/middleware.js';
 import { getPlayer } from '../chess/chesscom.js';
 import { importChessComGames } from '../chess/chesscomImport.js';
 import { importLichessGames } from '../chess/lichessImport.js';
+import { importPgnGames } from '../chess/pgnImport.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
 import { Chess } from 'chess.js';
 import { clearLiveBotGame, loadLiveBotGame, resumableSummary } from '../chess/liveBotGames.js';
@@ -15,6 +16,7 @@ router.use('*', requireAuth);
 router.get('/', (c) => {
   const user = c.get('user');
   const limit = Math.min(Number(c.req.query('limit') ?? 50), 200);
+  const offset = Math.max(0, Math.floor(Number(c.req.query('offset') ?? 0)) || 0);
   const bookmarked = c.req.query('bookmarked') === '1';
   const q = (c.req.query('q') ?? '').trim().toLowerCase();
   // An analysis cached at an older scoring_version reads as "not analyzed" in
@@ -40,9 +42,15 @@ router.get('/', (c) => {
     FROM games g LEFT JOIN analyses a ON a.game_id = g.id
     WHERE ${filters.join(' AND ')}
     ORDER BY g.end_time DESC NULLS LAST, g.id DESC
-    LIMIT ?
-  `).all(SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, ...params, limit);
-  return c.json({ games: rows });
+    LIMIT ? OFFSET ?
+  `).all(SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, ...params, limit, offset);
+  // Totals over every matching game, not just this page — a full import can
+  // hold thousands of games and the list only loads them a page at a time.
+  const totals = db.prepare(`
+    SELECT COUNT(*) AS total, COALESCE(SUM(g.bookmarked), 0) AS starred
+    FROM games g WHERE ${filters.join(' AND ')}
+  `).get(...params) as { total: number; starred: number };
+  return c.json({ games: rows, total: totals.total, starred: totals.starred });
 });
 
 // Games you can walk back into: the bot game you left mid-move, and any PvP
@@ -155,7 +163,13 @@ router.delete('/:id', (c) => {
 const importSchema = z.object({
   username: z.string().trim().regex(/^[A-Za-z0-9_-]{2,40}$/).optional(),
   limit: z.number().int().min(1).max(200).default(20),
+  // The whole history instead of the most recent `limit` games.
+  all: z.boolean().default(false),
 });
+
+// A whole-history import walks every monthly archive and can take minutes;
+// one per account at a time, so repeated clicks don't stack up requests.
+const chesscomImportsRunning = new Set<number>();
 
 router.post('/import/chesscom', async (c) => {
   const user = c.get('user');
@@ -164,11 +178,19 @@ router.post('/import/chesscom', async (c) => {
   if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
   const username = parsed.data.username ?? user.profile.chesscom_username;
   if (!username) return c.json({ error: 'no_chesscom_username' }, 400);
+  if (chesscomImportsRunning.has(user.id)) return c.json({ error: 'import_in_progress' }, 429);
 
-  const player = await getPlayer(username);
-  if (!player) return c.json({ error: 'player_not_found' }, 404);
-
-  return c.json(await importChessComGames(user.id, username, parsed.data.limit));
+  chesscomImportsRunning.add(user.id);
+  try {
+    const player = await getPlayer(username);
+    if (!player) return c.json({ error: 'player_not_found' }, 404);
+    return c.json(await importChessComGames(user.id, username, parsed.data.all ? undefined : parsed.data.limit));
+  } catch (e) {
+    if ((e as Error).message === 'not_found') return c.json({ error: 'player_not_found' }, 404);
+    return c.json({ error: 'chesscom_unavailable' }, 502);
+  } finally {
+    chesscomImportsRunning.delete(user.id);
+  }
 });
 
 const lichessImportSchema = z.object({
@@ -176,6 +198,8 @@ const lichessImportSchema = z.object({
   limit: z.number().int().min(1).max(200).default(20),
   // Only games that ended after this moment (ms since epoch).
   since: z.number().int().positive().optional(),
+  // The whole history instead of the most recent `limit` games.
+  all: z.boolean().default(false),
 });
 
 // Requests to Lichess go out one at a time for the whole server, so one
@@ -194,7 +218,7 @@ router.post('/import/lichess', async (c) => {
 
   lichessImportsRunning.add(user.id);
   try {
-    return c.json(await importLichessGames(user.id, username, parsed.data.limit, parsed.data.since));
+    return c.json(await importLichessGames(user.id, username, parsed.data.all ? undefined : parsed.data.limit, parsed.data.since));
   } catch (e) {
     const code = (e as Error).message;
     if (code === 'not_found') return c.json({ error: 'player_not_found' }, 404);
@@ -204,6 +228,22 @@ router.post('/import/lichess', async (c) => {
   } finally {
     lichessImportsRunning.delete(user.id);
   }
+});
+
+// Pasted PGN text or an uploaded .pgn file — one game or a whole database.
+// 10 MB of PGN is tens of thousands of games; anything bigger is not a paste.
+const pgnImportSchema = z.object({
+  pgn: z.string().min(1).max(10_000_000),
+});
+
+router.post('/import/pgn', async (c) => {
+  const user = c.get('user');
+  const body = await c.req.json().catch(() => ({}));
+  const parsed = pgnImportSchema.safeParse(body);
+  if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
+  const r = importPgnGames(user.id, parsed.data.pgn);
+  if (r.ids.length === 0) return c.json({ error: 'no_valid_games', ...r }, 400);
+  return c.json(r);
 });
 
 export default router;

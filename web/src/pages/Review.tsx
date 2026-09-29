@@ -1,15 +1,33 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Download, Trophy, Frown, Equal, BookOpen, Inbox, Settings as SettingsIcon, Star, Search, X } from 'lucide-react';
+import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { Download, Trophy, Frown, Equal, BookOpen, Inbox, Settings as SettingsIcon, Star, Search, X, FileText } from 'lucide-react';
 import { api } from '../api';
+import PgnImportPanel from '../components/PgnImportPanel';
 import { useAuth } from '../state/auth';
 import { fmtAccuracy, fmtTimeControl } from '../lib/utils';
 import { cn } from '../lib/utils';
 import type { GameRow } from '../types';
 
 type ImportSource = 'chesscom' | 'lichess';
+type GamesPage = { games: GameRow[]; total: number; starred: number };
+
+const PAGE_SIZE = 100;
+
+// How many games the Chess.com / Lichess buttons fetch. 'all' walks the whole
+// history on the site; re-importing is safe, games already here are skipped.
+const IMPORT_SCOPES = ['20', '100', '500', 'all'] as const;
+type ImportScope = typeof IMPORT_SCOPES[number];
+const SCOPE_KEY = 'patzer.importScope';
+
+function readScope(): ImportScope {
+  try {
+    const v = localStorage.getItem(SCOPE_KEY);
+    if (v && (IMPORT_SCOPES as readonly string[]).includes(v)) return v as ImportScope;
+  } catch { /* storage blocked */ }
+  return 'all';
+}
 
 export default function Review() {
   const { t } = useTranslation();
@@ -18,24 +36,39 @@ export default function Review() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [importMsg, setImportMsg] = useState<{ text: string; error?: boolean } | null>(null);
   const [q, setQ] = useState('');
+  const [scope, setScopeState] = useState<ImportScope>(readScope);
+  const [pgnOpen, setPgnOpen] = useState(false);
+
+  function setScope(v: ImportScope) {
+    setScopeState(v);
+    try { localStorage.setItem(SCOPE_KEY, v); } catch { /* storage blocked */ }
+  }
 
   const bookmarkedOnly = searchParams.get('bookmarked') === '1';
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['games', { bookmarkedOnly, q }],
-    queryFn: () => {
-      const params = new URLSearchParams({ limit: '100' });
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => {
+      const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(pageParam) });
       if (bookmarkedOnly) params.set('bookmarked', '1');
       if (q.trim()) params.set('q', q.trim());
-      return api.get<{ games: GameRow[] }>(`/api/games?${params.toString()}`);
+      return api.get<GamesPage>(`/api/games?${params.toString()}`);
+    },
+    getNextPageParam: (last, pages) => {
+      const loaded = pages.reduce((n, p) => n + p.games.length, 0);
+      return last.games.length === PAGE_SIZE && loaded < last.total ? loaded : undefined;
     },
   });
 
   const importMut = useMutation({
     mutationFn: (source: ImportSource) =>
-      api.post<{ imported: number; total: number }>(`/api/games/import/${source}`, { limit: 20 }),
+      api.post<{ imported: number; total: number }>(
+        `/api/games/import/${source}`,
+        scope === 'all' ? { all: true } : { limit: Number(scope) },
+      ),
     onSuccess: (r) => {
-      setImportMsg({ text: t('review.imported', { n: r.imported }) });
+      setImportMsg({ text: t('review.importedOf', { n: r.imported, total: r.total }) });
       qc.invalidateQueries({ queryKey: ['games'] });
       setTimeout(() => setImportMsg(null), 3000);
     },
@@ -51,12 +84,9 @@ export default function Review() {
   ];
   const linked = sources.filter((s) => s.username);
 
-  const games = data?.games ?? [];
-  const counts = useMemo(() => {
-    const total = games.length;
-    const starred = games.filter((g) => g.bookmarked).length;
-    return { total, starred };
-  }, [games]);
+  const games = useMemo(() => data?.pages.flatMap((p) => p.games) ?? [], [data]);
+  const lastPage = data?.pages[data.pages.length - 1];
+  const counts = { total: lastPage?.total ?? 0, starred: lastPage?.starred ?? 0 };
 
   function toggleBookmarkedOnly() {
     const next = new URLSearchParams(searchParams);
@@ -71,21 +101,46 @@ export default function Review() {
           <h1 className="page-h1">{t('review.title')}</h1>
           <p className="page-sub">{t('review.subtitle', { defaultValue: 'Browse, analyze and learn from your games.' })}</p>
         </div>
-        {linked.length > 0 ? (
-          <div className="flex flex-wrap gap-2 self-start sm:self-auto">
-            {linked.map((s) => (
-              <button key={s.source} onClick={() => importMut.mutate(s.source)} disabled={importMut.isPending} className="btn-primary">
-                <Download className="h-4 w-4" />
-                {importMut.isPending && importMut.variables === s.source ? t('review.importing') : `${s.label} (@${s.username})`}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <Link to="/settings" className="btn-secondary text-sm">
-            <SettingsIcon className="h-4 w-4" /> {t('review.setUsername', { defaultValue: 'Set Chess.com username' })}
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {linked.length > 0 ? (
+            <>
+              <select
+                value={scope}
+                onChange={(e) => setScope(e.target.value as ImportScope)}
+                disabled={importMut.isPending}
+                className="input w-auto py-2 text-sm"
+                aria-label={t('review.importScope.label')}
+                title={t('review.importScope.label')}
+              >
+                {IMPORT_SCOPES.map((s) => (
+                  <option key={s} value={s}>{s === 'all' ? t('review.importScope.all') : t('review.importScope.last', { n: Number(s) })}</option>
+                ))}
+              </select>
+              {linked.map((s) => (
+                <button key={s.source} onClick={() => importMut.mutate(s.source)} disabled={importMut.isPending} className="btn-primary">
+                  <Download className="h-4 w-4" />
+                  {importMut.isPending && importMut.variables === s.source ? t('review.importing') : `${s.label} (@${s.username})`}
+                </button>
+              ))}
+            </>
+          ) : (
+            <Link to="/settings" className="btn-secondary text-sm">
+              <SettingsIcon className="h-4 w-4" /> {t('review.setUsername', { defaultValue: 'Set Chess.com username' })}
+            </Link>
+          )}
+          <button onClick={() => setPgnOpen((v) => !v)} className="btn-secondary text-sm">
+            <FileText className="h-4 w-4" /> {t('review.pgn.open')}
+          </button>
+        </div>
       </header>
+
+      {importMut.isPending && scope === 'all' && (
+        <div className="rounded-md border border-chesscom-200 px-4 py-2 text-sm text-chesscom-500 dark:border-chesscom-700">
+          {t('review.importAllSlow')}
+        </div>
+      )}
+
+      {pgnOpen && <PgnImportPanel onClose={() => setPgnOpen(false)} onDone={(m) => { setImportMsg(m); setTimeout(() => setImportMsg(null), 6000); }} />}
 
       {importMsg && (
         <div className={cn('rounded-md border px-4 py-2 text-sm', importMsg.error
@@ -170,6 +225,11 @@ export default function Review() {
       {!isLoading && games.length > 0 && (
         <div className="grid gap-2">
           {games.map((g) => <GameCard key={g.id} g={g} />)}
+          {hasNextPage && (
+            <button onClick={() => void fetchNextPage()} disabled={isFetchingNextPage} className="btn-secondary mx-auto mt-2 text-sm">
+              {isFetchingNextPage ? t('review.loadingMore') : t('review.loadMore', { n: counts.total - games.length })}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -182,9 +242,14 @@ function GameCard({ g }: { g: GameRow }) {
   const star = useMutation({
     mutationFn: (next: boolean) => api.patch(`/api/games/${g.id}/bookmark`, { bookmarked: next }),
     onMutate: (next: boolean) => {
-      // Optimistic update.
-      qc.setQueriesData<{ games: GameRow[] }>({ queryKey: ['games'] }, (old) =>
-        old ? { games: old.games.map((row) => (row.id === g.id ? { ...row, bookmarked: next ? 1 : 0 } : row)) } : old);
+      // Optimistic update. ['games', …] holds both plain lists (Home) and this
+      // page's paged list.
+      const flip = (rows: GameRow[]) => rows.map((row) => (row.id === g.id ? { ...row, bookmarked: next ? 1 : 0 } : row));
+      qc.setQueriesData<{ games: GameRow[] } | InfiniteData<GamesPage>>({ queryKey: ['games'] }, (old) => {
+        if (!old) return old;
+        if ('pages' in old) return { ...old, pages: old.pages.map((p) => ({ ...p, games: flip(p.games) })) };
+        return { ...old, games: flip(old.games) };
+      });
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['games'] }),
   });

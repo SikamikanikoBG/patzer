@@ -206,10 +206,39 @@
       "player_not_found": "No se encontró ningún jugador con ese nombre de usuario.",
       "lichess_rate_limited": "Lichess pide una breve pausa: inténtalo de nuevo en un minuto.",
       "lichess_unavailable": "No se puede conectar con Lichess ahora mismo. Inténtalo más tarde.",
-      "generic": "La importación falló. Inténtalo de nuevo más tarde."
+      "generic": "La importación falló. Inténtalo de nuevo más tarde.",
+      "chesscom_unavailable": "No se puede acceder a Chess.com ahora mismo. Inténtalo más tarde."
     },
     "source": {
-      "lichess": "Lichess"
+      "lichess": "Lichess",
+      "imported": "PGN"
+    },
+    "importedOf": "Importadas {{n}} partidas nuevas ({{total}} encontradas)",
+    "importAllSlow": "Importando todo tu historial — con miles de partidas puede tardar unos minutos. Mientras tanto puedes seguir usando Patzer.",
+    "importScope": {
+      "label": "Cuántas partidas importar",
+      "last": "Últimas {{n}}",
+      "all": "Todas las partidas"
+    },
+    "loadMore": "Cargar más (quedan {{n}})",
+    "loadingMore": "Cargando…",
+    "pgn": {
+      "open": "Importar PGN",
+      "title": "Importar PGN",
+      "hint": "Pega una partida, o un archivo PGN entero, de cualquier web o app.",
+      "placeholder": "Pega aquí el texto PGN",
+      "upload": "Subir un archivo PGN",
+      "drop": "…o suelta aquí un archivo .pgn",
+      "submit": "Importar",
+      "close": "Cerrar",
+      "importedMany": "Importadas {{n}} partidas — {{dup}} ya estaban, {{skipped}} omitidas.",
+      "error": {
+        "empty": "Primero pega un PGN o elige un archivo.",
+        "too_large": "El archivo es demasiado grande — el límite es 10 MB.",
+        "no_valid_games": "No se pudo importar ninguna partida. Solo se puede analizar ajedrez estándar desde la posición inicial.",
+        "invalid_input": "Eso no parece PGN.",
+        "generic": "La importación falló. Inténtalo de nuevo."
+      }
     }
   },
   "classification": {

@@ -7,7 +7,8 @@ import { fetchRecentGames, toImportRow } from './lichess.js';
 export async function importLichessGames(
   userId: number,
   username: string,
-  limit: number,
+  /** Most recent N games; undefined imports the whole history. */
+  limit: number | undefined,
   since?: number,
 ): Promise<{ imported: number; total: number; skipped: number }> {
   const games = await fetchRecentGames(username, { max: limit, since });

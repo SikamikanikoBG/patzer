@@ -76,6 +76,7 @@ export async function getMonth(archiveUrl: string): Promise<ChessComGame[]> {
 }
 
 // Fetch the most recent N games for a user, walking archives backwards in time.
+// `limit` may be Infinity to walk every monthly archive — the whole history.
 export async function fetchRecentGames(username: string, limit: number): Promise<ChessComGame[]> {
   assertValidUsername(username);
   const archives = await listArchives(username);

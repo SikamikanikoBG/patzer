@@ -127,6 +127,12 @@ describe('fetchRecentGames', () => {
     expect(calls[0]!.headers['User-Agent']).toMatch(/patzer/);
   });
 
+  it('asks for the whole history when no max is given', async () => {
+    const { fetch, calls } = fakeFetch(200, JSON.stringify(game()));
+    await fetchRecentGames('DrNykterstein', {}, fetch);
+    expect(new URL(calls[0]!.url).searchParams.has('max')).toBe(false);
+  });
+
   it('turns 404 and 429 into codes the route can map', async () => {
     await expect(fetchRecentGames('nobody_here', { max: 1 }, fakeFetch(404).fetch)).rejects.toThrow('not_found');
     await expect(fetchRecentGames('someone', { max: 1 }, fakeFetch(429).fetch)).rejects.toThrow('rate_limited');

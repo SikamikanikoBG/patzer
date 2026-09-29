@@ -102,16 +102,30 @@ async function importDueSite(site: 'chesscom' | 'lichess'): Promise<void> {
   }
 }
 
-async function analyzePending(): Promise<void> {
-  const rows = db.prepare(`
-    SELECT g.id, g.pgn
-    FROM games g
-    LEFT JOIN analyses a ON a.game_id = g.id
-    WHERE g.source IN ('chesscom', 'lichess') AND a.game_id IS NULL
-    ORDER BY g.id DESC
+/** Games the background sync analyses next: only each user's IMPORT_LIMIT
+ *  most recent games per site — the ones this sync keeps up to date. A
+ *  whole-history import from the Game Review page can add thousands of older
+ *  games; analysing every one of them in the background (and, with
+ *  auto-review on, asking the LLM to review each) would keep the box busy for
+ *  days. Those are analysed when opened. Exported for tests. */
+export function pendingAnalysis(max: number): { id: number; pgn: string }[] {
+  return db.prepare(`
+    SELECT r.id, r.pgn
+    FROM (
+      SELECT g.id, g.pgn, g.end_time,
+             ROW_NUMBER() OVER (PARTITION BY g.user_id, g.source ORDER BY g.end_time DESC, g.id DESC) AS rn
+      FROM games g
+      WHERE g.source IN ('chesscom', 'lichess')
+    ) r
+    LEFT JOIN analyses a ON a.game_id = r.id
+    WHERE r.rn <= ? AND a.game_id IS NULL
+    ORDER BY r.end_time DESC, r.id DESC
     LIMIT ?
-  `).all(MAX_ANALYZE_PER_RUN) as { id: number; pgn: string }[];
+  `).all(IMPORT_LIMIT, max) as { id: number; pgn: string }[];
+}
 
+async function analyzePending(): Promise<void> {
+  const rows = pendingAnalysis(MAX_ANALYZE_PER_RUN);
   for (const row of rows) {
     try {
       const analysis = await analyzePgn(row.pgn, 14);

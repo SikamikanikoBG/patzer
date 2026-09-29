@@ -4,6 +4,28 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Import your whole history, or any PGN
+
+- **New: import every game from Chess.com or Lichess, not just the last 20.**
+  A picker next to the Import buttons on Game Review chooses the last 20,
+  100 or 500 games, or all of them (the default). Games already here are
+  skipped, so importing again is safe. One import per account runs at a
+  time. Background analysis still covers only each account's 20 most recent
+  games per site; older games are analysed when you open them, so a
+  5,000-game import doesn't tie up Stockfish and the LLM for days.
+- **New: Import PGN**, like lichess.org/paste. Paste a game or upload a
+  `.pgn` file (up to 10 MB, one game or many). A single game opens straight
+  in the analyzer. Your side is found from your Patzer, Chess.com and
+  Lichess names. Importing the same game twice adds no copy. Variants and
+  games from a set-up position are skipped, because the analyzer only
+  reviews standard chess from the initial position.
+- **Game Review lists every game.** The list loads 100 at a time with a
+  *Load more* button, and the count shows all matching games.
+- **Fixed:** a Chess.com outage during Import now shows an error message
+  instead of failing with a server error.
+
 ## [7.17.1] — 2026-09-27
 
 ### Finished games no longer hang on "Saving game…"

@@ -225,7 +225,8 @@
       "chesscom": "Chess.com",
       "played": "Played",
       "pvp": "PvP",
-      "lichess": "Lichess"
+      "lichess": "Lichess",
+      "imported": "PGN"
     },
     "hasNote": "note",
     "clearSearch": "Clear",
@@ -256,7 +257,35 @@
       "lichess_rate_limited": "Lichess asks for a short break — try again in a minute.",
       "lichess_unavailable": "Lichess can't be reached right now. Try again later.",
       "import_in_progress": "An import is already running — wait until it has finished.",
-      "generic": "The import failed. Please try again later."
+      "generic": "The import failed. Please try again later.",
+      "chesscom_unavailable": "Chess.com can't be reached right now. Try again later."
+    },
+    "importedOf": "Imported {{n}} new games ({{total}} found)",
+    "importAllSlow": "Importing your whole history — with thousands of games this can take a few minutes. You can keep using Patzer meanwhile.",
+    "importScope": {
+      "label": "How many games to import",
+      "last": "Last {{n}}",
+      "all": "All games"
+    },
+    "loadMore": "Load more ({{n}} left)",
+    "loadingMore": "Loading…",
+    "pgn": {
+      "open": "Import PGN",
+      "title": "Import PGN",
+      "hint": "Paste a game, or a whole PGN file of games, from any site or app.",
+      "placeholder": "Paste the PGN text here",
+      "upload": "Upload a PGN file",
+      "drop": "…or drop a .pgn file here",
+      "submit": "Import",
+      "close": "Close",
+      "importedMany": "Imported {{n}} games — {{dup}} were already here, {{skipped}} skipped.",
+      "error": {
+        "empty": "Paste a PGN or pick a file first.",
+        "too_large": "That file is too big — the limit is 10 MB.",
+        "no_valid_games": "No game in there could be imported. Only standard chess from the initial position can be reviewed.",
+        "invalid_input": "That doesn't look like PGN.",
+        "generic": "The import failed. Please try again."
+      }
     }
   },
   "classification": {
