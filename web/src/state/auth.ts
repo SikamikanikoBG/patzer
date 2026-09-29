@@ -33,6 +33,9 @@ export interface Profile {
   sound_set: SoundSet;
   move_sound_set: MoveSoundSet;
   kid_piece_emotions: number;
+  auto_review: number;
+  chesscom_sync_minutes: number;
+  lichess_sync_minutes: number;
 }
 
 export interface User {

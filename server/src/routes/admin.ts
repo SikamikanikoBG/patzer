@@ -7,6 +7,7 @@ import { hashPassword } from '../auth/passwords.js';
 import { connectionHint } from '../coach/connectionHint.js';
 import { testConnection, testModel, llmUrl, llmStats, llmProvider, deepseekApiKey, type LlmProvider } from '../coach/llm.js';
 import { StockfishEngine } from '../chess/stockfish.js';
+import { engineBackend } from '../chess/engine.js';
 import { isMailerConfigured, sendMail, verifyConnection, welcomeTemplate } from '../email/mailer.js';
 import {
   signupMode,
@@ -234,6 +235,9 @@ router.get('/system', async (c) => {
     deepseek_key_set: !!deepseekApiKey(),
     deepseek_env_override: !!process.env.DEEPSEEK_API_KEY,
     stockfish_path: getSetting('stockfish_path'),
+    // Which engine Game Review analysis runs on. The env var wins when set.
+    engine_backend: engineBackend(),
+    engine_backend_env_override: !!process.env.ENGINE_BACKEND,
     // Live runtime stats so admins can confirm which model the coach is
     // actually calling (the saved setting vs. what runtime resolved to may
     // diverge if the saved model isn't pulled on the Ollama host).
@@ -276,6 +280,7 @@ const systemSchema = z.object({
   // stored key untouched (so re-saving the form doesn't wipe it).
   deepseek_api_key: z.string().max(255).optional(),
   stockfish_path: z.string().optional(),
+  engine_backend: z.enum(['local', 'chessapi']).optional(),
   update_check_enabled: z.boolean().optional(),
   // Signup + email config
   signup_mode: z.enum(['open', 'invite', 'closed']).optional(),
@@ -314,6 +319,7 @@ router.patch('/system', async (c) => {
   setStr('deepseek_model', d.deepseek_model);
   if (d.deepseek_api_key) setSetting('deepseek_api_key', d.deepseek_api_key);
   setStr('stockfish_path', d.stockfish_path);
+  setStr('engine_backend', d.engine_backend);
 
   if (d.update_check_enabled !== undefined) setUpdateCheckEnabled(d.update_check_enabled);
   if (d.signup_mode) setSignupMode(d.signup_mode);

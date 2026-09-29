@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGES, type Language } from '../lib/languages';
-import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
+import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile, RefreshCw } from 'lucide-react';
 import { api } from '../api';
 import { useAuth, type Profile, type BoardTheme, type SiteTheme, type SoundSet, type MoveSoundSet } from '../state/auth';
 import { getVoices, onVoicesReady, speak } from '../lib/tts';
@@ -49,6 +49,9 @@ export default function Settings() {
       move_sound_set: form.move_sound_set,
       blunder_warning: !!form.blunder_warning,
       kid_piece_emotions: !!form.kid_piece_emotions,
+      auto_review: !!form.auto_review,
+      chesscom_sync_minutes: form.chesscom_sync_minutes,
+      lichess_sync_minutes: form.lichess_sync_minutes,
     });
     await i18n.changeLanguage(form.language);
     await refresh();
@@ -205,6 +208,44 @@ export default function Settings() {
                 </div>
               </button>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Automation — background jobs the user can turn on/off or pace. */}
+      <section className="card overflow-hidden">
+        <div className="section-header">
+          <div className="section-icon bg-teal-500/15 text-teal-600"><RefreshCw className="h-4 w-4" /></div>
+          <div>
+            <div className="section-title">{t('settings.automation')}</div>
+            <div className="section-desc">{t('settings.automationDesc')}</div>
+          </div>
+        </div>
+        <div className="space-y-3 p-5">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-ink-50 dark:hover:bg-ink-700/50">
+            <input type="checkbox" className="mt-1" checked={!!form.auto_review} onChange={(e) => set('auto_review', e.target.checked ? 1 : 0)} />
+            <div>
+              <div className="text-sm font-medium">{t('settings.autoReview')}</div>
+              <div className="text-xs text-ink-500">{t('settings.autoReviewDesc')}</div>
+            </div>
+          </label>
+          <div>
+            <label className="label mb-1 block">{t('settings.chessComSyncInterval')}</label>
+            <select className="input" value={form.chesscom_sync_minutes ?? 15} onChange={(e) => set('chesscom_sync_minutes', Number(e.target.value))}>
+              {[0, 5, 15, 30, 60].map((m) => (
+                <option key={m} value={m}>{m === 0 ? t('settings.chessComSyncOff') : t('settings.chessComSyncEvery', { n: m })}</option>
+              ))}
+            </select>
+            <div className="mt-1 text-xs text-ink-400">{t('settings.chessComSyncIntervalHelp')}</div>
+          </div>
+          <div>
+            <label className="label mb-1 block">{t('settings.lichessSyncInterval')}</label>
+            <select className="input" value={form.lichess_sync_minutes ?? 15} onChange={(e) => set('lichess_sync_minutes', Number(e.target.value))}>
+              {[0, 5, 15, 30, 60].map((m) => (
+                <option key={m} value={m}>{m === 0 ? t('settings.lichessSyncOff') : t('settings.lichessSyncEvery', { n: m })}</option>
+              ))}
+            </select>
+            <div className="mt-1 text-xs text-ink-400">{t('settings.lichessSyncIntervalHelp')}</div>
           </div>
         </div>
       </section>

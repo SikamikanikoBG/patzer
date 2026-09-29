@@ -390,7 +390,19 @@
       "classic": "Яркие колокольчики — оригинальные звуки Patzer.",
       "soft": "Тёплые ноты деревянной маримбы в тон звукам ходов."
     },
-    "soundSetPreview": "Прослушать"
+    "soundSetPreview": "Прослушать",
+    "automation": "Автоматизация",
+    "automationDesc": "Фоновые задачи, которые работают сами — включите их или задайте темп.",
+    "autoReview": "Автоматический разбор партии",
+    "autoReviewDesc": "Пишет ИИ-разбор сразу после окончания партии, без нажатия «Разбор».",
+    "chessComSyncInterval": "Автосинхронизация Chess.com",
+    "chessComSyncIntervalHelp": "Как часто Patzer автоматически загружает ваши новые партии с Chess.com. «Выкл.» — только ручной импорт.",
+    "chessComSyncOff": "Выкл.",
+    "chessComSyncEvery": "Каждые {{n}} мин",
+    "lichessSyncInterval": "Автосинхронизация Lichess",
+    "lichessSyncIntervalHelp": "Как часто Patzer автоматически загружает ваши новые партии с Lichess. «Выкл.» — только ручной импорт.",
+    "lichessSyncOff": "Выкл.",
+    "lichessSyncEvery": "Каждые {{n}} мин"
   },
   "admin": {
     "users": "Пользователи",
@@ -519,7 +531,13 @@
     "modelsFound_many": "Найдено {{count}} моделей",
     "modelsFound_other": "Найдено {{count}} модели",
     "connectionFailed": "ошибка подключения",
-    "failed": "ошибка"
+    "failed": "ошибка",
+    "engineBackend": "Движок анализа",
+    "engineBackendLocal": "Локальный Stockfish",
+    "engineBackendLocalDesc": "Встроенный Stockfish на этом сервере. Приватно, без сети.",
+    "engineBackendChessapi": "chess-api.com (облако)",
+    "engineBackendChessapiDesc": "Размещённый Stockfish 18 NNUE по HTTPS. Для устройств, слишком слабых для локального Stockfish.",
+    "engineBackendEnv": "Задано переменной окружения ENGINE_BACKEND — этот переключатель игнорируется."
   },
   "palette": {
     "switchLanguage": "Переключить на",

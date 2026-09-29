@@ -4,7 +4,7 @@ import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { getPlayer } from '../chess/chesscom.js';
 import { importChessComGames } from '../chess/chesscomImport.js';
-import { fetchRecentGames as fetchLichessGames, toImportRow } from '../chess/lichess.js';
+import { importLichessGames } from '../chess/lichessImport.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
 import { Chess } from 'chess.js';
 import { clearLiveBotGame, loadLiveBotGame, resumableSummary } from '../chess/liveBotGames.js';
@@ -192,10 +192,9 @@ router.post('/import/lichess', async (c) => {
   if (!username) return c.json({ error: 'no_lichess_username' }, 400);
   if (lichessImportsRunning.has(user.id)) return c.json({ error: 'import_in_progress' }, 429);
 
-  let games;
   lichessImportsRunning.add(user.id);
   try {
-    games = await fetchLichessGames(username, { max: parsed.data.limit, since: parsed.data.since });
+    return c.json(await importLichessGames(user.id, username, parsed.data.limit, parsed.data.since));
   } catch (e) {
     const code = (e as Error).message;
     if (code === 'not_found') return c.json({ error: 'player_not_found' }, 404);
@@ -205,25 +204,6 @@ router.post('/import/lichess', async (c) => {
   } finally {
     lichessImportsRunning.delete(user.id);
   }
-
-  // Same rules as the chess.com importer: never rated in Patzer's pool, and
-  // the (user, source, external_id) key makes a re-import a no-op.
-  const stmt = db.prepare(`
-    INSERT INTO games (user_id, source, external_id, pgn, white, black, result, time_control, time_class, end_time, user_color, rated)
-    VALUES (?, 'lichess', ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
-    ON CONFLICT(user_id, source, external_id) DO NOTHING
-  `);
-  let imported = 0;
-  let skipped = 0;
-  for (const g of games) {
-    const row = toImportRow(g, username);
-    if (!row) { skipped++; continue; }
-    const r = stmt.run(user.id, row.external_id, row.pgn, row.white, row.black, row.result,
-      row.time_control, row.time_class, row.end_time, row.user_color);
-    if (r.changes > 0) imported++;
-  }
-
-  return c.json({ imported, total: games.length, skipped });
 });
 
 export default router;

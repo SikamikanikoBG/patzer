@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Trans, useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, AlertCircle, Save, Sparkles, Cpu, Loader2, FlaskConical, Mail, UserPlus, Send } from 'lucide-react';
 import { api } from '../../api';
 
@@ -14,6 +14,8 @@ interface SysSettings {
   deepseek_key_set?: boolean;
   deepseek_env_override?: boolean;
   stockfish_path: string | null;
+  engine_backend?: 'local' | 'chessapi';
+  engine_backend_env_override?: boolean;
   last_model_used?: string | null;
   last_error?: string | null;
   p95_ms?: number | null;
@@ -52,7 +54,7 @@ interface MailState {
 
 export default function AdminSystem() {
   const { t } = useTranslation();
-  const [s, setS] = useState<SysSettings>({ llm_provider: 'ollama', ollama_url: '', ollama_model: '', vllm_url: '', vllm_model: '', stockfish_path: '' });
+  const [s, setS] = useState<SysSettings>({ llm_provider: 'ollama', ollama_url: '', ollama_model: '', vllm_url: '', vllm_model: '', stockfish_path: '', engine_backend: 'local' });
   const [runtime, setRuntime] = useState<{ last_model_used: string | null; last_error: string | null; p95_ms: number | null; call_count: number } | null>(null);
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
@@ -94,6 +96,8 @@ export default function AdminSystem() {
         deepseek_key_set: !!d.deepseek_key_set,
         deepseek_env_override: !!d.deepseek_env_override,
         stockfish_path: d.stockfish_path ?? '',
+        engine_backend: d.engine_backend === 'chessapi' ? 'chessapi' : 'local',
+        engine_backend_env_override: !!d.engine_backend_env_override,
       });
       setRuntime({
         last_model_used: d.last_model_used ?? null,
@@ -385,9 +389,28 @@ export default function AdminSystem() {
           </div>
         </div>
         <div className="space-y-4 p-5">
-          <p className="text-xs text-ink-400">
-            <Trans i18nKey="admin.engineBackendNote" components={{ code: <code className="font-mono" /> }} />
-          </p>
+          <div>
+            <label className="label mb-1 block">{t('admin.engineBackend')}</label>
+            {s.engine_backend_env_override && (
+              <div className="mb-2 flex items-start gap-2 rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {t('admin.engineBackendEnv')}
+              </div>
+            )}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {(['local', 'chessapi'] as const).map((b) => (
+                <button key={b} type="button" onClick={() => setS({ ...s, engine_backend: b })}
+                  className={`rounded-xl border p-3 text-left text-sm transition-colors
+                    ${(s.engine_backend ?? 'local') === b
+                      ? 'border-ink-900 bg-ink-900 text-cream dark:border-cream dark:bg-cream dark:text-ink-900'
+                      : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}>
+                  <div className="font-medium">{t(b === 'local' ? 'admin.engineBackendLocal' : 'admin.engineBackendChessapi')}</div>
+                  <div className={`mt-1 text-xs ${(s.engine_backend ?? 'local') === b ? 'opacity-80' : 'text-ink-500'}`}>
+                    {t(b === 'local' ? 'admin.engineBackendLocalDesc' : 'admin.engineBackendChessapiDesc')}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
           <div>
             <label className="label mb-1 block">{t('admin.stockfishPath')}</label>
             <div className="flex gap-2">

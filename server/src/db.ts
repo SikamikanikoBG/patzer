@@ -195,6 +195,26 @@ try {
 // Lichess username for the game importer, next to the Chess.com one.
 ensureColumn('profiles', 'lichess_username', 'TEXT');
 
+// Per-profile automatic game review. ON by default — matches the historical
+// always-on behaviour. When off, the background review sweep skips this user's
+// games (the Stockfish analysis still runs; only the AI prose is skipped).
+ensureColumn('profiles', 'auto_review', `INTEGER NOT NULL DEFAULT 1`);
+
+// Per-profile Chess.com auto-sync interval in minutes. 0 = don't auto-sync
+// (the username still enables the manual Import button). CHESSCOM_SYNC_MINUTES
+// seeds the default for installs that don't already have the column.
+const chesscomSyncEnv = Number(process.env.CHESSCOM_SYNC_MINUTES);
+const chesscomSyncDefault = Number.isFinite(chesscomSyncEnv) && chesscomSyncEnv >= 0 ? chesscomSyncEnv : 15;
+ensureColumn('profiles', 'chesscom_sync_minutes', `INTEGER NOT NULL DEFAULT ${chesscomSyncDefault}`);
+// When this profile was last auto-synced from Chess.com (ISO 8601, NULL=never).
+ensureColumn('profiles', 'chesscom_last_synced_at', `TEXT`);
+
+// Per-profile Lichess auto-sync interval in minutes. 0 = don't auto-sync (the
+// username still enables the manual Import button). Mirrors the Chess.com one.
+ensureColumn('profiles', 'lichess_sync_minutes', `INTEGER NOT NULL DEFAULT 15`);
+// When this profile was last auto-synced from Lichess (ISO 8601, NULL=never).
+ensureColumn('profiles', 'lichess_last_synced_at', `TEXT`);
+
 // v6.0.0 — Tactic Trainer attempts. Each row is one user attempt at a puzzle
 // extracted from one of their own blunders / missed mates.
 db.exec(`CREATE TABLE IF NOT EXISTS puzzle_attempts (

@@ -397,7 +397,19 @@
       "classic": "Bright bells — the original Patzer sounds.",
       "soft": "Warm wooden marimba notes that match the move sounds."
     },
-    "soundSetPreview": "Preview"
+    "soundSetPreview": "Preview",
+    "automation": "Automation",
+    "automationDesc": "Background jobs that run on their own — turn them on or set their pace.",
+    "autoReview": "Automatic game review",
+    "autoReviewDesc": "Write the AI review as soon as a game finishes, without clicking Review.",
+    "chessComSyncInterval": "Chess.com auto-sync",
+    "chessComSyncIntervalHelp": "How often Patzer pulls your new Chess.com games automatically. Off keeps manual Import only.",
+    "chessComSyncOff": "Off",
+    "chessComSyncEvery": "Every {{n}} min",
+    "lichessSyncInterval": "Lichess auto-sync",
+    "lichessSyncIntervalHelp": "How often Patzer pulls your new Lichess games automatically. Off keeps manual Import only.",
+    "lichessSyncOff": "Off",
+    "lichessSyncEvery": "Every {{n}} min"
   },
   "admin": {
     "users": "Users",
@@ -527,7 +539,13 @@
     "deepseekKeyEnv": "Supplied by the DEEPSEEK_API_KEY environment variable — this field is ignored.",
     "deepseekKeySaved": "A key is saved. Type a new one to replace it, or leave blank to keep it.",
     "deepseekKeyHint": "Saved in this server's settings. Save before clicking Test.",
-    "engineBackendNote": "Game Review runs on the bundled local Stockfish by default. To use the hosted chess-api.com engine instead, set <code>ENGINE_BACKEND=chessapi</code> (env) or the <code>engine_backend</code> setting — e.g. for a public try-it instance (DEMO_MODE, #27)."
+    "engineBackendNote": "Game Review runs on the bundled local Stockfish by default. To use the hosted chess-api.com engine instead, set <code>ENGINE_BACKEND=chessapi</code> (env) or the <code>engine_backend</code> setting — e.g. for a public try-it instance (DEMO_MODE, #27).",
+    "engineBackend": "Analysis engine",
+    "engineBackendLocal": "Local Stockfish",
+    "engineBackendLocalDesc": "The bundled Stockfish on this server. Private, no network needed.",
+    "engineBackendChessapi": "chess-api.com (cloud)",
+    "engineBackendChessapiDesc": "Hosted Stockfish 18 NNUE over HTTPS. For devices too weak to run Stockfish locally.",
+    "engineBackendEnv": "Set by the ENGINE_BACKEND environment variable — this toggle is ignored."
   },
   "palette": {
     "switchLanguage": "Switch to",

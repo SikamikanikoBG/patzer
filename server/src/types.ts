@@ -28,6 +28,11 @@ export interface Profile {
   tts_pitch: number;
   board_theme: string;
   piece_set: string;
+  auto_review: number;
+  chesscom_sync_minutes: number;
+  chesscom_last_synced_at: string | null;
+  lichess_sync_minutes: number;
+  lichess_last_synced_at: string | null;
 }
 
 export interface AuthedUser extends User {

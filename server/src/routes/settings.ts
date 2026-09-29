@@ -27,6 +27,9 @@ const profileSchema = z.object({
   sound_set: z.enum(['classic', 'soft']).optional(),
   move_sound_set: z.enum(['classic', 'board']).optional(),
   kid_piece_emotions: z.boolean().optional(),
+  auto_review: z.boolean().optional(),
+  chesscom_sync_minutes: z.number().int().min(0).max(1440).optional(),
+  lichess_sync_minutes: z.number().int().min(0).max(1440).optional(),
 });
 
 router.get('/profile', (c) => {

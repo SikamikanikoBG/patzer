@@ -57,7 +57,9 @@ async function sweep(): Promise<void> {
            a.key_moments_json, a.phase_split_json, a.moves_json
       FROM analyses a
       JOIN games g ON g.id = a.game_id
+      JOIN profiles p ON p.user_id = g.user_id
      WHERE a.prose_json IS NULL
+       AND p.auto_review = 1
      ORDER BY g.id ASC
   `).all() as ReviewRow[];
 

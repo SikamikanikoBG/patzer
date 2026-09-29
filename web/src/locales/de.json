@@ -397,7 +397,19 @@
       "classic": "Helle Glocken — die ursprünglichen Patzer-Töne.",
       "soft": "Warme Holz-Marimba-Töne, passend zu den Zug-Tönen."
     },
-    "soundSetPreview": "Anhören"
+    "soundSetPreview": "Anhören",
+    "automation": "Automatisierung",
+    "automationDesc": "Hintergrundjobs, die von selbst laufen — ein- oder ausschalten und das Tempo festlegen.",
+    "autoReview": "Automatische Partieauswertung",
+    "autoReviewDesc": "Die KI-Auswertung wird direkt nach Partieende geschrieben, ohne auf „Auswerten“ zu klicken.",
+    "chessComSyncInterval": "Chess.com Auto-Sync",
+    "chessComSyncIntervalHelp": "Wie oft Patzer deine neuen Chess.com-Partien automatisch holt. „Aus“ lässt nur den manuellen Import zu.",
+    "chessComSyncOff": "Aus",
+    "chessComSyncEvery": "Alle {{n}} Min.",
+    "lichessSyncInterval": "Lichess Auto-Sync",
+    "lichessSyncIntervalHelp": "Wie oft Patzer deine neuen Lichess-Partien automatisch holt. „Aus“ lässt nur den manuellen Import zu.",
+    "lichessSyncOff": "Aus",
+    "lichessSyncEvery": "Alle {{n}} Min."
   },
   "admin": {
     "users": "Benutzer",
@@ -527,7 +539,13 @@
     "deepseekKeyEnv": "Kommt aus der Umgebungsvariable DEEPSEEK_API_KEY — dieses Feld wird ignoriert.",
     "deepseekKeySaved": "Ein Schlüssel ist gespeichert. Gib einen neuen ein, um ihn zu ersetzen, oder lass das Feld leer, um ihn zu behalten.",
     "deepseekKeyHint": "Wird in den Einstellungen dieses Servers gespeichert. Vor „Testen“ zuerst speichern.",
-    "engineBackendNote": "Die Partieanalyse nutzt standardmäßig das mitgelieferte lokale Stockfish. Für die gehostete Engine von chess-api.com setze stattdessen <code>ENGINE_BACKEND=chessapi</code> (Umgebungsvariable) oder die Einstellung <code>engine_backend</code> — z. B. für eine öffentliche Test-Instanz (DEMO_MODE, #27)."
+    "engineBackendNote": "Die Partieanalyse nutzt standardmäßig das mitgelieferte lokale Stockfish. Für die gehostete Engine von chess-api.com setze stattdessen <code>ENGINE_BACKEND=chessapi</code> (Umgebungsvariable) oder die Einstellung <code>engine_backend</code> — z. B. für eine öffentliche Test-Instanz (DEMO_MODE, #27).",
+    "engineBackend": "Analyse-Engine",
+    "engineBackendLocal": "Lokales Stockfish",
+    "engineBackendLocalDesc": "Das mitgelieferte Stockfish auf diesem Server. Privat, kein Netzwerk nötig.",
+    "engineBackendChessapi": "chess-api.com (Cloud)",
+    "engineBackendChessapiDesc": "Gehostetes Stockfish 18 NNUE über HTTPS. Für Geräte, die zu schwach für lokales Stockfish sind.",
+    "engineBackendEnv": "Wird über die Umgebungsvariable ENGINE_BACKEND gesetzt — dieser Schalter wird ignoriert."
   },
   "palette": {
     "switchLanguage": "Wechseln zu",
