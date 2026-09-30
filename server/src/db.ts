@@ -231,6 +231,22 @@ db.exec(`CREATE TABLE IF NOT EXISTS puzzle_attempts (
 db.exec(`CREATE INDEX IF NOT EXISTS idx_puzzle_attempts_user ON puzzle_attempts(user_id, created_at DESC)`);
 db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_puzzle_attempts_unique ON puzzle_attempts(user_id, game_id, ply)`);
 
+// Lichess puzzle trainer (the Puzzles page) — one row per profile and puzzle
+// id, from either source. Only the first try at a puzzle moves the rating, so
+// the row keeps what that try did; `rating_after` of the newest row is the
+// player's current puzzle rating.
+db.exec(`CREATE TABLE IF NOT EXISTS lichess_puzzle_attempts (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  puzzle_id TEXT NOT NULL,
+  puzzle_rating INTEGER NOT NULL,
+  themes TEXT NOT NULL DEFAULT '',
+  solved INTEGER NOT NULL,
+  rating_after INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, puzzle_id)
+)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_lichess_puzzle_attempts_recent ON lichess_puzzle_attempts(user_id, created_at DESC)`);
+
 // Opening trainer — every move the user missed while practising a line, and
 // when it is due in the daily review queue (see chess/openingTrainer.ts).
 // `moves` is the line up to the position (space-separated SAN) so a review can

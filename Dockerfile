@@ -27,9 +27,10 @@ RUN npm run build
 FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
 
-# Stockfish from Debian repos — recent enough for our needs
+# Stockfish from Debian repos — recent enough for our needs. zstd unpacks the
+# Lichess puzzle database download (Node 20 has no built-in zstd).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    stockfish ca-certificates \
+    stockfish ca-certificates zstd \
  && rm -rf /var/lib/apt/lists/*
 
 # Install only production deps for the server workspace

@@ -7,8 +7,11 @@ import { importChessComGames } from '../chess/chesscomImport.js';
 import { importLichessGames } from '../chess/lichessImport.js';
 import { importPgnGames } from '../chess/pgnImport.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
+import { GAME_SOURCES } from '../dbMigrations.js';
 import { Chess } from 'chess.js';
 import { clearLiveBotGame, loadLiveBotGame, resumableSummary } from '../chess/liveBotGames.js';
+
+const TIME_CLASSES = ['bullet', 'blitz', 'rapid', 'daily'] as const;
 
 const router = new Hono();
 router.use('*', requireAuth);
@@ -24,6 +27,35 @@ router.get('/', (c) => {
   const filters: string[] = ['g.user_id = ?'];
   const params: unknown[] = [user.id];
   if (bookmarked) filters.push('g.bookmarked = 1');
+  // Review-list filters. Unknown values are ignored rather than rejected so a
+  // stale bookmarked URL still shows games.
+  const source = c.req.query('source');
+  if (source && (GAME_SOURCES as readonly string[]).includes(source)) {
+    filters.push('g.source = ?');
+    params.push(source);
+  }
+  const result = c.req.query('result');
+  if (result === 'win' || result === 'loss' || result === 'draw') {
+    filters.push('g.result = ?');
+    params.push(result);
+  }
+  const color = c.req.query('color');
+  if (color === 'white' || color === 'black') {
+    filters.push('g.user_color = ?');
+    params.push(color);
+  }
+  const timeClass = c.req.query('time_class');
+  if (timeClass && (TIME_CLASSES as readonly string[]).includes(timeClass)) {
+    filters.push('g.time_class = ?');
+    params.push(timeClass);
+  }
+  // Period in days back from now. end_time is an ISO-8601 UTC string, so a
+  // plain string comparison orders it correctly.
+  const days = Number(c.req.query('days'));
+  if (Number.isFinite(days) && days > 0) {
+    filters.push('g.end_time >= ?');
+    params.push(new Date(Date.now() - Math.min(days, 36_500) * 86_400_000).toISOString());
+  }
   if (q) {
     filters.push('(LOWER(g.white) LIKE ? OR LOWER(g.black) LIKE ? OR LOWER(g.opening_name) LIKE ? OR LOWER(g.notes) LIKE ?)');
     const like = `%${q}%`;

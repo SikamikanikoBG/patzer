@@ -18,6 +18,7 @@ import Review from './pages/Review';
 import GameAnalyzer from './pages/GameAnalyzer';
 import Insights from './pages/Insights';
 import Train from './pages/Train';
+import Puzzles from './pages/Puzzles';
 import Openings from './pages/Openings';
 import Learn from './pages/Learn';
 import Plan from './pages/Plan';
@@ -187,6 +188,7 @@ export default function App() {
           <Route path="/review/:id" element={<GameAnalyzer />} />
           <Route path="/insights" element={<Insights />} />
           <Route path="/train" element={<Train />} />
+          <Route path="/puzzles" element={<Puzzles />} />
           <Route path="/learn" element={<Learn />} />
           <Route path="/openings" element={<Openings />} />
           <Route path="/plan" element={<Plan />} />

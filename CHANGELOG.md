@@ -26,6 +26,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed:** a Chess.com outage during Import now shows an error message
   instead of failing with a server error.
 
+### Filter the game list
+
+- **New: filters on Game Review** for period (last 7 / 30 / 90 / 365 days),
+  site (Chess.com, Lichess, bot, PvP, PGN), result (wins, losses, draws),
+  your colour and time control. They combine with search and *Starred only*,
+  the game count follows them, and they live in the URL, so a filtered view
+  survives a reload and can be bookmarked.
+
+### Puzzles from the Lichess database
+
+- **New: Puzzles page** with the Lichess puzzle database (CC0, ~5 million
+  puzzles). Pick a theme from the groups Lichess uses on
+  lichess.org/training/themes (phases, motifs, advanced, mates, special
+  moves, goals, lengths, origin) and one of five difficulties relative to
+  your puzzle rating. The rating starts at 1500 and moves with the first
+  try at each puzzle; retries and a peek at the solution don't win points.
+  Like on Lichess, any mating move counts even if the solution has another.
+- **Two sources.** *Online* samples random pages of the
+  `Lichess/chess-puzzles` dataset on Hugging Face and filters them by theme
+  and rating in Patzer, keeping a pool in memory, so nothing is downloaded
+  or stored. (Hugging Face's DuckDB filter endpoint can't filter the
+  `Themes` list and times out on this dataset, so it isn't used.) Rare
+  themes can take a couple of tries. *On this server*: an
+  admin downloads `lichess_db_puzzle.csv.zst` (~300 MB) once and Patzer
+  imports it into `data/puzzles.db` (~1 GB), separate from `chess.db` so
+  backups stay small. It then works offline. Unpacking uses Node's built-in
+  zstd (22.15+) or the `zstd` tool, which the Docker image now includes.
+- Train keeps the puzzles from your own games.
+
 ## [7.17.1] — 2026-09-27
 
 ### Finished games no longer hang on "Saving game…"
