@@ -52,7 +52,7 @@ Patzer is a tiny, self-hosted take on the Chess.com / Lichess workflow you actua
 - **Family-ready** — multi-user with admin console, open / invite-only / closed sign-up, per-profile language, kid-mode blunder warnings, "horsey" piece names for the youngest profiles.
 - **Learn (beta)** — 54 interactive lessons in four levels, from how the pieces move to tactics, mating patterns and rook endgames. Stars and progress per profile; kid mode tells the same lessons in simpler words.
 - **Opening trainer (beta)** — drill 16 built-in main lines or any line from your own repertoire; the moves you miss come back in a daily review queue.
-- **Multilingual** — English, Bulgarian, Spanish, German and Russian out of the box, UI *and* coach prompts. Adding a language is one table entry per file — see CONTRIBUTING.
+- **Multilingual** — English, Bulgarian, Spanish, German, Russian and Persian (فارسی) out of the box, UI *and* coach prompts. Persian is complete down to every Learn lesson, with a right-to-left layout (the board and moves stay left to right) and the bundled Vazirmatn font. Adding a language is one table entry per file — see CONTRIBUTING.
 - **Self-hosted, single container** — runs on a Pi, a NAS, an old laptop. Your games never leave home.
 - **Phone-friendly** — full-width board, sticky action bar and a swipe-up move list on small screens.
 - **Tells you when it's stale** — a self-hosted app can't update itself, but Patzer checks GitHub every six hours and shows a one-line notice when a newer release is out, so you know to pull. Sends nothing about you; switch it off in *Admin → System*.

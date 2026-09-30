@@ -180,7 +180,7 @@ function Hero({ displayName, avatar, stats, tagline }: {
           >
             <Swords className="h-4 w-4" />
             {t('home.playTitle')}
-            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
           </Link>
           <Link
             to="/review"
@@ -477,7 +477,7 @@ function RecentGames({ games }: { games: GameRow[] }) {
                   )}
                 </div>
               </div>
-              <div className="shrink-0 text-right">
+              <div className="shrink-0 text-end">
                 {g.analyzed ? (
                   <div className="font-mono text-xs tabular-nums">
                     <span className={g.user_color === 'white' ? 'font-semibold text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-500'}>

@@ -76,7 +76,7 @@ export default function EvalGraph({ evals, current, onClick, markers = [], heigh
   const hoverCp = hoverPoint?.cp ?? null;
 
   return (
-    <div className="relative w-full" style={{ height }}>
+    <div className="relative w-full" style={{ height }} dir="ltr">
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="none"

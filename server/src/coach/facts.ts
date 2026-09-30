@@ -33,6 +33,7 @@ const SECOND_PERSON_PERSPECTIVE: Record<Language, string> = {
   es: "tú",
   de: "du",
   ru: "ты",
+  fa: "تو",
 };
 /** FACTS payload for /api/coach/explain. */
 export function factsForExplain(
@@ -203,6 +204,16 @@ Lass einen Schritt aus, wenn sein Feld in FACTS leer ist. ${address} Höchstens 
 5. Закончи FACTS.takeaway как правилом на будущее или одним коротким вопросом, который заставит посмотреть на доску.
 Пропусти шаг, если его поле в FACTS пустое. Обращайся к игроку как "${persp}", без глаголов прошедшего времени с родом. Не больше ${n} предложений — это важнее блока аудитории. Только FACTS. Без шахматной нотации. Без JSON. Только естественный язык, по-русски.`;
   }
+  if (language === "fa") {
+    const persp = own ? "تو" : input.player === "White" ? "سفید" : "سیاه";
+    return `TASK: دربارهٔ این حرکت مثل یک مربی با بازیکن حرف بزن، به این ترتیب:
+1. صریح بگو این چه نوع حرکتی بود (FACTS.verdict).${tone === "correct" ? " هیچ تحسینی نکن." : ""}
+2. با FACTS.why و FACTS.opponent_reply توضیح بده چرا — پیامد مشخص روی صفحه.
+3. اگر FACTS.better_move هست، ایدهٔ بهتر و دستاوردش را نشان بده؛ اگر در FACTS.other_good_moves چیزی هست، یکی را نام ببر.
+4. اگر FACTS.player_history موردی دارد، این حرکت را در یک جمله به آن ربط بده.
+5. با FACTS.takeaway به‌عنوان قاعده‌ای برای به خاطر سپردن تمام کن، یا با یک سؤال کوتاه که بازیکن را وادار کند به صفحه نگاه کند.
+هر مرحله‌ای را که فیلدش در FACTS خالی است رد کن. بازیکن را «${persp}» خطاب کن. حداکثر ${n} جمله — این بر بلوک مخاطب مقدم است. فقط FACTS. بدون نمادنویسی شطرنج. بدون JSON. فقط زبان طبیعی، به فارسی.`;
+  }
   const persp = own ? "you" : input.player;
   return `TASK: Coach the player on this move, in this order:
 1. Say plainly what kind of move it was (FACTS.verdict).${tone === "correct" ? " No praise at all." : ""}
@@ -238,6 +249,7 @@ export function correctionNote(language: Language, verdict: string): string {
     es: `IMPORTANTE: tu respuesta anterior contradecía FACTS.verdict ("${verdict}"). Empieza con ese veredicto y no elogies la jugada.`,
     de: `WICHTIG: Deine vorige Antwort widersprach FACTS.verdict ("${verdict}"). Beginne mit diesem Urteil und lobe den Zug nicht.`,
     ru: `ВАЖНО: твой прошлый ответ противоречил FACTS.verdict ("${verdict}"). Начни с этого вердикта и не хвали ход.`,
+    fa: `مهم: پاسخ قبلی‌ات با FACTS.verdict ("${verdict}") در تناقض بود. با همین حکم شروع کن و حرکت را تحسین نکن.`,
   };
   return notes[language] ?? notes.en;
 }
@@ -271,6 +283,9 @@ export function hintPrompt(
   }
   if (language === "ru") {
     return `FACTS:\n${factsJson}\n\nTASK: Помоги игроку как тренер перед его ходом. НЕ называй лучший ход и вообще конкретные ходы. По FACTS.where_to_look и FACTS.best_move_idea покажи, что важно в позиции и почему; если в FACTS.player_history есть запись, напомни об этой привычке. Закончи одним вопросом, который заставит посмотреть на доску. Не больше ${n} предложений. Без шахматной нотации. Только естественный язык, по-русски.`;
+  }
+  if (language === "fa") {
+    return `FACTS:\n${factsJson}\n\nTASK: پیش از حرکت بازیکن مثل یک مربی کمکش کن. بهترین حرکت یا هیچ حرکت مشخصی را نگو. با FACTS.where_to_look و FACTS.best_move_idea نشان بده چه چیزی در این موقعیت مهم است و چرا؛ اگر FACTS.player_history موردی دارد، آن عادت را یادش بینداز. با یک سؤال تمام کن که او را وادار کند به صفحه نگاه کند. حداکثر ${n} جمله. بدون نمادنویسی شطرنج. فقط زبان طبیعی، به فارسی.`;
   }
   return `FACTS:\n${factsJson}\n\nTASK: Coach the player before their move. Do NOT name the best move or any concrete move. Using FACTS.where_to_look and FACTS.best_move_idea, point out what matters in this position and why; if FACTS.player_history has an entry, remind them of that habit. End with one question that makes them look at the board. At most ${n} sentences. No chess notation. Natural language only, in English.`;
 }

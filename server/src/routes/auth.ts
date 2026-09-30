@@ -197,7 +197,7 @@ const registerSchema = z.object({
   // Optional, but if present must be a real address. Empty string is coerced to
   // "absent" so the front-end can always send the field.
   email: z.union([z.string().trim().email().max(200), z.literal('')]).optional(),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru']).default('en'),
+  language: z.enum(['en', 'bg', 'es', 'de', 'ru', 'fa']).default('en'),
   // Required when signup is invite-only; optional (but still checked) when it
   // is open, where it only presets language and audience.
   invite: z.string().max(40).optional(),

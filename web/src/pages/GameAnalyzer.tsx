@@ -271,10 +271,10 @@ export default function GameAnalyzer() {
     <div className="mx-auto max-w-7xl">
       <div className="mb-3 flex items-center justify-between gap-3">
         <Link to="/review" className="btn-ghost text-sm shrink-0"><ChevronLeft className="h-4 w-4" />{t('common.back')}</Link>
-        <div className="min-w-0 truncate text-right text-sm text-chesscom-500">
+        <div className="min-w-0 truncate text-end text-sm text-chesscom-500">
           <span className="font-medium text-chesscom-900 dark:text-chesscom-100">{data.game.white}</span> vs{' '}
           <span className="font-medium text-chesscom-900 dark:text-chesscom-100">{data.game.black}</span>
-          <span className="ml-2">· {data.game.result}</span>
+          <span className="ms-2">· {data.game.result}</span>
         </div>
       </div>
 
@@ -330,7 +330,7 @@ export default function GameAnalyzer() {
                 <>
                   <span className="font-medium text-chesscom-900 dark:text-chesscom-100">{ply % 2 === 1 ? t('review.sideShort.white') : t('review.sideShort.black')}: {move.san}</span>
                   {move.best_move_san && move.best_move_san !== move.san && (
-                    <span className="ml-2 text-xs text-chesscom-400">{t('review.best', { san: move.best_move_san })}</span>
+                    <span className="ms-2 text-xs text-chesscom-400">{t('review.best', { san: move.best_move_san })}</span>
                   )}
                 </>
               ) : <span className="italic">{t('review.startingPosition')}</span>}
@@ -339,7 +339,7 @@ export default function GameAnalyzer() {
               {fmtCp(currentEvalCp)}
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-center gap-1.5 sm:gap-2">
+          <div className="mt-3 flex items-center justify-center gap-1.5 sm:gap-2" dir="ltr">
             <button onClick={() => setPly(0)} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.first')}><ChevronsLeft className="h-5 w-5" /></button>
             <button onClick={() => setPly((p) => Math.max(0, p - 1))} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.prev')}><ChevronLeft className="h-5 w-5" /></button>
             <div className="flex h-10 min-w-[5rem] items-center justify-center rounded-xl bg-chesscom-100 px-3 text-sm font-mono tabular-nums dark:bg-chesscom-800 sm:h-12 sm:min-w-[5.5rem]">
@@ -354,7 +354,7 @@ export default function GameAnalyzer() {
         {/* RIGHT RAIL — scrolls inside itself on lg+ so the page stays fixed.
             `min-h-0` lets the flex child shrink below content height; without it
             flex would force the page to grow. */}
-        <div className="min-w-0 space-y-3 lg:w-[380px] lg:flex-initial lg:max-w-md lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+        <div className="min-w-0 space-y-3 lg:w-[380px] lg:flex-initial lg:max-w-md lg:min-h-0 lg:overflow-y-auto lg:pe-1">
           {!analysis && (
             <button onClick={() => analyze(requestedDepth, false)} disabled={analyzing} className="btn-primary w-full">
               <Sparkles className="h-4 w-4" />
@@ -432,7 +432,7 @@ export default function GameAnalyzer() {
                   <TabBtn active={tab === 'report'} onClick={() => setTab('report')} icon={FileText} label={t('review.gameReport', { defaultValue: 'AI report' })} />
                   <TabBtn active={tab === 'moments'} onClick={() => setTab('moments')} icon={Sparkles} label={t('review.keyMoments', { defaultValue: 'Key moments' })} />
                   <TabBtn active={tab === 'coach'} onClick={() => setTab('coach')} icon={Lightbulb} label={t('coach.title', { defaultValue: 'Coach' })} />
-                  <button onClick={() => setShowDepthControl((s) => !s)} className="btn-ghost ml-auto p-1.5" title={t('review.depth')}>
+                  <button onClick={() => setShowDepthControl((s) => !s)} className="btn-ghost ms-auto p-1.5" title={t('review.depth')}>
                     <SettingsIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -571,12 +571,12 @@ function GameMetaToolbar({ gameId, bookmarked, notes, onFlip, onShare, linkCopie
         </button>
         <button
           onClick={() => setShowNotes((s) => !s)}
-          className={`btn-ghost ml-auto px-2 py-1 text-xs ${showNotes ? 'text-chesscom-900 dark:text-chesscom-100' : ''}`}
+          className={`btn-ghost ms-auto px-2 py-1 text-xs ${showNotes ? 'text-chesscom-900 dark:text-chesscom-100' : ''}`}
           title={t('review.notes', { defaultValue: 'Notes' })}
         >
           <NotebookPen className="h-3.5 w-3.5" />
           {t('review.notes', { defaultValue: 'Notes' })}
-          {notes && !showNotes && <span className="ml-0.5 inline-block h-1.5 w-1.5 rounded-full bg-gold-500" />}
+          {notes && !showNotes && <span className="ms-0.5 inline-block h-1.5 w-1.5 rounded-full bg-gold-500" />}
         </button>
       </div>
       {showNotes && (
@@ -603,7 +603,7 @@ function PlayerHeader({ name, accuracy, elo, side, fen, highlighted }: { name: s
     <div
       className={`flex items-center justify-between rounded-md px-3 py-2 shadow-soft transition-colors ${
         highlighted
-          ? 'border-l-4 border-gold-500 bg-white dark:bg-chesscom-800 text-chesscom-900 dark:text-chesscom-100'
+          ? 'border-s-4 border-gold-500 bg-white dark:bg-chesscom-800 text-chesscom-900 dark:text-chesscom-100'
           : 'bg-white text-chesscom-900 dark:bg-chesscom-800/70 dark:text-chesscom-100'
       }`}
     >
@@ -697,7 +697,7 @@ function LinesPanel({ enabled, onToggle, lines, loading, error, playedUci, onAdv
         </span>
         <button
           onClick={onToggle}
-          className={`btn-ghost ml-auto px-2 py-1 text-xs ${enabled ? 'text-board-dark' : ''}`}
+          className={`btn-ghost ms-auto px-2 py-1 text-xs ${enabled ? 'text-board-dark' : ''}`}
         >
           {enabled
             ? t('review.linesHide', { defaultValue: 'Hide' })
@@ -726,7 +726,7 @@ function LinesPanel({ enabled, onToggle, lines, loading, error, playedUci, onAdv
                 onClick={() => { if (isPlayed) onAdvance(); }}
                 onMouseEnter={() => onHover(l)}
                 onMouseLeave={() => onHover(null)}
-                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-start text-xs transition-colors ${
                   isPlayed
                     ? 'cursor-pointer bg-board-dark/10 hover:bg-board-dark/15'
                     : 'cursor-default hover:bg-chesscom-50 dark:hover:bg-chesscom-900/40'

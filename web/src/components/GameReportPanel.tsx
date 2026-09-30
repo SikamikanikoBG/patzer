@@ -158,7 +158,7 @@ export default function GameReportPanel({ gameId, initial, onMomentJump, onGener
       {review.opening && (
         <div className="text-xs text-chesscom-500">
           <span className="font-semibold text-chesscom-700 dark:text-chesscom-200">{review.opening.name}</span>
-          {review.opening.eco && <span className="ml-1 font-mono">({review.opening.eco})</span>} — {review.opening.prose}
+          {review.opening.eco && <span className="ms-1 font-mono">({review.opening.eco})</span>} — {review.opening.prose}
         </div>
       )}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -180,7 +180,7 @@ export default function GameReportPanel({ gameId, initial, onMomentJump, onGener
           {review.key_moments.map((m) => (
             <button key={m.ply}
               onClick={() => onMomentJump?.(m.ply)}
-              className="block w-full rounded-lg border border-chesscom-200 bg-white px-3 py-2 text-left text-xs hover:border-gold-500/40 hover:bg-gold-50/40 dark:border-chesscom-700 dark:bg-chesscom-800 dark:hover:bg-chesscom-900/40">
+              className="block w-full rounded-lg border border-chesscom-200 bg-white px-3 py-2 text-start text-xs hover:border-gold-500/40 hover:bg-gold-50/40 dark:border-chesscom-700 dark:bg-chesscom-800 dark:hover:bg-chesscom-900/40">
               <div className="flex items-baseline gap-2">
                 <span className="font-mono text-[11px] tabular-nums text-chesscom-500">#{Math.ceil(m.ply / 2)}{m.side === 'black' ? '…' : '.'}</span>
                 <span className="font-semibold">{m.title}</span>

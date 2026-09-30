@@ -257,7 +257,7 @@ function TreeRow({
             ? 'bg-gold-500/15 text-chesscom-900 dark:text-chesscom-100'
             : 'text-chesscom-700 hover:bg-chesscom-100/60 dark:text-chesscom-200 dark:hover:bg-chesscom-700/40'
         }`}
-        style={{ paddingLeft: `${8 + depth * 14}px` }}
+        style={{ paddingInlineStart: `${8 + depth * 14}px` }}
       >
         <button
           type="button"
@@ -288,7 +288,7 @@ function TreeRow({
           </>
         )}
 
-        <span className="ml-auto flex shrink-0 items-center gap-2">
+        <span className="ms-auto flex shrink-0 items-center gap-2">
           <span className="font-mono text-xs tabular-nums text-chesscom-500">{node.played}g</span>
           <span className={`rounded px-1.5 py-0.5 font-mono text-[11px] tabular-nums ${scoreTone}`}>
             {Math.round(score * 100)}%
@@ -317,7 +317,7 @@ function TreeRow({
           {prunedHint && (
             <div
               className="text-xs italic text-chesscom-400"
-              style={{ paddingLeft: `${8 + (depth + 1) * 14 + 18}px` }}
+              style={{ paddingInlineStart: `${8 + (depth + 1) * 14 + 18}px` }}
             >
               {t('openings.moreBranches', { defaultValue: '+ more branches (rare lines hidden)' })}
             </div>

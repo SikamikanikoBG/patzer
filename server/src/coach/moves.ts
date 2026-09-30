@@ -12,6 +12,7 @@ const CASTLE_SHORT: Record<Language, string> = {
   es: "enroque corto",
   de: "kurze Rochade",
   ru: "короткая рокировка",
+  fa: "قلعه‌روی کوتاه",
 };
 
 const CASTLE_LONG: Record<Language, string> = {
@@ -20,6 +21,7 @@ const CASTLE_LONG: Record<Language, string> = {
   es: "enroque largo",
   de: "lange Rochade",
   ru: "длинная рокировка",
+  fa: "قلعه‌روی بلند",
 };
 
 type MoveFormatParams = {
@@ -105,6 +107,20 @@ const MOVE_DESCRIPTIONS: Record<
       if (promo) extra += `, превращение в ${ruForm(promo, "acc")}`;
       if (isMate) extra += " (мат)";
       else if (isCheck) extra += " (шах)";
+      return extra;
+    },
+  },
+  // Farsi is verb-final: "اسب سرباز را در e5 می‌گیرد" (the knight the pawn on e5 takes).
+  fa: {
+    capture: ({ pieceName, captured, to }) =>
+      `${pieceName} ${captured} را در ${to} می‌گیرد`,
+    pawn: ({ pieceName, to }) => `${pieceName} به ${to}`,
+    default: ({ pieceName, from, to }) => `${pieceName} از ${from} به ${to}`,
+    suffix: ({ promo, isCheck, isMate }) => {
+      let extra = "";
+      if (promo) extra += `، ارتقا به ${promo}`;
+      if (isMate) extra += " (کیش و مات)";
+      else if (isCheck) extra += " (کیش)";
       return extra;
     },
   },

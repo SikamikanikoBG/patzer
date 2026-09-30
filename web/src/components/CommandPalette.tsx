@@ -188,7 +188,7 @@ function PaletteSection({ items, active, setActive }: { items: Action[]; active:
                   onMouseMove={() => setActive(i)}
                   onClick={a.run}
                   className={cn(
-                    'flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors',
+                    'flex w-full items-center gap-3 px-3 py-2 text-start text-sm transition-colors',
                     isActive ? 'bg-gold-500/15 text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-700 dark:text-chesscom-200 hover:bg-chesscom-100/60 dark:hover:bg-chesscom-700/40',
                   )}
                 >

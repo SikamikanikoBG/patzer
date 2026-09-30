@@ -317,10 +317,10 @@ export default function AdminSystem() {
               <table className="w-full text-xs">
                 <thead className="bg-ink-50 text-[11px] uppercase tracking-wider text-ink-500 dark:bg-ink-900">
                   <tr>
-                    <th className="px-3 py-2 text-left">{t('admin.colModel')}</th>
-                    <th className="px-3 py-2 text-left">{t('admin.colStatus')}</th>
-                    <th className="px-3 py-2 text-right">{t('admin.colLatency')}</th>
-                    <th className="px-3 py-2 text-left">{t('admin.colSample')}</th>
+                    <th className="px-3 py-2 text-start">{t('admin.colModel')}</th>
+                    <th className="px-3 py-2 text-start">{t('admin.colStatus')}</th>
+                    <th className="px-3 py-2 text-end">{t('admin.colLatency')}</th>
+                    <th className="px-3 py-2 text-start">{t('admin.colSample')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -331,7 +331,7 @@ export default function AdminSystem() {
                         {r.ok ? <span className="inline-flex items-center gap-1 text-accent-600"><CheckCircle2 className="h-3 w-3" />{t('admin.ok')}</span>
                           : <span className="inline-flex items-center gap-1 text-bad"><AlertCircle className="h-3 w-3" />{t('admin.fail')}</span>}
                       </td>
-                      <td className="px-3 py-2 text-right font-mono text-ink-500">{r.latencyMs}ms</td>
+                      <td className="px-3 py-2 text-end font-mono text-ink-500">{r.latencyMs}ms</td>
                       <td className="px-3 py-2 truncate text-ink-500" title={r.sample ?? r.error ?? ''}>{r.sample ?? r.error ?? ''}</td>
                     </tr>
                   ))}
@@ -399,7 +399,7 @@ export default function AdminSystem() {
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {(['local', 'chessapi'] as const).map((b) => (
                 <button key={b} type="button" onClick={() => setS({ ...s, engine_backend: b })}
-                  className={`rounded-xl border p-3 text-left text-sm transition-colors
+                  className={`rounded-xl border p-3 text-start text-sm transition-colors
                     ${(s.engine_backend ?? 'local') === b
                       ? 'border-ink-900 bg-ink-900 text-cream dark:border-cream dark:bg-cream dark:text-ink-900'
                       : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}>

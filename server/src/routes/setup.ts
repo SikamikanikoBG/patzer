@@ -68,7 +68,7 @@ const setupSchema = z.object({
   // the worst dictionary attacks. Pair with bcrypt cost 12 (passwords.ts).
   password: z.string().min(10).max(200),
   display_name: z.string().trim().min(1).max(60),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru']).default('en'),
+  language: z.enum(['en', 'bg', 'es', 'de', 'ru', 'fa']).default('en'),
   ollama_url: z.string().url().or(z.literal('')).optional(),
   ollama_model: z.string().optional(),
 });

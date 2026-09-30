@@ -386,7 +386,7 @@ export default function Puzzles() {
 function PhaseLine({ phase, result }: { phase: Phase; result: { delta: number; counted: boolean } | null }) {
   const { t } = useTranslation();
   const delta = result?.counted ? (
-    <span className={cn('ml-2 font-mono text-xs', result.delta >= 0 ? 'text-board-dark' : 'text-mistake')}>
+    <span className={cn('ms-2 font-mono text-xs', result.delta >= 0 ? 'text-board-dark' : 'text-mistake')}>
       {result.delta >= 0 ? `+${result.delta}` : result.delta}
     </span>
   ) : null;

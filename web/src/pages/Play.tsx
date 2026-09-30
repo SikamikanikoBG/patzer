@@ -796,7 +796,7 @@ export default function Play() {
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {DIFFICULTIES.map((d) => (
                   <button key={d} onClick={() => setDifficulty(d)}
-                    className={`rounded-md border p-3 text-left transition-colors
+                    className={`rounded-md border p-3 text-start transition-colors
                       ${difficulty === d
                         ? 'border-green-500 bg-green-500 text-white shadow-soft'
                         : 'border-chesscom-200 bg-white hover:border-chesscom-300 dark:border-chesscom-700 dark:bg-chesscom-800 dark:hover:border-chesscom-600'}`}>
@@ -968,7 +968,7 @@ export default function Play() {
 
           {/* Rewind nav — visible once at least one move has been played */}
           {phase !== 'setup' && positions.length > 1 && (
-            <div className="mt-3 hidden items-center justify-center gap-1.5 sm:gap-2 lg:flex">
+            <div className="mt-3 hidden items-center justify-center gap-1.5 sm:gap-2 lg:flex" dir="ltr">
               <button onClick={() => setBrowseIndex(0)} disabled={(browseIndex ?? liveIndex) === 0} className="btn-secondary h-10 w-10 p-0 sm:h-11 sm:w-11" title={t('play.rewindFirst')}><ChevronsLeft className="h-5 w-5" /></button>
               <button onClick={stepBack} disabled={(browseIndex ?? liveIndex) === 0} className="btn-secondary h-10 w-10 p-0 sm:h-11 sm:w-11" title={t('play.rewindPrev')}><ChevronLeft className="h-5 w-5" /></button>
               <div className="flex h-10 min-w-[5rem] items-center justify-center rounded-xl bg-ink-100 px-3 font-mono text-sm tabular-nums dark:bg-ink-800 sm:h-11 sm:min-w-[5.5rem]">
@@ -1048,7 +1048,7 @@ export default function Play() {
               <motion.button
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 onClick={() => setGameOverDismissed(false)}
-                className="card-hover w-full p-3 text-left"
+                className="card-hover w-full p-3 text-start"
               >
                 <div className="flex items-center justify-between gap-3 text-sm">
                   <span className="font-semibold">
@@ -1070,10 +1070,13 @@ export default function Play() {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-200 bg-white/95 backdrop-blur dark:border-ink-700 dark:bg-ink-900/95 lg:hidden"
              style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
           <div className="mx-auto flex max-w-7xl items-center gap-1.5 px-2 py-2">
-            <button onClick={stepBack} disabled={(browseIndex ?? liveIndex) === 0} className="btn-secondary h-11 w-11 shrink-0 p-0" title={t('play.rewindPrev')}><ChevronLeft className="h-5 w-5" /></button>
-            <button onClick={isBrowsing ? stepForward : goToLive} disabled={!isBrowsing} className={`h-11 w-11 shrink-0 p-0 ${isBrowsing ? 'btn-primary' : 'btn-secondary'}`} title={isBrowsing ? t('play.rewindNext') : t('play.rewindLive')}>
-              {isBrowsing ? <ChevronRight className="h-5 w-5" /> : <Radio className="h-4 w-4" />}
-            </button>
+            {/* Back / forward walk the game, which reads left to right. */}
+            <div className="flex shrink-0 items-center gap-1.5" dir="ltr">
+              <button onClick={stepBack} disabled={(browseIndex ?? liveIndex) === 0} className="btn-secondary h-11 w-11 shrink-0 p-0" title={t('play.rewindPrev')}><ChevronLeft className="h-5 w-5" /></button>
+              <button onClick={isBrowsing ? stepForward : goToLive} disabled={!isBrowsing} className={`h-11 w-11 shrink-0 p-0 ${isBrowsing ? 'btn-primary' : 'btn-secondary'}`} title={isBrowsing ? t('play.rewindNext') : t('play.rewindLive')}>
+                {isBrowsing ? <ChevronRight className="h-5 w-5" /> : <Radio className="h-4 w-4" />}
+              </button>
+            </div>
             <button
               onClick={() => setSheetOpen(true)}
               onPointerDown={handleMovesPointerDown}
@@ -1084,7 +1087,7 @@ export default function Play() {
             >
               <ListOrdered className="h-4 w-4 shrink-0" />
               <span className="truncate">{t('review.moves')}</span>
-              <span className="ml-1 rounded-full bg-ink-100 px-1.5 text-[11px] tabular-nums dark:bg-ink-800">{moves.length}</span>
+              <span className="ms-1 rounded-full bg-ink-100 px-1.5 text-[11px] tabular-nums dark:bg-ink-800">{moves.length}</span>
             </button>
             {phase === 'playing' && (
               <button onClick={requestHint} disabled={hintLoading || isBrowsing} className="btn-secondary h-11 w-11 shrink-0 p-0" title={t('play.hint')}>
@@ -1097,7 +1100,7 @@ export default function Play() {
                 {moreOpen && (
                   <>
                     <div className="fixed inset-0 z-[41]" onClick={() => setMoreOpen(false)} />
-                    <div className="absolute bottom-full right-0 z-[42] mb-2 w-52 space-y-1 rounded-xl border border-ink-200 bg-white p-1.5 shadow-lift dark:border-ink-700 dark:bg-ink-900">
+                    <div className="absolute bottom-full end-0 z-[42] mb-2 w-52 space-y-1 rounded-xl border border-ink-200 bg-white p-1.5 shadow-lift dark:border-ink-700 dark:bg-ink-900">
                       <button onClick={() => { setMoreOpen(false); setFlipped((f) => !f); }} className="btn-ghost h-10 w-full justify-start px-3 text-sm"><FlipVertical2 className="h-4 w-4" />{t('play.flip')}</button>
                       <button onClick={() => { setMoreOpen(false); offerDraw(); }} disabled={drawOffer !== null} className="btn-ghost h-10 w-full justify-start px-3 text-sm"><Handshake className="h-4 w-4" />{t('play.offerDraw')}</button>
                       <button onClick={() => { setMoreOpen(false); requestTakeback(); }} disabled={takeback !== null || moves.length === 0} className="btn-ghost h-10 w-full justify-start px-3 text-sm"><Undo2 className="h-4 w-4" />{t('play.takeback')}</button>
@@ -1237,7 +1240,7 @@ export default function Play() {
                   </div>
                   <button
                     onClick={() => setGameOverDismissed(true)}
-                    className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-500 hover:bg-black/5 dark:hover:bg-white/10"
+                    className="absolute end-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-500 hover:bg-black/5 dark:hover:bg-white/10"
                     title={t('common.cancel')}
                   ><X className="h-4 w-4" /></button>
                 </div>
@@ -1428,7 +1431,7 @@ function FriendTab({ onChallengeAccepted }: { onChallengeAccepted: (gameId: numb
             <div className="max-h-72 space-y-1 overflow-auto">
               {users.map((u) => (
                 <button key={u.id} onClick={() => setTarget(u.id)}
-                  className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors
+                  className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-start transition-colors
                     ${target === u.id ? 'bg-chesscom-900 text-white dark:bg-chesscom-100 dark:text-chesscom-900' : 'hover:bg-chesscom-100 dark:hover:bg-chesscom-800'}`}>
                   <span className="text-xl">{u.avatar_emoji}</span>
                   <div className="flex-1">
@@ -1503,5 +1506,5 @@ function ClsGlyph({ c }: { c: Classification }) {
     forced: 'text-move-forced', inaccuracy: 'text-move-inaccuracy',
     mistake: 'text-move-mistake', blunder: 'text-move-blunder', miss: 'text-move-miss',
   };
-  return <span className={`ml-1 text-[11px] font-bold ${color[c]}`}>{map[c]}</span>;
+  return <span className={`ms-1 text-[11px] font-bold ${color[c]}`}>{map[c]}</span>;
 }

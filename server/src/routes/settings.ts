@@ -10,7 +10,7 @@ router.use('*', requireAuth);
 const profileSchema = z.object({
   display_name: z.string().trim().min(1).max(60).optional(),
   avatar_emoji: z.string().min(1).max(8).optional(),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru']).optional(),
+  language: z.enum(['en', 'bg', 'es', 'de', 'ru', 'fa']).optional(),
   audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).optional(),
   chesscom_username: z.string().trim().regex(/^[A-Za-z0-9_-]{2,40}$/).nullable().or(z.literal('')).optional(),
   lichess_username: z.string().trim().regex(/^[A-Za-z0-9_-]{2,30}$/).nullable().or(z.literal('')).optional(),

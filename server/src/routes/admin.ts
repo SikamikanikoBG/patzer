@@ -49,7 +49,7 @@ const createUserSchema = z.object({
   // password resets later). Empty string is treated as "no email".
   email: z.union([z.string().trim().email().max(200), z.literal('')]).optional(),
   role: z.enum(['admin', 'user']).default('user'),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru']).default('en'),
+  language: z.enum(['en', 'bg', 'es', 'de', 'ru', 'fa']).default('en'),
   audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).default('intermediate'),
   coach_behavior: z.enum(['silent', 'on_demand', 'always_on_pedagogical']).default('on_demand'),
   avatar_emoji: z.string().min(1).max(8).default('♟'),
@@ -103,7 +103,7 @@ const updateUserSchema = z.object({
   password: z.string().min(10).max(200).optional(),
   display_name: z.string().trim().min(1).max(60).optional(),
   avatar_emoji: z.string().min(1).max(8).optional(),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru']).optional(),
+  language: z.enum(['en', 'bg', 'es', 'de', 'ru', 'fa']).optional(),
   audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).optional(),
   coach_behavior: z.enum(['silent', 'on_demand', 'always_on_pedagogical']).optional(),
   tts_enabled: z.boolean().optional(),
@@ -196,7 +196,7 @@ const createInviteSchema = z.object({
   note: z.string().trim().max(80).optional(),
   max_uses: z.number().int().min(1).max(1000).nullable().default(1),
   expires_in_days: z.number().int().min(1).max(365).nullable().default(7),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru']).nullable().default(null),
+  language: z.enum(['en', 'bg', 'es', 'de', 'ru', 'fa']).nullable().default(null),
   audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).nullable().default(null),
 });
 

@@ -121,7 +121,7 @@ export default function LessonBoard({
   }, [fen]);
 
   return (
-    <div className="relative select-none">
+    <div className="relative select-none" dir="ltr">
       <div ref={ref} style={{ width: '100%', aspectRatio: '1 / 1' }} />
       <Overlay orientation={orientation} stars={stars ?? []} occupied={occupied} found={found ?? []} flashes={flashes ?? []} />
       {promotion && (

@@ -50,7 +50,7 @@ export default function EvalBar({ cp, mate, orientation = 'white', height }: Pro
   const ease = [0.22, 1, 0.36, 1] as const;
 
   return (
-    <div className="relative" style={wrapStyle}>
+    <div className="relative" style={wrapStyle} dir="ltr">
       <div
         className={`relative flex h-full w-full flex-col overflow-hidden rounded-l-md border border-chesscom-300 bg-chesscom-200 shadow-soft dark:border-chesscom-700 ${isMate ? 'shadow-glow' : ''}`}
       >

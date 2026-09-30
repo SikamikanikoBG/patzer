@@ -4,6 +4,8 @@ import de from './de.json';
 import learnEn from './learn/en.json';
 import learnDe from './learn/de.json';
 import ru from './ru.json';
+import fa from './fa.json';
+import learnFa from './learn/fa.json';
 import { goalText } from '../lib/goalText';
 
 type Tree = { [k: string]: string | Tree };
@@ -52,6 +54,36 @@ describe('de lesson texts', () => {
       expect(placeholders(deFlat[key] ?? ''), key).toEqual(placeholders(enFlat[key]!));
       // **bold** pairs must stay pairs, or the markers would show as text.
       expect((deFlat[key]!.match(/\*\*/g) ?? []).length % 2, key).toBe(0);
+    }
+  });
+});
+
+// Farsi ships complete: every UI string and every lesson. Its CLDR plural
+// categories are one / other, the same as English, so the keys match one to
+// one.
+describe('fa locale', () => {
+  const enFlat = flatten(en as Tree);
+  const faFlat = flatten(fa as Tree);
+
+  it('has every key that en has, and nothing else', () => {
+    expect(Object.keys(faFlat).sort()).toEqual(Object.keys(enFlat).sort());
+  });
+
+  it('keeps every interpolation placeholder and markup tag', () => {
+    for (const key of Object.keys(enFlat)) {
+      expect(placeholders(faFlat[key] ?? ''), key).toEqual(placeholders(enFlat[key]!));
+      const tags = (s: string) => (s.match(/<\/?\w+>/g) ?? []).sort();
+      expect(tags(faFlat[key] ?? ''), key).toEqual(tags(enFlat[key]!));
+    }
+  });
+
+  it('has lesson texts for every lesson, with placeholders and bold marks intact', () => {
+    const enLearn = flatten(learnEn as Tree);
+    const faLearn = flatten(learnFa as Tree);
+    expect(Object.keys(faLearn).sort()).toEqual(Object.keys(enLearn).sort());
+    for (const key of Object.keys(enLearn)) {
+      expect(placeholders(faLearn[key]!), key).toEqual(placeholders(enLearn[key]!));
+      expect((faLearn[key]!.match(/\*\*/g) ?? []).length % 2, key).toBe(0);
     }
   });
 });

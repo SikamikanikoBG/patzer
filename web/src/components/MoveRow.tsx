@@ -56,7 +56,7 @@ export default function MoveRow({ num, white, black, current, onSelect }: Props)
         tint,
       )}
     >
-      <div className="flex items-center justify-end pr-2 text-xs tabular-nums text-chesscom-400">{num}.</div>
+      <div className="flex items-center justify-end pe-2 text-xs tabular-nums text-chesscom-400">{num}.</div>
       <Half move={white} current={wCur} onSelect={onSelect} t={t} />
       <Half move={black} current={bCur} onSelect={onSelect} t={t} />
     </div>
@@ -73,7 +73,7 @@ function Half({
       onClick={() => onSelect(move.ply)}
       title={style ? t(`classification.${style.labelKey}`) : undefined}
       className={cn(
-        'group flex items-center justify-between gap-2 px-2 py-1.5 text-left text-sm transition-colors',
+        'group flex items-center justify-between gap-2 px-2 py-1.5 text-start text-sm transition-colors',
         current
           ? 'bg-chesscom-900 text-white dark:bg-chesscom-100 dark:text-chesscom-900'
           : 'hover:bg-chesscom-100 dark:hover:bg-chesscom-800',

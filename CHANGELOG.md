@@ -26,6 +26,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Fixed:** a Chess.com outage during Import now shows an error message
   instead of failing with a server error.
 
+### Persian (Farsi)
+
+- **New language: Persian (فارسی).** Everything is translated: the whole
+  interface, every Learn lesson, and the AI coach — its persona, rules,
+  move descriptions ("اسب سرباز را در e5 می‌گیرد"), verdicts, hints and the
+  written Game Review. The coach's check against praising a mistake knows
+  Farsi too, whether words are joined with a zero-width non-joiner or a space.
+- **Right-to-left layout.** Choosing Farsi flips the page. The board, the
+  eval bar and graph, the move list and the move buttons stay left to right,
+  since files a–h always run that way, and chess text such as "Nf3+" or a
+  score stays readable inside Farsi sentences.
+- **Vazirmatn font for Farsi.** A modern Persian sans-serif (SIL OFL 1.1),
+  bundled with the app rather than fetched from the web, since Patzer's
+  content policy only allows its own fonts and a home server may be offline.
+  It is only downloaded when the page is in Farsi.
+
 ### Filter the game list
 
 - **New: filters on Game Review** for period (last 7 / 30 / 90 / 365 days),

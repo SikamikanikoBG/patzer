@@ -194,7 +194,7 @@ function RepertoireCard({ prefix, onClose, onStart }: {
       <div className="flex items-center gap-2">
         <GraduationCap className="h-4 w-4 text-gold-600" />
         <h2 className="text-sm font-semibold">{t('openings.trainer.fromRepertoire')}</h2>
-        <button onClick={onClose} className="ml-auto rounded p-1 text-chesscom-400 hover:text-chesscom-700 dark:hover:text-chesscom-200" aria-label={t('openings.trainer.close')}>
+        <button onClick={onClose} className="ms-auto rounded p-1 text-chesscom-400 hover:text-chesscom-700 dark:hover:text-chesscom-200" aria-label={t('openings.trainer.close')}>
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -265,7 +265,7 @@ function LineGroup({ title, lines, onStart }: {
       <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-chesscom-500">{title}</h2>
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {lines.map((line) => (
-          <button key={line.id} onClick={() => onStart(line)} className="card-hover p-3 text-left">
+          <button key={line.id} onClick={() => onStart(line)} className="card-hover p-3 text-start">
             <div className="flex items-start gap-2">
               <span className="mt-0.5 rounded bg-chesscom-100 px-1.5 py-0.5 font-mono text-[11px] text-chesscom-600 dark:bg-chesscom-900/60 dark:text-chesscom-300">
                 {line.eco}
@@ -377,11 +377,11 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
     status = (
       <div className="card space-y-3 p-4">
         <div className="text-sm font-semibold text-chesscom-900 dark:text-chesscom-100">{t('openings.trainer.askTitle')}</div>
-        <button onClick={() => setPhase('watch')} className="btn-secondary w-full justify-start text-left text-sm">
+        <button onClick={() => setPhase('watch')} className="btn-secondary w-full justify-start text-start text-sm">
           <Eye className="h-4 w-4 shrink-0" />
           <span><span className="font-semibold">{t('openings.trainer.watchFirst')}</span><br /><span className="text-xs font-normal text-chesscom-500">{t('openings.trainer.watchFirstDesc')}</span></span>
         </button>
-        <button onClick={() => setPhase('test')} className="btn-secondary w-full justify-start text-left text-sm">
+        <button onClick={() => setPhase('test')} className="btn-secondary w-full justify-start text-start text-sm">
           <Target className="h-4 w-4 shrink-0" />
           <span><span className="font-semibold">{t('openings.trainer.practiseNow')}</span><br /><span className="text-xs font-normal text-chesscom-500">{t('openings.trainer.practiseNowDesc')}</span></span>
         </button>

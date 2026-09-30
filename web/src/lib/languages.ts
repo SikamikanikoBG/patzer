@@ -1,8 +1,8 @@
 // Single source of truth for the UI languages. Adding a language = one entry
 // here + a locale JSON + the server-side zod enums (grep for `'es'` in
-// server/src/routes). Everything else (toggles, TTS, signup default) iterates
+// server/src/routes). A right-to-left script also sets `rtl`. Everything else (toggles, TTS, signup default) iterates
 // this list.
-export type Language = 'en' | 'bg' | 'es' | 'de' | 'ru';
+export type Language = 'en' | 'bg' | 'es' | 'de' | 'ru' | 'fa';
 
 export interface LanguageInfo {
   code: Language;
@@ -14,6 +14,8 @@ export interface LanguageInfo {
   native: string;
   /** BCP-47 tag handed to the Web Speech API. */
   bcp47: string;
+  /** Written right to left: the page flips, the board and notation don't. */
+  rtl?: boolean;
 }
 
 export const LANGUAGES: readonly LanguageInfo[] = [
@@ -22,6 +24,7 @@ export const LANGUAGES: readonly LanguageInfo[] = [
   { code: 'es', short: 'ES', native: 'Español', bcp47: 'es-ES' },
   { code: 'de', short: 'DE', native: 'Deutsch', bcp47: 'de-DE' },
   { code: 'ru', short: 'RU', native: 'Русский', bcp47: 'ru-RU' },
+  { code: 'fa', short: 'FA', native: 'فارسی', bcp47: 'fa-IR', rtl: true },
 ] as const;
 
 export const LANGUAGE_CODES: readonly Language[] = LANGUAGES.map((l) => l.code);
@@ -34,6 +37,10 @@ export function isLanguage(v: unknown): v is Language {
 export function normalizeLanguage(detected: string | undefined | null): Language {
   const base = (detected ?? '').toLowerCase().split('-')[0];
   return isLanguage(base) ? base : 'en';
+}
+
+export function isRtl(lang: Language): boolean {
+  return !!LANGUAGES.find((l) => l.code === lang)?.rtl;
 }
 
 export function bcp47For(lang: Language): string {

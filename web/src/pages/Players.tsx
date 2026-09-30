@@ -146,12 +146,12 @@ export default function Players() {
       {/* Search + sort */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[12rem] flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-chesscom-400" />
+          <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-chesscom-400" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t('players.searchPlaceholder', { defaultValue: 'Search players…' })}
-            className="w-full rounded-lg border border-chesscom-200 bg-white py-2 pl-9 pr-3 text-sm outline-none transition-colors focus:border-board-dark dark:border-chesscom-700 dark:bg-chesscom-800"
+            className="w-full rounded-lg border border-chesscom-200 bg-white py-2 ps-9 pe-3 text-sm outline-none transition-colors focus:border-board-dark dark:border-chesscom-700 dark:bg-chesscom-800"
           />
         </div>
         <div className="flex rounded-lg border border-chesscom-200 bg-white p-0.5 text-xs dark:border-chesscom-700 dark:bg-chesscom-800">
@@ -211,7 +211,7 @@ function PlayerCard({ p, rank }: { p: PlayerSummary; rank: number | null }) {
             {p.avatar_emoji}
           </div>
           {p.online && (
-            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-chesscom-800" title={t('players.onlineTitle')} />
+            <span className="absolute -bottom-0.5 -end-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500 dark:border-chesscom-800" title={t('players.onlineTitle')} />
           )}
         </div>
 
@@ -248,7 +248,7 @@ function PlayerCard({ p, rank }: { p: PlayerSummary; rank: number | null }) {
 
         <div className="flex shrink-0 items-center gap-2">
           {p.best_rating != null && (
-            <div className="text-right">
+            <div className="text-end">
               <div className="flex items-center justify-end gap-1 font-mono text-sm font-bold tabular-nums text-chesscom-900 dark:text-chesscom-100">
                 <Trophy className="h-3 w-3 text-gold-500" />
                 {p.best_rating}
@@ -256,7 +256,7 @@ function PlayerCard({ p, rank }: { p: PlayerSummary; rank: number | null }) {
               <div className="text-[10px] uppercase tracking-wide text-chesscom-400">{t('players.rating', { defaultValue: 'rating' })}</div>
             </div>
           )}
-          <ChevronRight className="h-4 w-4 text-chesscom-300 transition-transform group-hover:translate-x-0.5" />
+          <ChevronRight className="h-4 w-4 text-chesscom-300 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
         </div>
       </Link>
     </li>

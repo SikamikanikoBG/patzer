@@ -84,7 +84,7 @@ function PlayerColumn({ name, accuracy, elo, perf, side, highlighted }: { name: 
   const sideDot = side === 'white' ? 'bg-white border border-chesscom-300' : 'bg-chesscom-900';
   // Gold left border for highlighted player — chess.com's subtle indicator.
   return (
-    <div className={`rounded-md border bg-white p-3 dark:bg-chesscom-800 ${highlighted ? 'border-l-4 border-gold-500 border-y-chesscom-200 border-r-chesscom-200 dark:border-y-chesscom-700 dark:border-r-chesscom-700' : 'border-chesscom-200 dark:border-chesscom-700'}`}>
+    <div className={`rounded-md border bg-white p-3 dark:bg-chesscom-800 ${highlighted ? 'border-s-4 border-gold-500 border-y-chesscom-200 border-e-chesscom-200 dark:border-y-chesscom-700 dark:border-e-chesscom-700' : 'border-chesscom-200 dark:border-chesscom-700'}`}>
       <div className="flex items-center gap-2">
         <span className={`h-3 w-3 rounded-full ${sideDot}`} />
         <span className="truncate text-xs font-semibold uppercase tracking-wide text-chesscom-500">{side === 'white' ? 'White' : 'Black'}</span>
@@ -97,13 +97,13 @@ function PlayerColumn({ name, accuracy, elo, perf, side, highlighted }: { name: 
             <div className="flex items-center gap-1 text-chesscom-500">
               <Trophy className="h-3 w-3" />
               <span>{t('review.estRating')}</span>
-              <span className="ml-auto rounded-sm bg-chesscom-100 px-1.5 py-0.5 font-mono font-bold tabular-nums text-chesscom-900 dark:bg-chesscom-700 dark:text-white">{elo}</span>
+              <span className="ms-auto rounded-sm bg-chesscom-100 px-1.5 py-0.5 font-mono font-bold tabular-nums text-chesscom-900 dark:bg-chesscom-700 dark:text-white">{elo}</span>
             </div>
           )}
           {perf != null && perf !== elo && (
             <div className="flex items-center gap-1 text-chesscom-500">
               <span>{t('review.performance')}</span>
-              <span className="ml-auto rounded-sm bg-chesscom-100 px-1.5 py-0.5 font-mono font-bold tabular-nums text-chesscom-900 dark:bg-chesscom-700 dark:text-white">{perf}</span>
+              <span className="ms-auto rounded-sm bg-chesscom-100 px-1.5 py-0.5 font-mono font-bold tabular-nums text-chesscom-900 dark:bg-chesscom-700 dark:text-white">{perf}</span>
             </div>
           )}
         </div>

@@ -28,7 +28,7 @@ const explainSchema = z.object({
   pv_san: z.array(z.string()).optional(),
   history: z.array(z.string()).optional(),
   user_perspective: z.boolean().optional(),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru']).optional(),
+  language: z.enum(['en', 'bg', 'es', 'de', 'ru', 'fa']).optional(),
   audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).optional(),
 });
 
@@ -61,7 +61,7 @@ router.post('/explain', async (c) => {
 const hintReqSchema = z.object({
   fen: z.string(),
   history: z.array(z.string()).optional(),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru']).optional(),
+  language: z.enum(['en', 'bg', 'es', 'de', 'ru', 'fa']).optional(),
   audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).optional(),
 });
 

@@ -187,17 +187,17 @@ export default function Review() {
       {/* Filter bar — search + starred-only toggle. */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-chesscom-400" />
+          <Search className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-chesscom-400" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t('review.searchPlaceholder', { defaultValue: 'Search players, opening, notes…' })}
-            className="input pl-8 pr-8 text-sm"
+            className="input ps-8 pe-8 text-sm"
           />
           {q && (
             <button
               onClick={() => setQ('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-chesscom-400 hover:bg-chesscom-100 dark:hover:bg-chesscom-700"
+              className="absolute end-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-chesscom-400 hover:bg-chesscom-100 dark:hover:bg-chesscom-700"
               aria-label={t('review.clearSearch')}
             >
               <X className="h-3 w-3" />
@@ -332,11 +332,11 @@ function GameCard({ g }: { g: GameRow }) {
             <span>{new Date(g.end_time).toLocaleDateString()}</span>
             <span>·</span>
             <span>{t(`review.source.${g.source}`, { defaultValue: g.source })}</span>
-            {g.notes && <span className="ml-1 italic text-chesscom-400">· {t('review.hasNote')}</span>}
+            {g.notes && <span className="ms-1 italic text-chesscom-400">· {t('review.hasNote')}</span>}
           </div>
         </div>
         {g.analyzed ? (
-          <div className="text-right text-xs">
+          <div className="text-end text-xs">
             <div className="text-[11px] uppercase tracking-wider text-chesscom-400">{t('review.accuracy')}</div>
             <div className="font-mono text-sm font-semibold tabular-nums">
               <span className="text-chesscom-700 dark:text-chesscom-200">{fmtAccuracy(g.accuracy_white)}</span>

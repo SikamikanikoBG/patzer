@@ -88,7 +88,7 @@ export default function PlayerProfile() {
               {player.avatar_emoji}
             </div>
             {player.online && (
-              <span className="absolute -bottom-1 -right-1 flex items-center gap-1 rounded-full bg-green-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white ring-2 ring-chesscom-900">
+              <span className="absolute -bottom-1 -end-1 flex items-center gap-1 rounded-full bg-green-500 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white ring-2 ring-chesscom-900">
                 {t('players.online', { defaultValue: 'on' })}
               </span>
             )}
@@ -116,7 +116,7 @@ export default function PlayerProfile() {
               <span className="font-semibold text-red-300">{stats.losses}</span>
               <span className="text-white/40">/</span>
               <span className="font-semibold text-white/80">{stats.draws}</span>
-              <span className="ml-1 text-xs uppercase tracking-wider text-white/50">{t('players.wld', { defaultValue: 'W/L/D' })}</span>
+              <span className="ms-1 text-xs uppercase tracking-wider text-white/50">{t('players.wld', { defaultValue: 'W/L/D' })}</span>
             </span>
             {stats.avg_accuracy != null && (
               <HeroStat value={`${stats.avg_accuracy}%`} label={t('players.accuracy', { defaultValue: 'accuracy' })} icon={Target} />

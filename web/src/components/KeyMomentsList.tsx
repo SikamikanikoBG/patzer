@@ -42,7 +42,7 @@ export default function KeyMomentsList({ items, current, onSelect }: Props) {
             <button
               key={m.ply}
               onClick={() => onSelect(m.ply)}
-              className={`flex w-full items-start gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-chesscom-50 dark:hover:bg-chesscom-900/40 ${active ? 'bg-gold-50/70 dark:bg-gold-700/10 ring-1 ring-inset ring-gold-500/40' : ''}`}
+              className={`flex w-full items-start gap-3 px-4 py-3 text-start text-sm transition-colors hover:bg-chesscom-50 dark:hover:bg-chesscom-900/40 ${active ? 'bg-gold-50/70 dark:bg-gold-700/10 ring-1 ring-inset ring-gold-500/40' : ''}`}
             >
               <span className={`mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white ${s.bgClass}`}>
                 <svg viewBox="0 0 24 24" width={14} height={14} aria-hidden>{GLYPH_SVG[s.glyph]}</svg>
@@ -57,7 +57,7 @@ export default function KeyMomentsList({ items, current, onSelect }: Props) {
                 </div>
                 <div className="mt-0.5 truncate text-xs">
                   {m.title ? <span className="font-medium text-chesscom-800 dark:text-chesscom-100">{m.title}</span> : <span className={`font-medium ${s.textClass}`}>{m.classification}</span>}
-                  <span className="ml-2 font-mono text-xs tabular-nums text-chesscom-500">−{m.cp_loss}cp · {m.win_pct_delta.toFixed(0)}wp</span>
+                  <span className="ms-2 font-mono text-xs tabular-nums text-chesscom-500">−{m.cp_loss}cp · {m.win_pct_delta.toFixed(0)}wp</span>
                 </div>
                 {m.prose && (
                   <div className="mt-1 line-clamp-2 text-[12px] text-chesscom-600 dark:text-chesscom-300">{m.prose}</div>

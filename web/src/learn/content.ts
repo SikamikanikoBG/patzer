@@ -51,6 +51,7 @@ export function loadCurriculum(): Promise<Curriculum> {
 const TEXTS: Partial<Record<Language, () => Promise<{ default: unknown }>>> = {
   en: () => import('../locales/learn/en.json'),
   de: () => import('../locales/learn/de.json'),
+  fa: () => import('../locales/learn/fa.json'),
 };
 
 const loadedTexts = new Map<Language, Promise<void>>();

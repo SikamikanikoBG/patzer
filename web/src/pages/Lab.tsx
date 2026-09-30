@@ -204,7 +204,7 @@ export default function Lab() {
                 <FlipVertical2 className="h-4 w-4" />
                 {t('lab.flip', { defaultValue: 'Flip board' })}
               </button>
-              <div className="ml-auto font-mono text-[11px] tabular-nums text-chesscom-400">
+              <div className="ms-auto font-mono text-[11px] tabular-nums text-chesscom-400">
                 {fen}
               </div>
             </div>
@@ -258,7 +258,7 @@ export default function Lab() {
               {result.lines.map((line, i) => (
                 <LineRow key={i} line={line} rank={i + 1} onPlay={playLineMove} />
               ))}
-              <div className="px-3 py-1.5 text-right text-[11px] text-chesscom-400">
+              <div className="px-3 py-1.5 text-end text-[11px] text-chesscom-400">
                 {t('lab.depthLabel', { defaultValue: 'depth' })} {result.depth}
               </div>
             </div>
@@ -295,7 +295,7 @@ export default function Lab() {
               <div className="max-h-60 overflow-y-auto p-2">
                 <button
                   onClick={() => gotoPly(0)}
-                  className={`w-full rounded px-2 py-1 text-left text-xs font-mono tabular-nums ${
+                  className={`w-full rounded px-2 py-1 text-start text-xs font-mono tabular-nums ${
                     historyIndex === 0
                       ? 'bg-gold-500/15 text-chesscom-900 dark:text-chesscom-100'
                       : 'text-chesscom-500 hover:bg-chesscom-100/60 dark:hover:bg-chesscom-700/40'
@@ -312,7 +312,7 @@ export default function Lab() {
                     <button
                       key={i}
                       onClick={() => gotoPly(ply)}
-                      className={`w-full rounded px-2 py-1 text-left text-xs font-mono tabular-nums ${
+                      className={`w-full rounded px-2 py-1 text-start text-xs font-mono tabular-nums ${
                         isActive
                           ? 'bg-gold-500/15 text-chesscom-900 dark:text-chesscom-100'
                           : 'text-chesscom-600 hover:bg-chesscom-100/60 dark:text-chesscom-200 dark:hover:bg-chesscom-700/40'
@@ -361,7 +361,7 @@ function LineRow({ line, rank, onPlay }: { line: AnalyzeLine; rank: number; onPl
           {line.san}
         </button>
         {tail.length > 0 && (
-          <span className="ml-2 font-mono text-xs tabular-nums text-chesscom-500">
+          <span className="ms-2 font-mono text-xs tabular-nums text-chesscom-500">
             {tail.join(' ')}
           </span>
         )}
