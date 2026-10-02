@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
-import { styleFor, GLYPH_SVG } from '../lib/classification';
+import { displayStyleFor, GLYPH_SVG } from '../lib/classification';
 
 interface Move { ply: number; san: string; classification?: string }
 
@@ -67,7 +67,7 @@ function Half({
   move, current, onSelect, t,
 }: { move?: Move; current: boolean; onSelect: (p: number) => void; t: (k: string) => string }) {
   if (!move) return <div />;
-  const style = styleFor(move.classification);
+  const style = displayStyleFor(move.classification, move.san);
   return (
     <button
       onClick={() => onSelect(move.ply)}

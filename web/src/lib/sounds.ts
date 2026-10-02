@@ -11,7 +11,7 @@
 import boardMoveUrl from '../assets/sounds/board-move.wav';
 import boardCaptureUrl from '../assets/sounds/board-capture.wav';
 
-type SoundKind = 'move' | 'capture' | 'check' | 'castle' | 'promotion' | 'game_start' | 'game_end' | 'click';
+type SoundKind = 'move' | 'capture' | 'check' | 'checkmate' | 'castle' | 'promotion' | 'game_start' | 'game_end' | 'click';
 /** 'classic' = the original bells; 'soft' swaps check and game-end for
  *  marimba-style wooden bars that sit closer to the wood-knock move sounds. */
 export type SoundSet = 'classic' | 'soft';
@@ -297,6 +297,21 @@ export function playSound(kind: SoundKind) {
       bell(b, t + 0.09,  { freq: 880,  duration: 0.55, gain: 0.14 });   // A5
       break;
     }
+    case 'checkmate': {
+      // The check motif carried down to a final low note — it resolves where
+      // a plain check is left hanging.
+      if (soundSet === 'soft') {
+        marimba(b, t,        { freq: 659, duration: 0.28, gain: 0.2 });
+        marimba(b, t + 0.09, { freq: 880, duration: 0.3,  gain: 0.2 });
+        marimba(b, t + 0.24, { freq: 440, duration: 0.9,  gain: 0.22 });
+      } else {
+        bell(b, t,        { freq: 1175, duration: 0.5, gain: 0.18 }); // D6
+        bell(b, t + 0.09, { freq: 880,  duration: 0.5, gain: 0.14 }); // A5
+        bell(b, t + 0.24, { freq: 587,  duration: 1.1, gain: 0.2 });  // D5
+      }
+      damped(b, t + 0.24, { freq: 147, duration: 0.7, gain: 0.1, type: 'sine', wet: 0.45 });
+      break;
+    }
     case 'castle':
       // King, then rook: the board move twice, the second a touch lower and softer.
       if (boardSample(b, t, 'move')) {
@@ -349,7 +364,8 @@ export function playSound(kind: SoundKind) {
 }
 
 // Decide which sound to play for a SAN/UCI move + flags.
-export function soundForMove(args: { san?: string; capture?: boolean; check?: boolean; castle?: boolean; promotion?: boolean }) {
+export function soundForMove(args: { san?: string; capture?: boolean; check?: boolean; checkmate?: boolean; castle?: boolean; promotion?: boolean }) {
+  if (args.checkmate) return playSound('checkmate');
   if (args.castle) return playSound('castle');
   if (args.promotion) return playSound('promotion');
   if (args.check) return playSound('check');
@@ -358,10 +374,11 @@ export function soundForMove(args: { san?: string; capture?: boolean; check?: bo
 }
 
 // Quick deduce flags from SAN string (used in places where chess.js move object isn't handy).
-export function inferMoveFlagsFromSan(san: string): { capture: boolean; check: boolean; castle: boolean; promotion: boolean } {
+export function inferMoveFlagsFromSan(san: string): { capture: boolean; check: boolean; checkmate: boolean; castle: boolean; promotion: boolean } {
   return {
     capture: san.includes('x'),
     check: san.endsWith('+') || san.endsWith('#'),
+    checkmate: san.endsWith('#'),
     castle: san === 'O-O' || san === 'O-O-O' || san === '0-0' || san === '0-0-0',
     promotion: /=[QRBN]/.test(san),
   };

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { Download, Trophy, Frown, Equal, BookOpen, Inbox, Settings as SettingsIcon, Star, Search, X, FileText, FilterX } from 'lucide-react';
+import { Download, Trophy, Frown, Equal, BookOpen, Inbox, Settings as SettingsIcon, Star, Search, X, FileText, FilterX, Loader2 } from 'lucide-react';
 import { api } from '../api';
 import PgnImportPanel from '../components/PgnImportPanel';
 import { useAuth } from '../state/auth';
@@ -81,6 +81,10 @@ export default function Review() {
       const loaded = pages.reduce((n, p) => n + p.games.length, 0);
       return last.games.length === PAGE_SIZE && loaded < last.total ? loaded : undefined;
     },
+    // While the engine is on one of the listed games, poll so its row flips
+    // from "Analyzing…" to the accuracy on its own.
+    refetchInterval: (query) =>
+      query.state.data?.pages.some((p) => p.games.some((g) => g.analyzing)) ? 4000 : false,
   });
 
   const importMut = useMutation({
@@ -344,6 +348,10 @@ function GameCard({ g }: { g: GameRow }) {
               <span className="text-chesscom-700 dark:text-chesscom-200">{fmtAccuracy(g.accuracy_black)}</span>
             </div>
           </div>
+        ) : g.analyzing ? (
+          <span className="badge gap-1 bg-gold-500/15 text-gold-700 dark:text-gold-300">
+            <Loader2 className="h-3 w-3 animate-spin" /> {t('review.analyzingNow')}
+          </span>
         ) : (
           <span className="badge gap-1 bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300">
             <BookOpen className="h-3 w-3" /> review

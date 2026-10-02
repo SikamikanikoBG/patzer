@@ -179,6 +179,8 @@
     "analyze": "تحلیل",
     "reanalyze": "تحلیل دوباره",
     "analyzing": "در حال تحلیل… ({{progress}}%)",
+    "analyzingNow": "در حال تحلیل…",
+    "engineBusy": "موتور مشغول تحلیل یکی دیگر از بازی‌های شماست. پس از پایان آن دوباره تلاش کنید.",
     "depth": "عمق",
     "accuracy": "دقت",
     "moves": "حرکت‌ها",
@@ -331,6 +333,7 @@
     }
   },
   "classification": {
+    "checkmate": "کیش و مات",
     "brilliant": "درخشان",
     "great": "عالی",
     "best": "بهترین",

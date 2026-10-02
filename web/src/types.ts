@@ -86,6 +86,8 @@ export interface GameRow {
   end_time: string;
   user_color: 'white' | 'black' | null;
   analyzed: number;
+  /** The engine is working on this game right now. */
+  analyzing?: boolean;
   accuracy_white: number | null;
   accuracy_black: number | null;
   performance_white: number | null;

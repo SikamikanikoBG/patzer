@@ -7,6 +7,7 @@ import { importChessComGames } from '../chess/chesscomImport.js';
 import { importLichessGames } from '../chess/lichessImport.js';
 import { importPgnGames } from '../chess/pgnImport.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
+import { isAnalyzing } from './analyze.js';
 import { GAME_SOURCES } from '../dbMigrations.js';
 import { Chess } from 'chess.js';
 import { clearLiveBotGame, loadLiveBotGame, resumableSummary } from '../chess/liveBotGames.js';
@@ -75,14 +76,15 @@ router.get('/', (c) => {
     WHERE ${filters.join(' AND ')}
     ORDER BY g.end_time DESC NULLS LAST, g.id DESC
     LIMIT ? OFFSET ?
-  `).all(SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, ...params, limit, offset);
+  `).all(SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, SCORING_VERSION, ...params, limit, offset) as { id: number }[];
   // Totals over every matching game, not just this page — a full import can
   // hold thousands of games and the list only loads them a page at a time.
   const totals = db.prepare(`
     SELECT COUNT(*) AS total, COALESCE(SUM(g.bookmarked), 0) AS starred
     FROM games g WHERE ${filters.join(' AND ')}
   `).get(...params) as { total: number; starred: number };
-  return c.json({ games: rows, total: totals.total, starred: totals.starred });
+  const games = rows.map((r) => ({ ...r, analyzing: isAnalyzing(r.id) }));
+  return c.json({ games, total: totals.total, starred: totals.starred });
 });
 
 // Games you can walk back into: the bot game you left mid-move, and any PvP
@@ -181,6 +183,7 @@ router.get('/:id', (c) => {
     game,
     analysis: stale ? null : analysis,
     analysis_stale: stale,
+    analyzing: isAnalyzing(id),
   });
 });
 

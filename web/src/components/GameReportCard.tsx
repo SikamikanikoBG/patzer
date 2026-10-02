@@ -4,7 +4,8 @@
 // column wears a gold left border instead of a full-background inversion
 // (chess.com's subtle "highlighted player" treatment).
 
-import { Trophy } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import AccuracyDonut from './AccuracyDonut';
 import { CLASS_STYLE, GLYPH_SVG } from '../lib/classification';
@@ -22,13 +23,18 @@ interface Props {
   moves: AnalyzedMove[];
   phaseSplit?: PhaseSplit | null;
   userColor?: 'white' | 'black' | null;
+  /** Ply shown on the board, highlighted in an opened move list. */
+  currentPly?: number;
+  /** Jump to a ply. When set, each classification row opens the list of its moves. */
+  onSelectPly?: (ply: number) => void;
 }
 
 export default function GameReportCard({
   whiteName, blackName, accuracyW, accuracyB,
-  eloW, eloB, perfW, perfB, moves, phaseSplit, userColor,
+  eloW, eloB, perfW, perfB, moves, phaseSplit, userColor, currentPly, onSelectPly,
 }: Props) {
   const { t } = useTranslation();
+  const [openCls, setOpenCls] = useState<Classification | null>(null);
   const w = countByCls(moves, 'white');
   const b = countByCls(moves, 'black');
 
@@ -51,16 +57,64 @@ export default function GameReportCard({
           const bc = b[c] ?? 0;
           if (wc === 0 && bc === 0) return null;
           const s = CLASS_STYLE[c];
-          return (
-            <div key={c} className="grid grid-cols-[1fr_3rem_3rem] items-center gap-2 border-b border-chesscom-100 px-4 py-1.5 text-sm last:border-b-0 dark:border-chesscom-800">
+          const open = openCls === c;
+          const cells = (
+            <>
               <div className="flex items-center gap-2">
                 <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white ${s.bgClass}`}>
                   <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">{GLYPH_SVG[s.glyph]}</svg>
                 </span>
                 <span>{t(`classification.${s.labelKey}`)}</span>
+                {onSelectPly && <ChevronDown className={`h-3.5 w-3.5 text-chesscom-400 transition-transform ${open ? 'rotate-180' : ''}`} />}
               </div>
               <span className={`text-center font-mono tabular-nums ${wc > 0 ? '' : 'opacity-30'}`}>{wc}</span>
               <span className={`text-center font-mono tabular-nums ${bc > 0 ? '' : 'opacity-30'}`}>{bc}</span>
+            </>
+          );
+          const rowCls = 'grid w-full grid-cols-[1fr_3rem_3rem] items-center gap-2 px-4 py-1.5 text-start text-sm';
+          return (
+            <div key={c} className="border-b border-chesscom-100 last:border-b-0 dark:border-chesscom-800">
+              {onSelectPly ? (
+                <button
+                  type="button"
+                  onClick={() => setOpenCls(open ? null : c)}
+                  aria-expanded={open}
+                  className={`${rowCls} transition-colors hover:bg-chesscom-50 dark:hover:bg-chesscom-800/60`}
+                >
+                  {cells}
+                </button>
+              ) : (
+                <div className={rowCls}>{cells}</div>
+              )}
+              {open && onSelectPly && (
+                <div className="space-y-1.5 px-4 pb-2.5 pt-0.5" dir="ltr">
+                  {(['white', 'black'] as const).map((side) => {
+                    const list = moves.filter((m) => m.classification === c && (m.ply % 2 === 1) === (side === 'white'));
+                    if (list.length === 0) return null;
+                    return (
+                      <div key={side} className="flex items-start gap-2">
+                        <span className="mt-1 w-4 shrink-0 text-[11px] font-semibold uppercase text-chesscom-500">{side === 'white' ? 'W' : 'B'}</span>
+                        <div className="flex flex-wrap gap-1">
+                          {list.map((m) => (
+                            <button
+                              key={m.ply}
+                              type="button"
+                              onClick={() => onSelectPly(m.ply)}
+                              className={`rounded px-1.5 py-0.5 font-mono text-xs tabular-nums transition-colors ${
+                                m.ply === currentPly
+                                  ? 'bg-chesscom-900 text-white dark:bg-chesscom-100 dark:text-chesscom-900'
+                                  : 'bg-chesscom-100 hover:bg-chesscom-200 dark:bg-chesscom-700 dark:hover:bg-chesscom-600'
+                              }`}
+                            >
+                              {Math.ceil(m.ply / 2)}{side === 'white' ? '.' : '…'} {m.san}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
