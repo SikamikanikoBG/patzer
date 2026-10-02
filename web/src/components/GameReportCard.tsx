@@ -90,9 +90,11 @@ function PlayerColumn({ name, accuracy, elo, perf, side, highlighted }: { name: 
         <span className="truncate text-xs font-semibold uppercase tracking-wide text-chesscom-500">{side === 'white' ? 'White' : 'Black'}</span>
       </div>
       <div className="mt-1 truncate text-sm font-semibold">{name}</div>
-      <div className="mt-3 flex items-center gap-3">
+      {/* Wraps the ratings under the donut when the column is too narrow for
+          both (two columns inside the desktop side panel). */}
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <AccuracyDonut value={accuracy} size={96} showBand />
-        <div className="flex flex-col gap-1 text-xs">
+        <div className="flex min-w-[7.5rem] flex-1 flex-col gap-1 text-xs">
           {elo != null && (
             <div className="flex items-center gap-1 text-chesscom-500">
               <Trophy className="h-3 w-3" />
