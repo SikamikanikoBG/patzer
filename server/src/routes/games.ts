@@ -8,6 +8,7 @@ import { importLichessGames } from '../chess/lichessImport.js';
 import { importPgnGames } from '../chess/pgnImport.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
 import { isAnalyzing } from './analyze.js';
+import { analysisDepth } from '../chess/engine.js';
 import { GAME_SOURCES } from '../dbMigrations.js';
 import { Chess } from 'chess.js';
 import { clearLiveBotGame, loadLiveBotGame, resumableSummary } from '../chess/liveBotGames.js';
@@ -184,6 +185,8 @@ router.get('/:id', (c) => {
     analysis: stale ? null : analysis,
     analysis_stale: stale,
     analyzing: isAnalyzing(id),
+    // What "Run engine analysis" will use unless the user picks another depth.
+    default_depth: analysisDepth(),
   });
 });
 
