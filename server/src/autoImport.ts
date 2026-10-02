@@ -1,38 +1,47 @@
-// Automatic Chess.com import. On a schedule, Patzer pulls each profile's recent
-// Chess.com games, dedupes them into `games`, then analyzes and reviews the new
-// ones in the background — so a game you finish on Chess.com shows up here
-// (with its review) without a manual Import click. Only profiles with a
-// `chesscom_username` set are synced; that username is the on/off switch.
+// Automatic Chess.com + Lichess import. On a schedule, Patzer pulls each
+// profile's recent games from both sites, dedupes them into `games`, then
+// analyzes and reviews the new ones in the background — so a game you finish
+// on Chess.com or Lichess shows up here (with its review) without a manual
+// Import click.
+//
+// Each profile controls its own cadence per site: `chesscom_sync_minutes` /
+// `lichess_sync_minutes` are the per-user intervals (0 = off) and the
+// `*_last_synced_at` columns record the last run. A single one-minute ticker
+// checks which profiles are due and syncs only those, so users can set
+// 5-minute or 60-minute cadences independently. Having a `chesscom_username`
+// or `lichess_username` set remains the on/off switch for each site.
 
 import { db } from './db.js';
 import { importChessComGames } from './chess/chesscomImport.js';
-import { analyzePgn, saveAnalysis } from './routes/analyze.js';
+import { importLichessGames } from './chess/lichessImport.js';
+import { analyzePgn, saveAnalysis, trackAnalysis } from './routes/analyze.js';
 import { kickAutoReview } from './autoReview.js';
+import { analysisDepth } from './chess/engine.js';
 
-// Poll interval in minutes; 0 disables the timer (a one-off sync still runs on
-// boot so a restart always catches up).
-const SYNC_MINUTES = Number(process.env.CHESSCOM_SYNC_MINUTES ?? 15);
-const IMPORT_LIMIT = 20; // most recent games fetched per user per tick
+// How often the ticker wakes up to check for due profiles. This is NOT the
+// per-user interval — it's the granularity at which we look.
+const TICK_MINUTES = 1;
+const IMPORT_LIMIT = 20; // most recent games fetched per user per site per tick
 const MAX_ANALYZE_PER_RUN = 3; // bound chess-api.com load per tick
 
 let running = false;
 
 export function startChessComSync(): void {
-  // First catch-up shortly after boot, then on the interval.
+  // First catch-up shortly after boot, then a tick every minute.
   setTimeout(() => void syncOnce(), 15_000);
-  if (SYNC_MINUTES > 0) setInterval(() => void syncOnce(), SYNC_MINUTES * 60_000);
+  setInterval(() => void syncOnce(), TICK_MINUTES * 60_000);
 }
 
-/** One full sync pass: import → analyze new games → review. Exported so a
- *  manual "Import" can kick it immediately and for tests. */
+/** One full sync pass: import due profiles → analyze new games → review.
+ *  Exported for tests and for the boot catch-up. */
 export async function syncOnce(): Promise<void> {
   if (running) return;
   running = true;
   try {
-    await importAll();
+    await importDue();
     await analyzePending();
   } catch (err) {
-    console.error('[chesscom-sync]', err);
+    console.error('[auto-import]', err);
   } finally {
     running = false;
   }
@@ -47,40 +56,84 @@ export async function syncOnce(): Promise<void> {
   }
 }
 
-async function importAll(): Promise<void> {
-  const profiles = db.prepare(`
-    SELECT user_id, chesscom_username FROM profiles
-    WHERE chesscom_username IS NOT NULL AND TRIM(chesscom_username) != ''
-  `).all() as { user_id: number; chesscom_username: string }[];
+async function importDue(): Promise<void> {
+  await importDueSite('chesscom');
+  await importDueSite('lichess');
+}
 
+type SyncProfile = {
+  user_id: number;
+  username: string;
+  sync_minutes: number;
+  last_synced_at: string | null;
+};
+
+async function importDueSite(site: 'chesscom' | 'lichess'): Promise<void> {
+  const usernameCol = site === 'chesscom' ? 'chesscom_username' : 'lichess_username';
+  const minutesCol = site === 'chesscom' ? 'chesscom_sync_minutes' : 'lichess_sync_minutes';
+  const lastCol = site === 'chesscom' ? 'chesscom_last_synced_at' : 'lichess_last_synced_at';
+
+  const profiles = db.prepare(`
+    SELECT user_id, ${usernameCol} AS username, ${minutesCol} AS sync_minutes, ${lastCol} AS last_synced_at
+    FROM profiles
+    WHERE ${usernameCol} IS NOT NULL AND TRIM(${usernameCol}) != ''
+  `).all() as SyncProfile[];
+
+  const now = Date.now();
   for (const p of profiles) {
-    try {
-      const r = await importChessComGames(p.user_id, p.chesscom_username.trim(), IMPORT_LIMIT);
-      if (r.imported > 0) console.log(`[chesscom-sync] user ${p.user_id}: imported ${r.imported} of ${r.total} recent games`);
-    } catch (err) {
-      // One bad username / a chess.com hiccup must not sink the sweep.
-      console.warn(`[chesscom-sync] user ${p.user_id} (${p.chesscom_username}):`, err instanceof Error ? err.message : err);
+    const minutes = Number(p.sync_minutes);
+    if (!(minutes > 0)) continue; // 0 = auto-sync off (manual Import still works)
+    if (p.last_synced_at) {
+      const last = Date.parse(p.last_synced_at);
+      if (Number.isFinite(last) && now - last < minutes * 60_000) continue; // not due yet
     }
+    try {
+      const r = site === 'chesscom'
+        ? await importChessComGames(p.user_id, p.username.trim(), IMPORT_LIMIT)
+        : await importLichessGames(p.user_id, p.username.trim(), IMPORT_LIMIT);
+      if (r.imported > 0) console.log(`[${site}-sync] user ${p.user_id}: imported ${r.imported} of ${r.total} recent games`);
+    } catch (err) {
+      // One bad username / a site hiccup must not sink the sweep. We still
+      // stamp last_synced_at below so a persistently-broken username is retried
+      // at most once per interval, not every minute.
+      console.warn(`[${site}-sync] user ${p.user_id} (${p.username}):`, err instanceof Error ? err.message : err);
+    }
+    db.prepare(`UPDATE profiles SET ${lastCol} = ? WHERE user_id = ?`)
+      .run(new Date().toISOString(), p.user_id);
   }
 }
 
-async function analyzePending(): Promise<void> {
-  const rows = db.prepare(`
-    SELECT g.id, g.pgn
-    FROM games g
-    LEFT JOIN analyses a ON a.game_id = g.id
-    WHERE g.source = 'chesscom' AND a.game_id IS NULL
-    ORDER BY g.id DESC
+/** Games the background sync analyses next: only each user's IMPORT_LIMIT
+ *  most recent games per site — the ones this sync keeps up to date. A
+ *  whole-history import from the Game Review page can add thousands of older
+ *  games; analysing every one of them in the background (and, with
+ *  auto-review on, asking the LLM to review each) would keep the box busy for
+ *  days. Those are analysed when opened. Exported for tests. */
+export function pendingAnalysis(max: number): { id: number; pgn: string }[] {
+  return db.prepare(`
+    SELECT r.id, r.pgn
+    FROM (
+      SELECT g.id, g.pgn, g.end_time,
+             ROW_NUMBER() OVER (PARTITION BY g.user_id, g.source ORDER BY g.end_time DESC, g.id DESC) AS rn
+      FROM games g
+      WHERE g.source IN ('chesscom', 'lichess')
+    ) r
+    LEFT JOIN analyses a ON a.game_id = r.id
+    WHERE r.rn <= ? AND a.game_id IS NULL
+    ORDER BY r.end_time DESC, r.id DESC
     LIMIT ?
-  `).all(MAX_ANALYZE_PER_RUN) as { id: number; pgn: string }[];
+  `).all(IMPORT_LIMIT, max) as { id: number; pgn: string }[];
+}
 
+async function analyzePending(): Promise<void> {
+  const rows = pendingAnalysis(MAX_ANALYZE_PER_RUN);
   for (const row of rows) {
     try {
-      const analysis = await analyzePgn(row.pgn, 14);
+      const analysis = await trackAnalysis(row.id, () => analyzePgn(row.pgn, analysisDepth(14)));
       saveAnalysis(row.id, analysis);
-      console.log(`[chesscom-sync] analyzed game ${row.id}`);
+      console.log(`[auto-import] analyzed game ${row.id}`);
     } catch (err) {
-      console.warn(`[chesscom-sync] analyze game ${row.id}:`, err instanceof Error ? err.message : err);
+      console.warn(`[auto-import] analyze game ${row.id}:`, err instanceof Error ? err.message : err);
     }
   }
 }

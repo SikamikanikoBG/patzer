@@ -1,5 +1,5 @@
 export type Role = 'admin' | 'user';
-export type Language = 'en' | 'bg' | 'es' | 'de' | 'ru';
+export type Language = 'en' | 'bg' | 'es' | 'de' | 'ru' | 'fa';
 export type Audience = 'kid' | 'beginner' | 'intermediate' | 'advanced';
 export type CoachBehavior = 'silent' | 'on_demand' | 'always_on_pedagogical';
 export type Difficulty = 'kid' | 'beginner' | 'easy' | 'medium' | 'hard' | 'master' | 'stockfish';
@@ -28,6 +28,11 @@ export interface Profile {
   tts_pitch: number;
   board_theme: string;
   piece_set: string;
+  auto_review: number;
+  chesscom_sync_minutes: number;
+  chesscom_last_synced_at: string | null;
+  lichess_sync_minutes: number;
+  lichess_last_synced_at: string | null;
 }
 
 export interface AuthedUser extends User {

@@ -480,11 +480,11 @@ function OpeningRepertoireCard({ data }: { data: OpeningRow[] }) {
       <table className="w-full min-w-[28rem] text-xs">
         <thead className="bg-chesscom-50/50 text-[11px] uppercase tracking-wide text-chesscom-500 dark:bg-chesscom-900/40">
           <tr>
-            <th className="px-3 py-1.5 text-left">{t('insights.opening', { defaultValue: 'Opening' })}</th>
+            <th className="px-3 py-1.5 text-start">{t('insights.opening', { defaultValue: 'Opening' })}</th>
             <th className="whitespace-nowrap px-2 py-1.5 text-center" title={t('insights.sideTitle')}><span className="sr-only">{t('insights.side')}</span>♔/♚</th>
-            <th className="whitespace-nowrap px-2 py-1.5 text-right">{t('insights.played', { defaultValue: 'Games' })}</th>
-            <th className="whitespace-nowrap px-2 py-1.5 text-right">{t('insights.score', { defaultValue: 'Score' })}</th>
-            <th className="whitespace-nowrap px-2 py-1.5 text-right">{t('insights.acc', { defaultValue: 'Acc' })}</th>
+            <th className="whitespace-nowrap px-2 py-1.5 text-end">{t('insights.played', { defaultValue: 'Games' })}</th>
+            <th className="whitespace-nowrap px-2 py-1.5 text-end">{t('insights.score', { defaultValue: 'Score' })}</th>
+            <th className="whitespace-nowrap px-2 py-1.5 text-end">{t('insights.acc', { defaultValue: 'Acc' })}</th>
           </tr>
         </thead>
         <tbody>
@@ -501,12 +501,12 @@ function OpeningRepertoireCard({ data }: { data: OpeningRow[] }) {
                   </div>
                 </td>
                 <td className="px-2 py-1.5 text-center">{o.color === 'white' ? '♔' : '♚'}</td>
-                <td className="px-2 py-1.5 text-right font-mono tabular-nums">{o.played}</td>
-                <td className="px-2 py-1.5 text-right">
+                <td className="px-2 py-1.5 text-end font-mono tabular-nums">{o.played}</td>
+                <td className="px-2 py-1.5 text-end">
                   <span className={`font-mono tabular-nums ${tone}`}>{(score * 100).toFixed(0)}%</span>
-                  <span className="ml-1 text-[11px] text-chesscom-400">{o.wins}/{o.draws}/{o.losses}</span>
+                  <span className="ms-1 text-[11px] text-chesscom-400">{o.wins}/{o.draws}/{o.losses}</span>
                 </td>
-                <td className="whitespace-nowrap px-2 py-1.5 text-right font-mono tabular-nums">{o.avg_accuracy != null ? `${o.avg_accuracy.toFixed(1)}` : '—'}</td>
+                <td className="whitespace-nowrap px-2 py-1.5 text-end font-mono tabular-nums">{o.avg_accuracy != null ? `${o.avg_accuracy.toFixed(1)}` : '—'}</td>
               </tr>
             );
           })}

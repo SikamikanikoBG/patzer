@@ -26,6 +26,39 @@ body {
   color: #f1f1f0;
 }
 
+/* Farsi. Vazirmatn is a modern Persian sans-serif (SIL OFL 1.1). It ships
+   inside the app — the CSP allows fonts from 'self' only, and a household
+   server may have no internet anyway. One variable file covers weights
+   100–900. The browser only downloads it when a Farsi page uses it. */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('./assets/fonts/Vazirmatn-wght.woff2') format('woff2-variations'),
+       url('./assets/fonts/Vazirmatn-wght.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+/* The script also wants a little more line height. */
+html:lang(fa) body {
+  font-family: 'Vazirmatn', Tahoma, system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+/* Right to left. The page flips via logical utilities (ms-, ps-, start-,
+   text-start…); these cover what utilities can't. */
+/* Chess text — moves, scores, counts — reads left to right inside Farsi
+   sentences: without this, "Nf3+" shows as "+Nf3". */
+[dir='rtl'] .font-mono {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+/* "Next" / "open" arrows point the way the page reads — except inside the
+   board and move controls, which stay left to right (dir="ltr"). */
+/* `scale`, not `transform`, so it composes with Tailwind's translate utilities. */
+[dir='rtl'] :is(.lucide-arrow-right, .lucide-arrow-left, .lucide-chevron-right, .lucide-chevron-left):not([dir='ltr'] *) {
+  scale: -1 1;
+}
+
 /* Polished chessground tweaks */
 cg-board {
   border-radius: 6px;

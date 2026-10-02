@@ -240,7 +240,7 @@ describe('contradiction — the guard', () => {
     // answer quoting the verdict used to be rejected as praise.
     const { verdictPhrase } = await import('../src/coach/locales.js');
     const classes = ['brilliant', 'great', 'best', 'excellent', 'good', 'book', 'forced', 'inaccuracy', 'mistake', 'blunder', 'miss'] as const;
-    for (const lang of ['en', 'bg', 'es', 'de', 'ru'] as const) {
+    for (const lang of ['en', 'bg', 'es', 'de', 'ru', 'fa'] as const) {
       for (const cls of classes) {
         const v = verdictPhrase(cls, lang);
         expect(coaching.contradiction(`${v.charAt(0).toUpperCase()}${v.slice(1)}.`, cls, lang), `${lang} ${cls}`).toBeNull();

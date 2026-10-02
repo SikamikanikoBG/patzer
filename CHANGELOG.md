@@ -4,6 +4,73 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Import your whole history, or any PGN
+
+- **New: import every game from Chess.com or Lichess, not just the last 20.**
+  A picker next to the Import buttons on Game Review chooses the last 20,
+  100 or 500 games, or all of them (the default). Games already here are
+  skipped, so importing again is safe. One import per account runs at a
+  time. Background analysis still covers only each account's 20 most recent
+  games per site; older games are analysed when you open them, so a
+  5,000-game import doesn't tie up Stockfish and the LLM for days.
+- **New: Import PGN**, like lichess.org/paste. Paste a game or upload a
+  `.pgn` file (up to 10 MB, one game or many). A single game opens straight
+  in the analyzer. Your side is found from your Patzer, Chess.com and
+  Lichess names. Importing the same game twice adds no copy. Variants and
+  games from a set-up position are skipped, because the analyzer only
+  reviews standard chess from the initial position.
+- **Game Review lists every game.** The list loads 100 at a time with a
+  *Load more* button, and the count shows all matching games.
+- **Fixed:** a Chess.com outage during Import now shows an error message
+  instead of failing with a server error.
+
+### Persian (Farsi)
+
+- **New language: Persian (فارسی).** Everything is translated: the whole
+  interface, every Learn lesson, and the AI coach — its persona, rules,
+  move descriptions ("اسب سرباز را در e5 می‌گیرد"), verdicts, hints and the
+  written Game Review. The coach's check against praising a mistake knows
+  Farsi too, whether words are joined with a zero-width non-joiner or a space.
+- **Right-to-left layout.** Choosing Farsi flips the page. The board, the
+  eval bar and graph, the move list and the move buttons stay left to right,
+  since files a–h always run that way, and chess text such as "Nf3+" or a
+  score stays readable inside Farsi sentences.
+- **Vazirmatn font for Farsi.** A modern Persian sans-serif (SIL OFL 1.1),
+  bundled with the app rather than fetched from the web, since Patzer's
+  content policy only allows its own fonts and a home server may be offline.
+  It is only downloaded when the page is in Farsi.
+
+### Filter the game list
+
+- **New: filters on Game Review** for period (last 7 / 30 / 90 / 365 days),
+  site (Chess.com, Lichess, bot, PvP, PGN), result (wins, losses, draws),
+  your colour and time control. They combine with search and *Starred only*,
+  the game count follows them, and they live in the URL, so a filtered view
+  survives a reload and can be bookmarked.
+
+### Puzzles from the Lichess database
+
+- **New: Puzzles page** with the Lichess puzzle database (CC0, ~5 million
+  puzzles). Pick a theme from the groups Lichess uses on
+  lichess.org/training/themes (phases, motifs, advanced, mates, special
+  moves, goals, lengths, origin) and one of five difficulties relative to
+  your puzzle rating. The rating starts at 1500 and moves with the first
+  try at each puzzle; retries and a peek at the solution don't win points.
+  Like on Lichess, any mating move counts even if the solution has another.
+- **Two sources.** *Online* samples random pages of the
+  `Lichess/chess-puzzles` dataset on Hugging Face and filters them by theme
+  and rating in Patzer, keeping a pool in memory, so nothing is downloaded
+  or stored. (Hugging Face's DuckDB filter endpoint can't filter the
+  `Themes` list and times out on this dataset, so it isn't used.) Rare
+  themes can take a couple of tries. *On this server*: an
+  admin downloads `lichess_db_puzzle.csv.zst` (~300 MB) once and Patzer
+  imports it into `data/puzzles.db` (~1 GB), separate from `chess.db` so
+  backups stay small. It then works offline. Unpacking uses Node's built-in
+  zstd (22.15+) or the `zstd` tool, which the Docker image now includes.
+- Train keeps the puzzles from your own games.
+
 ## [7.17.1] — 2026-09-27
 
 ### Finished games no longer hang on "Saving game…"

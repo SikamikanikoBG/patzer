@@ -161,7 +161,7 @@ function Overview({ cur, progress, totalStars, onOpenLesson, onOpenCourse }: {
               >
                 <Play className="h-4 w-4 fill-current" />
                 {nextRow && nextRow.step > 0 ? t('learn.resumeLesson') : done ? t('learn.nextUp') : t('learn.startHere')}: {tl(`${next.lesson.id}.title`)}
-                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5" />
               </button>
             )}
             {!next && (
@@ -185,7 +185,7 @@ function Overview({ cur, progress, totalStars, onOpenLesson, onOpenCourse }: {
                 <div className="text-xs uppercase tracking-[0.16em] text-white/55">{t('learn.yourLevel')}</div>
                 <div className="text-xl font-bold">{t('learn.level', { n: lvl.level })}</div>
               </div>
-              <div className="text-right">
+              <div className="text-end">
                 <div className="flex items-center justify-end gap-1 font-mono text-xl font-semibold tabular-nums">
                   <Star className="h-4 w-4 fill-gold-500 text-gold-300" /> {totalStars}
                 </div>
@@ -245,7 +245,7 @@ function LevelSection({ level, index, progress, onOpenCourse }: {
           const s = courseStats(course, progress);
           const complete = s.done === s.total;
           return (
-            <button key={course.id} onClick={() => onOpenCourse(course.id)} className="card-hover flex flex-col p-4 text-left">
+            <button key={course.id} onClick={() => onOpenCourse(course.id)} className="card-hover flex flex-col p-4 text-start">
               <div className="flex items-start gap-3">
                 <LessonIcon icon={course.icon} level={level.id} done={complete} />
                 <div className="min-w-0 flex-1">
@@ -340,14 +340,14 @@ function CourseView({ course, level, cur, progress, onOpen, onBack }: {
               <button
                 onClick={() => onOpen(lesson.id)}
                 className={cn(
-                  'card-hover flex w-full items-center gap-3 p-3 text-left sm:p-4',
+                  'card-hover flex w-full items-center gap-3 p-3 text-start sm:p-4',
                   isNext && 'ring-2 ring-gold-500/70',
                 )}
               >
                 <div className="relative">
                   <LessonIcon icon={lesson.icon} level={level.id} done={complete} />
                   {complete && (
-                    <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-white ring-2 ring-white dark:ring-chesscom-800">
+                    <span className="absolute -bottom-1 -end-1 flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-white ring-2 ring-white dark:ring-chesscom-800">
                       <Check className="h-3 w-3" />
                     </span>
                   )}

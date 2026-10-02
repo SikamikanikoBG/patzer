@@ -41,6 +41,7 @@ export default function MoveList({ moves, current, onSelect, phaseSplit, maxHeig
     <div
       className="overflow-auto rounded-md border border-chesscom-200 bg-white dark:border-chesscom-700 dark:bg-chesscom-800/60"
       style={{ maxHeight }}
+      dir="ltr"
     >
       <div className="sticky top-0 z-10 grid grid-cols-[2.25rem_1fr_1fr] border-b border-chesscom-200 bg-chesscom-50 px-0 py-1 text-[11px] font-semibold uppercase tracking-wide text-chesscom-500 dark:border-chesscom-700 dark:bg-chesscom-900 dark:text-chesscom-300">
         <div />

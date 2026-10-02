@@ -320,6 +320,46 @@ const PHRASES: Record<Language, Phrases> = {
       topIdea: (r) => `Что даёт лучший ход по мнению движка: ${r}.`,
     },
   },
+  fa: {
+    on: "در",
+    allowsMate: (m) => `این حرکت به حریف اجازه می‌دهد فوراً مات کند: ${m}.`,
+    hangs: (p) => `بعد از این حرکت بی‌دفاع ماند: ${p}. حریف می‌تواند مهره ببرد.`,
+    opponentReply: (m) => `بهترین پاسخ حریف: ${m}.`,
+    reasons: {
+      mate: "این مات است", stopsMate: "تهدید مات را دفع می‌کند", threatensMate: "تهدید به مات می‌کند",
+      check: "کیش می‌دهد", castles: "شاه را به جای امن می‌برد", develops: "یک مهره را گسترش می‌دهد",
+      wins: (p) => `مهره می‌برد (${p})`, fork: (ps) => `هم‌زمان به دو مهره حمله می‌کند (${ps})`,
+      saves: (p) => `مهرهٔ در خطر را نجات می‌دهد (${p})`, threatens: (p) => `به مهره‌ای که خوب دفاع نشده حمله می‌کند (${p})`,
+    },
+    quiet: "حرکتی آرام که موقعیت را بهتر می‌کند",
+    takeaway: {
+      allowed_mate: "قبل از هر حرکت، همهٔ کیش‌هایی را که حریف بعد از آن می‌تواند بدهد بررسی کن، مخصوصاً روی خانه‌های اطراف شاهت.",
+      hung_piece: "قبل از اینکه مهره را رها کنی، از خودت بپرس: بعد از این حرکت حریف چه چیزی را می‌تواند بگیرد و آیا از آن دفاع شده؟",
+      missed_mate: "وقتی شاه حریف خانهٔ کمی دارد، اول همهٔ کیش‌ها را بررسی کن: شاید مات باشد.",
+      missed_win: "وقتی در حال بردن هستی، اول دنبال حرکت اجباری بگرد: کیش، گرفتن، تهدید.",
+      missed_tactic: "دنبال مهره‌هایی بگرد که بی‌دفاع‌اند یا می‌شود هم‌زمان دو بار به آن‌ها حمله کرد. تاکتیک همان‌جا پنهان است.",
+      positional: "حرکتت را با حرکت بهتر مقایسه کن: هر کدام برای مهره‌ها و شاهت چه می‌کند؟",
+    },
+    kind: {
+      allowed_mate: "اجازه دادن به مات سریع", hung_piece: "بی‌دفاع گذاشتن مهره", missed_mate: "از دست دادن مات",
+      missed_win: "از دست دادن برد", missed_tactic: "ندیدن تاکتیک",
+    },
+    pattern: (n, t, l) => `الگویی از بازی‌های اخیرت (${n} از ${t} بازی آخر): ${l}.`,
+    weakPhase: (w, wa, b, ba) => `ضعیف‌ترین مرحلهٔ بازی‌ات در این اواخر: ${w}، با دقت ${wa}% (${b}: ${ba}%).`,
+    phase: { opening: "گشایش", middlegame: "وسط بازی", endgame: "آخر بازی" },
+    greatFinds: (n) => `در بازی‌های اخیرت ${n} حرکت عالی یا درخشان داشته‌ای.`,
+    trainer: (n, m) => `همین موقعیت در تمرین‌دهندهٔ گشایش تو هست (${n} بار اشتباه)؛ حرکت درست آنجا ${m} است.`,
+    hint: {
+      mateAvailable: "در این موقعیت برای تو یک مات وجود دارد.",
+      mateThreat: "حریف تهدید می‌کند در حرکت بعد مات کند.",
+      inCheck: "شاه تو کیش است.",
+      ourHanging: (ps) => `زیر حمله و ناامن: ${ps}.`,
+      theirHanging: (ps) => `حریف مهره‌ای دارد که خوب دفاع نشده: ${ps}.`,
+      undeveloped: (ps) => `هنوز در خانهٔ اول: ${ps}. اول گسترش مهره‌ها.`,
+      notCastled: "شاه تو هنوز قلعه نرفته است.",
+      topIdea: (r) => `کاری که بهترین حرکت موتور انجام می‌دهد: ${r}.`,
+    },
+  },
 };
 
 export const phrases = (lang: Language): Phrases => PHRASES[lang] ?? PHRASES.en;
@@ -586,6 +626,9 @@ const PRAISE: Record<Language, RegExp> = {
   es: /(gran jugada|genial|excelente|brillante|bien jugad|buena jugada|jugada fuerte|sólid|perfect|estupend|bien hecho)/i,
   de: /(großartig|ausgezeichnet|brillant|gut gespielt|guter zug|starker zug|solide|perfekt|klasse zug|stark gespielt|gut gemacht|schöner zug)/i,
   ru: /(отличн|блестящ|прекрасн|молодец|хороший ход|(?<!более )сильный ход|здорово|великолепн|солидн|хорошо сыграно)/i,
+  // Farsi words are glued with a zero-width non-joiner or a plain space
+  // depending on the writer, so compound words accept either.
+  fa: /(عالی|درخشان|آفرین|حرکت خوب|حرکت قوی|خوب بازی کرد|فوق[‌ ]?العاده|بی[‌ ]?نقص|هوشمندانه|محکم|کارت خوب بود|بسیار خوب|زیبا بود)/,
 };
 const BLAME: Record<Language, RegExp> = {
   en: /\b(blunder|mistake|inaccura)/i,
@@ -593,6 +636,7 @@ const BLAME: Record<Language, RegExp> = {
   es: /(error|imprecisi|fallo grave)/i,
   de: /(fehler|ungenauigkeit)/i,
   ru: /(ошибк|зевок|неточност)/i,
+  fa: /(اشتباه|بی[‌ ]?دقتی|خطا)/,
 };
 
 const firstSentence = (t: string) => t.trim().split(/(?<=[.!?…])\s/)[0] ?? t;
@@ -624,5 +668,5 @@ export function fallbackText(c: ExplainCoaching["facts"], lang: Language): strin
 }
 
 function betterWord(lang: Language): string {
-  return { en: "Better:", bg: "По-добре:", es: "Mejor:", de: "Besser:", ru: "Лучше:" }[lang] ?? "Better:";
+  return { en: "Better:", bg: "По-добре:", es: "Mejor:", de: "Besser:", ru: "Лучше:", fa: "بهتر:" }[lang] ?? "Better:";
 }

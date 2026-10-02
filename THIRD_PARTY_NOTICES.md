@@ -45,3 +45,7 @@ The tactic, mate and endgame tasks of the Learn section (`web/src/learn/content/
 | `i18next`, `react-i18next` | MIT |
 
 Run `npm ls --all --json` and a license auditor (e.g. `license-checker`) for the full transitive list of any release.
+
+## Vazirmatn font (SIL OFL 1.1)
+
+`web/src/assets/fonts/Vazirmatn-wght.woff2` is the variable webfont of [Vazirmatn](https://github.com/rastikerdar/vazirmatn), Copyright 2015 The Vazirmatn Project Authors, licensed under the [SIL Open Font License 1.1](https://openfontlicense.org). It is used for the Persian (Farsi) interface. The full license text is next to the font in `web/src/assets/fonts/Vazirmatn-OFL.txt`; the font is bundled unmodified.

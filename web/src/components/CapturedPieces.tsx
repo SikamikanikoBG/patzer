@@ -60,11 +60,11 @@ export default function CapturedPieces({ fen, side, size = 'sm' }: Props) {
     <div className="flex items-center gap-1 overflow-hidden">
       <div className={`flex flex-wrap gap-0 leading-none ${sizeCls}`}>
         {captured.map((p, i) => (
-          <span key={i} className="-ml-1 first:ml-0">{p.sym}</span>
+          <span key={i} className="-ms-1 first:ms-0">{p.sym}</span>
         ))}
       </div>
       {mat > 0 && (
-        <span className="ml-1 rounded bg-accent-500/15 px-1.5 py-0.5 text-[11px] font-mono font-bold text-accent-700 dark:text-accent-300">
+        <span className="ms-1 rounded bg-accent-500/15 px-1.5 py-0.5 text-[11px] font-mono font-bold text-accent-700 dark:text-accent-300">
           +{mat}
         </span>
       )}

@@ -125,7 +125,7 @@ function CoachBubble({ text, tone, note, onSpeak }: { text: string; tone: Tone; 
           </p>
           <button
             onClick={onSpeak}
-            className="-mr-1 -mt-1 shrink-0 rounded-md p-1.5 text-chesscom-400 hover:bg-chesscom-100 hover:text-chesscom-700 dark:hover:bg-chesscom-700 dark:hover:text-chesscom-200"
+            className="-me-1 -mt-1 shrink-0 rounded-md p-1.5 text-chesscom-400 hover:bg-chesscom-100 hover:text-chesscom-700 dark:hover:bg-chesscom-700 dark:hover:text-chesscom-200"
             title={t('learn.readAloud')}
             aria-label={t('learn.readAloud')}
           >
@@ -1050,7 +1050,7 @@ function QuizView({ step, lessonId, onSolved }: StepProps<QuizStep>) {
                 transition={{ duration: 0.3 }}
                 disabled={right || isWrong}
                 className={cn(
-                  'flex items-center gap-2 rounded-lg border px-3.5 py-3 text-left text-sm font-medium transition-colors',
+                  'flex items-center gap-2 rounded-lg border px-3.5 py-3 text-start text-sm font-medium transition-colors',
                   isRight ? 'border-green-400 bg-green-50 text-green-700 dark:bg-green-500/15 dark:text-green-300'
                     : isWrong ? 'border-move-mistake/60 bg-move-mistake/5 text-chesscom-400 line-through'
                       : 'border-chesscom-200 bg-white hover:border-gold-500 hover:bg-gold-50 dark:border-chesscom-700 dark:bg-chesscom-800 dark:hover:bg-chesscom-700',

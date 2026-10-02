@@ -10,14 +10,14 @@ export interface ClassificationStyle {
   textClass: string;   // Tailwind text color when bg is muted
   hex: string;         // Hex value (must match Tailwind value above)
   glyph: GlyphKind;    // SVG pictogram (24x24, currentColor)
-  labelKey: Classification;
+  labelKey: Classification | 'checkmate';
   order: number;       // Display order in stat panels (chess.com order)
 }
 
 export type GlyphKind =
   | 'check' | 'doubleCheck' | 'star' | 'dot' | 'book'
   | 'questionMark' | 'doubleQuestion' | 'inaccuracy' | 'cross'
-  | 'lightning' | 'lock';
+  | 'lightning' | 'lock' | 'mate';
 
 export const CLASS_STYLE: Record<Classification, ClassificationStyle> = {
   brilliant:  { bgClass: 'bg-move-brilliant',  textClass: 'text-move-brilliant',  hex: '#1baca6', glyph: 'lightning',      labelKey: 'brilliant',  order: 0 },
@@ -44,10 +44,22 @@ export const GLYPH_SVG: Record<GlyphKind, ReactNode> = {
   inaccuracy:     <text x="12" y="18" textAnchor="middle" fontSize="14" fontWeight="900" fill="currentColor" fontFamily="Inter,system-ui,sans-serif">?!</text>,
   cross:          <g fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M6 6 L18 18"/><path d="M18 6 L6 18"/></g>,
   lightning:      <path d="M13 2 L4 14 H11 L9 22 L20 9 H12 Z" fill="currentColor" />,
+  mate:           <text x="12" y="18.5" textAnchor="middle" fontSize="18" fontWeight="900" fill="currentColor" fontFamily="Inter,system-ui,sans-serif">#</text>,
   lock:           <path d="M8 11 V8 a4 4 0 1 1 8 0 V11 H17 a1 1 0 0 1 1 1 v8 a1 1 0 0 1-1 1 H7 a1 1 0 0 1-1-1 v-8 a1 1 0 0 1 1-1 Z M10 11 H14 V8 a2 2 0 1 0-4 0 Z" fill="currentColor"/>,
 };
 
 export function styleFor(c: string | undefined | null): ClassificationStyle | null {
   if (!c) return null;
   return (CLASS_STYLE as Record<string, ClassificationStyle>)[c] ?? null;
+}
+
+// The move that delivers mate shows "#" instead of its classification glyph.
+// It is display-only: the move keeps its classification in the counts.
+export const MATE_STYLE: ClassificationStyle = {
+  bgClass: 'bg-[#7c5cbf]', textClass: 'text-[#7c5cbf]', hex: '#7c5cbf', glyph: 'mate', labelKey: 'checkmate', order: -1,
+};
+
+export function displayStyleFor(c: string | undefined | null, san: string | undefined | null): ClassificationStyle | null {
+  if (san?.endsWith('#')) return MATE_STYLE;
+  return styleFor(c);
 }

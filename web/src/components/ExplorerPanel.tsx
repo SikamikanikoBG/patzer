@@ -74,7 +74,7 @@ export default function ExplorerPanel({ fen, onPreview }: { fen: string; onPrevi
         </span>
         <button
           onClick={() => setEnabled((s) => !s)}
-          className={`btn-ghost ml-auto px-2 py-1 text-xs ${enabled ? 'text-board-dark' : ''}`}
+          className={`btn-ghost ms-auto px-2 py-1 text-xs ${enabled ? 'text-board-dark' : ''}`}
         >
           {enabled ? t('review.linesHide', { defaultValue: 'Hide' }) : t('explorer.show', { defaultValue: 'Show master stats' })}
         </button>
@@ -121,7 +121,7 @@ export default function ExplorerPanel({ fen, onPreview }: { fen: string; onPrevi
                       <span className="w-12 shrink-0 font-mono font-semibold text-chesscom-900 dark:text-chesscom-100">{m.san}</span>
                       <span className="w-14 shrink-0 tabular-nums text-chesscom-500">{pct(n, total)}% · {n.toLocaleString()}</span>
                       <div className="min-w-0 flex-1"><WdlBar white={m.white} draws={m.draws} black={m.black} /></div>
-                      {m.averageRating != null && <span className="w-9 shrink-0 text-right tabular-nums text-chesscom-400">{m.averageRating}</span>}
+                      {m.averageRating != null && <span className="w-9 shrink-0 text-end tabular-nums text-chesscom-400">{m.averageRating}</span>}
                     </div>
                   );
                 })}

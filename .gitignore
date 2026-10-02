@@ -29,6 +29,7 @@ npm-debug.log*
 .vscode/
 .idea/
 .claude/
+ai.md
 .DS_Store
 Thumbs.db
 

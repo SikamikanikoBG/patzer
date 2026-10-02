@@ -141,7 +141,7 @@ export default function ThreatPanel({ fen, currentCpWhite }: { fen: string; curr
         </span>
         <button
           onClick={() => setEnabled((s) => !s)}
-          className={`btn-ghost ml-auto px-2 py-1 text-xs ${enabled ? 'text-board-dark' : ''}`}
+          className={`btn-ghost ms-auto px-2 py-1 text-xs ${enabled ? 'text-board-dark' : ''}`}
         >
           {enabled ? t('review.linesHide', { defaultValue: 'Hide' }) : t('threat.show', { defaultValue: 'Show threat' })}
         </button>

@@ -11,7 +11,7 @@ interface Props {
   onClick?: (ply: number) => void;
   /** Plies where blunders/mistakes/inaccuracies happened, drawn as colored dots. */
   markers?: Mistake[];
-  /** Pixel height; defaults to 96 (chess.com Game Review). */
+  /** Pixel height; defaults to 128. */
   height?: number;
 }
 
@@ -40,9 +40,9 @@ function fmtCp(cp: number | null): string {
 
 // Hand-rolled SVG eval graph — chess.com-style horizontal area chart. White's
 // win-share is filled from the top, black's from the bottom, midline at 0.0.
-// Mistake/blunder/brilliancy markers are circles colored by class. Hovering
+// Mistake/blunder/brilliancy markers are dots colored by class. Hovering
 // shows a vertical hairline + chip with the ply's cp value.
-export default function EvalGraph({ evals, current, onClick, markers = [], height = 96 }: Props) {
+export default function EvalGraph({ evals, current, onClick, markers = [], height = 128 }: Props) {
   const { t } = useTranslation();
   const [hoverPly, setHoverPly] = useState<number | null>(null);
   const points = useMemo(() => {
@@ -76,11 +76,11 @@ export default function EvalGraph({ evals, current, onClick, markers = [], heigh
   const hoverCp = hoverPoint?.cp ?? null;
 
   return (
-    <div className="relative w-full" style={{ height }}>
+    <div className="relative w-full" style={{ height }} dir="ltr">
       <svg
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
-        className="block h-full w-full cursor-crosshair"
+        className="block h-full w-full cursor-crosshair rounded-md"
         onMouseMove={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           setHoverPly(pickPly(e.clientX, rect));
@@ -97,46 +97,46 @@ export default function EvalGraph({ evals, current, onClick, markers = [], heigh
         {/* Black's territory */}
         <path d={blackArea} className="fill-chesscom-900 opacity-95" />
         {/* Midline */}
-        <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(100,116,139,0.40)" strokeWidth="0.4" strokeDasharray="1.5 1.5" />
+        <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(100,116,139,0.40)" strokeWidth="1" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
         {/* Eval line — chesscom-400 reads on both halves */}
-        <path d={linePath} fill="none" stroke="#7d7670" strokeWidth="0.7" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-        {/* Mistake / blunder / brilliancy markers */}
-        {markers.map((m) => {
-          const idx = m.ply - 1;
-          const p = points[idx];
-          if (!p) return null;
-          const s = styleFor(m.classification);
-          if (!s) return null;
-          const radius = m.classification === 'brilliant' ? 2.6 : 2.0;
-          return (
-            <circle
-              key={m.ply}
-              cx={p.x}
-              cy={p.y}
-              r={radius}
-              fill={s.hex}
-              stroke="#fff"
-              strokeWidth="0.5"
-              vectorEffect="non-scaling-stroke"
-            />
-          );
-        })}
+        <path d={linePath} fill="none" stroke="#7d7670" strokeWidth="1.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
         {/* Current-ply scrubber — chess.com gold, not emerald */}
         {current !== undefined && (() => {
           const p = points[current - 1] ?? points[0];
           if (!p) return null;
-          return (
-            <g>
-              <line x1={p.x} y1={0} x2={p.x} y2={100} stroke="#ffc934" strokeWidth="0.5" strokeDasharray="1 1" vectorEffect="non-scaling-stroke" />
-              <circle cx={p.x} cy={p.y} r="2.4" fill="#ffc934" stroke="#fff" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
-            </g>
-          );
+          return <line x1={p.x} y1={0} x2={p.x} y2={100} stroke="#ffc934" strokeWidth="1" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />;
         })()}
         {/* Hover hairline */}
         {hoverPoint && hoverPoint.ply !== current && (
-          <line x1={hoverPoint.x} y1={0} x2={hoverPoint.x} y2={100} stroke="rgba(125,118,112,0.55)" strokeWidth="0.4" vectorEffect="non-scaling-stroke" />
+          <line x1={hoverPoint.x} y1={0} x2={hoverPoint.x} y2={100} stroke="rgba(125,118,112,0.55)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
         )}
       </svg>
+      {/* Dots are HTML, not SVG: the SVG is stretched to the panel's width, which
+          would squash circles into ellipses. */}
+      {markers.map((m) => {
+        const p = points[m.ply - 1];
+        const s = styleFor(m.classification);
+        if (!p || !s) return null;
+        const size = m.classification === 'brilliant' ? 10 : 8;
+        return (
+          <span
+            key={m.ply}
+            className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-white"
+            style={{ left: `${p.x}%`, top: `${p.y}%`, width: size, height: size, background: s.hex }}
+          />
+        );
+      })}
+      {/* Current-ply dot — chess.com gold, not emerald */}
+      {current !== undefined && (() => {
+        const p = points[current - 1] ?? points[0];
+        if (!p) return null;
+        return (
+          <span
+            className="pointer-events-none absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white bg-[#ffc934]"
+            style={{ left: `${p.x}%`, top: `${p.y}%` }}
+          />
+        );
+      })()}
       {/* Hover eval chip — top-right of cursor */}
       {hoverPoint && (
         <div

@@ -42,7 +42,10 @@
 
 Patzer is a tiny, self-hosted take on the Chess.com / Lichess workflow you actually use:
 
-- **Game Review** — pull your public Chess.com or Lichess games (or paste a PGN; Chess.com games can sync on their own), analyze with bundled Stockfish, get chess.com-style classifications (Brilliant / Great / Best / Excellent / Good / Book / Inaccuracy / Mistake / Miss / Blunder), accuracy %, estimated Elo, eval graph, key moments, top engine lines, a "What's the threat?" probe, and master-game statistics for the position.
+- **Game Review** — pull your public Chess.com or Lichess games (or paste a PGN; both Chess.com and Lichess games can sync on their own), analyze with bundled Stockfish, get chess.com-style classifications (Brilliant / Great / Best / Excellent / Good / Book / Inaccuracy / Mistake / Miss / Blunder), accuracy %, estimated Elo, eval graph, key moments, top engine lines, a "What's the threat?" probe, and master-game statistics for the position. Import your whole history in one go, then filter the list by period, site, result, colour and time control. Move the pieces on the review board to try a different move and see the engine's verdict on it — evaluation, top lines, and arrows for what it preferred and what it would play next. Click a count in the move table (say, *Blunder 2*) to list those moves and jump to them; the mating move gets its own `#` badge and sound; and a game the engine is still working on shows *Analyzing…* in the list instead of inviting a second click.
+- **Your choice of engine** — Game Review runs on the bundled Stockfish (locally, or on the hosted chess-api.com), or on an engine an admin downloads with one click in *Admin → System*: Stockfish 19, Reckless, Viridithas or Avalanche. Downloads come from the projects' official releases and are checked against a pinned checksum before they run. The same page sets the default analysis depth.
+- **Puzzles** — the Lichess puzzle database (~5 million puzzles, CC0), filtered by the same themes as lichess.org/training/themes (forks, pins, mate in 2, rook endgames, smothered mate…) at five difficulties around your own puzzle rating. Play them *online* straight from Hugging Face with nothing to download, or let an admin download the database once so every theme is instant and works offline.
+- **Tactic Trainer** — puzzles cut from your own analysed games: the positions where you blundered, retried until you find the move.
 - **Play vs Bot** — full games against Stockfish at seven named tiers (Kid → Stockfish max), all standard time controls, a queue of up to six premoves shown on the board, kid-mode blunder warnings.
 - **Play vs Friend** — real-time PvP between profiles on the same server over WebSocket, with draw offers, takebacks and one-click rematch. Playing across the internet is a tunnel away — see the [FAQ](docs/FAQ.md#can-i-play-a-friend-who-lives-somewhere-else).
 - **Players & profiles** — a directory of everyone on your server with a rating leaderboard, live presence and public profiles (record, per-time-class ratings, your head-to-head), challenge-from-profile, and a "missed invitations" rail.
@@ -50,7 +53,7 @@ Patzer is a tiny, self-hosted take on the Chess.com / Lichess workflow you actua
 - **Family-ready** — multi-user with admin console, open / invite-only / closed sign-up, per-profile language, kid-mode blunder warnings, "horsey" piece names for the youngest profiles.
 - **Learn (beta)** — 54 interactive lessons in four levels, from how the pieces move to tactics, mating patterns and rook endgames. Stars and progress per profile; kid mode tells the same lessons in simpler words.
 - **Opening trainer (beta)** — drill 16 built-in main lines or any line from your own repertoire; the moves you miss come back in a daily review queue.
-- **Multilingual** — English, Bulgarian, Spanish, German and Russian out of the box, UI *and* coach prompts. Adding a language is one table entry per file — see CONTRIBUTING.
+- **Multilingual** — English, Bulgarian, Spanish, German, Russian and Persian (فارسی) out of the box, UI *and* coach prompts. Persian is complete down to every Learn lesson, with a right-to-left layout (the board and moves stay left to right) and the bundled Vazirmatn font. Adding a language is one table entry per file — see CONTRIBUTING.
 - **Self-hosted, single container** — runs on a Pi, a NAS, an old laptop. Your games never leave home.
 - **Phone-friendly** — full-width board, sticky action bar and a swipe-up move list on small screens.
 - **Tells you when it's stale** — a self-hosted app can't update itself, but Patzer checks GitHub every six hours and shows a one-line notice when a newer release is out, so you know to pull. Sends nothing about you; switch it off in *Admin → System*.
@@ -135,7 +138,8 @@ volumes:
 > vLLM host, the *Coach* panel just shows the engine facts in plain text.
 >
 > **What needs a Chess.com or Lichess username:** importing your public games for review. Without it
-> you can still load PGNs by paste or play live and review from the move list.
+> you can still load PGNs by paste or play live and review from the move list. Once a username is set,
+> Patzer can pull new games automatically on an interval you pick in *Settings → Automation*.
 
 You'll want, optionally:
 
@@ -245,12 +249,12 @@ All user-facing configuration is done **through the UI** and persisted in SQLite
 | `UPDATE_CHECK` | `1` | Set to `0` to disable the six-hourly "a newer release exists" check for the whole deployment (there's also a toggle in *Admin → System*) |
 | `SESSION_SECRET` | (auto-generated) | Cookie signing secret. Persisted on first run. |
 | `COOKIE_SECURE`  | `false` | Set to `true` when terminating TLS at a reverse proxy so session cookies are flagged `Secure`. |
-| `ENGINE_BACKEND` | `local` | `chessapi` sends Game Review positions to the hosted chess-api.com engine instead of the bundled Stockfish (opt-in — for a Pi or a public demo instance) |
-| `CHESSCOM_SYNC_MINUTES` | `15` | How often linked Chess.com accounts are synced, analyzed and reviewed in the background; `0` turns the timer off |
+| `ENGINE_BACKEND` | `local` | `chessapi` sends Game Review positions to the hosted chess-api.com engine instead of the bundled Stockfish (also a toggle in *Admin → System*; the env var wins over the UI setting, and while it is set analysis stays on Stockfish even if another engine is selected there) |
+| `CHESSCOM_SYNC_MINUTES` | `15` | Default Chess.com auto-sync interval (minutes) applied when a profile's setting is first created. The live interval is per-profile under *Settings → Automation* (Lichess has its own too); `0` makes auto-sync opt-in |
 | `DEEPSEEK_API_KEY` | (none) | DeepSeek key for the coach; wins over the key saved in *Admin → System* (handy with Docker secrets) |
 
-System settings (coach provider and model, Stockfish path override, who can sign up) live in *Admin → System*; invites in *Admin → Users*.
-Per-profile settings (language, audience, coach behavior, TTS voice, sound sets, Chess.com / Lichess usernames) live in *Settings*.
+System settings (coach provider and model, the analysis engine and its default depth, Stockfish path override, who can sign up) live in *Admin → System*; invites in *Admin → Users*. Engines downloaded there are stored in `engines/` next to the database, so they survive image updates as long as the data volume does; downloads are available when Patzer runs on Linux (the Docker image), and bot play always uses the bundled Stockfish.
+Per-profile settings (language, audience, coach behavior, TTS voice, sound sets, Chess.com / Lichess usernames) live in *Settings*, alongside the *Automation* section: a toggle to write the AI review automatically when a game finishes, and a per-site auto-sync interval for Chess.com and Lichess.
 
 ## How move classification works
 

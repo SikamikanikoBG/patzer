@@ -26,6 +26,7 @@
 import { Chess } from 'chess.js';
 import { getSetting } from '../db.js';
 import { StockfishEngine, type EngineMultiEval } from './stockfish.js';
+import { installedEnginePath } from './engineStore.js';
 
 export type EngineBackend = 'local' | 'chessapi';
 
@@ -54,7 +55,36 @@ export function engineBackend(): EngineBackend {
   return v === 'chessapi' ? 'chessapi' : 'local';
 }
 
-export function createAnalysisEngine(backend: EngineBackend = engineBackend()): AnalysisEngine {
+/**
+ * Which engine analysis runs on: 'stockfish' (the bundled one, local or hosted
+ * per engineBackend) or the id of an engine installed from Admin → System.
+ * ENGINE_BACKEND pins the deployment to Stockfish, as it always has. A chosen
+ * engine that is no longer on disk falls back to Stockfish.
+ */
+export function analysisEngineId(): string {
+  if (process.env.ENGINE_BACKEND) return 'stockfish';
+  const v = getSetting('analysis_engine');
+  return v && installedEnginePath(v) ? v : 'stockfish';
+}
+
+export const MIN_ANALYSIS_DEPTH = 8;
+export const MAX_ANALYSIS_DEPTH = 22;
+
+/** The depth set in Admin → System, or `fallback` while nobody has set one. */
+export function analysisDepth(fallback = 16): number {
+  const v = Number(getSetting('analysis_depth'));
+  if (!Number.isInteger(v) || v < MIN_ANALYSIS_DEPTH || v > MAX_ANALYSIS_DEPTH) return fallback;
+  return v;
+}
+
+export function createAnalysisEngine(backend?: EngineBackend): AnalysisEngine {
+  if (backend === undefined) {
+    // Any UCI engine speaks the same protocol as Stockfish, so an installed
+    // one runs through the same wrapper, pointed at its own binary.
+    const custom = installedEnginePath(analysisEngineId());
+    if (custom) return new StockfishEngine(custom);
+    backend = engineBackend();
+  }
   return backend === 'chessapi' ? new ChessApiEngine() : new StockfishEngine();
 }
 

@@ -163,7 +163,8 @@ export default function ChessBoard({
     : { width: '100%', aspectRatio: '1 / 1' };
 
   return (
-    <div className="relative">
+    // Files a–h always run left to right, whatever the page's direction.
+    <div className="relative" dir="ltr">
       <div ref={ref} style={style} />
       {promotion && (
         <PromotionPicker

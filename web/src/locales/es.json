@@ -170,6 +170,10 @@
     "analyze": "Analizar",
     "reanalyze": "Reanalizar",
     "analyzing": "Analizando… ({{progress}}%)",
+    "analyzingNow": "Analizando…",
+    "variationBack": "Volver a la partida",
+    "variationUndo": "Deshacer la última jugada probada",
+    "engineBusy": "El motor está ocupado con otra de tus partidas. Inténtalo de nuevo cuando termine.",
     "depth": "Profundidad",
     "accuracy": "Precisión",
     "moves": "Jugadas",
@@ -206,13 +210,43 @@
       "player_not_found": "No se encontró ningún jugador con ese nombre de usuario.",
       "lichess_rate_limited": "Lichess pide una breve pausa: inténtalo de nuevo en un minuto.",
       "lichess_unavailable": "No se puede conectar con Lichess ahora mismo. Inténtalo más tarde.",
-      "generic": "La importación falló. Inténtalo de nuevo más tarde."
+      "generic": "La importación falló. Inténtalo de nuevo más tarde.",
+      "chesscom_unavailable": "No se puede acceder a Chess.com ahora mismo. Inténtalo más tarde."
     },
     "source": {
-      "lichess": "Lichess"
+      "lichess": "Lichess",
+      "imported": "PGN"
+    },
+    "importedOf": "Importadas {{n}} partidas nuevas ({{total}} encontradas)",
+    "importAllSlow": "Importando todo tu historial — con miles de partidas puede tardar unos minutos. Mientras tanto puedes seguir usando Patzer.",
+    "importScope": {
+      "label": "Cuántas partidas importar",
+      "last": "Últimas {{n}}",
+      "all": "Todas las partidas"
+    },
+    "loadMore": "Cargar más (quedan {{n}})",
+    "loadingMore": "Cargando…",
+    "pgn": {
+      "open": "Importar PGN",
+      "title": "Importar PGN",
+      "hint": "Pega una partida, o un archivo PGN entero, de cualquier web o app.",
+      "placeholder": "Pega aquí el texto PGN",
+      "upload": "Subir un archivo PGN",
+      "drop": "…o suelta aquí un archivo .pgn",
+      "submit": "Importar",
+      "close": "Cerrar",
+      "importedMany": "Importadas {{n}} partidas — {{dup}} ya estaban, {{skipped}} omitidas.",
+      "error": {
+        "empty": "Primero pega un PGN o elige un archivo.",
+        "too_large": "El archivo es demasiado grande — el límite es 10 MB.",
+        "no_valid_games": "No se pudo importar ninguna partida. Solo se puede analizar ajedrez estándar desde la posición inicial.",
+        "invalid_input": "Eso no parece PGN.",
+        "generic": "La importación falló. Inténtalo de nuevo."
+      }
     }
   },
   "classification": {
+    "checkmate": "Jaque mate",
     "brilliant": "Brillante",
     "great": "Gran jugada",
     "best": "La mejor",
@@ -376,7 +410,27 @@
     "sendTestEmail": "Enviar correo de prueba",
     "sendTestEmailHint": "Guarda primero — la prueba utilizará la configuración guardada.",
     "send": "Enviar",
-    "testEmailSent": "Correo de prueba enviado."
+    "testEmailSent": "Correo de prueba enviado.",
+    "engines": {
+      "intro": "La revisión de partidas y las líneas del motor usan el motor elegido aquí. El juego contra el bot siempre usa el Stockfish incluido. Los motores adicionales se descargan de sus publicaciones oficiales y se comprueban con una suma de verificación fija antes de ejecutarse.",
+      "bundled": "Incluido con Patzer",
+      "use": "Usar este motor",
+      "inUse": "En uso",
+      "install": "Descargar",
+      "downloading": "Descargando… {{pct}}%",
+      "verifying": "Comprobando…",
+      "remove": "Quitar",
+      "failed": "La instalación falló: {{error}}",
+      "unavailable": {
+        "platform": "Las descargas solo están disponibles cuando Patzer se ejecuta en Linux (p. ej., en Docker).",
+        "arch": "No hay versión para el tipo de procesador de este servidor.",
+        "cpu": "El procesador de este servidor es demasiado antiguo para este motor (necesita AVX2 y BMI2)."
+      },
+      "stockfishWhere": "Dónde se ejecuta Stockfish",
+      "depth": "Profundidad de análisis",
+      "depthHelp": "Hasta qué profundidad busca el motor en cada posición de una revisión. Más alto es más fuerte pero más lento; 16 es un buen valor. Se aplica a las revisiones nuevas, incluidas las automáticas.",
+      "singleLine": "Da una sola línea por posición: no hay líneas alternativas, y no se detectan las jugadas «Gran jugada» ni algunas «Brillante»."
+    }
   },
   "palette": {
     "switchLanguage": "Cambiar a",

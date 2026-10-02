@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Search, Home, Swords, BookOpen, BarChart3, Settings as SettingsIcon, Target,
   Trophy, Frown, Equal, Users, Server, Sun, Moon, Globe, LogOut, Star,
-  BookMarked, ListChecks, Microscope, GraduationCap,
+  BookMarked, ListChecks, Microscope, GraduationCap, Puzzle,
 } from 'lucide-react';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
@@ -61,6 +61,7 @@ export default function CommandPalette({ open, onClose }: Props) {
       { id: 'nav-review', label: t('review.title'), icon: BookOpen, group: 'nav', run: () => { nav('/review'); onClose(); } },
       { id: 'nav-insights', label: t('insights.title', { defaultValue: 'Insights' }), icon: BarChart3, group: 'nav', run: () => { nav('/insights'); onClose(); } },
       { id: 'nav-train', label: t('train.title', { defaultValue: 'Tactic Trainer' }), icon: Target, group: 'nav', keywords: 'puzzle tactic train practice', run: () => { nav('/train'); onClose(); } },
+      { id: 'nav-puzzles', label: t('puzzles.title'), icon: Puzzle, group: 'nav', keywords: 'puzzle lichess theme tactic fork pin mate', run: () => { nav('/puzzles'); onClose(); } },
       { id: 'nav-learn', label: t('learn.title'), icon: GraduationCap, group: 'nav', keywords: 'learn lesson course rules basics tactics endgame', run: () => { nav('/learn'); onClose(); } },
       { id: 'nav-openings', label: t('openings.title', { defaultValue: 'Openings' }), icon: BookMarked, group: 'nav', keywords: 'opening repertoire tree eco', run: () => { nav('/openings'); onClose(); } },
       { id: 'nav-plan', label: t('plan.title', { defaultValue: 'Improvement plan' }), icon: ListChecks, group: 'nav', keywords: 'plan goals weekly improvement', run: () => { nav('/plan'); onClose(); } },
@@ -187,7 +188,7 @@ function PaletteSection({ items, active, setActive }: { items: Action[]; active:
                   onMouseMove={() => setActive(i)}
                   onClick={a.run}
                   className={cn(
-                    'flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors',
+                    'flex w-full items-center gap-3 px-3 py-2 text-start text-sm transition-colors',
                     isActive ? 'bg-gold-500/15 text-chesscom-900 dark:text-chesscom-100' : 'text-chesscom-700 dark:text-chesscom-200 hover:bg-chesscom-100/60 dark:hover:bg-chesscom-700/40',
                   )}
                 >

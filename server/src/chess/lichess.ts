@@ -138,30 +138,33 @@ function serialized<T>(fn: () => Promise<T>): Promise<T> {
   return run;
 }
 
-/** Fetch a user's most recent finished games, newest first.
+/** Fetch a user's most recent finished games, newest first. Without `max`
+ *  it is the user's whole history.
  *  Throws `not_found`, `rate_limited` or `lichess_<status>`. */
 export function fetchRecentGames(
   username: string,
-  opts: { max: number; since?: number },
+  opts: { max?: number; since?: number },
   fetchImpl: FetchLike = fetch as unknown as FetchLike,
 ): Promise<LichessGame[]> {
   if (!isValidLichessUsername(username)) return Promise.reject(new Error('invalid_username'));
   const params = new URLSearchParams({
-    max: String(opts.max),
     pgnInJson: 'true',
     clocks: 'false',
     evals: 'false',
     opening: 'false',
     finished: 'true',
   });
+  if (opts.max !== undefined) params.set('max', String(opts.max));
   if (opts.since) params.set('since', String(opts.since));
   const url = `${BASE}/api/games/user/${encodeURIComponent(username)}?${params.toString()}`;
 
   return serialized(async () => {
-    // The export streams; 30s is plenty for the ≤200 games a request asks for.
+    // The export streams at about 20 games a second for anonymous clients:
+    // 30s is plenty for a bounded request, but a whole history of several
+    // thousand games takes minutes.
     const res = await fetchImpl(url, {
       headers: { 'User-Agent': UA, Accept: 'application/x-ndjson' },
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(opts.max === undefined ? 30 * 60_000 : 30_000),
     });
     if (res.status === 404) throw new Error('not_found');
     if (res.status === 429) throw new Error('rate_limited');

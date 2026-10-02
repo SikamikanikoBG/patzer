@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope, ChevronDown, GraduationCap } from 'lucide-react';
+import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope, ChevronDown, GraduationCap, Puzzle } from 'lucide-react';
 import { api } from '../api';
 import UpdateNotice from './UpdateNotice';
 import { useAuth } from '../state/auth';
@@ -138,12 +138,13 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
           </NavLink>
 
           {/* Desktop nav */}
-          <nav ref={navRef} data-compact={compactNav ? '1' : '0'} className="ml-4 hidden min-w-0 flex-1 items-center gap-0.5 md:flex">
+          <nav ref={navRef} data-compact={compactNav ? '1' : '0'} className="ms-4 hidden min-w-0 flex-1 items-center gap-0.5 md:flex">
             <NavPill to="/" icon={Home} label={t('app.home')} />
             <NavPill to="/play" icon={Swords} label={t('home.playTitle')} />
             <NavPill to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
             <NavPill to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
             <NavPill to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
+            <NavPill to="/puzzles" icon={Puzzle} label={t('puzzles.nav')} />
             <NavPill to="/learn" icon={GraduationCap} label={t('learn.nav')} />
             <NavPill to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />
             <NavPill to="/plan" icon={ListChecks} label={t('plan.nav', { defaultValue: 'Plan' })} />
@@ -173,7 +174,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
                   {adminOpen && (
                     <div
                       role="menu"
-                      className="absolute left-0 top-full mt-1 min-w-44 rounded-lg border border-chesscom-700 bg-chesscom-900 p-1 shadow-lg"
+                      className="absolute start-0 top-full mt-1 min-w-44 rounded-lg border border-chesscom-700 bg-chesscom-900 p-1 shadow-lg"
                     >
                       <NavLink
                         to="/admin/users"
@@ -255,7 +256,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
               title={`${user?.profile.display_name ?? ''} @${user?.username ?? ''}`}
             >
               <span className="text-lg leading-none">{user?.profile.avatar_emoji ?? '♟'}</span>
-              <div className="hidden max-w-[10rem] text-right text-xs leading-tight xl:block">
+              <div className="hidden max-w-[10rem] text-end text-xs leading-tight xl:block">
                 <div className="truncate font-medium">{user?.profile.display_name}</div>
                 <div className="truncate text-[11px] text-chesscom-400">@{user?.username}</div>
               </div>
@@ -293,7 +294,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
       {navOpen && (
         <>
           <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setNavOpen(false)} />
-          <aside className="fixed inset-y-0 right-0 z-50 flex w-72 max-w-[85vw] flex-col overflow-y-auto bg-chesscom-900 p-4 text-white md:hidden">
+          <aside className="fixed inset-y-0 end-0 z-50 flex w-72 max-w-[85vw] flex-col overflow-y-auto bg-chesscom-900 p-4 text-white md:hidden">
             <div className="mb-3 flex items-center justify-between">
               <LogoLockup size={24} />
               <button onClick={() => setNavOpen(false)} className="rounded-lg p-1.5 text-chesscom-300 hover:bg-chesscom-800">
@@ -318,6 +319,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
               <MobileNavItem to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
               <MobileNavItem to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
               <MobileNavItem to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
+              <MobileNavItem to="/puzzles" icon={Puzzle} label={t('puzzles.nav')} />
               <MobileNavItem to="/learn" icon={GraduationCap} label={t('learn.nav')} />
               <MobileNavItem to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />
               <MobileNavItem to="/plan" icon={ListChecks} label={t('plan.nav', { defaultValue: 'Plan' })} />

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sparkles, Settings as SettingsIcon, Copy, Download, Check, ListOrdered, Lightbulb, FileText, Star, Share2, FlipVertical2, NotebookPen, Search, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sparkles, Settings as SettingsIcon, Copy, Download, Check, ListOrdered, Lightbulb, FileText, Star, Share2, FlipVertical2, NotebookPen, Search, Loader2, Undo2, GitBranch } from 'lucide-react';
 import { Chess } from 'chess.js';
 import ChessBoard from '../components/ChessBoard';
 import EvalBar from '../components/EvalBar';
@@ -34,6 +34,10 @@ interface GameDetail {
     moves_json: string;
   } | null;
   analysis_stale?: boolean;
+  /** The engine is already working on this game (this tab, another one, or a background job). */
+  analyzing?: boolean;
+  /** Analysis depth set by the admin. */
+  default_depth?: number;
 }
 
 interface EngineLine {
@@ -55,6 +59,13 @@ function fmtCp(cp: number | null | undefined): string {
 
 type Tab = 'moves' | 'report' | 'moments' | 'coach';
 
+/** A move the user tried on the board, off the game's own line. */
+interface VariationMove {
+  uci: string; san: string; fen: string; from: string; to: string;
+  /** What the engine would have played instead, when it had already answered. */
+  bestUci: string | null;
+}
+
 export default function GameAnalyzer() {
   const { id } = useParams<{ id: string }>();
   const { t } = useTranslation();
@@ -65,9 +76,15 @@ export default function GameAnalyzer() {
     queryKey: ['game', gameId],
     queryFn: () => api.get<GameDetail>(`/api/games/${gameId}`),
     enabled: !!gameId,
+    // Poll while the server is analyzing this game, so the result appears
+    // without the user having to start (or re-click) anything.
+    refetchInterval: (query) => (query.state.data?.analyzing ? 3000 : false),
   });
 
   const [analyzing, setAnalyzing] = useState(false);
+  // The engine turned us down because it is busy with another of the user's games.
+  const [engineBusy, setEngineBusy] = useState(false);
+  const staleFiredFor = useRef<number | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [coachConfigured, setCoachConfigured] = useState(false);
   const [requestedDepth, setRequestedDepth] = useState(16);
@@ -97,12 +114,16 @@ export default function GameAnalyzer() {
         phase_split: a.phase_split_json ? (JSON.parse(a.phase_split_json) as PhaseSplit) : null,
         moves: JSON.parse(a.moves_json) as AnalyzedMove[],
       });
-      setRequestedDepth(Math.max(16, a.depth));
+      setRequestedDepth(Math.max(data.default_depth ?? 16, a.depth));
     } else {
       setAnalysis(null);
+      setRequestedDepth(data.default_depth ?? 16);
     }
-    if (data.analysis_stale && !analyzing) {
-      void analyze(16, true);
+    // Once per game: a refetch (polling, or after a refused request) must not
+    // fire the re-analysis again.
+    if (data.analysis_stale && !analyzing && !data.analyzing && staleFiredFor.current !== gameId) {
+      staleFiredFor.current = gameId;
+      void analyze(data.default_depth ?? 16, true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
@@ -153,6 +174,13 @@ export default function GameAnalyzer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ply]);
 
+  // Moves tried on the board from the current game position ("what if I had
+  // played this?"). Stepping to another game move drops them.
+  const [variation, setVariation] = useState<VariationMove[]>([]);
+  const variationRef = useRef(variation);
+  variationRef.current = variation;
+  useEffect(() => { setVariation([]); }, [ply, gameId]);
+
   const prevPlyRef = useRef(ply);
   useEffect(() => {
     if (ply === prevPlyRef.current) return;
@@ -167,10 +195,15 @@ export default function GameAnalyzer() {
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement | null)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-      if (e.key === 'ArrowLeft') setPly((p) => Math.max(0, p - 1));
+      if (e.key === 'ArrowLeft') {
+        // Inside a tried line, step back through it before leaving the position.
+        if (variationRef.current.length) setVariation((v) => v.slice(0, -1));
+        else setPly((p) => Math.max(0, p - 1));
+      }
       else if (e.key === 'ArrowRight') setPly((p) => Math.min(positions.length - 1, p + 1));
-      else if (e.key === 'Home') setPly(0);
-      else if (e.key === 'End') setPly(positions.length - 1);
+      else if (e.key === 'Home') { setVariation([]); setPly(0); }
+      else if (e.key === 'End') { setVariation([]); setPly(positions.length - 1); }
+      else if (e.key === 'Escape') setVariation([]);
       else if (e.key === 'f' || e.key === 'F') setFlipped((f) => !f);
       else if (e.key === 's' || e.key === 'S') {
         const url = window.location.href;
@@ -186,10 +219,17 @@ export default function GameAnalyzer() {
 
   async function analyze(depth: number, force = false) {
     setAnalyzing(true);
+    setEngineBusy(false);
     try {
       const r = await api.post<{ analysis: AnalysisResult; cached: boolean }>('/api/analyze', { game_id: gameId, depth, force });
       setAnalysis(r.analysis);
       await refetch();
+    } catch (e) {
+      if ((e as { status?: number }).status !== 429) throw e;
+      // Refused: the engine is already on this game (the refetch picks that up
+      // and the page waits for it) or on another one.
+      const fresh = await refetch();
+      if (!fresh.data?.analyzing) setEngineBusy(true);
     } finally {
       setAnalyzing(false);
     }
@@ -204,29 +244,98 @@ export default function GameAnalyzer() {
   const [linesError, setLinesError] = useState(false);
   const [linesHover, setLinesHover] = useState<EngineLine | null>(null);
   const [explorerHover, setExplorerHover] = useState<string | null>(null);
+  const [linesFen, setLinesFen] = useState('');
+  // Engine's first choice per position seen, so a tried move can be compared
+  // with what the engine preferred there.
+  const bestByFen = useRef(new Map<string, string>());
   const pos = data ? (positions[ply] ?? positions[0]) : undefined;
-  const currentFen = pos?.fen ?? '';
+  const inVariation = variation.length > 0;
+  const lastVar = variation[variation.length - 1];
+  // The position on the board: the game's, or the end of the tried line.
+  const currentFen = lastVar?.fen ?? pos?.fen ?? '';
+  // A tried line always asks the engine — its verdict is the whole point.
+  const wantLines = linesEnabled || inVariation;
   useEffect(() => {
-    if (!linesEnabled || !currentFen) return;
+    if (!wantLines || !currentFen) return;
     let cancelled = false;
+    let handle = 0;
     setLinesError(false);
     setLinesLoading(true);
-    const handle = window.setTimeout(() => {
+    const ask = (triesLeft: number) => {
       api.post<{ fen: string; depth: number; lines: EngineLine[] }>('/api/analyze/position', { fen: currentFen, depth: 18, lines: 3 })
-        .then((r) => { if (!cancelled) { setLines(r.lines ?? []); setLinesLoading(false); } })
-        .catch(() => { if (!cancelled) { setLinesError(true); setLinesLoading(false); setLines([]); } });
-    }, 400);
+        .then((r) => {
+          if (r.lines?.[0]?.uci) bestByFen.current.set(currentFen, r.lines[0].uci);
+          if (!cancelled) { setLines(r.lines ?? []); setLinesFen(currentFen); setLinesLoading(false); }
+        })
+        .catch((e) => {
+          if (cancelled) return;
+          // 429: the engine is still on the previous position (moves made in
+          // quick succession) — wait for it rather than giving up.
+          if ((e as { status?: number }).status === 429 && triesLeft > 0) {
+            handle = window.setTimeout(() => ask(triesLeft - 1), 800);
+            return;
+          }
+          setLinesError(true); setLinesLoading(false); setLines([]);
+        });
+    };
+    handle = window.setTimeout(() => ask(20), 400);
     return () => { cancelled = true; window.clearTimeout(handle); };
-  }, [linesEnabled, currentFen]);
+  }, [wantLines, currentFen]);
 
   if (isLoading || !data) return <AnalyzerSkeleton />;
 
   const move: AnalyzedMove | undefined = analysis?.moves[ply - 1];
+  const busy = analyzing || !!data.analyzing;
   const userColor = data.game.user_color ?? 'white';
   const orientation: 'white' | 'black' = flipped
     ? (userColor === 'white' ? 'black' : 'white')
     : userColor;
-  const currentEvalCp = move?.eval_after_cp ?? 0;
+  const gameEvalCp = move?.eval_after_cp ?? 0;
+  const whiteToMove = currentFen.split(' ')[1] !== 'b';
+  // Engine verdict on the tried line, white's point of view. Null while the
+  // engine is still thinking about this exact position.
+  const varEvalCp: number | null = (() => {
+    if (!inVariation) return null;
+    const end = new Chess(currentFen);
+    if (end.isCheckmate()) return whiteToMove ? -10000 : 10000;
+    if (end.isGameOver()) return 0;
+    const top = linesFen === currentFen ? lines[0] : undefined;
+    if (!top) return null;
+    const stm = top.mate != null ? (top.mate > 0 ? 10000 - top.mate * 10 : -10000 - top.mate * 10) : (top.cp ?? 0);
+    return whiteToMove ? stm : -stm;
+  })();
+  // The bar keeps the game's eval until the engine answers, then follows it.
+  const currentEvalCp = inVariation ? (varEvalCp ?? gameEvalCp) : gameEvalCp;
+
+  function jump(p: number) {
+    setVariation([]);
+    setPly(p);
+  }
+
+  function tryMove(uci: string) {
+    const chess = new Chess(currentFen);
+    let m;
+    try {
+      m = chess.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4) || undefined });
+    } catch { return; }
+    if (!m) return;
+    // Replaying the game's own next move just steps forward in the game.
+    const next = positions[ply + 1];
+    if (!inVariation && next && next.fen === chess.fen()) { setPly(ply + 1); return; }
+    soundForMove(inferMoveFlagsFromSan(m.san));
+    // The engine's choice in the position this move was played from: the game
+    // analysis has it for the game position, the lines panel for tried ones.
+    const bestUci = (inVariation ? null : analysis?.moves[ply]?.best_move_uci) ?? bestByFen.current.get(currentFen) ?? null;
+    setVariation((v) => [...v, { uci, san: m.san, fen: chess.fen(), from: m.from, to: m.to, bestUci }]);
+  }
+
+  // "12… Nf6 13. Bg5" — numbered from the game position the line starts at.
+  const variationText = variation.map((v, i) => {
+    const p = ply + i + 1;
+    const num = Math.ceil(p / 2);
+    if (p % 2 === 1) return `${num}. ${v.san}`;
+    return i === 0 ? `${num}… ${v.san}` : v.san;
+  }).join(' ');
 
   const historySoFar = analysis?.moves.slice(0, ply - 1).map((m) => m.san) ?? [];
   const coachReq = move ? () => ({
@@ -251,18 +360,28 @@ export default function GameAnalyzer() {
     },
   }) : null;
 
-  const baseArrow = move?.best_move_uci && move.best_move_uci !== move.uci ? [{
+  const baseArrow = !inVariation && move?.best_move_uci && move.best_move_uci !== move.uci ? [{
     orig: move.best_move_uci.slice(0, 2) as never,
     dest: move.best_move_uci.slice(2, 4) as never,
     brush: 'paleBlue',
   }] : [];
+  // On a tried move: blue = what the engine preferred to it (as for game
+  // moves), green = the engine's best move from here.
+  const variationArrows: { orig: never; dest: never; brush: string }[] = [];
+  if (lastVar) {
+    if (lastVar.bestUci && lastVar.bestUci !== lastVar.uci) {
+      variationArrows.push({ orig: lastVar.bestUci.slice(0, 2) as never, dest: lastVar.bestUci.slice(2, 4) as never, brush: 'paleBlue' });
+    }
+    const reply = linesFen === currentFen ? lines[0]?.uci : undefined;
+    if (reply) variationArrows.push({ orig: reply.slice(0, 2) as never, dest: reply.slice(2, 4) as never, brush: 'green' });
+  }
   const hoverUci = linesHover?.uci ?? explorerHover;
   const hoverArrow = hoverUci ? [{
     orig: hoverUci.slice(0, 2) as never,
     dest: hoverUci.slice(2, 4) as never,
     brush: 'paleGreen',
   }] : [];
-  const arrow = [...baseArrow, ...hoverArrow];
+  const arrow = [...baseArrow, ...variationArrows, ...hoverArrow];
 
   const eco = analysis?.opening_eco ?? data.game.eco ?? null;
   const openingName = analysis?.opening_name ?? data.game.opening_name ?? null;
@@ -271,10 +390,10 @@ export default function GameAnalyzer() {
     <div className="mx-auto max-w-7xl">
       <div className="mb-3 flex items-center justify-between gap-3">
         <Link to="/review" className="btn-ghost text-sm shrink-0"><ChevronLeft className="h-4 w-4" />{t('common.back')}</Link>
-        <div className="min-w-0 truncate text-right text-sm text-chesscom-500">
+        <div className="min-w-0 truncate text-end text-sm text-chesscom-500">
           <span className="font-medium text-chesscom-900 dark:text-chesscom-100">{data.game.white}</span> vs{' '}
           <span className="font-medium text-chesscom-900 dark:text-chesscom-100">{data.game.black}</span>
-          <span className="ml-2">· {data.game.result}</span>
+          <span className="ms-2">· {data.game.result}</span>
         </div>
       </div>
 
@@ -292,7 +411,7 @@ export default function GameAnalyzer() {
             accuracy={orientation === 'white' ? analysis?.accuracy_black : analysis?.accuracy_white}
             elo={orientation === 'white' ? analysis?.estimated_elo_black : analysis?.estimated_elo_white}
             side={orientation === 'white' ? 'black' : 'white'}
-            fen={pos?.fen ?? ''}
+            fen={currentFen}
           />
           {/* Board sized so column fits in the workspace height. Chrome math:
               workspace chrome (header + breadcrumb + page padding + footer) ≈
@@ -305,13 +424,18 @@ export default function GameAnalyzer() {
               className={`relative aspect-square w-full min-w-0 board-theme-${user?.profile.board_theme ?? 'green'} lg:max-w-[calc(100vh-24rem)]`}
             >
               <ChessBoard
-                fen={pos?.fen ?? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'}
+                fen={currentFen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'}
                 orientation={orientation}
-                lastMove={pos?.from && pos?.to ? [pos.from as never, pos.to as never] : undefined}
+                movable
+                turnColor={whiteToMove ? 'white' : 'black'}
+                onMove={tryMove}
+                lastMove={lastVar
+                  ? [lastVar.from as never, lastVar.to as never]
+                  : pos?.from && pos?.to ? [pos.from as never, pos.to as never] : undefined}
                 arrows={arrow as never[]}
               />
-              {move && pos?.to && (
-                <ClassificationBadge classification={move.classification} square={pos.to} orientation={orientation} />
+              {!inVariation && move && pos?.to && (
+                <ClassificationBadge classification={move.classification} san={move.san} square={pos.to} orientation={orientation} />
               )}
             </div>
           </div>
@@ -320,33 +444,52 @@ export default function GameAnalyzer() {
             accuracy={orientation === 'white' ? analysis?.accuracy_white : analysis?.accuracy_black}
             elo={orientation === 'white' ? analysis?.estimated_elo_white : analysis?.estimated_elo_black}
             side={orientation}
-            fen={pos?.fen ?? ''}
+            fen={currentFen}
             highlighted
           />
 
           <div className="mt-2 flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm shadow-soft dark:bg-chesscom-800">
             <div className="min-w-0 truncate text-chesscom-500">
-              {move ? (
+              {inVariation ? (
+                <span className="flex min-w-0 items-center gap-1.5" dir="ltr">
+                  <GitBranch className="h-3.5 w-3.5 shrink-0 text-gold-600" />
+                  <span className="truncate font-mono text-xs font-medium text-chesscom-900 dark:text-chesscom-100" title={variationText}>{variationText}</span>
+                </span>
+              ) : move ? (
                 <>
                   <span className="font-medium text-chesscom-900 dark:text-chesscom-100">{ply % 2 === 1 ? t('review.sideShort.white') : t('review.sideShort.black')}: {move.san}</span>
                   {move.best_move_san && move.best_move_san !== move.san && (
-                    <span className="ml-2 text-xs text-chesscom-400">{t('review.best', { san: move.best_move_san })}</span>
+                    <span className="ms-2 text-xs text-chesscom-400">{t('review.best', { san: move.best_move_san })}</span>
                   )}
                 </>
               ) : <span className="italic">{t('review.startingPosition')}</span>}
             </div>
-            <div className="font-mono text-base font-semibold tabular-nums">
-              {fmtCp(currentEvalCp)}
+            <div className="flex shrink-0 items-center gap-2 ps-2">
+              {inVariation && (
+                <>
+                  <button onClick={() => setVariation((v) => v.slice(0, -1))} className="btn-ghost px-1.5 py-1 text-xs" title={t('review.variationUndo')}>
+                    <Undo2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button onClick={() => setVariation([])} className="btn-secondary px-2 py-1 text-xs">
+                    {t('review.variationBack')}
+                  </button>
+                </>
+              )}
+              <div className="font-mono text-base font-semibold tabular-nums">
+                {inVariation && varEvalCp == null
+                  ? <Loader2 className="h-4 w-4 animate-spin text-chesscom-400" />
+                  : fmtCp(currentEvalCp)}
+              </div>
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-center gap-1.5 sm:gap-2">
-            <button onClick={() => setPly(0)} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.first')}><ChevronsLeft className="h-5 w-5" /></button>
-            <button onClick={() => setPly((p) => Math.max(0, p - 1))} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.prev')}><ChevronLeft className="h-5 w-5" /></button>
+          <div className="mt-3 flex items-center justify-center gap-1.5 sm:gap-2" dir="ltr">
+            <button onClick={() => jump(0)} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.first')}><ChevronsLeft className="h-5 w-5" /></button>
+            <button onClick={() => jump(Math.max(0, ply - 1))} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.prev')}><ChevronLeft className="h-5 w-5" /></button>
             <div className="flex h-10 min-w-[5rem] items-center justify-center rounded-xl bg-chesscom-100 px-3 text-sm font-mono tabular-nums dark:bg-chesscom-800 sm:h-12 sm:min-w-[5.5rem]">
               {ply} / {positions.length - 1}
             </div>
-            <button onClick={() => setPly((p) => Math.min(positions.length - 1, p + 1))} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.next')}><ChevronRight className="h-5 w-5" /></button>
-            <button onClick={() => setPly(positions.length - 1)} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.last')}><ChevronsRight className="h-5 w-5" /></button>
+            <button onClick={() => jump(Math.min(positions.length - 1, ply + 1))} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.next')}><ChevronRight className="h-5 w-5" /></button>
+            <button onClick={() => jump(positions.length - 1)} className="btn-secondary h-10 w-10 p-0 sm:h-12 sm:w-12" title={t('review.last')}><ChevronsRight className="h-5 w-5" /></button>
           </div>
 
         </div>
@@ -354,14 +497,19 @@ export default function GameAnalyzer() {
         {/* RIGHT RAIL — scrolls inside itself on lg+ so the page stays fixed.
             `min-h-0` lets the flex child shrink below content height; without it
             flex would force the page to grow. */}
-        <div className="min-w-0 space-y-3 lg:w-[380px] lg:flex-initial lg:max-w-md lg:min-h-0 lg:overflow-y-auto lg:pr-1">
+        <div className="min-w-0 space-y-3 lg:w-[380px] lg:flex-initial lg:max-w-md lg:min-h-0 lg:overflow-y-auto lg:pe-1">
           {!analysis && (
-            <button onClick={() => analyze(requestedDepth, false)} disabled={analyzing} className="btn-primary w-full">
-              <Sparkles className="h-4 w-4" />
-              {analyzing
-                ? t('review.analyzing', { progress: '…' })
+            <button onClick={() => analyze(requestedDepth, false)} disabled={busy} className="btn-primary w-full">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {busy
+                ? t('review.analyzingNow')
                 : t('review.runEngine', { defaultValue: 'Run engine analysis' })}
             </button>
+          )}
+          {engineBusy && !busy && (
+            <div className="rounded-md border border-chesscom-200 px-3 py-2 text-xs text-chesscom-500 dark:border-chesscom-700">
+              {t('review.engineBusy')}
+            </div>
           )}
 
           {analysis && (
@@ -374,7 +522,7 @@ export default function GameAnalyzer() {
                 <EvalGraph
                   evals={analysis.moves.map((m) => ({ ply: m.ply, cp: m.eval_after_cp }))}
                   current={ply}
-                  onClick={(p) => setPly(p)}
+                  onClick={jump}
                   markers={analysis.moves
                     .filter((m) => ['blunder','mistake','inaccuracy','miss','brilliant','great'].includes(m.classification))
                     .map((m) => ({ ply: m.ply, classification: m.classification }))}
@@ -393,6 +541,8 @@ export default function GameAnalyzer() {
                 moves={analysis.moves}
                 phaseSplit={analysis.phase_split}
                 userColor={userColor}
+                currentPly={ply}
+                onSelectPly={jump}
               />
 
               {showDepthControl && (
@@ -414,11 +564,11 @@ export default function GameAnalyzer() {
                   </div>
                   <button
                     onClick={() => analyze(requestedDepth, true)}
-                    disabled={analyzing}
+                    disabled={busy}
                     className="btn-primary mt-3 w-full text-sm"
                   >
-                    <Sparkles className="h-4 w-4" />
-                    {analyzing ? t('review.analyzing', { progress: '…' }) : `${t('review.reanalyze')} (depth ${requestedDepth})`}
+                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {busy ? t('review.analyzingNow') : `${t('review.reanalyze')} (depth ${requestedDepth})`}
                   </button>
                 </div>
               )}
@@ -432,7 +582,7 @@ export default function GameAnalyzer() {
                   <TabBtn active={tab === 'report'} onClick={() => setTab('report')} icon={FileText} label={t('review.gameReport', { defaultValue: 'AI report' })} />
                   <TabBtn active={tab === 'moments'} onClick={() => setTab('moments')} icon={Sparkles} label={t('review.keyMoments', { defaultValue: 'Key moments' })} />
                   <TabBtn active={tab === 'coach'} onClick={() => setTab('coach')} icon={Lightbulb} label={t('coach.title', { defaultValue: 'Coach' })} />
-                  <button onClick={() => setShowDepthControl((s) => !s)} className="btn-ghost ml-auto p-1.5" title={t('review.depth')}>
+                  <button onClick={() => setShowDepthControl((s) => !s)} className="btn-ghost ms-auto p-1.5" title={t('review.depth')}>
                     <SettingsIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
@@ -441,7 +591,7 @@ export default function GameAnalyzer() {
                     <MoveList
                       moves={analysis.moves.map((m) => ({ ply: m.ply, san: m.san, classification: m.classification }))}
                       current={ply}
-                      onSelect={setPly}
+                      onSelect={jump}
                       phaseSplit={analysis.phase_split}
                       maxHeight={typeof window !== 'undefined' && window.innerWidth < 768 ? 320 : 460}
                     />
@@ -450,7 +600,7 @@ export default function GameAnalyzer() {
                     <GameReportPanel
                       gameId={gameId}
                       initial={reviewProse}
-                      onMomentJump={setPly}
+                      onMomentJump={jump}
                       onGenerated={setReviewProse}
                     />
                   )}
@@ -471,7 +621,7 @@ export default function GameAnalyzer() {
                         };
                       })}
                       current={ply}
-                      onSelect={setPly}
+                      onSelect={jump}
                     />
                   )}
                   {tab === 'coach' && coachReq && (
@@ -491,13 +641,15 @@ export default function GameAnalyzer() {
               </div>
 
               <LinesPanel
-                enabled={linesEnabled}
+                enabled={wantLines}
+                locked={inVariation}
                 onToggle={() => setLinesEnabled((s) => !s)}
-                lines={lines}
+                lines={linesFen === currentFen ? lines : []}
                 loading={linesLoading}
                 error={linesError}
-                playedUci={positions[ply + 1] ? (positions[ply + 1]!.from ?? '') + (positions[ply + 1]!.to ?? '') : null}
-                onAdvance={() => setPly((p) => Math.min(positions.length - 1, p + 1))}
+                whiteToMove={whiteToMove}
+                playedUci={!inVariation && positions[ply + 1] ? (positions[ply + 1]!.from ?? '') + (positions[ply + 1]!.to ?? '') : null}
+                onPlay={tryMove}
                 onHover={setLinesHover}
               />
 
@@ -571,12 +723,12 @@ function GameMetaToolbar({ gameId, bookmarked, notes, onFlip, onShare, linkCopie
         </button>
         <button
           onClick={() => setShowNotes((s) => !s)}
-          className={`btn-ghost ml-auto px-2 py-1 text-xs ${showNotes ? 'text-chesscom-900 dark:text-chesscom-100' : ''}`}
+          className={`btn-ghost ms-auto px-2 py-1 text-xs ${showNotes ? 'text-chesscom-900 dark:text-chesscom-100' : ''}`}
           title={t('review.notes', { defaultValue: 'Notes' })}
         >
           <NotebookPen className="h-3.5 w-3.5" />
           {t('review.notes', { defaultValue: 'Notes' })}
-          {notes && !showNotes && <span className="ml-0.5 inline-block h-1.5 w-1.5 rounded-full bg-gold-500" />}
+          {notes && !showNotes && <span className="ms-0.5 inline-block h-1.5 w-1.5 rounded-full bg-gold-500" />}
         </button>
       </div>
       {showNotes && (
@@ -603,7 +755,7 @@ function PlayerHeader({ name, accuracy, elo, side, fen, highlighted }: { name: s
     <div
       className={`flex items-center justify-between rounded-md px-3 py-2 shadow-soft transition-colors ${
         highlighted
-          ? 'border-l-4 border-gold-500 bg-white dark:bg-chesscom-800 text-chesscom-900 dark:text-chesscom-100'
+          ? 'border-s-4 border-gold-500 bg-white dark:bg-chesscom-800 text-chesscom-900 dark:text-chesscom-100'
           : 'bg-white text-chesscom-900 dark:bg-chesscom-800/70 dark:text-chesscom-100'
       }`}
     >
@@ -677,14 +829,18 @@ function ExportRow({ pgn, fen, fileBase }: { pgn: string; fen: string; fileBase:
   );
 }
 
-function LinesPanel({ enabled, onToggle, lines, loading, error, playedUci, onAdvance, onHover }: {
+function LinesPanel({ enabled, locked, onToggle, lines, loading, error, whiteToMove, playedUci, onPlay, onHover }: {
   enabled: boolean;
+  /** Shown because a tried line needs it — the hide button would do nothing. */
+  locked: boolean;
   onToggle: () => void;
   lines: EngineLine[];
   loading: boolean;
   error: boolean;
+  whiteToMove: boolean;
   playedUci: string | null;
-  onAdvance: () => void;
+  /** Play a line's first move on the board. */
+  onPlay: (uci: string) => void;
   onHover: (l: EngineLine | null) => void;
 }) {
   const { t } = useTranslation();
@@ -695,14 +851,16 @@ function LinesPanel({ enabled, onToggle, lines, loading, error, playedUci, onAdv
         <span className="text-xs font-semibold uppercase tracking-wider text-chesscom-500 dark:text-chesscom-300">
           {t('review.lines', { defaultValue: 'Engine lines' })}
         </span>
-        <button
-          onClick={onToggle}
-          className={`btn-ghost ml-auto px-2 py-1 text-xs ${enabled ? 'text-board-dark' : ''}`}
-        >
-          {enabled
-            ? t('review.linesHide', { defaultValue: 'Hide' })
-            : t('review.linesShow', { defaultValue: 'Show top engine lines' })}
-        </button>
+        {!locked && (
+          <button
+            onClick={onToggle}
+            className={`btn-ghost ms-auto px-2 py-1 text-xs ${enabled ? 'text-board-dark' : ''}`}
+          >
+            {enabled
+              ? t('review.linesHide', { defaultValue: 'Hide' })
+              : t('review.linesShow', { defaultValue: 'Show top engine lines' })}
+          </button>
+        )}
       </div>
       {enabled && (
         <div className="space-y-1 p-2">
@@ -720,23 +878,27 @@ function LinesPanel({ enabled, onToggle, lines, loading, error, playedUci, onAdv
           {lines.map((l) => {
             const isPlayed = playedUci != null && playedUci.length >= 4 && l.uci.slice(0, 4) === playedUci.slice(0, 4);
             const pv = l.pv_san.slice(0, 6).join(' ');
+            // Scores arrive from the side to move; show them from White's side,
+            // like the eval bar and the number under the board.
             return (
               <button
                 key={l.multipv}
-                onClick={() => { if (isPlayed) onAdvance(); }}
+                onClick={() => onPlay(l.uci)}
                 onMouseEnter={() => onHover(l)}
                 onMouseLeave={() => onHover(null)}
-                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${
+                className={`flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-start text-xs transition-colors ${
                   isPlayed
-                    ? 'cursor-pointer bg-board-dark/10 hover:bg-board-dark/15'
-                    : 'cursor-default hover:bg-chesscom-50 dark:hover:bg-chesscom-900/40'
+                    ? 'bg-board-dark/10 hover:bg-board-dark/15'
+                    : 'hover:bg-chesscom-50 dark:hover:bg-chesscom-900/40'
                 }`}
               >
                 <span className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
                   l.multipv === 1 ? 'bg-gold-500/20 text-gold-600' : 'bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-800'
                 }`}>{l.multipv}</span>
                 <span className="w-12 shrink-0 font-mono text-xs font-semibold tabular-nums">
-                  {l.mate != null ? (l.mate > 0 ? `#${l.mate}` : `-#${Math.abs(l.mate)}`) : fmtCp(l.cp)}
+                  {l.mate != null
+                    ? ((l.mate > 0) === whiteToMove ? `#${Math.abs(l.mate)}` : `-#${Math.abs(l.mate)}`)
+                    : fmtCp(l.cp == null ? null : whiteToMove ? l.cp : -l.cp)}
                 </span>
                 <span className="w-12 shrink-0 truncate font-mono font-semibold text-chesscom-900 dark:text-chesscom-100">{l.san}</span>
                 <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-chesscom-500">{pv}</span>

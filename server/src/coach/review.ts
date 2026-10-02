@@ -158,6 +158,26 @@ Schema: { "title": string, "what_happened": string, "why_it_matters": string, "w
     fallbackSkill: (elo) => `Эта партия сыграна примерно на уровне ${elo} Эло.`,
     fallbackOpening: (name) => `Дебют партии — ${name}: крепкий выбор.`,
   },
+  fa: {
+    jsonHard: `\n\nR10. دقیقاً با یک شیء JSON مطابق طرح TASK پاسخ بده. هیچ متنی بیرون از JSON نباشد. بدون بلوک markdown. بدون کلید اضافه.`,
+    perspective: 'تو',
+    phase: { opening: 'گشایش', middlegame: 'وسط بازی', endgame: 'آخر بازی' },
+    keyMoment: 'لحظهٔ کلیدی',
+    taskPhase: (phase) => `TASK: در ۲ تا ۳ جمله توضیح بده بازیکن مرحلهٔ «${phase}» را چطور بازی کرد. او را «تو» خطاب کن. طرح: { "prose": string }`,
+    taskMoment: `TASK: این لحظهٔ کلیدی را توضیح بده. بازیکن را «تو» خطاب کن. فیلدها:
+- title: حداکثر ۶ کلمه، بدون نقطه در پایان.
+- what_happened: ۱ جمله — بازیکن چه کرد و حکم موتور چه بود.
+- why_it_matters: ۱ جمله — هزینهٔ آن یا اصلی که پشتش است.
+- what_to_learn: ۱ جمله — درسی که باید گرفت.
+طرح: { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`,
+    taskSummary: `TASK: بازی را برای بازیکن جمع‌بندی کن. او را «تو» خطاب کن. طرح: { "summary": string (۳ تا ۴ جمله), "skill_assessment": string (۱ جمله دربارهٔ سطح بازی), "opening_prose": string (حداکثر ۲ جمله دربارهٔ گشایش) }`,
+    fallbackPhase: (phase, accuracy, plies) => `دقت تو در مرحلهٔ «${phase}» در ${plies} نیم‌حرکت ${accuracy}% بود.`,
+    fallbackMoment: (ply, verdict, cpLoss) => `در نیم‌حرکت ${ply} ورق بازی برگشت. ${verdict}. هزینه‌اش حدود ${cpLoss} سانتی‌پیاده بود.`,
+    fallbackSummary: (acc, brilliant, mistakes, blunders) => `دقت تو ${acc}% بود. ${brilliant} حرکت درخشان، ${mistakes} اشتباه و ${blunders} اشتباه فاحش داشتی.`,
+    fallbackSkillNone: 'هنوز برآوردی از سطح بازی نیست.',
+    fallbackSkill: (elo) => `این بازی تقریباً در سطح ${elo} الو انجام شد.`,
+    fallbackOpening: (name) => `بازی را با ${name} شروع کردی — انتخابی محکم.`,
+  },
 };
 
 function reviewText(language: Language): ReviewText {

@@ -138,7 +138,7 @@ export default function Plan() {
             <section className="space-y-3">
               <button
                 onClick={() => setExpiredOpen((v) => !v)}
-                className="flex w-full items-center gap-2 text-left"
+                className="flex w-full items-center gap-2 text-start"
               >
                 {expiredOpen ? <ChevronDown className="h-3.5 w-3.5 text-chesscom-400" /> : <ChevronRight className="h-3.5 w-3.5 text-chesscom-400" />}
                 <SectionHeader
@@ -196,7 +196,7 @@ function GoalCard({ goal }: { goal: PlanGoal }) {
   return (
     <div className={`card relative overflow-hidden p-4 ${borderTone}`}>
       {completed && (
-        <div className="pointer-events-none absolute -right-6 -top-6 text-gold-500/15">
+        <div className="pointer-events-none absolute -end-6 -top-6 text-gold-500/15">
           <Sparkles className="h-24 w-24" />
         </div>
       )}

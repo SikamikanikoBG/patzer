@@ -6,7 +6,7 @@ Thanks for considering a contribution. Patzer is a small, opinionated project �
 
 - **Bug fixes** of any size — open a PR, no need to ask first.
 - **Small, well-scoped features** that fit the "self-hosted Chess.com Game Review alternative for a household" pitch.
-- **Translations.** EN, BG, ES, DE and RU ship today; see [Adding a language](#adding-a-language) below.
+- **Translations.** EN, BG, ES, DE, RU and FA ship today; see [Adding a language](#adding-a-language) below.
 - **Coach prompt improvements** for reducing hallucinations or improving voice in a specific audience (kid / beginner / etc.).
 
 ## What we'll probably push back on
@@ -143,7 +143,8 @@ it `<code>` below. Spanish (`es`, PR #17) is a complete worked example to diff a
    it (keep the keys and the `{{side}}` token) and add the file to `TEXTS` in `web/src/learn/content.ts`.
    Until then the Learn section reads English. `web/src/locales/locales.test.ts` shows how to pin a
    language's lesson texts to full parity with English.
-6. **Database default.** The `profiles.language` column is a free-form `TEXT NOT NULL DEFAULT 'en'` (see `server/src/db.ts`), so no migration is needed — existing users keep their language.
+6. **Right-to-left scripts.** Set `rtl: true` on the `LANGUAGES` entry; `i18n.ts` then sets `<html dir="rtl">` and the layout flips. This only works because the UI uses logical Tailwind utilities — write `ms-`/`me-`, `ps-`/`pe-`, `start-`/`end-`, `text-start`/`text-end`, `border-s`/`border-e` instead of `ml-`/`mr-`, `pl-`/`pr-`, `left-`/`right-`, `text-left`/`text-right`. The board, eval bar, eval graph, move list and move-navigation buttons carry `dir="ltr"`: files a–h always run left to right. Farsi (`fa`) is the worked example.
+7. **Database default.** The `profiles.language` column is a free-form `TEXT NOT NULL DEFAULT 'en'` (see `server/src/db.ts`), so no migration is needed — existing users keep their language.
 
 To test locally: `npm run dev`, switch to your language in *Settings*, play a couple of moves with the coach on, and confirm the coach output stays in your language across kid / beginner / intermediate / advanced audience tiers.
 

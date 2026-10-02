@@ -104,6 +104,24 @@ export function evaluationStateNatural(
           return "проигранная позиция";
       }
 
+    case "fa":
+      switch (key) {
+        case "winning":
+          return "موقعیت برنده";
+        case "clearly_better":
+          return "به‌وضوح بهتر";
+        case "slightly_better":
+          return "کمی بهتر";
+        case "equal":
+          return "تقریباً برابر";
+        case "slightly_worse":
+          return "کمی بدتر";
+        case "clearly_worse":
+          return "به‌وضوح بدتر";
+        case "losing":
+          return "موقعیت بازنده";
+      }
+
     case "en":
     default:
       switch (key) {
@@ -172,6 +190,9 @@ export function boardPiecesNatural(
           case "ru":
             location = `${pieceName} на ${sq}`;
             break;
+          case "fa":
+            location = `${pieceName} در ${sq}`;
+            break;
           default:
             location = `${pieceName} on ${sq}`;
         }
@@ -191,6 +212,9 @@ export function boardPiecesNatural(
         return n === 1 ? `${n} ${names.P}` : `${n} Bauern`;
       case "ru":
         return `${n} ${ruPlural(n, "пешка", "пешки", "пешек")}`;
+      case "fa":
+        // A count takes the singular in Farsi: "۳ سرباز".
+        return `${n} ${names.P}`;
       case "en":
       default:
         return `${n} ${names.P}${n === 1 ? "" : "s"}`;
@@ -224,6 +248,7 @@ export function materialBalanceNatural(
     if (language === "es") return "el material está igualado";
     if (language === "de") return "das Material ist ausgeglichen";
     if (language === "ru") return "материал равен";
+    if (language === "fa") return "تعداد مهره‌ها برابر است";
     return "material is equal";
   }
 
@@ -237,6 +262,7 @@ export function materialBalanceNatural(
       else if (language === "es") pieceLabel = `${abs.toFixed(0)} peones`;
       else if (language === "de") pieceLabel = `${abs.toFixed(0)} Bauern`;
       else if (language === "ru") pieceLabel = `${abs.toFixed(0)} пешки`;
+      else if (language === "fa") pieceLabel = `${abs.toFixed(0)} ${names.P}`;
       else pieceLabel = `${abs.toFixed(0)} ${names.P}s`;
     } else {
       pieceLabel = names.P!;
@@ -260,6 +286,11 @@ export function materialBalanceNatural(
     // "на 2 пешки" is already declined; a single piece takes the accusative.
     const label = /^\d/.test(pieceLabel) ? pieceLabel : ruForm(pieceLabel, "acc");
     return ahead ? `у тебя на ${label} больше` : `у тебя на ${label} меньше`;
+  }
+  if (language === "fa") {
+    // "2 سرباز" already carries its number; a single piece needs "یک".
+    const label = /^\d/.test(pieceLabel) ? pieceLabel : `یک ${pieceLabel}`;
+    return ahead ? `${label} بیشتر داری` : `${label} کمتر داری`;
   }
   return ahead ? `you are up a ${pieceLabel}` : `you are down a ${pieceLabel}`;
 }

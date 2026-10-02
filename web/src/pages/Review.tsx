@@ -1,15 +1,45 @@
 import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Download, Trophy, Frown, Equal, BookOpen, Inbox, Settings as SettingsIcon, Star, Search, X } from 'lucide-react';
+import { useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { Download, Trophy, Frown, Equal, BookOpen, Inbox, Settings as SettingsIcon, Star, Search, X, FileText, FilterX, Loader2 } from 'lucide-react';
 import { api } from '../api';
+import PgnImportPanel from '../components/PgnImportPanel';
 import { useAuth } from '../state/auth';
 import { fmtAccuracy, fmtTimeControl } from '../lib/utils';
 import { cn } from '../lib/utils';
 import type { GameRow } from '../types';
 
 type ImportSource = 'chesscom' | 'lichess';
+type GamesPage = { games: GameRow[]; total: number; starred: number };
+
+const PAGE_SIZE = 100;
+
+// How many games the Chess.com / Lichess buttons fetch. 'all' walks the whole
+// history on the site; re-importing is safe, games already here are skipped.
+const IMPORT_SCOPES = ['20', '100', '500', 'all'] as const;
+type ImportScope = typeof IMPORT_SCOPES[number];
+const SCOPE_KEY = 'patzer.importScope';
+
+// List filters, kept in the URL so a filtered view survives a reload and can
+// be linked. Each maps to a query parameter of GET /api/games.
+const FILTERS = {
+  days: ['7', '30', '90', '365'],
+  source: ['chesscom', 'lichess', 'played', 'pvp', 'imported'],
+  result: ['win', 'loss', 'draw'],
+  color: ['white', 'black'],
+  time_class: ['bullet', 'blitz', 'rapid', 'daily'],
+} as const;
+type FilterKey = keyof typeof FILTERS;
+const FILTER_KEYS = Object.keys(FILTERS) as FilterKey[];
+
+function readScope(): ImportScope {
+  try {
+    const v = localStorage.getItem(SCOPE_KEY);
+    if (v && (IMPORT_SCOPES as readonly string[]).includes(v)) return v as ImportScope;
+  } catch { /* storage blocked */ }
+  return 'all';
+}
 
 export default function Review() {
   const { t } = useTranslation();
@@ -18,24 +48,53 @@ export default function Review() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [importMsg, setImportMsg] = useState<{ text: string; error?: boolean } | null>(null);
   const [q, setQ] = useState('');
+  const [scope, setScopeState] = useState<ImportScope>(readScope);
+  const [pgnOpen, setPgnOpen] = useState(false);
+
+  function setScope(v: ImportScope) {
+    setScopeState(v);
+    try { localStorage.setItem(SCOPE_KEY, v); } catch { /* storage blocked */ }
+  }
 
   const bookmarkedOnly = searchParams.get('bookmarked') === '1';
+  const filters = useMemo(() => {
+    const out: Partial<Record<FilterKey, string>> = {};
+    for (const k of FILTER_KEYS) {
+      const v = searchParams.get(k);
+      if (v && (FILTERS[k] as readonly string[]).includes(v)) out[k] = v;
+    }
+    return out;
+  }, [searchParams]);
+  const anyFilter = Object.keys(filters).length > 0;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['games', { bookmarkedOnly, q }],
-    queryFn: () => {
-      const params = new URLSearchParams({ limit: '100' });
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ['games', { bookmarkedOnly, q, filters }],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) => {
+      const params = new URLSearchParams({ limit: String(PAGE_SIZE), offset: String(pageParam) });
       if (bookmarkedOnly) params.set('bookmarked', '1');
+      for (const [k, v] of Object.entries(filters)) params.set(k, v);
       if (q.trim()) params.set('q', q.trim());
-      return api.get<{ games: GameRow[] }>(`/api/games?${params.toString()}`);
+      return api.get<GamesPage>(`/api/games?${params.toString()}`);
     },
+    getNextPageParam: (last, pages) => {
+      const loaded = pages.reduce((n, p) => n + p.games.length, 0);
+      return last.games.length === PAGE_SIZE && loaded < last.total ? loaded : undefined;
+    },
+    // While the engine is on one of the listed games, poll so its row flips
+    // from "Analyzing…" to the accuracy on its own.
+    refetchInterval: (query) =>
+      query.state.data?.pages.some((p) => p.games.some((g) => g.analyzing)) ? 4000 : false,
   });
 
   const importMut = useMutation({
     mutationFn: (source: ImportSource) =>
-      api.post<{ imported: number; total: number }>(`/api/games/import/${source}`, { limit: 20 }),
+      api.post<{ imported: number; total: number }>(
+        `/api/games/import/${source}`,
+        scope === 'all' ? { all: true } : { limit: Number(scope) },
+      ),
     onSuccess: (r) => {
-      setImportMsg({ text: t('review.imported', { n: r.imported }) });
+      setImportMsg({ text: t('review.importedOf', { n: r.imported, total: r.total }) });
       qc.invalidateQueries({ queryKey: ['games'] });
       setTimeout(() => setImportMsg(null), 3000);
     },
@@ -51,12 +110,21 @@ export default function Review() {
   ];
   const linked = sources.filter((s) => s.username);
 
-  const games = data?.games ?? [];
-  const counts = useMemo(() => {
-    const total = games.length;
-    const starred = games.filter((g) => g.bookmarked).length;
-    return { total, starred };
-  }, [games]);
+  const games = useMemo(() => data?.pages.flatMap((p) => p.games) ?? [], [data]);
+  const lastPage = data?.pages[data.pages.length - 1];
+  const counts = { total: lastPage?.total ?? 0, starred: lastPage?.starred ?? 0 };
+
+  function setFilter(key: FilterKey, value: string) {
+    const next = new URLSearchParams(searchParams);
+    if (value) next.set(key, value); else next.delete(key);
+    setSearchParams(next, { replace: true });
+  }
+
+  function clearFilters() {
+    const next = new URLSearchParams(searchParams);
+    for (const k of FILTER_KEYS) next.delete(k);
+    setSearchParams(next, { replace: true });
+  }
 
   function toggleBookmarkedOnly() {
     const next = new URLSearchParams(searchParams);
@@ -71,21 +139,46 @@ export default function Review() {
           <h1 className="page-h1">{t('review.title')}</h1>
           <p className="page-sub">{t('review.subtitle', { defaultValue: 'Browse, analyze and learn from your games.' })}</p>
         </div>
-        {linked.length > 0 ? (
-          <div className="flex flex-wrap gap-2 self-start sm:self-auto">
-            {linked.map((s) => (
-              <button key={s.source} onClick={() => importMut.mutate(s.source)} disabled={importMut.isPending} className="btn-primary">
-                <Download className="h-4 w-4" />
-                {importMut.isPending && importMut.variables === s.source ? t('review.importing') : `${s.label} (@${s.username})`}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <Link to="/settings" className="btn-secondary text-sm">
-            <SettingsIcon className="h-4 w-4" /> {t('review.setUsername', { defaultValue: 'Set Chess.com username' })}
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {linked.length > 0 ? (
+            <>
+              <select
+                value={scope}
+                onChange={(e) => setScope(e.target.value as ImportScope)}
+                disabled={importMut.isPending}
+                className="input w-auto py-2 text-sm"
+                aria-label={t('review.importScope.label')}
+                title={t('review.importScope.label')}
+              >
+                {IMPORT_SCOPES.map((s) => (
+                  <option key={s} value={s}>{s === 'all' ? t('review.importScope.all') : t('review.importScope.last', { n: Number(s) })}</option>
+                ))}
+              </select>
+              {linked.map((s) => (
+                <button key={s.source} onClick={() => importMut.mutate(s.source)} disabled={importMut.isPending} className="btn-primary">
+                  <Download className="h-4 w-4" />
+                  {importMut.isPending && importMut.variables === s.source ? t('review.importing') : `${s.label} (@${s.username})`}
+                </button>
+              ))}
+            </>
+          ) : (
+            <Link to="/settings" className="btn-secondary text-sm">
+              <SettingsIcon className="h-4 w-4" /> {t('review.setUsername', { defaultValue: 'Set Chess.com username' })}
+            </Link>
+          )}
+          <button onClick={() => setPgnOpen((v) => !v)} className="btn-secondary text-sm">
+            <FileText className="h-4 w-4" /> {t('review.pgn.open')}
+          </button>
+        </div>
       </header>
+
+      {importMut.isPending && scope === 'all' && (
+        <div className="rounded-md border border-chesscom-200 px-4 py-2 text-sm text-chesscom-500 dark:border-chesscom-700">
+          {t('review.importAllSlow')}
+        </div>
+      )}
+
+      {pgnOpen && <PgnImportPanel onClose={() => setPgnOpen(false)} onDone={(m) => { setImportMsg(m); setTimeout(() => setImportMsg(null), 6000); }} />}
 
       {importMsg && (
         <div className={cn('rounded-md border px-4 py-2 text-sm', importMsg.error
@@ -98,17 +191,17 @@ export default function Review() {
       {/* Filter bar — search + starred-only toggle. */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-chesscom-400" />
+          <Search className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-chesscom-400" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t('review.searchPlaceholder', { defaultValue: 'Search players, opening, notes…' })}
-            className="input pl-8 pr-8 text-sm"
+            className="input ps-8 pe-8 text-sm"
           />
           {q && (
             <button
               onClick={() => setQ('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-chesscom-400 hover:bg-chesscom-100 dark:hover:bg-chesscom-700"
+              className="absolute end-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-chesscom-400 hover:bg-chesscom-100 dark:hover:bg-chesscom-700"
               aria-label={t('review.clearSearch')}
             >
               <X className="h-3 w-3" />
@@ -133,6 +226,29 @@ export default function Review() {
         </span>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        {FILTER_KEYS.map((key) => (
+          <select
+            key={key}
+            value={filters[key] ?? ''}
+            onChange={(e) => setFilter(key, e.target.value)}
+            aria-label={t(`review.filter.${key}.label`)}
+            title={t(`review.filter.${key}.label`)}
+            className={cn('input w-auto py-1.5 text-xs', filters[key] && 'border-board-dark text-board-dark dark:text-chesscom-100')}
+          >
+            <option value="">{t(`review.filter.${key}.any`)}</option>
+            {(FILTERS[key] as readonly string[]).map((v) => (
+              <option key={v} value={v}>{t(`review.filter.${key}.${v}`)}</option>
+            ))}
+          </select>
+        ))}
+        {anyFilter && (
+          <button onClick={clearFilters} className="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-chesscom-500 hover:bg-chesscom-100 dark:hover:bg-chesscom-700">
+            <FilterX className="h-3.5 w-3.5" /> {t('review.filter.clear')}
+          </button>
+        )}
+      </div>
+
       {isLoading && (
         <div className="grid gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -153,9 +269,13 @@ export default function Review() {
             <Inbox className="h-6 w-6" />
           </div>
           <div className="text-base font-semibold">
-            {bookmarkedOnly ? t('review.noStarred', { defaultValue: 'No starred games yet' }) : t('review.noGames')}
+            {anyFilter || q.trim()
+              ? t('review.filter.noMatch')
+              : bookmarkedOnly ? t('review.noStarred', { defaultValue: 'No starred games yet' }) : t('review.noGames')}
           </div>
-          {bookmarkedOnly ? (
+          {anyFilter ? (
+            <button onClick={clearFilters} className="btn-secondary text-sm">{t('review.filter.clear')}</button>
+          ) : bookmarkedOnly ? (
             <button onClick={toggleBookmarkedOnly} className="btn-secondary text-sm">{t('review.showAll', { defaultValue: 'Show all games' })}</button>
           ) : (
             linked.length === 0 && (
@@ -170,6 +290,11 @@ export default function Review() {
       {!isLoading && games.length > 0 && (
         <div className="grid gap-2">
           {games.map((g) => <GameCard key={g.id} g={g} />)}
+          {hasNextPage && (
+            <button onClick={() => void fetchNextPage()} disabled={isFetchingNextPage} className="btn-secondary mx-auto mt-2 text-sm">
+              {isFetchingNextPage ? t('review.loadingMore') : t('review.loadMore', { n: counts.total - games.length })}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -182,9 +307,14 @@ function GameCard({ g }: { g: GameRow }) {
   const star = useMutation({
     mutationFn: (next: boolean) => api.patch(`/api/games/${g.id}/bookmark`, { bookmarked: next }),
     onMutate: (next: boolean) => {
-      // Optimistic update.
-      qc.setQueriesData<{ games: GameRow[] }>({ queryKey: ['games'] }, (old) =>
-        old ? { games: old.games.map((row) => (row.id === g.id ? { ...row, bookmarked: next ? 1 : 0 } : row)) } : old);
+      // Optimistic update. ['games', …] holds both plain lists (Home) and this
+      // page's paged list.
+      const flip = (rows: GameRow[]) => rows.map((row) => (row.id === g.id ? { ...row, bookmarked: next ? 1 : 0 } : row));
+      qc.setQueriesData<{ games: GameRow[] } | InfiniteData<GamesPage>>({ queryKey: ['games'] }, (old) => {
+        if (!old) return old;
+        if ('pages' in old) return { ...old, pages: old.pages.map((p) => ({ ...p, games: flip(p.games) })) };
+        return { ...old, games: flip(old.games) };
+      });
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['games'] }),
   });
@@ -206,11 +336,11 @@ function GameCard({ g }: { g: GameRow }) {
             <span>{new Date(g.end_time).toLocaleDateString()}</span>
             <span>·</span>
             <span>{t(`review.source.${g.source}`, { defaultValue: g.source })}</span>
-            {g.notes && <span className="ml-1 italic text-chesscom-400">· {t('review.hasNote')}</span>}
+            {g.notes && <span className="ms-1 italic text-chesscom-400">· {t('review.hasNote')}</span>}
           </div>
         </div>
         {g.analyzed ? (
-          <div className="text-right text-xs">
+          <div className="text-end text-xs">
             <div className="text-[11px] uppercase tracking-wider text-chesscom-400">{t('review.accuracy')}</div>
             <div className="font-mono text-sm font-semibold tabular-nums">
               <span className="text-chesscom-700 dark:text-chesscom-200">{fmtAccuracy(g.accuracy_white)}</span>
@@ -218,6 +348,10 @@ function GameCard({ g }: { g: GameRow }) {
               <span className="text-chesscom-700 dark:text-chesscom-200">{fmtAccuracy(g.accuracy_black)}</span>
             </div>
           </div>
+        ) : g.analyzing ? (
+          <span className="badge gap-1 bg-gold-500/15 text-gold-700 dark:text-gold-300">
+            <Loader2 className="h-3 w-3 animate-spin" /> {t('review.analyzingNow')}
+          </span>
         ) : (
           <span className="badge gap-1 bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300">
             <BookOpen className="h-3 w-3" /> review

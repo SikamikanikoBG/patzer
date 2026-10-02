@@ -48,10 +48,10 @@ export default function AdminUsers() {
         <table className="w-full text-sm">
           <thead className="bg-ink-50 text-xs uppercase tracking-wide text-ink-500 dark:bg-ink-900">
             <tr>
-              <th className="px-4 py-2 text-left">{t('admin.colUser')}</th>
-              <th className="px-4 py-2 text-left">{t('admin.role')}</th>
-              <th className="px-4 py-2 text-left">{t('common.language')}</th>
-              <th className="px-4 py-2 text-left">{t('admin.audience')}</th>
+              <th className="px-4 py-2 text-start">{t('admin.colUser')}</th>
+              <th className="px-4 py-2 text-start">{t('admin.role')}</th>
+              <th className="px-4 py-2 text-start">{t('common.language')}</th>
+              <th className="px-4 py-2 text-start">{t('admin.audience')}</th>
               <th className="px-4 py-2"></th>
             </tr>
           </thead>
@@ -67,7 +67,7 @@ export default function AdminUsers() {
                       {u.email && (
                         <div className="text-xs text-ink-400">
                           {u.email}
-                          {!u.email_verified && <span className="ml-1 rounded bg-amber-100 px-1 text-[10px] text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t('admin.unverified')}</span>}
+                          {!u.email_verified && <span className="ms-1 rounded bg-amber-100 px-1 text-[10px] text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t('admin.unverified')}</span>}
                         </div>
                       )}
                       {u.invite_code && (
@@ -83,7 +83,7 @@ export default function AdminUsers() {
                 </td>
                 <td className="px-4 py-2 uppercase text-xs">{u.language}</td>
                 <td className="px-4 py-2 capitalize">{u.audience}</td>
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-2 text-end">
                   {me?.id !== u.id && (
                     <button
                       onClick={() => { if (confirm(t('admin.deleteConfirm', { name: u.display_name }))) del.mutate(u.id); }}

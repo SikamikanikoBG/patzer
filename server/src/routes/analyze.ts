@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { Chess } from 'chess.js';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
-import { createAnalysisEngine } from '../chess/engine.js';
+import { analysisDepth, createAnalysisEngine } from '../chess/engine.js';
 import {
   classifyByWpDrop, refineClassification, normalizeEval, cpToWinPct,
   cpLossForPly, cpLossForAcpl, moveAccuracy, estimateElo, estimateGamePerformance, BOOK_PLIES,
@@ -19,7 +19,8 @@ router.use('*', requireAuth);
 
 const schema = z.object({
   game_id: z.number().int().positive(),
-  depth: z.number().int().min(8).max(22).default(16),
+  // Omitted = the depth set in Admin → System.
+  depth: z.number().int().min(8).max(22).optional(),
   force: z.boolean().default(false),
 });
 
@@ -31,6 +32,26 @@ const inflight = new Map<number, Promise<unknown>>();
 // keeps the engine fed as the user clicks through moves, and we don't want
 // two boards racing each other.
 const positionInflight = new Map<number, Promise<unknown>>();
+
+// Games whose engine analysis is running right now — started here or by a
+// background job (auto-import, end of a played game) — so the UI can show
+// "Analyzing…" instead of offering to start a second one.
+const analyzingGames = new Map<number, number>();
+
+export function isAnalyzing(gameId: number): boolean {
+  return analyzingGames.has(gameId);
+}
+
+export async function trackAnalysis<T>(gameId: number, work: () => Promise<T>): Promise<T> {
+  analyzingGames.set(gameId, (analyzingGames.get(gameId) ?? 0) + 1);
+  try {
+    return await work();
+  } finally {
+    const left = (analyzingGames.get(gameId) ?? 1) - 1;
+    if (left > 0) analyzingGames.set(gameId, left);
+    else analyzingGames.delete(gameId);
+  }
+}
 
 const positionSchema = z.object({
   fen: z.string().min(10),
@@ -86,7 +107,8 @@ router.post('/', async (c) => {
   const body = await c.req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
-  const { game_id, depth, force } = parsed.data;
+  const { game_id, force } = parsed.data;
+  const depth = parsed.data.depth ?? analysisDepth();
 
   const game = db.prepare(`
     SELECT pgn, user_color, opponent_user_id, time_class,
@@ -95,7 +117,7 @@ router.post('/', async (c) => {
   `).get(game_id, user.id) as GameRow | undefined;
   if (!game) return c.json({ error: 'not_found' }, 404);
 
-  if (inflight.has(user.id)) return c.json({ error: 'already_analyzing' }, 429);
+  if (inflight.has(user.id) || isAnalyzing(game_id)) return c.json({ error: 'already_analyzing' }, 429);
 
   if (!force) {
     const existing = db.prepare('SELECT depth, scoring_version FROM analyses WHERE game_id = ?').get(game_id) as
@@ -112,7 +134,7 @@ router.post('/', async (c) => {
     }
   }
 
-  const work = (async () => {
+  const work = trackAnalysis(game_id, async () => {
     const result = await analyzePgnFull(game.pgn, depth, {
       score: scoreFromResultForUser(game.result, game.user_color ?? 'white'),
       userColor: game.user_color ?? 'white',
@@ -124,7 +146,7 @@ router.post('/', async (c) => {
     });
     saveAnalysis(game_id, result);
     return result;
-  })();
+  });
 
   inflight.set(user.id, work);
   try {

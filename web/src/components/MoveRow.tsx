@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
-import { styleFor, GLYPH_SVG } from '../lib/classification';
+import { displayStyleFor, GLYPH_SVG } from '../lib/classification';
 
 interface Move { ply: number; san: string; classification?: string }
 
@@ -56,7 +56,7 @@ export default function MoveRow({ num, white, black, current, onSelect }: Props)
         tint,
       )}
     >
-      <div className="flex items-center justify-end pr-2 text-xs tabular-nums text-chesscom-400">{num}.</div>
+      <div className="flex items-center justify-end pe-2 text-xs tabular-nums text-chesscom-400">{num}.</div>
       <Half move={white} current={wCur} onSelect={onSelect} t={t} />
       <Half move={black} current={bCur} onSelect={onSelect} t={t} />
     </div>
@@ -67,13 +67,13 @@ function Half({
   move, current, onSelect, t,
 }: { move?: Move; current: boolean; onSelect: (p: number) => void; t: (k: string) => string }) {
   if (!move) return <div />;
-  const style = styleFor(move.classification);
+  const style = displayStyleFor(move.classification, move.san);
   return (
     <button
       onClick={() => onSelect(move.ply)}
       title={style ? t(`classification.${style.labelKey}`) : undefined}
       className={cn(
-        'group flex items-center justify-between gap-2 px-2 py-1.5 text-left text-sm transition-colors',
+        'group flex items-center justify-between gap-2 px-2 py-1.5 text-start text-sm transition-colors',
         current
           ? 'bg-chesscom-900 text-white dark:bg-chesscom-100 dark:text-chesscom-900'
           : 'hover:bg-chesscom-100 dark:hover:bg-chesscom-800',

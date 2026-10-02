@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGES, type Language } from '../lib/languages';
-import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
+import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile, RefreshCw } from 'lucide-react';
 import { api } from '../api';
 import { useAuth, type Profile, type BoardTheme, type SiteTheme, type SoundSet, type MoveSoundSet } from '../state/auth';
 import { getVoices, onVoicesReady, speak } from '../lib/tts';
@@ -49,6 +49,9 @@ export default function Settings() {
       move_sound_set: form.move_sound_set,
       blunder_warning: !!form.blunder_warning,
       kid_piece_emotions: !!form.kid_piece_emotions,
+      auto_review: !!form.auto_review,
+      chesscom_sync_minutes: form.chesscom_sync_minutes,
+      lichess_sync_minutes: form.lichess_sync_minutes,
     });
     await i18n.changeLanguage(form.language);
     await refresh();
@@ -195,7 +198,7 @@ export default function Settings() {
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {(['silent','on_demand','always_on_pedagogical'] as const).map((b) => (
               <button key={b} type="button" onClick={() => set('coach_behavior', b)}
-                className={`rounded-xl border p-3 text-left text-sm transition-colors
+                className={`rounded-xl border p-3 text-start text-sm transition-colors
                   ${form.coach_behavior === b
                     ? 'border-ink-900 bg-ink-900 text-cream dark:border-cream dark:bg-cream dark:text-ink-900'
                     : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}>
@@ -205,6 +208,44 @@ export default function Settings() {
                 </div>
               </button>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Automation — background jobs the user can turn on/off or pace. */}
+      <section className="card overflow-hidden">
+        <div className="section-header">
+          <div className="section-icon bg-teal-500/15 text-teal-600"><RefreshCw className="h-4 w-4" /></div>
+          <div>
+            <div className="section-title">{t('settings.automation')}</div>
+            <div className="section-desc">{t('settings.automationDesc')}</div>
+          </div>
+        </div>
+        <div className="space-y-3 p-5">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-ink-50 dark:hover:bg-ink-700/50">
+            <input type="checkbox" className="mt-1" checked={!!form.auto_review} onChange={(e) => set('auto_review', e.target.checked ? 1 : 0)} />
+            <div>
+              <div className="text-sm font-medium">{t('settings.autoReview')}</div>
+              <div className="text-xs text-ink-500">{t('settings.autoReviewDesc')}</div>
+            </div>
+          </label>
+          <div>
+            <label className="label mb-1 block">{t('settings.chessComSyncInterval')}</label>
+            <select className="input" value={form.chesscom_sync_minutes ?? 15} onChange={(e) => set('chesscom_sync_minutes', Number(e.target.value))}>
+              {[0, 5, 15, 30, 60].map((m) => (
+                <option key={m} value={m}>{m === 0 ? t('settings.chessComSyncOff') : t('settings.chessComSyncEvery', { n: m })}</option>
+              ))}
+            </select>
+            <div className="mt-1 text-xs text-ink-400">{t('settings.chessComSyncIntervalHelp')}</div>
+          </div>
+          <div>
+            <label className="label mb-1 block">{t('settings.lichessSyncInterval')}</label>
+            <select className="input" value={form.lichess_sync_minutes ?? 15} onChange={(e) => set('lichess_sync_minutes', Number(e.target.value))}>
+              {[0, 5, 15, 30, 60].map((m) => (
+                <option key={m} value={m}>{m === 0 ? t('settings.lichessSyncOff') : t('settings.lichessSyncEvery', { n: m })}</option>
+              ))}
+            </select>
+            <div className="mt-1 text-xs text-ink-400">{t('settings.lichessSyncIntervalHelp')}</div>
           </div>
         </div>
       </section>
@@ -227,7 +268,7 @@ export default function Settings() {
             </div>
           </label>
           {!!form.sound_enabled && (
-            <div className="space-y-3 pl-8">
+            <div className="space-y-3 ps-8">
               <SoundChoice label={t('settings.moveSoundSet')} options={['classic', 'board'] as const} value={form.move_sound_set}
                 optionText={(s) => t(`settings.moveSoundSetOption.${s}`)} descText={(s) => t(`settings.moveSoundSetDesc.${s}`)}
                 previewText={t('settings.soundSetPreview')}
@@ -374,19 +415,19 @@ function SiteThemeOption({ value, selected, onPick, label }: { value: SiteTheme;
         {value === 'light' && <div className="h-full w-full bg-gradient-to-br from-cream to-amber-50">
           <div className="absolute inset-x-2 top-2 h-1 rounded bg-ink-200" />
           <div className="absolute inset-x-2 top-4 h-1 w-12 rounded bg-ink-300" />
-          <div className="absolute bottom-2 left-2 h-3 w-3 rounded-full bg-accent-500" />
+          <div className="absolute bottom-2 start-2 h-3 w-3 rounded-full bg-accent-500" />
         </div>}
         {value === 'dark' && <div className="h-full w-full bg-gradient-to-br from-ink-900 to-ink-800">
           <div className="absolute inset-x-2 top-2 h-1 rounded bg-ink-700" />
           <div className="absolute inset-x-2 top-4 h-1 w-12 rounded bg-ink-600" />
-          <div className="absolute bottom-2 left-2 h-3 w-3 rounded-full bg-accent-500" />
+          <div className="absolute bottom-2 start-2 h-3 w-3 rounded-full bg-accent-500" />
         </div>}
         {value === 'auto' && <div className="grid h-full w-full grid-cols-2">
           <div className="bg-cream"><div className="m-2 h-1 w-8 rounded bg-ink-300" /></div>
           <div className="bg-ink-900"><div className="m-2 h-1 w-8 rounded bg-ink-600" /></div>
         </div>}
         {selected && (
-          <div className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white shadow">
+          <div className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white shadow">
             <Check className="h-3 w-3" />
           </div>
         )}
@@ -415,7 +456,7 @@ function BoardThemeOption({ value, selected, onPick, label }: { value: BoardThem
           })}
         </div>
         {selected && (
-          <div className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white shadow">
+          <div className="absolute end-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white shadow">
             <Check className="h-3 w-3" />
           </div>
         )}
@@ -446,7 +487,7 @@ function SoundChoice<T extends string>({ label, options, value, optionText, desc
             ${value === o
               ? 'border-ink-900 bg-ink-900 text-cream dark:border-cream dark:bg-cream dark:text-ink-900'
               : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}>
-            <button type="button" onClick={() => onPick(o)} className="min-w-0 flex-1 text-left">
+            <button type="button" onClick={() => onPick(o)} className="min-w-0 flex-1 text-start">
               <div className="font-medium">{optionText(o)}</div>
               <div className={`mt-1 text-xs ${value === o ? 'opacity-80' : 'text-ink-500'}`}>{descText(o)}</div>
             </button>
