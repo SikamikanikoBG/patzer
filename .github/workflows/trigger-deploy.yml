@@ -1,0 +1,30 @@
+name: Trigger deploy
+
+# Every commit on main starts the deploy workflow in aminghuf/patzer-deploy,
+# which ships this branch to the server. That repo's own schedule stays as a
+# fallback in case this trigger is ever missed.
+#
+# Needs the DEPLOY_TRIGGER_TOKEN secret: a fine-grained token limited to
+# aminghuf/patzer-deploy with "Actions: Read and write".
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  trigger:
+    # The fork only — the same file on upstream or another fork must not try.
+    if: github.repository == 'aminghuf/patzer'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start the deploy workflow
+        env:
+          GH_TOKEN: ${{ secrets.DEPLOY_TRIGGER_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::error::DEPLOY_TRIGGER_TOKEN is not set; the deploy was not triggered."
+            exit 1
+          fi
+          gh workflow run deploy.yml --repo aminghuf/patzer-deploy --ref main
