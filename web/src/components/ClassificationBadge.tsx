@@ -1,8 +1,10 @@
 import { cn } from '../lib/utils';
-import { styleFor, GLYPH_SVG } from '../lib/classification';
+import { displayStyleFor, GLYPH_SVG } from '../lib/classification';
 
 interface Props {
   classification: string;
+  /** The move's SAN; a mating move ("#") shows the checkmate badge instead. */
+  san?: string;
   square: string;       // e.g. "e4"
   orientation?: 'white' | 'black';
   size?: 'sm' | 'md';
@@ -12,8 +14,8 @@ interface Props {
 // is computed in percentage units of the parent so the badge scales with the
 // board at any size (chess.com's badge stays 24% of a square wide). Place
 // inside a position:relative parent that's exactly the size of the chessboard.
-export default function ClassificationBadge({ classification, square, orientation = 'white', size = 'md' }: Props) {
-  const style = styleFor(classification);
+export default function ClassificationBadge({ classification, san, square, orientation = 'white', size = 'md' }: Props) {
+  const style = displayStyleFor(classification, san);
   if (!style) return null;
   if (square.length < 2) return null;
 
@@ -50,7 +52,7 @@ export default function ClassificationBadge({ classification, square, orientatio
           'flex h-full w-full items-center justify-center rounded-full text-white shadow-lift ring-2 ring-white/90 dark:ring-chesscom-900/90',
           style.bgClass,
         )}
-        title={classification}
+        title={style.labelKey}
       >
         <svg viewBox="0 0 24 24" width="70%" height="70%" aria-hidden="true">
           {GLYPH_SVG[style.glyph]}

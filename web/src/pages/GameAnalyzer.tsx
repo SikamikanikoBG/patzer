@@ -34,6 +34,8 @@ interface GameDetail {
     moves_json: string;
   } | null;
   analysis_stale?: boolean;
+  /** The engine is already working on this game (this tab, another one, or a background job). */
+  analyzing?: boolean;
 }
 
 interface EngineLine {
@@ -65,9 +67,15 @@ export default function GameAnalyzer() {
     queryKey: ['game', gameId],
     queryFn: () => api.get<GameDetail>(`/api/games/${gameId}`),
     enabled: !!gameId,
+    // Poll while the server is analyzing this game, so the result appears
+    // without the user having to start (or re-click) anything.
+    refetchInterval: (query) => (query.state.data?.analyzing ? 3000 : false),
   });
 
   const [analyzing, setAnalyzing] = useState(false);
+  // The engine turned us down because it is busy with another of the user's games.
+  const [engineBusy, setEngineBusy] = useState(false);
+  const staleFiredFor = useRef<number | null>(null);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [coachConfigured, setCoachConfigured] = useState(false);
   const [requestedDepth, setRequestedDepth] = useState(16);
@@ -101,7 +109,10 @@ export default function GameAnalyzer() {
     } else {
       setAnalysis(null);
     }
-    if (data.analysis_stale && !analyzing) {
+    // Once per game: a refetch (polling, or after a refused request) must not
+    // fire the re-analysis again.
+    if (data.analysis_stale && !analyzing && !data.analyzing && staleFiredFor.current !== gameId) {
+      staleFiredFor.current = gameId;
       void analyze(16, true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,10 +197,17 @@ export default function GameAnalyzer() {
 
   async function analyze(depth: number, force = false) {
     setAnalyzing(true);
+    setEngineBusy(false);
     try {
       const r = await api.post<{ analysis: AnalysisResult; cached: boolean }>('/api/analyze', { game_id: gameId, depth, force });
       setAnalysis(r.analysis);
       await refetch();
+    } catch (e) {
+      if ((e as { status?: number }).status !== 429) throw e;
+      // Refused: the engine is already on this game (the refetch picks that up
+      // and the page waits for it) or on another one.
+      const fresh = await refetch();
+      if (!fresh.data?.analyzing) setEngineBusy(true);
     } finally {
       setAnalyzing(false);
     }
@@ -222,6 +240,7 @@ export default function GameAnalyzer() {
   if (isLoading || !data) return <AnalyzerSkeleton />;
 
   const move: AnalyzedMove | undefined = analysis?.moves[ply - 1];
+  const busy = analyzing || !!data.analyzing;
   const userColor = data.game.user_color ?? 'white';
   const orientation: 'white' | 'black' = flipped
     ? (userColor === 'white' ? 'black' : 'white')
@@ -311,7 +330,7 @@ export default function GameAnalyzer() {
                 arrows={arrow as never[]}
               />
               {move && pos?.to && (
-                <ClassificationBadge classification={move.classification} square={pos.to} orientation={orientation} />
+                <ClassificationBadge classification={move.classification} san={move.san} square={pos.to} orientation={orientation} />
               )}
             </div>
           </div>
@@ -356,12 +375,17 @@ export default function GameAnalyzer() {
             flex would force the page to grow. */}
         <div className="min-w-0 space-y-3 lg:w-[380px] lg:flex-initial lg:max-w-md lg:min-h-0 lg:overflow-y-auto lg:pe-1">
           {!analysis && (
-            <button onClick={() => analyze(requestedDepth, false)} disabled={analyzing} className="btn-primary w-full">
-              <Sparkles className="h-4 w-4" />
-              {analyzing
-                ? t('review.analyzing', { progress: '…' })
+            <button onClick={() => analyze(requestedDepth, false)} disabled={busy} className="btn-primary w-full">
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {busy
+                ? t('review.analyzingNow')
                 : t('review.runEngine', { defaultValue: 'Run engine analysis' })}
             </button>
+          )}
+          {engineBusy && !busy && (
+            <div className="rounded-md border border-chesscom-200 px-3 py-2 text-xs text-chesscom-500 dark:border-chesscom-700">
+              {t('review.engineBusy')}
+            </div>
           )}
 
           {analysis && (
@@ -393,6 +417,8 @@ export default function GameAnalyzer() {
                 moves={analysis.moves}
                 phaseSplit={analysis.phase_split}
                 userColor={userColor}
+                currentPly={ply}
+                onSelectPly={setPly}
               />
 
               {showDepthControl && (
@@ -414,11 +440,11 @@ export default function GameAnalyzer() {
                   </div>
                   <button
                     onClick={() => analyze(requestedDepth, true)}
-                    disabled={analyzing}
+                    disabled={busy}
                     className="btn-primary mt-3 w-full text-sm"
                   >
-                    <Sparkles className="h-4 w-4" />
-                    {analyzing ? t('review.analyzing', { progress: '…' }) : `${t('review.reanalyze')} (depth ${requestedDepth})`}
+                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {busy ? t('review.analyzingNow') : `${t('review.reanalyze')} (depth ${requestedDepth})`}
                   </button>
                 </div>
               )}

@@ -483,8 +483,8 @@ export default function Play() {
       case 'move_made': {
         if (msg.fen) setFen(msg.fen);
         if (msg.san && msg.uci) {
-          const flags = inferMoveFlagsFromSan(msg.san);
-          soundForMove(flags);
+          // No checkmate sound here: game_over plays the game-end sound right after.
+          soundForMove({ ...inferMoveFlagsFromSan(msg.san), checkmate: false });
           setMoves((m) => [...m, { ply: m.length + 1, san: msg.san!, uci: msg.uci! }]);
         }
         if (msg.fen && msg.uci) {

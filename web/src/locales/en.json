@@ -179,6 +179,8 @@
     "analyze": "Analyze",
     "reanalyze": "Re-analyze",
     "analyzing": "Analyzing… ({{progress}}%)",
+    "analyzingNow": "Analyzing…",
+    "engineBusy": "The engine is busy with another of your games. Try again when it finishes.",
     "depth": "Depth",
     "accuracy": "Accuracy",
     "moves": "Moves",
@@ -331,6 +333,7 @@
     }
   },
   "classification": {
+    "checkmate": "Checkmate",
     "brilliant": "Brilliant",
     "great": "Great",
     "best": "Best",

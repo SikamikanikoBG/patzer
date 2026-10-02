@@ -76,6 +76,15 @@ describe('sound sets', () => {
     for (const f of [784, 659, 523]) expect(started).toContain(f);
   });
 
+  it('a mating move gets its own sound, ending on a low note a check lacks', async () => {
+    const { soundForMove, inferMoveFlagsFromSan } = await import('./sounds');
+    soundForMove(inferMoveFlagsFromSan('Qh5+'));
+    expect(started).not.toContain(587);
+    started.length = 0;
+    soundForMove(inferMoveFlagsFromSan('Qxf7#'));
+    expect(started).toContain(587);
+  });
+
   it('an unknown set falls back to classic', async () => {
     const { playSound, setSoundSet } = await import('./sounds');
     setSoundSet('loud' as never);

@@ -170,6 +170,8 @@
     "analyze": "Analizar",
     "reanalyze": "Reanalizar",
     "analyzing": "Analizando… ({{progress}}%)",
+    "analyzingNow": "Analizando…",
+    "engineBusy": "El motor está ocupado con otra de tus partidas. Inténtalo de nuevo cuando termine.",
     "depth": "Profundidad",
     "accuracy": "Precisión",
     "moves": "Jugadas",
@@ -242,6 +244,7 @@
     }
   },
   "classification": {
+    "checkmate": "Jaque mate",
     "brilliant": "Brillante",
     "great": "Gran jugada",
     "best": "La mejor",

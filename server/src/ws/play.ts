@@ -8,7 +8,7 @@ import { persistLiveBotGame, clearLiveBotGame, loadLiveBotGame } from '../chess/
 import { lookupUser, SESSION_COOKIE_NAME } from '../auth/sessions.js';
 import { StockfishEngine } from '../chess/stockfish.js';
 import { db } from '../db.js';
-import { analyzePgn, analyzePgnFull, saveAnalysis } from '../routes/analyze.js';
+import { analyzePgn, analyzePgnFull, saveAnalysis, trackAnalysis } from '../routes/analyze.js';
 import { kickAutoReview } from '../autoReview.js';
 import { classifyByWpDrop, refineClassification, normalizeEval, cpToWinPct, SCORING_VERSION } from '../chess/classifier.js';
 import { classifyTimeControl, type TimeClass } from '../chess/timeClass.js';
@@ -644,7 +644,7 @@ async function endBotGame(ws: WebSocket, session: BotSession, result: '1-0' | '0
   });
   setImmediate(async () => {
     try {
-      const analysis = await analyzePgn(pgn, 14);
+      const analysis = await trackAnalysis(gameId, () => analyzePgn(pgn, 14));
       // The full row — key moments and phase split included — so the written
       // Game Review has what it needs without a second analysis.
       saveAnalysis(gameId, analysis);
@@ -1013,12 +1013,12 @@ async function endPvpGame(session: PvpSession, result: '1-0' | '0-1' | '1/2-1/2'
       const ids = db.prepare(`SELECT id, user_color, opponent_rating_before, user_rd_before FROM games WHERE external_id = ?`).all(session.external_id) as { id: number; user_color: 'white' | 'black' | null; opponent_rating_before: number | null; user_rd_before: number | null }[];
       for (const r of ids) {
         const score = scoreFor(result, r.user_color ?? 'white');
-        const analysis = await analyzePgnFull(pgn, 14, {
+        const analysis = await trackAnalysis(r.id, () => analyzePgnFull(pgn, 14, {
           score,
           userColor: r.user_color ?? 'white',
           opponentRating: r.opponent_rating_before,
           opponentRd: r.user_rd_before,
-        });
+        }));
         saveAnalysis(r.id, analysis);
       }
       kickAutoReview();

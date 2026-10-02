@@ -179,6 +179,8 @@
     "analyze": "Analysieren",
     "reanalyze": "Neu analysieren",
     "analyzing": "Wird analysiert… ({{progress}} %)",
+    "analyzingNow": "Wird analysiert…",
+    "engineBusy": "Die Engine ist mit einer anderen deiner Partien beschäftigt. Versuch es erneut, wenn sie fertig ist.",
     "depth": "Tiefe",
     "accuracy": "Genauigkeit",
     "moves": "Züge",
@@ -331,6 +333,7 @@
     }
   },
   "classification": {
+    "checkmate": "Schachmatt",
     "brilliant": "Brillant",
     "great": "Stark",
     "best": "Bester Zug",
