@@ -7,7 +7,8 @@ import { hashPassword } from '../auth/passwords.js';
 import { connectionHint } from '../coach/connectionHint.js';
 import { testConnection, testModel, llmUrl, llmStats, llmProvider, deepseekApiKey, type LlmProvider } from '../coach/llm.js';
 import { StockfishEngine } from '../chess/stockfish.js';
-import { engineBackend } from '../chess/engine.js';
+import { analysisDepth, analysisEngineId, engineBackend, MAX_ANALYSIS_DEPTH, MIN_ANALYSIS_DEPTH } from '../chess/engine.js';
+import { engineStatus, installedEnginePath, removeEngine, startInstall } from '../chess/engineStore.js';
 import { isMailerConfigured, sendMail, verifyConnection, welcomeTemplate } from '../email/mailer.js';
 import {
   signupMode,
@@ -238,6 +239,9 @@ router.get('/system', async (c) => {
     // Which engine Game Review analysis runs on. The env var wins when set.
     engine_backend: engineBackend(),
     engine_backend_env_override: !!process.env.ENGINE_BACKEND,
+    // 'stockfish' (bundled; local or hosted per engine_backend) or an installed engine's id.
+    analysis_engine: analysisEngineId(),
+    analysis_depth: analysisDepth(),
     // Live runtime stats so admins can confirm which model the coach is
     // actually calling (the saved setting vs. what runtime resolved to may
     // diverge if the saved model isn't pulled on the Ollama host).
@@ -281,6 +285,8 @@ const systemSchema = z.object({
   deepseek_api_key: z.string().max(255).optional(),
   stockfish_path: z.string().optional(),
   engine_backend: z.enum(['local', 'chessapi']).optional(),
+  analysis_engine: z.string().max(40).optional(),
+  analysis_depth: z.number().int().min(MIN_ANALYSIS_DEPTH).max(MAX_ANALYSIS_DEPTH).optional(),
   update_check_enabled: z.boolean().optional(),
   // Signup + email config
   signup_mode: z.enum(['open', 'invite', 'closed']).optional(),
@@ -306,6 +312,10 @@ router.patch('/system', async (c) => {
   const parsed = systemSchema.safeParse(body);
   if (!parsed.success) return c.json({ error: 'invalid_input', details: parsed.error.flatten() }, 400);
   const d = parsed.data;
+  // Only the bundled Stockfish or an engine that is actually installed.
+  if (d.analysis_engine !== undefined && d.analysis_engine !== 'stockfish' && !installedEnginePath(d.analysis_engine)) {
+    return c.json({ error: 'engine_not_installed' }, 400);
+  }
 
   const setStr = (k: string, v: string | undefined) => { if (v !== undefined) setSetting(k, v); };
   const setBool = (k: string, v: boolean | undefined) => { if (v !== undefined) setSetting(k, v ? '1' : '0'); };
@@ -320,6 +330,8 @@ router.patch('/system', async (c) => {
   if (d.deepseek_api_key) setSetting('deepseek_api_key', d.deepseek_api_key);
   setStr('stockfish_path', d.stockfish_path);
   setStr('engine_backend', d.engine_backend);
+  setStr('analysis_engine', d.analysis_engine);
+  if (d.analysis_depth !== undefined) setSetting('analysis_depth', String(d.analysis_depth));
 
   if (d.update_check_enabled !== undefined) setUpdateCheckEnabled(d.update_check_enabled);
   if (d.signup_mode) setSignupMode(d.signup_mode);
@@ -396,6 +408,25 @@ router.post('/test/ollama-models', async (c) => {
     results.push({ model: m.name, ...r });
   }
   return c.json({ ok: true, results });
+});
+
+// ---- Extra analysis engines ----
+// The id is only ever matched against the built-in catalog (engineStore.ts);
+// nothing from the request reaches a URL, a path or a command line.
+
+router.get('/engines', (c) => c.json({ engines: engineStatus() }));
+
+router.post('/engines/:id/install', (c) => {
+  const r = startInstall(c.req.param('id'));
+  return r.ok ? c.json(r, 202) : c.json(r, r.error === 'unknown_engine' ? 404 : 409);
+});
+
+router.delete('/engines/:id', (c) => {
+  const id = c.req.param('id');
+  const r = removeEngine(id);
+  if (!r.ok) return c.json(r, r.error === 'unknown_engine' ? 404 : 409);
+  if (getSetting('analysis_engine') === id) setSetting('analysis_engine', 'stockfish');
+  return c.json(r);
 });
 
 router.post('/test/stockfish', async (c) => {

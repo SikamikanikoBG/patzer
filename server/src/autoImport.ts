@@ -16,6 +16,7 @@ import { importChessComGames } from './chess/chesscomImport.js';
 import { importLichessGames } from './chess/lichessImport.js';
 import { analyzePgn, saveAnalysis, trackAnalysis } from './routes/analyze.js';
 import { kickAutoReview } from './autoReview.js';
+import { analysisDepth } from './chess/engine.js';
 
 // How often the ticker wakes up to check for due profiles. This is NOT the
 // per-user interval — it's the granularity at which we look.
@@ -128,7 +129,7 @@ async function analyzePending(): Promise<void> {
   const rows = pendingAnalysis(MAX_ANALYZE_PER_RUN);
   for (const row of rows) {
     try {
-      const analysis = await trackAnalysis(row.id, () => analyzePgn(row.pgn, 14));
+      const analysis = await trackAnalysis(row.id, () => analyzePgn(row.pgn, analysisDepth(14)));
       saveAnalysis(row.id, analysis);
       console.log(`[auto-import] analyzed game ${row.id}`);
     } catch (err) {

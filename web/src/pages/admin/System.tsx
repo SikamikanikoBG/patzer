@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, AlertCircle, Save, Sparkles, Cpu, Loader2, FlaskConical, Mail, UserPlus, Send } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Save, Sparkles, Cpu, Loader2, FlaskConical, Mail, UserPlus, Send, Download, Trash2, ExternalLink } from 'lucide-react';
 import { api } from '../../api';
 
 interface SysSettings {
@@ -16,6 +16,9 @@ interface SysSettings {
   stockfish_path: string | null;
   engine_backend?: 'local' | 'chessapi';
   engine_backend_env_override?: boolean;
+  /** 'stockfish' (bundled) or the id of an installed engine. */
+  analysis_engine?: string;
+  analysis_depth?: number;
   last_model_used?: string | null;
   last_error?: string | null;
   p95_ms?: number | null;
@@ -36,6 +39,18 @@ interface SysSettings {
   email_enabled?: boolean;
 }
 
+interface EngineInfo {
+  id: string;
+  name: string;
+  version: string;
+  homepage: string;
+  singleLine: boolean;
+  size: number | null;
+  installed: boolean;
+  unavailable: 'platform' | 'arch' | 'cpu' | null;
+  job: { state: 'downloading' | 'verifying' | 'failed'; received: number; total: number; error?: string } | null;
+}
+
 type SignupMode = 'open' | 'invite' | 'closed';
 const SIGNUP_MODES: readonly SignupMode[] = ['open', 'invite', 'closed'];
 
@@ -54,12 +69,13 @@ interface MailState {
 
 export default function AdminSystem() {
   const { t } = useTranslation();
-  const [s, setS] = useState<SysSettings>({ llm_provider: 'ollama', ollama_url: '', ollama_model: '', vllm_url: '', vllm_model: '', stockfish_path: '', engine_backend: 'local' });
+  const [s, setS] = useState<SysSettings>({ llm_provider: 'ollama', ollama_url: '', ollama_model: '', vllm_url: '', vllm_model: '', stockfish_path: '', engine_backend: 'local', analysis_engine: 'stockfish', analysis_depth: 16 });
   const [runtime, setRuntime] = useState<{ last_model_used: string | null; last_error: string | null; p95_ms: number | null; call_count: number } | null>(null);
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [ollamaStatus, setOllamaStatus] = useState<{ ok: boolean; msg: string; hint?: string } | null>(null);
   const [stockfishStatus, setStockfishStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [engines, setEngines] = useState<EngineInfo[]>([]);
   const [saved, setSaved] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [allTesting, setAllTesting] = useState(false);
@@ -98,6 +114,8 @@ export default function AdminSystem() {
         stockfish_path: d.stockfish_path ?? '',
         engine_backend: d.engine_backend === 'chessapi' ? 'chessapi' : 'local',
         engine_backend_env_override: !!d.engine_backend_env_override,
+        analysis_engine: d.analysis_engine ?? 'stockfish',
+        analysis_depth: d.analysis_depth ?? 16,
       });
       setRuntime({
         last_model_used: d.last_model_used ?? null,
@@ -162,6 +180,7 @@ export default function AdminSystem() {
   }
 
   const provider = s.llm_provider ?? 'ollama';
+  const engineId = s.analysis_engine ?? 'stockfish';
   const activeUrl = provider === 'vllm' ? (s.vllm_url ?? '') : provider === 'deepseek' ? (s.deepseek_url ?? '') : (s.ollama_url ?? '');
   const activeModel = provider === 'vllm' ? (s.vllm_model ?? '') : provider === 'deepseek' ? (s.deepseek_model ?? '') : (s.ollama_model ?? '');
   // DeepSeek's URL is optional — empty means the official https://api.deepseek.com.
@@ -179,6 +198,30 @@ export default function AdminSystem() {
   }
 
   useEffect(() => { void loadSettings(); }, []);
+
+  function loadEngines() {
+    return api.get<{ engines: EngineInfo[] }>('/api/admin/engines')
+      .then((r) => setEngines(r.engines))
+      .catch(() => undefined);
+  }
+  useEffect(() => { void loadEngines(); }, []);
+  // Follow a running download.
+  const engineBusy = engines.some((e) => e.job && e.job.state !== 'failed');
+  useEffect(() => {
+    if (!engineBusy) return;
+    const h = window.setInterval(() => void loadEngines(), 1000);
+    return () => window.clearInterval(h);
+  }, [engineBusy]);
+
+  async function installEngine(id: string) {
+    await api.post(`/api/admin/engines/${id}/install`).catch(() => undefined);
+    await loadEngines();
+  }
+  async function removeEngine(id: string) {
+    await api.del(`/api/admin/engines/${id}`).catch(() => undefined);
+    setS((cur) => (cur.analysis_engine === id ? { ...cur, analysis_engine: 'stockfish' } : cur));
+    await loadEngines();
+  }
 
   // Auto-load models on first load, provider switch, and whenever the user
   // pastes a different URL for the currently-selected provider.
@@ -388,42 +431,114 @@ export default function AdminSystem() {
             <p className="text-xs text-ink-500">{t('admin.stockfishDesc')}</p>
           </div>
         </div>
-        <div className="space-y-4 p-5">
+        <div className="space-y-5 p-5">
+          {s.engine_backend_env_override && (
+            <div className="flex items-start gap-2 rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
+              <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {t('admin.engineBackendEnv')}
+            </div>
+          )}
+
+          {/* ---- Which engine ---- */}
           <div>
             <label className="label mb-1 block">{t('admin.engineBackend')}</label>
-            {s.engine_backend_env_override && (
-              <div className="mb-2 flex items-start gap-2 rounded-xl border border-amber-300/50 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-700/40 dark:bg-amber-900/20 dark:text-amber-300">
-                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {t('admin.engineBackendEnv')}
-              </div>
-            )}
+            <p className="mb-2 text-xs text-ink-500">{t('admin.engines.intro')}</p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {(['local', 'chessapi'] as const).map((b) => (
-                <button key={b} type="button" onClick={() => setS({ ...s, engine_backend: b })}
-                  className={`rounded-xl border p-3 text-start text-sm transition-colors
-                    ${(s.engine_backend ?? 'local') === b
-                      ? 'border-ink-900 bg-ink-900 text-cream dark:border-cream dark:bg-cream dark:text-ink-900'
-                      : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}>
-                  <div className="font-medium">{t(b === 'local' ? 'admin.engineBackendLocal' : 'admin.engineBackendChessapi')}</div>
-                  <div className={`mt-1 text-xs ${(s.engine_backend ?? 'local') === b ? 'opacity-80' : 'text-ink-500'}`}>
-                    {t(b === 'local' ? 'admin.engineBackendLocalDesc' : 'admin.engineBackendChessapiDesc')}
-                  </div>
-                </button>
-              ))}
+              <EngineCard
+                title="Stockfish"
+                subtitle={t('admin.engines.bundled')}
+                selected={engineId === 'stockfish'}
+                selectLabel={t('admin.engines.use')}
+                selectedLabel={t('admin.engines.inUse')}
+                onSelect={() => setS({ ...s, analysis_engine: 'stockfish' })}
+              />
+              {engines.map((e) => {
+                const busy = e.job && e.job.state !== 'failed';
+                const pct = e.job && e.job.total ? Math.min(100, Math.round((e.job.received / e.job.total) * 100)) : 0;
+                return (
+                  <EngineCard
+                    key={e.id}
+                    title={`${e.name} ${e.version}`}
+                    subtitle={e.size ? `${(e.size / 1e6).toFixed(0)} MB` : undefined}
+                    href={e.homepage}
+                    selected={engineId === e.id}
+                    selectLabel={t('admin.engines.use')}
+                    selectedLabel={t('admin.engines.inUse')}
+                    onSelect={e.installed ? () => setS({ ...s, analysis_engine: e.id }) : undefined}
+                    note={e.unavailable
+                      ? t(`admin.engines.unavailable.${e.unavailable}`)
+                      : e.job?.state === 'failed' ? t('admin.engines.failed', { error: e.job.error ?? '' })
+                      : e.singleLine ? t('admin.engines.singleLine') : undefined}
+                    noteBad={e.job?.state === 'failed'}
+                  >
+                    {!e.installed && !e.unavailable && (
+                      <button type="button" onClick={() => void installEngine(e.id)} disabled={!!busy} className="btn-primary w-full text-sm">
+                        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                        {busy
+                          ? (e.job!.state === 'verifying' ? t('admin.engines.verifying') : t('admin.engines.downloading', { pct }))
+                          : t('admin.engines.install')}
+                      </button>
+                    )}
+                    {e.installed && (
+                      <button type="button" onClick={() => void removeEngine(e.id)} className="btn-ghost px-2 py-1 text-xs text-ink-500" title={t('admin.engines.remove')}>
+                        <Trash2 className="h-3.5 w-3.5" /> {t('admin.engines.remove')}
+                      </button>
+                    )}
+                  </EngineCard>
+                );
+              })}
             </div>
           </div>
-          <div>
-            <label className="label mb-1 block">{t('admin.stockfishPath')}</label>
-            <div className="flex gap-2">
-              <input className="input" value={s.stockfish_path ?? ''} onChange={(e) => setS({ ...s, stockfish_path: e.target.value })} placeholder={t('admin.autoDetect')} />
-              <button onClick={testStockfish} className="btn-secondary text-sm">{t('common.test')}</button>
-            </div>
-            <p className="mt-1 text-xs text-ink-400">{t('admin.stockfishPathHelp')}</p>
-            {stockfishStatus && (
-              <div className={`mt-2 flex items-center gap-1 text-sm ${stockfishStatus.ok ? 'text-accent-600' : 'text-bad'}`}>
-                {stockfishStatus.ok ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-                {t('admin.engineFound', { name: stockfishStatus.msg })}
+
+          {/* ---- Stockfish: local or online ---- */}
+          {engineId === 'stockfish' && (
+            <>
+              <div>
+                <label className="label mb-1 block">{t('admin.engines.stockfishWhere')}</label>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {(['local', 'chessapi'] as const).map((b) => (
+                    <button key={b} type="button" onClick={() => setS({ ...s, engine_backend: b })}
+                      className={`rounded-xl border p-3 text-start text-sm transition-colors
+                        ${(s.engine_backend ?? 'local') === b
+                          ? 'border-ink-900 bg-ink-900 text-cream dark:border-cream dark:bg-cream dark:text-ink-900'
+                          : 'border-ink-200 bg-white hover:border-ink-300 dark:border-ink-700 dark:bg-ink-800 dark:hover:border-ink-600'}`}>
+                      <div className="font-medium">{t(b === 'local' ? 'admin.engineBackendLocal' : 'admin.engineBackendChessapi')}</div>
+                      <div className={`mt-1 text-xs ${(s.engine_backend ?? 'local') === b ? 'opacity-80' : 'text-ink-500'}`}>
+                        {t(b === 'local' ? 'admin.engineBackendLocalDesc' : 'admin.engineBackendChessapiDesc')}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
+              <div>
+                <label className="label mb-1 block">{t('admin.stockfishPath')}</label>
+                <div className="flex gap-2">
+                  <input className="input" value={s.stockfish_path ?? ''} onChange={(e) => setS({ ...s, stockfish_path: e.target.value })} placeholder={t('admin.autoDetect')} />
+                  <button onClick={testStockfish} className="btn-secondary text-sm">{t('common.test')}</button>
+                </div>
+                <p className="mt-1 text-xs text-ink-400">{t('admin.stockfishPathHelp')}</p>
+                {stockfishStatus && (
+                  <div className={`mt-2 flex items-center gap-1 text-sm ${stockfishStatus.ok ? 'text-accent-600' : 'text-bad'}`}>
+                    {stockfishStatus.ok ? <CheckCircle2 className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                    {t('admin.engineFound', { name: stockfishStatus.msg })}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* ---- Depth ---- */}
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="label">{t('admin.engines.depth')}</label>
+              <span className="font-mono text-sm font-semibold tabular-nums">{s.analysis_depth ?? 16}</span>
+            </div>
+            <input
+              type="range" min={8} max={22} step={1}
+              value={s.analysis_depth ?? 16}
+              onChange={(e) => setS({ ...s, analysis_depth: Number(e.target.value) })}
+              className="w-full"
+            />
+            <p className="mt-1 text-xs text-ink-400">{t('admin.engines.depthHelp')}</p>
           </div>
         </div>
       </section>
@@ -567,5 +682,48 @@ function ToggleRow({ checked, onChange, label, hint, disabled }: { checked: bool
       </div>
       <input type="checkbox" className="mt-1 h-4 w-4 shrink-0" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
     </label>
+  );
+}
+
+function EngineCard({ title, subtitle, href, selected, selectLabel, selectedLabel, onSelect, note, noteBad, children }: {
+  title: string;
+  subtitle?: string;
+  href?: string;
+  selected: boolean;
+  selectLabel: string;
+  selectedLabel: string;
+  /** Absent while the engine can't be chosen (not installed yet). */
+  onSelect?: () => void;
+  note?: string;
+  noteBad?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className={`flex flex-col gap-2 rounded-xl border p-3 text-sm transition-colors ${selected
+      ? 'border-accent-500 bg-accent-500/5'
+      : 'border-ink-200 bg-white dark:border-ink-700 dark:bg-ink-800'}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate font-semibold">{title}</div>
+          {subtitle && <div className="text-xs text-ink-500">{subtitle}</div>}
+        </div>
+        {href && (
+          <a href={href} target="_blank" rel="noreferrer noopener" className="shrink-0 text-ink-400 hover:text-ink-700 dark:hover:text-ink-200" title={href}>
+            <ExternalLink className="h-3.5 w-3.5" />
+          </a>
+        )}
+      </div>
+      {note && <div className={`text-xs ${noteBad ? 'text-bad' : 'text-ink-500'}`}>{note}</div>}
+      <div className="mt-auto flex flex-wrap items-center gap-2">
+        {onSelect && (selected ? (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-accent-600">
+            <CheckCircle2 className="h-4 w-4" /> {selectedLabel}
+          </span>
+        ) : (
+          <button type="button" onClick={onSelect} className="btn-secondary text-sm">{selectLabel}</button>
+        ))}
+        {children}
+      </div>
+    </div>
   );
 }

@@ -180,6 +180,8 @@
     "reanalyze": "Re-analyze",
     "analyzing": "Analyzing… ({{progress}}%)",
     "analyzingNow": "Analyzing…",
+    "variationBack": "Back to game",
+    "variationUndo": "Take back the last tried move",
     "engineBusy": "The engine is busy with another of your games. Try again when it finishes.",
     "depth": "Depth",
     "accuracy": "Accuracy",
@@ -619,7 +621,27 @@
     "engineBackendLocalDesc": "The bundled Stockfish on this server. Private, no network needed.",
     "engineBackendChessapi": "chess-api.com (cloud)",
     "engineBackendChessapiDesc": "Hosted Stockfish 18 NNUE over HTTPS. For devices too weak to run Stockfish locally.",
-    "engineBackendEnv": "Set by the ENGINE_BACKEND environment variable — this toggle is ignored."
+    "engineBackendEnv": "Set by the ENGINE_BACKEND environment variable — this toggle is ignored.",
+    "engines": {
+      "intro": "Game Review and engine lines run on the engine chosen here. Bot play always uses the bundled Stockfish. Extra engines are downloaded from their official releases and checked against a pinned checksum before they run.",
+      "bundled": "Bundled with Patzer",
+      "use": "Use this engine",
+      "inUse": "In use",
+      "install": "Download",
+      "downloading": "Downloading… {{pct}}%",
+      "verifying": "Checking…",
+      "remove": "Remove",
+      "failed": "Install failed: {{error}}",
+      "unavailable": {
+        "platform": "Downloads are only available when Patzer runs on Linux (e.g. in Docker).",
+        "arch": "No build for this server's processor type.",
+        "cpu": "This server's processor is too old for this engine (needs AVX2 and BMI2)."
+      },
+      "stockfishWhere": "Where Stockfish runs",
+      "depth": "Analysis depth",
+      "depthHelp": "How deep the engine searches each position in a game review. Higher is stronger but slower; 16 is a good default. Applies to new reviews, including automatic ones.",
+      "singleLine": "Gives one line per position: no alternative engine lines, and “Great” and some “Brilliant” moves can't be detected."
+    }
   },
   "palette": {
     "switchLanguage": "Switch to",

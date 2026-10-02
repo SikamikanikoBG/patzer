@@ -180,6 +180,8 @@
     "reanalyze": "Neu analysieren",
     "analyzing": "Wird analysiert… ({{progress}} %)",
     "analyzingNow": "Wird analysiert…",
+    "variationBack": "Zurück zur Partie",
+    "variationUndo": "Letzten ausprobierten Zug zurücknehmen",
     "engineBusy": "Die Engine ist mit einer anderen deiner Partien beschäftigt. Versuch es erneut, wenn sie fertig ist.",
     "depth": "Tiefe",
     "accuracy": "Genauigkeit",
@@ -619,7 +621,27 @@
     "engineBackendLocalDesc": "Das mitgelieferte Stockfish auf diesem Server. Privat, kein Netzwerk nötig.",
     "engineBackendChessapi": "chess-api.com (Cloud)",
     "engineBackendChessapiDesc": "Gehostetes Stockfish 18 NNUE über HTTPS. Für Geräte, die zu schwach für lokales Stockfish sind.",
-    "engineBackendEnv": "Wird über die Umgebungsvariable ENGINE_BACKEND gesetzt — dieser Schalter wird ignoriert."
+    "engineBackendEnv": "Wird über die Umgebungsvariable ENGINE_BACKEND gesetzt — dieser Schalter wird ignoriert.",
+    "engines": {
+      "intro": "Partieanalyse und Engine-Varianten laufen auf der hier gewählten Engine. Bot-Partien nutzen immer das mitgelieferte Stockfish. Zusätzliche Engines werden aus ihren offiziellen Releases geladen und vor dem Start gegen eine festgelegte Prüfsumme geprüft.",
+      "bundled": "Mit Patzer mitgeliefert",
+      "use": "Diese Engine verwenden",
+      "inUse": "In Verwendung",
+      "install": "Herunterladen",
+      "downloading": "Lädt herunter… {{pct}} %",
+      "verifying": "Wird geprüft…",
+      "remove": "Entfernen",
+      "failed": "Installation fehlgeschlagen: {{error}}",
+      "unavailable": {
+        "platform": "Downloads gibt es nur, wenn Patzer unter Linux läuft (z. B. in Docker).",
+        "arch": "Kein Build für den Prozessortyp dieses Servers.",
+        "cpu": "Der Prozessor dieses Servers ist zu alt für diese Engine (benötigt AVX2 und BMI2)."
+      },
+      "stockfishWhere": "Wo Stockfish läuft",
+      "depth": "Analysetiefe",
+      "depthHelp": "Wie tief die Engine jede Stellung einer Partieanalyse durchsucht. Höher ist stärker, aber langsamer; 16 ist ein guter Standard. Gilt für neue Analysen, auch automatische.",
+      "singleLine": "Liefert eine Variante pro Stellung: keine alternativen Engine-Varianten, und „Großartig“ sowie manche „Brillant“-Züge werden nicht erkannt."
+    }
   },
   "palette": {
     "switchLanguage": "Wechseln zu",

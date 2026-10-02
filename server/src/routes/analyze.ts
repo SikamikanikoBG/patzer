@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { Chess } from 'chess.js';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
-import { createAnalysisEngine } from '../chess/engine.js';
+import { analysisDepth, createAnalysisEngine } from '../chess/engine.js';
 import {
   classifyByWpDrop, refineClassification, normalizeEval, cpToWinPct,
   cpLossForPly, cpLossForAcpl, moveAccuracy, estimateElo, estimateGamePerformance, BOOK_PLIES,
@@ -19,7 +19,8 @@ router.use('*', requireAuth);
 
 const schema = z.object({
   game_id: z.number().int().positive(),
-  depth: z.number().int().min(8).max(22).default(16),
+  // Omitted = the depth set in Admin → System.
+  depth: z.number().int().min(8).max(22).optional(),
   force: z.boolean().default(false),
 });
 
@@ -106,7 +107,8 @@ router.post('/', async (c) => {
   const body = await c.req.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
-  const { game_id, depth, force } = parsed.data;
+  const { game_id, force } = parsed.data;
+  const depth = parsed.data.depth ?? analysisDepth();
 
   const game = db.prepare(`
     SELECT pgn, user_color, opponent_user_id, time_class,
