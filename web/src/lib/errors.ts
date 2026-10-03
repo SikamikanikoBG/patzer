@@ -32,6 +32,7 @@ const CODE_KEYS: Record<string, string> = {
   csrf_required: 'auth.errGeneric',
   last_admin: 'auth.errLastAdmin',
   cannot_delete_self: 'auth.errCannotDeleteSelf',
+  password_login_disabled: 'sso.errPasswordDisabled',
 };
 
 export function humanizeError(e: unknown, t: TFn): string {

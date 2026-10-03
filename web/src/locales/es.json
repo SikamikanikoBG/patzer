@@ -56,6 +56,18 @@
     "submitting": "Iniciando sesión…",
     "invalid": "Usuario o contraseña inválidos"
   },
+  "sso": {
+    "signIn": "Iniciar sesión con SSO",
+    "or": "o",
+    "errUnavailable": "El servicio de inicio de sesión no está disponible ahora. Inténtalo de nuevo en un momento",
+    "errExpired": "El inicio de sesión tardó demasiado. Inténtalo de nuevo",
+    "errDenied": "El inicio de sesión se canceló o no está permitido",
+    "errNotProvisioned": "Todavía no tienes una cuenta en Patzer. Pide al administrador que te cree una",
+    "errConflict": "Esta cuenta ya está vinculada a otro inicio de sesión. Pide ayuda al administrador",
+    "errAdminFirst": "Este servidor espera a que primero inicie sesión un administrador. Inténtalo de nuevo más tarde",
+    "errFailed": "El inicio de sesión único falló. Inténtalo de nuevo",
+    "errPasswordDisabled": "El inicio de sesión con contraseña está desactivado en este servidor. Usa el inicio de sesión único"
+  },
   "play": {
     "newGame": "Juego nuevo",
     "difficulty": "Dificultad",
@@ -400,7 +412,13 @@
     "sendTestEmail": "Enviar correo de prueba",
     "sendTestEmailHint": "Guarda primero — la prueba utilizará la configuración guardada.",
     "send": "Enviar",
-    "testEmailSent": "Correo de prueba enviado."
+    "testEmailSent": "Correo de prueba enviado.",
+    "colSignIn": "Inicio de sesión",
+    "signInSso": "SSO",
+    "signInPassword": "Contraseña",
+    "signInSsoHint": "Creada al iniciar sesión con inicio de sesión único",
+    "signInPasswordHint": "Creada con nombre de usuario y contraseña",
+    "ssoLinked": "vinculada a SSO"
   },
   "palette": {
     "switchLanguage": "Cambiar a",

@@ -374,6 +374,27 @@ db.exec(`CREATE TABLE IF NOT EXISTS live_bot_games (
 // short enough that the table stays small.
 db.prepare(`DELETE FROM live_bot_games WHERE updated_at < datetime('now','-14 days')`).run();
 
+// SSO (OpenID Connect). One row per identity at the identity provider,
+// keyed by (issuer, subject) as the spec says: `sub` is the only claim that is
+// stable for a user, unlike usernames and emails. The unique index allows at
+// most one identity per Patzer account per provider, which is what turns a
+// second, different identity matching the same account into a conflict.
+db.exec(`CREATE TABLE IF NOT EXISTS oidc_identities (
+  issuer TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  last_login_at TEXT,
+  PRIMARY KEY (issuer, subject)
+)`);
+db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_oidc_identities_user ON oidc_identities(user_id, issuer)`);
+// The ID token a session was opened with, kept so logout can hand it to the
+// provider's end-session endpoint as id_token_hint. NULL for password logins.
+ensureColumn('sessions', 'oidc_id_token', 'TEXT');
+// How the account came to be: 'password' (setup wizard, sign-up, admin
+// console) or 'sso' (created by a single sign-on login). Shown in Admin → Users.
+ensureColumn('users', 'created_via', "TEXT NOT NULL DEFAULT 'password'");
+
 // Automatic review. When a game finishes, ws/play.ts calls kickAutoReview()
 // (see autoReview.ts), which writes the AI Game Review prose for every game
 // that has an analysis row but no cached review yet. No dedicated column is

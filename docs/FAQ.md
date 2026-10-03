@@ -96,6 +96,21 @@ Public exposure isn't recommended (see [SECURITY.md](../SECURITY.md) — the
 threat model assumes a trusted LAN), but a Tailscale tunnel or a Cloudflare
 Tunnel works well for "let my family use it from anywhere".
 
+## Can family members sign in with our Authentik / Keycloak account?
+
+Yes. Patzer speaks OpenID Connect, so any provider that does (Authentik,
+Keycloak, Authelia, Pocket ID, Zitadel, …) can sit in front of it. It's all
+environment variables:
+
+- a "Sign in with …" button with your own label;
+- an optional SSO-only mode without Patzer passwords, which on a fresh install
+  skips the setup wizard;
+- admins chosen by a group at the provider;
+- accounts created automatically or matched to existing ones;
+- a logout that signs you out of the provider as well.
+
+Setup, with Authentik step by step: [docs/OIDC.md](OIDC.md).
+
 ## How do I back up my games?
 
 Everything lives in one SQLite file: the volume you mounted at `/app/data`

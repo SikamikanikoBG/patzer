@@ -38,12 +38,24 @@ function verifySigned(signed: string): string | null {
   return token;
 }
 
-export function createSession(userId: number): string {
+export function createSession(userId: number, opts: { oidcIdToken?: string } = {}): string {
   const token = randomBytes(32).toString('hex');
   const now = new Date().toISOString();
   const expires = new Date(Date.now() + SESSION_DAYS * 86400_000).toISOString();
-  db.prepare('INSERT INTO sessions (token, user_id, expires_at, last_active_at) VALUES (?, ?, ?, ?)').run(token, userId, expires, now);
+  db.prepare('INSERT INTO sessions (token, user_id, expires_at, last_active_at, oidc_id_token) VALUES (?, ?, ?, ?, ?)')
+    .run(token, userId, expires, now, opts.oidcIdToken ?? null);
   return `${token}.${sign(token)}`;
+}
+
+// The ID token an SSO session was opened with, or null for a password login
+// (or a cookie that doesn't verify). Read before destroySession on logout.
+export function sessionOidcIdToken(signed: string): string | null {
+  const token = verifySigned(signed);
+  if (!token) return null;
+  const row = db.prepare('SELECT oidc_id_token FROM sessions WHERE token = ?').get(token) as
+    | { oidc_id_token: string | null }
+    | undefined;
+  return row?.oidc_id_token ?? null;
 }
 
 export function destroySession(signed: string): void {

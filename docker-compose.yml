@@ -24,6 +24,20 @@ services:
       # the hosted chess-api.com engine — the knob for a public try-it instance
       # (DEMO_MODE, #27).
       - ENGINE_BACKEND=${ENGINE_BACKEND:-local}
+      # Behind a reverse proxy: the public address, and Secure cookies for HTTPS.
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-}
+      - COOKIE_SECURE=${COOKIE_SECURE:-false}
+      # Single sign-on through Authentik, Keycloak or any OpenID Connect
+      # provider; off until OIDC_ISSUER and OIDC_CLIENT_ID are set (e.g. in a
+      # .env file next to this one). Every variable is explained in docs/OIDC.md.
+      - OIDC_ISSUER=${OIDC_ISSUER:-}
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-}
+      - OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET:-}
+      - OIDC_BUTTON_TEXT=${OIDC_BUTTON_TEXT:-}
+      - OIDC_ONLY=${OIDC_ONLY:-false}
+      - OIDC_ADMIN_GROUP=${OIDC_ADMIN_GROUP:-}
+      - OIDC_AUTO_PROVISION=${OIDC_AUTO_PROVISION:-false}
+      - OIDC_MATCH_BY=${OIDC_MATCH_BY:-none}
       # PORT/HOST/DB_PATH/STOCKFISH_PATH have sensible defaults baked into the image.
     labels:
       # Opt this container in to the (label-enabled) Watchtower on the host, so

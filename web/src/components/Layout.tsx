@@ -10,6 +10,7 @@ import ChangelogModal from './ChangelogModal';
 import GitHubStar from './GitHubStar';
 import { LogoMark, LogoLockup } from './Logo';
 import { LANGUAGES, normalizeLanguage } from '../lib/languages';
+import { endSession } from '../lib/logout';
 
 // v4.0.0 Layout — chess.com-style horizontal top bar.
 // Replaces the v3 narrow left rail. The dark sage navbar (`bg-chesscom-900`)
@@ -46,7 +47,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
   }, [location.pathname]);
 
   async function logout() {
-    await api.post('/api/auth/logout');
+    if (await endSession()) return;
     await refresh();
     nav('/login');
   }
