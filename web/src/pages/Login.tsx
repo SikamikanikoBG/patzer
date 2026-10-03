@@ -17,6 +17,7 @@ const SSO_ERROR_KEYS: Record<string, string> = {
   denied: 'sso.errDenied',
   not_provisioned: 'sso.errNotProvisioned',
   conflict: 'sso.errConflict',
+  admin_first: 'sso.errAdminFirst',
 };
 
 export default function Login() {

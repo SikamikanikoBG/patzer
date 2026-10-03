@@ -66,6 +66,11 @@ describe('Login page and single sign-on', () => {
     expect(await screen.findByText(/don't have a Patzer account yet/)).toBeTruthy();
   });
 
+  it('explains that the admin has to sign in first', async () => {
+    renderLogin({ oidc_enabled: true, oidc_only: true }, '/login?sso_error=admin_first');
+    expect(await screen.findByText(/waiting for its administrator to sign in first/)).toBeTruthy();
+  });
+
   it('an unknown error code still says something useful', async () => {
     renderLogin({ oidc_enabled: true }, '/login?sso_error=whatever');
     expect(await screen.findByText(/Single sign-on didn't work/)).toBeTruthy();

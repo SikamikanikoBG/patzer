@@ -35,6 +35,7 @@ services:
       - OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET:-}
       - OIDC_BUTTON_TEXT=${OIDC_BUTTON_TEXT:-}
       - OIDC_ONLY=${OIDC_ONLY:-false}
+      - OIDC_ADMIN_GROUP=${OIDC_ADMIN_GROUP:-}
       - OIDC_AUTO_PROVISION=${OIDC_AUTO_PROVISION:-false}
       - OIDC_MATCH_BY=${OIDC_MATCH_BY:-none}
       # PORT/HOST/DB_PATH/STOCKFISH_PATH have sensible defaults baked into the image.

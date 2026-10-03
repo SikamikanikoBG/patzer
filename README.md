@@ -48,7 +48,7 @@ Patzer is a tiny, self-hosted take on the Chess.com / Lichess workflow you actua
 - **Players & profiles** — a directory of everyone on your server with a rating leaderboard, live presence and public profiles (record, per-time-class ratings, your head-to-head), challenge-from-profile, and a "missed invitations" rail.
 - **AI Coach (your LLM)** — point at any [Ollama](https://ollama.com) or [vLLM](https://docs.vllm.ai) host (or, if you have no GPU to spare, the hosted DeepSeek API). A coach, not a commentator: it explains *why* a move works or fails (what it allows, hangs or wins, and the opponent's best answer), shows the better move and other good ones with what they achieve, connects the mistake to your own recent games ("4 of your last 10 games: leaving a piece unprotected", your weakest phase, positions you missed in the opening trainer) and links a matching Learn lesson. Hints point you at what matters without giving the move away. It never contradicts the engine: an answer that praises a mistake is caught before you see it. Audience-tuned for Kid / Beginner / Intermediate / Advanced.
 - **Family-ready** — multi-user with admin console, open / invite-only / closed sign-up, per-profile language, kid-mode blunder warnings, "horsey" piece names for the youngest profiles.
-- **Single sign-on (optional)** — sign in with Authentik, Keycloak or any other OpenID Connect provider; optionally SSO-only, with automatic accounts and a logout that ends the provider session too. See [docs/OIDC.md](docs/OIDC.md).
+- **Single sign-on (optional)** — sign in with Authentik, Keycloak or any other OpenID Connect provider: SSO next to passwords or SSO only, admins chosen by a provider group, automatic accounts, and a logout that ends the provider session too. See [docs/OIDC.md](docs/OIDC.md).
 - **Learn (beta)** — 69 interactive lessons in four levels, from how the pieces move to tactics, mating patterns and endgames. Stars and progress per profile; kid mode tells the same lessons in simpler words.
 - **Opening trainer (beta)** — drill 16 built-in main lines or any line from your own repertoire; the moves you miss come back in a daily review queue.
 - **Multilingual** — English, Bulgarian, Spanish, German and Russian out of the box, UI *and* coach prompts. Adding a language is one table entry per file — see CONTRIBUTING.
@@ -147,7 +147,7 @@ To use a different host port, run with `-p 9000:8800` (or set `HOST_PORT=9000` i
 
 If you're terminating TLS at a reverse proxy, set `COOKIE_SECURE=true` in the container's environment so session cookies aren't shipped over plaintext HTTP.
 
-To sign in through Authentik, Keycloak or another OpenID Connect provider instead of (or next to) Patzer passwords, see [Single sign-on](docs/OIDC.md).
+To sign in through Authentik, Keycloak or another OpenID Connect provider instead of (or next to) Patzer passwords, see [Single sign-on](docs/OIDC.md). With `OIDC_ONLY=true` a fresh install skips the setup wizard below: the first SSO login creates the admin.
 
 ## Compared to alternatives
 
@@ -261,7 +261,8 @@ All user-facing configuration is done **through the UI** and persisted in SQLite
 | `OIDC_CLIENT_ID` | (none) | Client ID |
 | `OIDC_CLIENT_SECRET` | (empty) | Client secret; empty for a public client |
 | `OIDC_BUTTON_TEXT` | "Sign in with SSO" | Label of the SSO button on the login page |
-| `OIDC_ONLY` | `false` | `true` removes password login, sign-up and password reset; ignored if SSO isn't configured |
+| `OIDC_ONLY` | `false` | `true` removes password login, sign-up and password reset, and on a fresh install replaces the setup wizard (the first SSO login is the admin); ignored if SSO isn't configured |
+| `OIDC_ADMIN_GROUP` | (none) | Provider group whose members are admins; checked at every SSO login, and until an admin exists only its members can sign in |
 | `OIDC_AUTO_PROVISION` | `false` | Create an account for someone the provider lets in who has none yet |
 | `OIDC_MATCH_BY` | `none` | Link a first SSO login to an existing account by `username` (case-insensitive) or verified `email`, or `none` |
 
@@ -305,11 +306,11 @@ Estimated Elo comes from average centipawn loss on a piecewise curve calibrated 
 - **Port 8800 already in use** — `-p 9000:8800` (docker run) or `HOST_PORT=9000 docker compose up -d`.
 - **Lost your admin password** — there is no in-app reset yet. Until one ships, edit `chess.db` directly: open `data/chess.db` with `sqlite3` and replace the row's `password_hash` with a `bcryptjs` hash (cost ≥ 12).
 - **Cookies dropped behind a reverse proxy** — see `COOKIE_SECURE=true` above. The cookie also requires the same hostname for both the page and the API.
-- **Locked out with `OIDC_ONLY=true`** (provider down or misconfigured) — remove `OIDC_ONLY` and restart: password login comes back, and the admin from the setup wizard still has their password. The login page names the reason for a failed SSO sign-in; [docs/OIDC.md](docs/OIDC.md#troubleshooting) explains each one.
+- **Locked out with `OIDC_ONLY=true`** (provider down or misconfigured) — remove `OIDC_ONLY` and restart: password login comes back for accounts that have a password. Accounts created through SSO don't; [docs/OIDC.md](docs/OIDC.md#getting-back-in) shows how to get an admin back in either way. The login page names the reason for a failed SSO sign-in, and [the troubleshooting table](docs/OIDC.md#troubleshooting) explains each one.
 
 ## More
 
-- **[Single sign-on](docs/OIDC.md)** — Authentik / Keycloak / OpenID Connect setup, account matching, logout, troubleshooting.
+- **[Single sign-on](docs/OIDC.md)** — Authentik / Keycloak / OpenID Connect setup, SSO-only installs, admins from a provider group, account matching, logout, troubleshooting.
 - **[FAQ](docs/FAQ.md)** — what Patzer is and isn't, Chess.com API legality, playing a friend across the internet, NAT/proxy notes, backup, "I lost my admin password", language additions.
 - **[Roadmap](ROADMAP.md)** — what's queued and what's deliberately out of scope.
 - **[Changelog](CHANGELOG.md)** — every release, with why-not-just-what entries.

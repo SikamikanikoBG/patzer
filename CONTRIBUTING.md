@@ -84,7 +84,8 @@ full PvP game (moves, clocks, draw offers, takebacks, rematch). Run it whenever 
 
 `npm run test:oidc` boots a real server next to a real OpenID Connect provider
 ([oidc-provider](https://github.com/panva/node-oidc-provider), a dev dependency) and walks a simulated browser
-through single sign-on: linking, provisioning, a cancelled login and the logout round trip through the provider.
+through single sign-on: a fresh SSO-only install, the admin group, provisioning, linking, a cancelled login and
+the logout round trip through the provider.
 Run it whenever you touch `server/src/auth/oidc.ts` or the auth routes.
 
 `npm run test:ui` does the same thing through the actual interface, with two real browsers clicking the board.

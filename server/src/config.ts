@@ -66,6 +66,9 @@ function loadOidcConfig() {
     buttonText: (process.env.OIDC_BUTTON_TEXT ?? '').trim(),
     autoProvision: parseBool(process.env.OIDC_AUTO_PROVISION, false),
     matchBy,
+    // Members of this provider group (from the `groups` claim) are Patzer
+    // admins; everyone else signing in through SSO is a normal user.
+    adminGroup: (process.env.OIDC_ADMIN_GROUP ?? '').trim() || null,
   };
 }
 

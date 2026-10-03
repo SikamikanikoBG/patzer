@@ -391,6 +391,9 @@ db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_oidc_identities_user ON oidc_iden
 // The ID token a session was opened with, kept so logout can hand it to the
 // provider's end-session endpoint as id_token_hint. NULL for password logins.
 ensureColumn('sessions', 'oidc_id_token', 'TEXT');
+// How the account came to be: 'password' (setup wizard, sign-up, admin
+// console) or 'sso' (created by a single sign-on login). Shown in Admin → Users.
+ensureColumn('users', 'created_via', "TEXT NOT NULL DEFAULT 'password'");
 
 // Automatic review. When a game finishes, ws/play.ts calls kickAutoReview()
 // (see autoReview.ts), which writes the AI Game Review prose for every game

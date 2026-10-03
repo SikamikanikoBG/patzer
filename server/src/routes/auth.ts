@@ -187,9 +187,10 @@ router.get('/oidc/start', async (c) => {
 // The provider sends the browser back here with an authorization code.
 router.get('/oidc/callback', async (c) => {
   if (!config.oidc.enabled) return c.notFound();
-  // On a fresh install the setup wizard creates the admin first. Letting SSO
-  // create the first account would skip the wizard and leave no admin.
-  if (userCount() === 0) return c.redirect('/');
+  // On a fresh install the setup wizard creates the admin first; letting SSO
+  // create the first account would skip it. In SSO-only mode there is no
+  // wizard, and the first SSO login creates the admin instead.
+  if (userCount() === 0 && !config.oidc.only) return c.redirect('/');
   const ip = clientIp(c);
 
   let login: Awaited<ReturnType<typeof finishOidcLogin>>;
@@ -202,7 +203,15 @@ router.get('/oidc/callback', async (c) => {
   }
 
   const { identity } = login;
-  const result = resolveOidcUser(identity, { matchBy: config.oidc.matchBy, autoProvision: config.oidc.autoProvision });
+  if (config.oidc.adminGroup && identity.groups === null) {
+    console.warn('[oidc] OIDC_ADMIN_GROUP is set but the provider sent no "groups" claim; roles are left unchanged');
+  }
+  const result = resolveOidcUser(identity, {
+    matchBy: config.oidc.matchBy,
+    autoProvision: config.oidc.autoProvision,
+    adminGroup: config.oidc.adminGroup,
+    ssoOnly: config.oidc.only,
+  });
   if ('error' in result) {
     console.warn(`[auth] sso_rejected ip=${ip} sub=${identity.subject} user=${identity.username ?? '-'} reason=${result.error}`);
     return c.redirect(`/login?sso_error=${result.error}`);
@@ -212,7 +221,8 @@ router.get('/oidc/callback', async (c) => {
   const existing = getCookie(c, SESSION_COOKIE_NAME);
   if (existing) destroySession(existing);
   setCookie(c, SESSION_COOKIE_NAME, createSession(result.userId, { oidcIdToken: login.idToken }), sessionCookieOpts());
-  console.log(`[auth] sso_login_ok ip=${ip} user_id=${result.userId} sub=${identity.subject} account=${result.outcome}`);
+  const notes = [result.roleChanged && 'role_changed', result.emailAdded && 'email_added'].filter(Boolean).join(' ');
+  console.log(`[auth] sso_login_ok ip=${ip} user_id=${result.userId} sub=${identity.subject} account=${result.outcome} role=${result.role}${notes ? ` ${notes}` : ''}`);
   return c.redirect('/');
 });
 

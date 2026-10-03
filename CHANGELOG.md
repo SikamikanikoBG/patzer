@@ -17,30 +17,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "forgot password" and password reset, in the interface and on the server.
   Set by mistake without a working SSO configuration, it is ignored with a
   warning instead of locking everyone out.
+- **No setup wizard on an SSO-only install.** A fresh install started with
+  `OIDC_ONLY=true` skips the wizard, whose password nobody could use: sign-up
+  is closed, the coach is left for *Admin → System*, and the browser goes
+  straight to the login page. The first SSO login creates the admin, even
+  with automatic accounts off.
+- **Admins from a provider group.** With `OIDC_ADMIN_GROUP=patzer-admins`,
+  members of that group are admins and everyone else signing in through SSO
+  is a normal user, re-checked at every login. While no admin exists, only
+  group members can sign in, so on a fresh install the first admin is the
+  first group member rather than whoever is fastest. A provider that sends no
+  `groups` claim leaves roles alone, with a warning in the log.
 - **Logging out of Patzer logs you out of the provider too.** A session that
   came from SSO remembers its ID token. Logout sends the browser to the
   provider's end-session endpoint, which sends it back to the login page, so
   the next person at a shared computer has to sign in again.
 - **Your choice of who gets in.** `OIDC_AUTO_PROVISION=true` creates an
-  ordinary account for someone the provider lets in. It takes their
-  username (or the next free `name-2`), display name, email and browser
-  language, and gives the account no password. `OIDC_MATCH_BY=username|email`
-  links a first SSO login to an existing account instead: username ignoring
-  case, email only when the provider marks it verified. An identity stays
-  linked to its account from then on, and an account takes only one identity
-  per provider, so a second match is refused rather than guessed.
-- **The setup wizard still comes first.** SSO never creates the first
-  account, so a fresh install always gets its admin from the wizard. Use the
-  same username as at the provider, and `OIDC_MATCH_BY=username` links them on
-  the first SSO login.
+  account for someone the provider lets in. It takes their username (or the
+  next free `name-2`), display name, email and browser language, and gives
+  the account no password. `OIDC_MATCH_BY=username|email` links a first SSO
+  login to an existing account instead: username ignoring case, email only
+  when the provider marks it verified. An identity stays linked to its
+  account from then on, and an account takes only one identity per provider,
+  so a second match is refused rather than guessed.
+- **Linked accounts get the provider's email** if they have none and no other
+  account uses it, so password resets and notifications reach them too.
+  Existing emails are never overwritten.
+- **Admin → Users shows how each account signs in:** *Password*, *Password*
+  linked to SSO, or *SSO* for accounts created by a single sign-on login.
 - **Clear errors.** A failed SSO login returns to the login page with the
   reason in the user's language (provider unreachable, cancelled, took too
-  long, no account, already linked), and an `[auth] sso_…` line in the log.
-- **Tests.** `server/test/oidc.test.ts` covers the account-matching rules and the
-  SSO-only guards, `web/src/pages/Login.test.tsx` the three login page modes,
-  and `npm run test:oidc` (also in CI) runs the whole thing against a real
-  OpenID provider: linking, provisioning, a cancelled login and the logout
-  round trip.
+  long, no account, already linked, waiting for the admin), and an
+  `[auth] sso_…` line in the log.
+- **Tests.**
+  - `server/test/oidc.test.ts`, `oidc-first-run.test.ts` and
+    `oidc-mixed.test.ts` cover account matching, emails, the admin group, both
+    kinds of fresh install and the SSO-only guards.
+  - `web/src/pages/Login.test.tsx` and `web/src/pages/admin/Users.test.tsx`
+    cover the screens.
+  - `npm run test:oidc` (also in CI) runs the whole thing against a real
+    OpenID provider.
 
 ## [7.18.0] — 2026-10-03
 

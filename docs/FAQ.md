@@ -100,11 +100,16 @@ Tunnel works well for "let my family use it from anywhere".
 
 Yes. Patzer speaks OpenID Connect, so any provider that does (Authentik,
 Keycloak, Authelia, Pocket ID, Zitadel, …) can sit in front of it. It's all
-environment variables: a "Sign in with …" button with your own label, an
-optional SSO-only mode without Patzer passwords, accounts created
-automatically or matched to existing ones, and a logout that signs you out
-of the provider as well. Setup, with Authentik step by step:
-[docs/OIDC.md](OIDC.md).
+environment variables:
+
+- a "Sign in with …" button with your own label;
+- an optional SSO-only mode without Patzer passwords, which on a fresh install
+  skips the setup wizard;
+- admins chosen by a group at the provider;
+- accounts created automatically or matched to existing ones;
+- a logout that signs you out of the provider as well.
+
+Setup, with Authentik step by step: [docs/OIDC.md](OIDC.md).
 
 ## How do I back up my games?
 

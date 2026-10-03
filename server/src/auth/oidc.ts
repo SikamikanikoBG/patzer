@@ -1,9 +1,10 @@
 import * as client from 'openid-client';
 import type { Context } from 'hono';
 import { getSignedCookie, setSignedCookie, deleteCookie } from 'hono/cookie';
-import { db, getSetting } from '../db.js';
+import { db, getSetting, userCount } from '../db.js';
 import { config, type OidcMatchBy } from '../config.js';
 import { publicBaseUrl } from '../publicUrl.js';
+import { setSignupMode } from './invites.js';
 
 // Single sign-on with any OpenID Connect provider (Authentik, Keycloak,
 // Authelia, …). Authorization code flow with PKCE, state and nonce; the
@@ -21,7 +22,8 @@ type Language = (typeof LANGUAGES)[number];
 export const SSO_ONLY_PASSWORD = '!sso-only';
 
 // Error codes end up in /login?sso_error=… and are translated by the web app.
-export type OidcErrorCode = 'unavailable' | 'expired' | 'denied' | 'failed' | 'not_provisioned' | 'conflict';
+export type OidcErrorCode =
+  | 'unavailable' | 'expired' | 'denied' | 'failed' | 'not_provisioned' | 'conflict' | 'admin_first';
 
 export class OidcError extends Error {
   constructor(public code: OidcErrorCode, detail?: string) {
@@ -112,6 +114,8 @@ export interface OidcIdentity {
   email: string | null;
   emailVerified: boolean;
   displayName: string | null;
+  // The `groups` claim; null when the provider didn't send one at all.
+  groups: string[] | null;
   language: Language;
 }
 
@@ -184,6 +188,7 @@ export async function finishOidcLogin(c: Context): Promise<{ identity: OidcIdent
       email: str(info.email),
       emailVerified: info.email_verified === true || info.email_verified === 'true',
       displayName: str(info.name),
+      groups: Array.isArray(info.groups) ? info.groups.filter((g): g is string => typeof g === 'string') : null,
       language: pickLanguage(c),
     },
   };
@@ -192,68 +197,132 @@ export async function finishOidcLogin(c: Context): Promise<{ identity: OidcIdent
 // ---- Account resolution ----------------------------------------------------
 
 export type ResolveResult =
-  | { userId: number; outcome: 'existing' | 'linked' | 'created' }
-  | { error: 'not_provisioned' | 'conflict' };
+  | {
+      userId: number;
+      outcome: 'existing' | 'linked' | 'created';
+      role: 'admin' | 'user';
+      // What changed on an existing account during this login, for the log.
+      roleChanged: boolean;
+      emailAdded: boolean;
+    }
+  | { error: 'not_provisioned' | 'conflict' | 'admin_first' };
 
-interface ResolveOptions {
+export interface ResolveOptions {
   matchBy: OidcMatchBy;
   autoProvision: boolean;
+  // OIDC_ADMIN_GROUP: the provider decides who is an admin.
+  adminGroup: string | null;
+  // OIDC_ONLY: there is no setup wizard, so SSO creates the first account.
+  ssoOnly: boolean;
 }
 
 // Maps an identity to a Patzer account:
 //  1. an identity seen before logs into the same account, whatever changed since;
 //  2. otherwise OIDC_MATCH_BY may link it to an existing account by username
 //     (case-insensitive) or by email (only when the provider says it's verified);
-//  3. otherwise OIDC_AUTO_PROVISION decides whether a new account is created.
+//  3. otherwise OIDC_AUTO_PROVISION decides whether a new account is created,
+//     except for the very first account in SSO-only mode, which always is.
+// With OIDC_ADMIN_GROUP set, the account's role follows the group on every
+// login, and while no admin exists only members of the group get in.
 export function resolveOidcUser(id: OidcIdentity, opts: ResolveOptions): ResolveResult {
   return db.transaction((): ResolveResult => {
+    // null: no admin group configured, or the provider sent no groups claim.
+    const inAdminGroup = opts.adminGroup && id.groups ? id.groups.includes(opts.adminGroup) : null;
+    const adminCount = (db.prepare(`SELECT COUNT(*) AS n FROM users WHERE role = 'admin'`).get() as { n: number }).n;
+    // Until the first admin has signed in, the provider group is the only
+    // proof of who that should be.
+    if (opts.adminGroup && adminCount === 0 && inAdminGroup !== true) return { error: 'admin_first' };
+
+    let userId: number;
+    let outcome: 'existing' | 'linked' | 'created';
     const linked = db
       .prepare('SELECT user_id FROM oidc_identities WHERE issuer = ? AND subject = ?')
       .get(id.issuer, id.subject) as { user_id: number } | undefined;
     if (linked) {
       db.prepare(`UPDATE oidc_identities SET last_login_at = datetime('now') WHERE issuer = ? AND subject = ?`)
         .run(id.issuer, id.subject);
-      return { userId: linked.user_id, outcome: 'existing' };
+      userId = linked.user_id;
+      outcome = 'existing';
+    } else {
+      const match = findMatch(id, opts.matchBy);
+      if (match === 'ambiguous') return { error: 'conflict' };
+      if (match !== null) {
+        // The account already belongs to a different identity at this provider.
+        const taken = db.prepare('SELECT 1 FROM oidc_identities WHERE user_id = ? AND issuer = ?').get(match, id.issuer);
+        if (taken) return { error: 'conflict' };
+        db.prepare(`INSERT INTO oidc_identities (issuer, subject, user_id, last_login_at) VALUES (?, ?, ?, datetime('now'))`)
+          .run(id.issuer, id.subject, match);
+        userId = match;
+        outcome = 'linked';
+      } else {
+        const firstAccount = opts.ssoOnly && userCount() === 0;
+        if (!opts.autoProvision && !firstAccount) return { error: 'not_provisioned' };
+        // Without an admin group, the first account in SSO-only mode is the admin.
+        const role = inAdminGroup === true || (firstAccount && !opts.adminGroup) ? 'admin' : 'user';
+        userId = createAccount(id, role);
+        outcome = 'created';
+      }
     }
 
-    let candidates: { id: number }[] = [];
-    if (opts.matchBy === 'username' && id.username) {
-      candidates = db.prepare('SELECT id FROM users WHERE username = ? COLLATE NOCASE').all(id.username) as { id: number }[];
-    } else if (opts.matchBy === 'email' && id.email && id.emailVerified) {
-      candidates = db.prepare('SELECT id FROM users WHERE lower(email) = lower(?)').all(id.email) as { id: number }[];
-    }
-    // Two accounts differing only in letter case: refuse to guess.
-    if (candidates.length > 1) return { error: 'conflict' };
-    if (candidates.length === 1) {
-      const userId = candidates[0]!.id;
-      // The account already belongs to a different identity at this provider.
-      const taken = db.prepare('SELECT 1 FROM oidc_identities WHERE user_id = ? AND issuer = ?').get(userId, id.issuer);
-      if (taken) return { error: 'conflict' };
-      db.prepare(`INSERT INTO oidc_identities (issuer, subject, user_id, last_login_at) VALUES (?, ?, ?, datetime('now'))`)
-        .run(id.issuer, id.subject, userId);
-      return { userId, outcome: 'linked' };
+    // Keep the role in step with the provider group. Without a groups claim
+    // (scope or mapping missing) roles are left alone rather than guessed.
+    let roleChanged = false;
+    if (inAdminGroup !== null) {
+      const want = inAdminGroup ? 'admin' : 'user';
+      roleChanged = db.prepare('UPDATE users SET role = ? WHERE id = ? AND role != ?').run(want, userId, want).changes > 0;
     }
 
-    if (!opts.autoProvision) return { error: 'not_provisioned' };
+    // An existing account without an email gets the provider's, so password
+    // resets and notifications work for it too. An email it already has is
+    // never overwritten.
+    let emailAdded = false;
+    if (outcome !== 'created' && id.email) {
+      const free = !db.prepare('SELECT 1 FROM users WHERE lower(email) = lower(?) AND id != ?').get(id.email, userId);
+      if (free) {
+        emailAdded = db
+          .prepare('UPDATE users SET email = ?, email_verified = ? WHERE id = ? AND email IS NULL')
+          .run(id.email, id.emailVerified ? 1 : 0, userId).changes > 0;
+      }
+    }
 
-    const username = freeUsername(id.username ?? id.email?.split('@')[0] ?? null);
-    // Keep the email only if no other account uses it (emails are unique).
-    const emailFree = id.email !== null
-      && !db.prepare('SELECT 1 FROM users WHERE lower(email) = lower(?)').get(id.email);
-    const email = emailFree ? id.email : null;
-    const r = db
-      .prepare(`INSERT INTO users (username, password_hash, role, email, email_verified) VALUES (?, ?, 'user', ?, ?)`)
-      .run(username, SSO_ONLY_PASSWORD, email, email && !id.emailVerified ? 0 : 1);
-    const userId = Number(r.lastInsertRowid);
-    const displayName = (id.displayName ?? username).slice(0, 60);
-    // Same defaults as self-signup.
-    db.prepare(
-      `INSERT INTO profiles (user_id, display_name, language, audience, coach_behavior) VALUES (?, ?, ?, 'beginner', 'on_demand')`,
-    ).run(userId, displayName, id.language);
-    db.prepare(`INSERT INTO oidc_identities (issuer, subject, user_id, last_login_at) VALUES (?, ?, ?, datetime('now'))`)
-      .run(id.issuer, id.subject, userId);
-    return { userId, outcome: 'created' };
+    const { role } = db.prepare('SELECT role FROM users WHERE id = ?').get(userId) as { role: 'admin' | 'user' };
+    return { userId, outcome, role, roleChanged, emailAdded };
   })();
+}
+
+// The account OIDC_MATCH_BY points at: its id, null for none, or 'ambiguous'
+// for two accounts whose usernames differ only in letter case.
+function findMatch(id: OidcIdentity, matchBy: OidcMatchBy): number | null | 'ambiguous' {
+  let rows: { id: number }[] = [];
+  if (matchBy === 'username' && id.username) {
+    rows = db.prepare('SELECT id FROM users WHERE username = ? COLLATE NOCASE').all(id.username) as { id: number }[];
+  } else if (matchBy === 'email' && id.email && id.emailVerified) {
+    rows = db.prepare('SELECT id FROM users WHERE lower(email) = lower(?)').all(id.email) as { id: number }[];
+  }
+  if (rows.length > 1) return 'ambiguous';
+  return rows[0]?.id ?? null;
+}
+
+// A new account for a first SSO login, with the provider's profile and no
+// password. Called inside resolveOidcUser's transaction.
+function createAccount(id: OidcIdentity, role: 'admin' | 'user'): number {
+  const username = freeUsername(id.username ?? id.email?.split('@')[0] ?? null);
+  // Keep the email only if no other account uses it (emails are unique).
+  const emailFree = id.email !== null
+    && !db.prepare('SELECT 1 FROM users WHERE lower(email) = lower(?)').get(id.email);
+  const email = emailFree ? id.email : null;
+  const r = db
+    .prepare(`INSERT INTO users (username, password_hash, role, email, email_verified, created_via) VALUES (?, ?, ?, ?, ?, 'sso')`)
+    .run(username, SSO_ONLY_PASSWORD, role, email, email && !id.emailVerified ? 0 : 1);
+  const userId = Number(r.lastInsertRowid);
+  const displayName = (id.displayName ?? username).slice(0, 60);
+  // Same defaults as self-signup.
+  db.prepare(
+    `INSERT INTO profiles (user_id, display_name, language, audience, coach_behavior) VALUES (?, ?, ?, 'beginner', 'on_demand')`,
+  ).run(userId, displayName, id.language);
+  db.prepare(`INSERT INTO oidc_identities (issuer, subject, user_id, last_login_at) VALUES (?, ?, ?, datetime('now'))`)
+    .run(id.issuer, id.subject, userId);
+  return userId;
 }
 
 // The provider's username if nobody has it yet, else the first free
@@ -268,6 +337,25 @@ function freeUsername(preferred: string | null): string {
     const candidate = `${base.slice(0, 40 - suffix.length)}${suffix}`;
     if (!taken.get(candidate)) return candidate;
   }
+}
+
+// ---- First run in SSO-only mode ---------------------------------------------
+
+// With OIDC_ONLY there's no setup wizard: nobody could use a local password
+// anyway. On a fresh install this does what the wizard would have, minus the
+// parts that need a person: sign-up is closed (accounts come from the
+// provider) and the coach stays unconfigured until an admin sets it up in
+// Admin → System. The first SSO login then creates the admin. Runs at startup;
+// does nothing once any account exists.
+export function prepareSsoOnlyFirstRun(): boolean {
+  if (!config.oidc.only || userCount() > 0) return false;
+  setSignupMode('closed');
+  console.log(
+    config.oidc.adminGroup
+      ? `[oidc] fresh install in SSO-only mode: no setup wizard; the first member of "${config.oidc.adminGroup}" to sign in becomes the admin`
+      : '[oidc] fresh install in SSO-only mode: no setup wizard; the first person to sign in becomes the admin',
+  );
+  return true;
 }
 
 // ---- Logout ----------------------------------------------------------------

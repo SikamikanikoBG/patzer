@@ -1,7 +1,9 @@
 // End-to-end proof that single sign-on works against a real OpenID Connect
 // provider (panva/oidc-provider, an OpenID Certified implementation). It
 // simulates a browser: per-host cookie jars, manual redirects, the provider's
-// login form. Covers login, account linking, provisioning, the IdP logout
+// login form. Covers a fresh SSO-only install (no wizard, the admin group
+// decides who goes first), provisioning, linking an account the admin made,
+// roles following the provider group, the admin's user list, the IdP logout
 // round trip and a cancelled login.
 //
 // Not part of `npm test` (it binds two ports and starts the whole server).
@@ -29,6 +31,7 @@ process.env.OIDC_CLIENT_SECRET = 'patzer-secret';
 process.env.OIDC_ONLY = 'true';
 process.env.OIDC_AUTO_PROVISION = 'true';
 process.env.OIDC_MATCH_BY = 'username';
+process.env.OIDC_ADMIN_GROUP = 'patzer-admins';
 process.env.OIDC_BUTTON_TEXT = 'Sign in with the test IdP';
 const dbPath = process.env.DB_PATH ?? join(tmpdir(), `patzer-oidc-${process.pid}.db`);
 process.env.DB_PATH = dbPath;
@@ -42,9 +45,11 @@ function check(cond: unknown, label: string) {
 
 // ---- The identity provider ---------------------------------------------------
 
+// Mutable: the test moves people in and out of the admin group.
 const ACCOUNTS: Record<string, Record<string, unknown>> = {
-  alice: { preferred_username: 'alice', name: 'Alice Admin', email: 'alice@example.com', email_verified: true },
-  bob: { preferred_username: 'bob', name: 'Bob Builder', email: 'bob@example.com', email_verified: true },
+  alice: { preferred_username: 'alice', name: 'Alice Admin', email: 'alice@example.com', email_verified: true, groups: ['family', 'patzer-admins'] },
+  bob: { preferred_username: 'bob', name: 'Bob Builder', email: 'bob@example.com', email_verified: true, groups: ['family'] },
+  carol: { preferred_username: 'carol', name: 'Carol', email: 'carol@example.com', email_verified: true, groups: ['family'] },
 };
 
 function startProvider() {
@@ -58,7 +63,8 @@ function startProvider() {
       response_types: ['code'],
       token_endpoint_auth_method: 'client_secret_post',
     }],
-    claims: { openid: ['sub'], profile: ['preferred_username', 'name'], email: ['email', 'email_verified'] },
+    // Like Authentik: the groups come with the profile scope.
+    claims: { openid: ['sub'], profile: ['preferred_username', 'name', 'groups'], email: ['email', 'email_verified'] },
     async findAccount(_ctx, id) {
       const claims = ACCOUNTS[id] ?? { preferred_username: id, name: id };
       return { accountId: id, claims: () => ({ sub: `idp-${id}`, ...claims }) };
@@ -157,6 +163,11 @@ async function api(path: string, method = 'GET', body?: unknown) {
   return { status: res.status, json: (await res.json().catch(() => null)) as any };
 }
 
+// Ends the provider session without a Patzer session (after a refused login).
+async function logoutAtProvider() {
+  jar(IDP).clear();
+}
+
 // Logs out of Patzer and follows the provider's logout page back home.
 async function logout() {
   const out = await api('/api/auth/logout', 'POST');
@@ -179,24 +190,22 @@ async function main() {
   check(cfg.json.oidc_enabled && cfg.json.oidc_only && cfg.json.oidc_button_text === 'Sign in with the test IdP', 'login page is told: SSO only, custom button text');
   check(cfg.json.signup_enabled === false && cfg.json.email_enabled === false, 'signup and password reset are hidden');
 
-  console.log('fresh install');
-  let r = await ssoLogin('alice');
-  check(r.landed === `${BASE}/`, 'SSO before setup goes back to the wizard');
-  check((await api('/api/setup/status')).json.setup_required === true, 'and creates no account');
-  await logout();
-  jar(IDP).clear();
-
-  const setup = await api('/api/setup/init', 'POST', { username: 'Alice', password: 'alicepassword1', display_name: 'Alice' });
-  check(setup.status === 200, 'setup wizard creates the admin');
-  jar(BASE).clear();
-  const pw = await api('/api/auth/login', 'POST', { username: 'Alice', password: 'alicepassword1' });
-  check(pw.status === 403 && pw.json.error === 'password_login_disabled', 'OIDC_ONLY refuses password login');
-
-  console.log('linking by username');
+  console.log('fresh install in SSO-only mode');
+  check((await api('/api/setup/status')).json.setup_required === false, 'no setup wizard: the app goes straight to the login page');
+  const init = await api('/api/setup/init', 'POST', { username: 'local', password: 'localpassword1', display_name: 'Local' });
+  check(init.status === 403, 'the wizard endpoint refuses to create a password admin');
+  let r = await ssoLogin('bob');
+  check(r.landed === `${BASE}/login?sso_error=admin_first`, 'bob (not in the admin group) can\'t be first in');
+  await logoutAtProvider();
   r = await ssoLogin('alice');
-  check(r.sawLoginForm && r.landed === `${BASE}/`, 'provider asks for credentials, then back to Patzer');
   let me = (await api('/api/auth/me')).json.user;
-  check(me?.username === 'Alice' && me.role === 'admin', 'provider user "alice" is linked to the admin "Alice"');
+  check(me?.username === 'alice' && me.role === 'admin', 'alice (admin group) signs in first and is the admin');
+  const pw = await api('/api/auth/login', 'POST', { username: 'alice', password: 'anything' });
+  check(pw.status === 403 && pw.json.error === 'password_login_disabled', 'password login is refused');
+
+  console.log('an account the admin created, then signed into with SSO');
+  const made = await api('/api/admin/users', 'POST', { username: 'Carol', password: 'carolpassword1', display_name: 'Carol' });
+  check(made.status === 200, 'admin creates "Carol" with a password and no email');
 
   console.log('logout ends the provider session too');
   const out = await logout();
@@ -205,17 +214,35 @@ async function main() {
   check(u.searchParams.get('post_logout_redirect_uri') === `${BASE}/login`, 'and asks to come back to /login');
   check(out.landed === `${BASE}/login`, 'the provider sends the browser back to /login');
   check((await api('/api/auth/me')).json.user === null, 'the Patzer session is gone');
-  r = await ssoLogin('alice');
+
+  r = await ssoLogin('carol');
   check(r.sawLoginForm, 'the next SSO login has to sign in at the provider again');
   me = (await api('/api/auth/me')).json.user;
-  check(me?.username === 'Alice', 'and returns to the same account');
+  check(me?.username === 'Carol' && me.role === 'user', 'provider user "carol" is linked to the account "Carol"');
   await logout();
 
-  console.log('provisioning');
+  console.log('provisioning and roles from the provider group');
   r = await ssoLogin('bob');
   me = (await api('/api/auth/me')).json.user;
-  check(me?.username === 'bob' && me.role === 'user', 'unknown "bob" gets a new, ordinary account');
+  check(me?.username === 'bob' && me.role === 'user', 'unknown bob gets a new, ordinary account now that an admin exists');
   check(me?.profile.display_name === 'Bob Builder' && me.profile.language === 'de', 'name from the provider, language from the browser');
+  await logout();
+  ACCOUNTS.bob!.groups = ['family', 'patzer-admins'];
+  await ssoLogin('bob');
+  check((await api('/api/auth/me')).json.user?.role === 'admin', 'added to the admin group: bob is an admin at his next login');
+  await logout();
+  ACCOUNTS.bob!.groups = ['family'];
+  await ssoLogin('bob');
+  check((await api('/api/auth/me')).json.user?.role === 'user', 'removed from it: back to a normal user');
+  await logout();
+
+  console.log('the admin\'s user list');
+  await ssoLogin('alice');
+  const list = (await api('/api/admin/users')).json.users as { username: string; created_via: string; sso_linked: number; email: string | null }[];
+  const row = (name: string) => list.find((x) => x.username === name);
+  check(row('alice')?.created_via === 'sso' && row('bob')?.created_via === 'sso', 'alice and bob are marked as created by SSO');
+  check(row('Carol')?.created_via === 'password' && row('Carol')?.sso_linked === 1, 'Carol is a password account linked to SSO');
+  check(row('Carol')?.email === 'carol@example.com', 'and now has the email from the provider');
   await logout();
 
   console.log('cancelled login');
