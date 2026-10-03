@@ -16,6 +16,8 @@ export interface KeyMomentItem {
   // Optional AI-generated title/prose (when /api/games/:id/review has run)
   title?: string;
   prose?: string;
+  /** Whether it was the player's own move (unknown: not shown). */
+  mine?: boolean;
 }
 
 interface Props {
@@ -55,12 +57,17 @@ export default function KeyMomentsList({ items, current, onSelect }: Props) {
                     <span className="text-xs text-chesscom-500">{t('review.bestLabel')} <span className="font-medium text-chesscom-700 dark:text-chesscom-200">{m.best_san}</span></span>
                   )}
                 </div>
-                <div className="mt-0.5 truncate text-xs">
+                <div className="mt-0.5 text-xs">
                   {m.title ? <span className="font-medium text-chesscom-800 dark:text-chesscom-100">{m.title}</span> : <span className={`font-medium ${s.textClass}`}>{m.classification}</span>}
                   <span className="ms-2 font-mono text-xs tabular-nums text-chesscom-500">−{m.cp_loss}cp · {m.win_pct_delta.toFixed(0)}wp</span>
+                  {m.mine != null && (
+                    <span className={`ms-2 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${m.mine ? 'bg-gold-500/15 text-gold-700 dark:text-gold-300' : 'bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300'}`}>
+                      {m.mine ? t('review.why.yourMove') : t('review.why.opponentMove')}
+                    </span>
+                  )}
                 </div>
                 {m.prose && (
-                  <div className="mt-1 line-clamp-2 text-[12px] text-chesscom-600 dark:text-chesscom-300">{m.prose}</div>
+                  <div className="mt-1 text-[12px] leading-relaxed text-chesscom-600 dark:text-chesscom-300">{m.prose}</div>
                 )}
               </div>
             </button>

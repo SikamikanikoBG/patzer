@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatMoves, isExpectedMove, isUserPly, localDay, moveSquares, positionAfter, userMoveCount } from './openingTrainer';
+import { branchDrills, formatMoves, moveLabel, isExpectedMove, isUserPly, localDay, moveSquares, positionAfter, userMoveCount } from './openingTrainer';
 
 const START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -36,6 +36,24 @@ describe('opening trainer helpers', () => {
   it('writes a line in the usual notation', () => {
     expect(formatMoves(['e4', 'e5', 'Nf3'])).toBe('1. e4 e5 2. Nf3');
     expect(formatMoves([])).toBe('');
+  });
+
+  it('counts your moves from a later start, for branches', () => {
+    expect(userMoveCount(['e4', 'e5', 'Nf3', 'f6', 'Nxe5', 'fxe5', 'Qh5+'], 'white', 3)).toBe(2);
+  });
+
+  it('names a move with its number', () => {
+    const line = ['e4', 'e5', 'Nf3', 'f6', 'Nxe5'];
+    expect(moveLabel(line, 3)).toBe('2…f6');
+    expect(moveLabel(line, 4)).toBe('3.Nxe5');
+  });
+
+  it('turns branches into lines of their own that remember the main move', () => {
+    const main = { id: 'italian', name: 'Italian', color: 'white' as const, moves: ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4'],
+      branches: [{ at: 3, moves: ['e4', 'e5', 'Nf3', 'f6', 'Nxe5'], trap: true }] };
+    const [drill] = branchDrills(main);
+    expect(drill).toMatchObject({ id: 'italian', color: 'white', moves: main.branches[0]!.moves, branch: { at: 3, trap: true, mainMove: 'Nc6' } });
+    expect(branchDrills({ ...main, branches: undefined })).toEqual([]);
   });
 
   it('gives the local calendar day, zero-padded', () => {

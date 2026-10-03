@@ -264,6 +264,30 @@
       "generic": "Der Import ist fehlgeschlagen. Bitte versuch es später erneut.",
       "chesscom_unavailable": "Chess.com ist gerade nicht erreichbar. Versuche es später erneut."
     },
+    "pickMoves": "Diese Züge zeigen",
+    "pickBoth": "beide Seiten",
+    "why": {
+      "yourMove": "Dein Zug",
+      "opponentMove": "Zug des Gegners",
+      "whiteMove": "Zug von Weiß",
+      "blackMove": "Zug von Schwarz",
+      "winChance": "Gewinnchance der ziehenden Seite: vorher → nachher",
+      "engineWanted": "Die Engine wollte:",
+      "line": "Variante",
+      "coachSays": "In einfachen Worten",
+      "brilliant": "Der beste Zug der Engine — und er gibt Material. Das Opfer funktioniert: Die Stellung bleibt gesund ({{after}} % Gewinnchance), weil der Gegner das Angebot nicht gefahrlos annehmen kann.",
+      "great": "Ein kritischer Zug: die erste Wahl der Engine in einer Stellung, in der die anderen Züge klar schlechter waren, oder ein Zug, der eine schlechte Stellung rettet ({{before}} % → {{after}} %).",
+      "best": "Genau die erste Wahl der Engine — besser ging es nicht.",
+      "excellent": "Fast so gut wie der beste Zug — die Gewinnchance hat sich kaum bewegt ({{before}} % → {{after}} %).",
+      "good": "Ein vernünftiger Zug, etwas schwächer als der beste: Die Gewinnchance sank um {{drop}} % ({{before}} % → {{after}} %).",
+      "book": "Ein bekannter Eröffnungszug — direkt aus der Theorie.",
+      "forced": "Der einzige legale Zug — es gab keine Wahl.",
+      "inaccuracy": "Eine Ungenauigkeit: Die Gewinnchance sank um {{drop}} % ({{before}} % → {{after}} %), etwa {{pawns}} Bauern. Keine Katastrophe, aber es gab einen klar besseren Zug.",
+      "mistake": "Ein Fehler: Die Gewinnchance sank um {{drop}} % ({{before}} % → {{after}} %), etwa {{pawns}} Bauern — ein guter Teil des Vorteils ist weg.",
+      "blunder": "Ein Patzer: Die Gewinnchance brach um {{drop}} % ein ({{before}} % → {{after}} %), etwa {{pawns}} Bauern. Solche Züge verlieren meist Material oder erlauben einen entscheidenden Angriff.",
+      "miss": "Verpasst: Die Stellung war gewonnen ({{before}} % Gewinnchance), und dieser Zug ließ den Sieg entgleiten ({{after}} %). Es gab einen viel stärkeren Zug."
+    },
+    "regenerateReport": "Neu schreiben",
     "importedOf": "{{n}} neue Partien importiert ({{total}} gefunden)",
     "importAllSlow": "Deine gesamte Historie wird importiert — bei Tausenden Partien kann das einige Minuten dauern. Du kannst Patzer währenddessen weiter nutzen.",
     "importScope": {
@@ -700,7 +724,48 @@
     "nextPuzzle": "Nächste Aufgabe",
     "openInReview": "Diese Stellung in der vollen Analyse öffnen",
     "correct": "Richtig!",
-    "wrong": "Nicht ganz — die Engine bevorzugt"
+    "wrong": "Nicht ganz — die Engine bevorzugt",
+    "tabs": {
+      "mine": "Aus deinen Partien",
+      "puzzles": "Taktikaufgaben"
+    },
+    "puzzles": {
+      "intro": "Taktikaufgaben aus der Lichess-Puzzle-Datenbank, passend zu deiner Puzzle-Wertung ausgesucht. Der erste Versuch zählt: Löst du sie, steigt deine Wertung.",
+      "loadError": "Die Aufgabe konnte nicht geladen werden.",
+      "allDone": "Du hast jede Aufgabe hier versucht – beeindruckend!",
+      "yourRating": "Deine Puzzle-Wertung",
+      "solvedOf": "{{solved}} von {{played}} gelöst",
+      "provisional": "Noch nicht eingependelt – in den ersten Aufgaben bewegt sie sich stark.",
+      "watch": "Schau dir den Zug deines Gegners an …",
+      "findWhite": "Weiß am Zug. Finde den besten Zug!",
+      "findBlack": "Schwarz am Zug. Finde den besten Zug!",
+      "wrong": "Nicht der beste Zug – das Brett ist zurückgesprungen. Versuch es noch einmal!",
+      "solved": "Gelöst!",
+      "solvedLate": "Gelöst – aber nicht im ersten Versuch, deshalb zählt sie als nicht gelöst.",
+      "showing": "Hier kommt die Lösung …",
+      "shownDone": "Das war die Lösung.",
+      "notRated": "Diese Aufgabe zählt schon als nicht gelöst – spiel sie trotzdem zu Ende.",
+      "hint": "Tipp",
+      "hintMove": "Zug zeigen",
+      "solution": "Lösung zeigen",
+      "tryIt": "Selbst nachspielen",
+      "next": "Nächste Aufgabe",
+      "puzzleRating": "Aufgaben-Wertung {{rating}}",
+      "onLichess": "Auf lichess.org",
+      "credit": "Aufgaben aus der Lichess-Puzzle-Datenbank (CC0):",
+      "rules": "Ein falscher Zug, ein Tipp oder die Lösung – dann zählt die Aufgabe als nicht gelöst. Jede Aufgabe kommt nur einmal.",
+      "themes": {
+        "all": "Alle",
+        "mate": "Matt",
+        "fork": "Gabel",
+        "pin": "Fesselung & Spieß",
+        "discovered": "Abzugsangriff",
+        "sacrifice": "Opfer",
+        "hanging": "Hängende & gefangene Figuren",
+        "defence": "Verteidigung",
+        "endgame": "Endspiel"
+      }
+    }
   },
   "learn": {
     "nav": "Lernen",
@@ -713,6 +778,7 @@
     "levelUp": "Level {{n}} erreicht!",
     "toNextLevel_one": "Noch {{count}} Stern bis Level {{n}}",
     "toNextLevel_other": "Noch {{count}} Sterne bis Level {{n}}",
+    "starsExplained": "Jede Lektion bringt bis zu 3 Sterne – je weniger Tipps und Fehlversuche, desto mehr. Deine Sterne ergeben zusammen dein Level, und du kannst jede Lektion wiederholen, um fehlende Sterne zu holen.",
     "lessonsDone": "{{done}}/{{total}} Lektionen",
     "startHere": "Hier geht's los",
     "nextUp": "Nächste Lektion",
@@ -732,7 +798,7 @@
       },
       "beginner": {
         "title": "Einsteiger",
-        "desc": "Grundmatts, erste Taktiken und wie man eine Partie beginnt."
+        "desc": "Grundmatts, erste Taktik, Verteidigen und wie man eine Partie beginnt."
       },
       "intermediate": {
         "title": "Fortgeschritten",
@@ -740,7 +806,7 @@
       },
       "advanced": {
         "title": "Könner",
-        "desc": "Stille Züge, Zugzwang, tiefere Kombinationen und Turmendspiele."
+        "desc": "Stille Züge, Zugzwang, seltene Mattbilder, Matt in vier sowie Turm-, Damen- und Leichtfigurenendspiele."
       }
     },
     "readAloud": "Vorlesen",
@@ -868,7 +934,13 @@
       "win": "Sieg",
       "loss": "Niederlage",
       "draw": "Remis"
-    }
+    },
+    "moveQuality": "Zugqualität",
+    "moveQualityTotal_one": "{{count}} Zug von dir",
+    "moveQualityTotal_other": "{{count}} Züge von dir",
+    "brilliantMoves": "Deine brillanten Züge",
+    "noBrilliant": "Noch kein brillanter Zug – das ist ein gutes Opfer. Sobald dir einer gelingt, steht er hier.",
+    "vsOpponent": "gegen {{name}}"
   },
   "openings": {
     "nav": "Eröffnungen",
@@ -969,6 +1041,24 @@
       "reviewDone": "Für heute alles erledigt!",
       "reviewScore": "{{right}} von {{total}} richtig.",
       "back": "Zurück zu den Linien",
+      "branchCount_one": "{{count}} Abweichung",
+      "branchCount_other": "{{count}} Abweichungen",
+      "practiseBranches_one": "Die Abweichung üben",
+      "practiseBranches_other": "Die {{count}} Abweichungen üben",
+      "practiseBranchesDesc": "Patzer verlässt die Hauptlinie: die anderen Züge, die dir begegnen werden, und ein paar verlockende, die du bestrafen kannst.",
+      "repertoireBranches_one": "Deine Gegner sind einmal anders von dieser Linie abgewichen – auch das kannst du üben: nach der Linie „Die Abweichung üben“ wählen.",
+      "repertoireBranches_other": "Deine Gegner sind auf {{count}} Arten von dieser Linie abgewichen – auch das kannst du üben: nach der Linie „Die Abweichungen üben“ wählen.",
+      "branchOf": "Abweichung {{i}} von {{n}}",
+      "branchText": "Patzer spielt {{move}} statt {{main}}. Wie geht es weiter?",
+      "branchTextNoMain": "Patzer spielt {{move}}. Wie geht es weiter?",
+      "branchTrap": "Patzer spielt {{move}} statt {{main}} – sieht verlockend aus, lässt sich aber bestrafen. Wie?",
+      "branchGames_one": "Aus deinen Partien (einmal).",
+      "branchGames_other": "Aus deinen Partien ({{count}}-mal).",
+      "branchPlayed_one": "Aus deinen Partien (einmal). Du hast mit {{played}} geantwortet – die Analyse kennt einen besseren Zug.",
+      "branchPlayed_other": "Aus deinen Partien ({{count}}-mal). Du hast mit {{played}} geantwortet – die Analyse kennt einen besseren Zug.",
+      "branchDoneTitle": "Abweichung geschafft!",
+      "nextBranch": "Nächste Abweichung",
+      "branchesAllDone": "Das war die letzte Abweichung dieser Linie.",
       "lineNames": {
         "italian": "Italienische Partie: Giuoco Pianissimo",
         "ruy-lopez": "Spanische Partie: Geschlossene Variante",

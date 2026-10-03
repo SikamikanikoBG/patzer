@@ -120,6 +120,45 @@
             {"id": "p5", "type": "move", "fen": "r7/3b2p1/5p1p/n2kp2P/3P2P1/3BPP2/5K2/7R b - - 1 33", "pre": "e5d4", "line": ["d3e4", "d5d6", "e4a8"], "src": "QOyK9"},
             {"id": "p6", "type": "move", "fen": "r4k2/pp5p/3q1rp1/3p4/3Q1P2/2PP3P/PP4P1/4R1K1 b - - 3 27", "pre": "f6f4", "line": ["d4h8", "f8f7", "h8a8"], "src": "9I5v1"}
           ]
+        },
+        {
+          "id": "defend",
+          "icon": "escape",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "r5k1/p4pp1/1p2p2p/3pP3/P1rP2P1/2P2PKP/1Q6/2R1N1q1 w - - 3 31", "orientation": "white", "demo": ["e1g2", "g1c1", "b2c1"]},
+            {"id": "p1", "type": "move", "fen": "5k2/2PR4/8/3P1p2/6pp/2r5/6K1/8 b - - 0 51", "pre": "c3c2", "line": ["g2f1", "c2c1", "f1e2"], "src": "1WPqw"},
+            {"id": "p2", "type": "move", "fen": "r5k1/p1R3pp/1p3p2/3p4/P2B4/4P1P1/4rnKP/R7 b - - 2 29", "pre": "f2g4", "line": ["g2f3", "e2h2", "f3g4"], "src": "m85cp"},
+            {"id": "p3", "type": "move", "fen": "8/p7/1p2P3/2p1R3/k1P1K3/2P5/5r2/8 b - - 4 48", "pre": "f2e2", "line": ["e4d5", "e2e5", "d5e5"], "src": "1ytFc"},
+            {"id": "p4", "type": "move", "fen": "r5k1/bpp3pp/3p3q/2P3r1/1P2Nn2/2N3P1/5P2/R2Q1RK1 b - - 2 26", "pre": "f4h3", "line": ["g1g2", "h3f4", "g2f3"], "src": "Vre7x"},
+            {"id": "p5", "type": "move", "fen": "8/8/4K3/1p2B3/2r5/4p2R/5k2/8 w - - 5 57", "pre": "e5g3", "line": ["f2g2", "h3h5", "g2g3"], "src": "EKked"},
+            {"id": "p6", "type": "move", "fen": "6k1/p4p1p/5Qp1/1p6/2q4P/P7/1B4PK/3r4 b - - 1 33", "pre": "c4c7", "line": ["b2e5", "c7e5", "f6e5"], "src": "AEyks"}
+          ]
+        },
+        {
+          "id": "attack-f7",
+          "icon": "check",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "r3k2r/ppp2ppp/3p3q/4N3/4P3/3P2P1/PP1N1Q1P/5bK1 w kq - 0 18", "orientation": "white", "demo": ["f2f7", "e8d8", "f7d7"]},
+            {"id": "p1", "type": "move", "fen": "r1b1k2r/1pp2ppp/p1p2n2/2b1N3/3qP3/3P3P/PPP2PP1/RNBQK2R w KQkq - 1 8", "pre": "e5c6", "line": ["d4f2"], "goal": "mate", "src": "aBagS"},
+            {"id": "p2", "type": "move", "fen": "rnb1kbnr/1pNp1ppp/p1q5/4p3/2B1P3/5Q2/PPPP1PPP/R1B1K1NR b KQkq - 0 6", "pre": "c6c7", "line": ["f3f7", "e8d8", "f7f8"], "goal": "mate", "src": "RYYEf"},
+            {"id": "p3", "type": "move", "fen": "r1b1k2r/ppp1qppp/8/2bp4/3Nn3/2N5/PPP1QPPP/R1B1KB1R w KQkq - 2 9", "pre": "d4b3", "line": ["c5f2", "e2f2", "e4f2"], "src": "8f7a4"},
+            {"id": "p4", "type": "move", "fen": "r6Q/ppk1pp1p/1q1p2p1/1B2N3/P3n3/8/1PP2PPP/R3K2R w KQ - 3 16", "pre": "h8a8", "line": ["b6f2", "e1d1", "f2d2"], "goal": "mate", "src": "lW9rm"},
+            {"id": "p5", "type": "move", "fen": "r3kb1r/1bq2ppp/ppn1p3/4P2Q/2Pp4/8/PPBP2PP/R1BN1RK1 b kq - 3 14", "pre": "c7e5", "line": ["h5f7", "e8d8", "f7b7"], "src": "afLgw"},
+            {"id": "p6", "type": "move", "fen": "rnb1k2r/ppppnppp/1q6/2b3B1/4P3/5N2/PPP2PPP/RN1QKB1R w KQkq - 3 7", "pre": "g5e7", "line": ["c5f2", "e1d2", "b6e3"], "goal": "mate", "src": "l5B9X"}
+          ]
+        },
+        {
+          "id": "advanced-pawn",
+          "icon": "promote",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "2r3k1/P1r3p1/2R4p/8/8/7P/5PK1/8 w - - 0 35", "orientation": "white", "demo": ["c6c7", "c8c7", "a7a8q"]},
+            {"id": "p1", "type": "move", "fen": "8/1Q4p1/5Nkp/5p2/2p1P3/5P1P/1p4PK/q7 w - - 2 46", "pre": "f6e8", "line": ["b2b1q", "b7b1", "a1b1"], "src": "cHjhy"},
+            {"id": "p2", "type": "move", "fen": "8/kpR5/2p5/5P2/8/8/pr4P1/3R2K1 w - - 0 39", "pre": "d1a1", "line": ["b2b1", "a1b1", "a2b1q"], "src": "3pw2D"},
+            {"id": "p3", "type": "move", "fen": "2b5/2r1kp2/4p1P1/pp1pNp1p/3P3P/2P1R1K1/PP6/8 b - - 0 38", "pre": "f7f6", "line": ["g6g7", "f6e5", "g7g8q"], "src": "IMzut"},
+            {"id": "p4", "type": "move", "fen": "8/2P5/4p1r1/1R6/1nk5/8/8/4K3 b - - 0 63", "pre": "g6g8", "line": ["b5b8", "g8b8", "c7b8q"], "src": "ZAyir"},
+            {"id": "p5", "type": "move", "fen": "8/5p2/5P2/1P1k2P1/8/3b2K1/8/8 b - - 0 43", "pre": "d3b5", "line": ["g5g6", "d5e6", "g6g7", "e6f6", "g7g8q"], "src": "XpdRd"},
+            {"id": "p6", "type": "move", "fen": "2q3k1/p1Pb2p1/2NQ2np/8/8/7P/P5PK/8 b - - 14 46", "pre": "d7c6", "line": ["d6d8", "c8d8", "c7d8q"], "src": "oAFik"}
+          ]
         }
       ]
     },

@@ -1,6 +1,6 @@
 {
   "name": "patzer",
-  "version": "7.17.1",
+  "version": "7.18.0",
   "private": true,
   "description": "Patzer — your private Chess.com. Self-hosted, AI-coached, family-friendly. Stockfish + your own LLM in one Docker container.",
   "license": "MIT",
@@ -25,7 +25,8 @@
     "test:resume": "tsx server/test/e2e/resume.ts",
     "test:ui": "tsx server/test/e2e/pvp-ui.ts",
     "test:resume-ui": "tsx server/test/e2e/resume-ui.ts",
-    "verify:lessons": "node scripts/verify-lessons.mjs"
+    "verify:lessons": "node scripts/verify-lessons.mjs",
+    "build:tactics": "node scripts/build-tactics-set.mjs"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",

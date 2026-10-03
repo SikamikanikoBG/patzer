@@ -77,6 +77,7 @@ async function sweep(): Promise<void> {
         language,
         audience,
         userColor,
+        userId: row.user_id,
       });
       db.prepare(`
         UPDATE analyses SET prose_json = ?, prose_version = ?, prose_lang = ?, prose_audience = ?

@@ -1,12 +1,16 @@
 // Tactic Trainer — solve puzzles extracted from your own analyzed games.
 // The point: chess.com puzzles are generic. Patzer's are *yours* — every
 // position is a real moment from your own play where you missed something.
+// A second tab (?tab=puzzles) has general puzzles for when you've run out of
+// your own, or have no analyzed games yet (components/TacticsPuzzles.tsx).
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Target, RotateCcw, ArrowRight, Lightbulb, Check, X, Trophy, BookOpen } from 'lucide-react';
+import { Target, RotateCcw, ArrowRight, Lightbulb, Check, X, Trophy, BookOpen, Zap } from 'lucide-react';
+import BetaBadge from '../components/BetaBadge';
+import TacticsPuzzles from '../components/TacticsPuzzles';
 import ChessBoard from '../components/ChessBoard';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
@@ -32,6 +36,41 @@ interface Puzzle {
 interface Stats { total: number; solved: number; failed: number; accuracy: number }
 
 export default function Train() {
+  const { t } = useTranslation();
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'puzzles' ? 'puzzles' : 'mine';
+  const setTab = (next: 'mine' | 'puzzles') => setParams(next === 'puzzles' ? { tab: 'puzzles' } : {}, { replace: true });
+  const tabClass = (active: boolean) => `tab-pill flex items-center gap-1.5 ${active ? 'is-active' : ''}`;
+
+  return (
+    <div className="mx-auto max-w-5xl space-y-4">
+      <div role="tablist" className="flex gap-1 border-b border-chesscom-200 dark:border-chesscom-700">
+        <button role="tab" aria-selected={tab === 'mine'} onClick={() => setTab('mine')} className={tabClass(tab === 'mine')}>
+          <Target className="h-4 w-4" /> {t('train.tabs.mine')}
+        </button>
+        <button role="tab" aria-selected={tab === 'puzzles'} onClick={() => setTab('puzzles')} className={tabClass(tab === 'puzzles')}>
+          <Zap className="h-4 w-4" /> {t('train.tabs.puzzles')}
+          <BetaBadge />
+        </button>
+      </div>
+      {tab === 'puzzles' ? (
+        <>
+          <header>
+            <h1 className="page-h1 flex items-center gap-2"><Zap className="h-6 w-6 text-gold-600" />{t('train.tabs.puzzles')}</h1>
+            <p className="page-sub">{t('train.puzzles.intro')}</p>
+          </header>
+          <TacticsPuzzles />
+          <footer className="pt-2 text-center text-xs text-chesscom-400">
+            {t('train.puzzles.credit')}{' '}
+            <a href="https://database.lichess.org/#puzzles" target="_blank" rel="noreferrer noopener" className="underline underline-offset-2 hover:text-chesscom-600 dark:hover:text-chesscom-200">database.lichess.org</a>
+          </footer>
+        </>
+      ) : <FromYourGames onPuzzles={() => setTab('puzzles')} />}
+    </div>
+  );
+}
+
+function FromYourGames({ onPuzzles }: { onPuzzles: () => void }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -97,8 +136,9 @@ export default function Train() {
           <Trophy className="h-8 w-8 text-gold-500" />
           <div className="text-base font-semibold">{t('train.allClear', { defaultValue: "Nothing to train — you're caught up." })}</div>
           <p className="max-w-md text-sm text-chesscom-500">{t('train.allClearDesc', { defaultValue: 'Play more games and analyze them to unlock new puzzles. Every blunder you fix here is a pattern you stop repeating in real games.' })}</p>
-          <div className="mt-2 flex gap-2">
-            <Link to="/play" className="btn-primary text-sm">{t('home.playTitle')}</Link>
+          <div className="mt-2 flex flex-wrap justify-center gap-2">
+            <button onClick={onPuzzles} className="btn-primary text-sm"><Zap className="h-4 w-4" /> {t('train.tabs.puzzles')}</button>
+            <Link to="/play" className="btn-secondary text-sm">{t('home.playTitle')}</Link>
             <Link to="/review" className="btn-secondary text-sm">{t('review.title')}</Link>
           </div>
         </div>

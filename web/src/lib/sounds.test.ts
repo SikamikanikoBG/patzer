@@ -145,13 +145,36 @@ describe('board move sounds', () => {
     expect(started).toContain(1175);
   });
 
-  it('falls back to the synthesized knock while the recordings are still loading', async () => {
-    vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+  it('downloads the recordings as soon as board is chosen, before any sound', async () => {
+    const { setMoveSoundSet } = await import('./sounds');
+    setMoveSoundSet('board');
+    expect(fetchOk).toHaveBeenCalledTimes(2);
+  });
+
+  it('the first move right after a page load waits for the recordings', async () => {
+    // A puzzle's opening move plays by itself, before anything else made a sound.
     const { playSound, setMoveSoundSet } = await import('./sounds');
     setMoveSoundSet('board');
     playSound('move');
-    expect(started).toContain(280);
     expect(samples).toEqual([]);
+    await vi.waitFor(() => expect(samples).toEqual([expect.stringMatching(/board-move\.wav$/)]));
+    expect(started).not.toContain(280);
+  });
+
+  it('falls back to the synthesized knock if the recordings take too long', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal('fetch', vi.fn(() => new Promise(() => {})));
+      const { playSound, setMoveSoundSet } = await import('./sounds');
+      setMoveSoundSet('board');
+      playSound('move');
+      expect(started).not.toContain(280);
+      await vi.advanceTimersByTimeAsync(400);
+      expect(started).toContain(280);
+      expect(samples).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('falls back to the synthesized knock if the recordings cannot be loaded', async () => {

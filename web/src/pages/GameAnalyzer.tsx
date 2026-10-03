@@ -2,14 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sparkles, Settings as SettingsIcon, Copy, Download, Check, ListOrdered, Lightbulb, FileText, Star, Share2, FlipVertical2, NotebookPen, Search, Loader2, Undo2, GitBranch } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Sparkles, Settings as SettingsIcon, Copy, Download, Check, ListOrdered, FileText, X, Star, Share2, FlipVertical2, NotebookPen, Search, Loader2, Undo2, GitBranch } from 'lucide-react';
 import { Chess } from 'chess.js';
 import ChessBoard from '../components/ChessBoard';
 import EvalBar from '../components/EvalBar';
 import EvalGraph from '../components/EvalGraph';
 import MoveList from '../components/MoveList';
 import CoachPanel from '../components/CoachPanel';
-import GameReportCard from '../components/GameReportCard';
+import GameReportCard, { type MovePick } from '../components/GameReportCard';
+import MoveExplanation from '../components/MoveExplanation';
 import GameReportPanel, { type GameReviewProse } from '../components/GameReportPanel';
 import KeyMomentsList from '../components/KeyMomentsList';
 import OpeningBanner from '../components/OpeningBanner';
@@ -57,7 +58,7 @@ function fmtCp(cp: number | null | undefined): string {
   return `${sign}${(Math.abs(cp) / 100).toFixed(2)}`;
 }
 
-type Tab = 'moves' | 'report' | 'moments' | 'coach';
+type Tab = 'moves' | 'report' | 'moments';
 
 /** A move the user tried on the board, off the game's own line. */
 interface VariationMove {
@@ -91,6 +92,10 @@ export default function GameAnalyzer() {
   const [showDepthControl, setShowDepthControl] = useState(false);
   const [reviewProse, setReviewProse] = useState<GameReviewProse | null>(null);
   const [tab, setTab] = useState<Tab>('moves');
+  // A category picked in the Game Report table (e.g. Black's misses): those
+  // moves stand out in the move list and the arrows below step through them.
+  const [pick, setPick] = useState<MovePick | null>(null);
+  const tabsRef = useRef<HTMLDivElement | null>(null);
   // Local UI state for new features.
   const [flipped, setFlipped] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -383,6 +388,31 @@ export default function GameAnalyzer() {
   }] : [];
   const arrow = [...baseArrow, ...variationArrows, ...hoverArrow];
 
+  const pickedPlies = pick && analysis
+    ? analysis.moves
+      .filter((m) => m.classification === pick.classification && (pick.side === 'both' || (m.ply % 2 === 1 ? 'white' : 'black') === pick.side))
+      .map((m) => m.ply)
+    : [];
+  const pickedSet = pick ? new Set(pickedPlies) : null;
+  const pickIndex = pickedPlies.indexOf(ply);
+  const stepPick = (dir: 1 | -1) => {
+    if (pickedPlies.length === 0) return;
+    // From a move outside the category, go to the nearest one in that direction.
+    const next = dir === 1
+      ? (pickedPlies.find((p) => p > ply) ?? pickedPlies[0]!)
+      : ([...pickedPlies].reverse().find((p) => p < ply) ?? pickedPlies[pickedPlies.length - 1]!);
+    jump(next);
+  };
+  const onPick = (p: MovePick) => {
+    if (pick && pick.classification === p.classification && pick.side === p.side) { setPick(null); return; }
+    setPick(p);
+    setTab('moves');
+    const first = analysis?.moves.find((m) => m.classification === p.classification && (p.side === 'both' || (m.ply % 2 === 1 ? 'white' : 'black') === p.side));
+    if (first) jump(first.ply);
+    // Bring the move list into view inside the right rail.
+    requestAnimationFrame(() => tabsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+
   const eco = analysis?.opening_eco ?? data.game.eco ?? null;
   const openingName = analysis?.opening_name ?? data.game.opening_name ?? null;
 
@@ -543,6 +573,8 @@ export default function GameAnalyzer() {
                 userColor={userColor}
                 currentPly={ply}
                 onSelectPly={jump}
+                onPick={onPick}
+                picked={pick}
               />
 
               {showDepthControl && (
@@ -576,23 +608,43 @@ export default function GameAnalyzer() {
               {/* Tabbed workspace — Moves / AI report / Key moments / Engine / Coach.
                   This is the ONLY tabbed surface on the page: engine lines moved in
                   here (previously a peer card) so there is one mental model, not three. */}
-              <div className="card overflow-hidden">
+              <div ref={tabsRef} className="card overflow-hidden scroll-mt-2">
                 <div className="flex items-center gap-0.5 border-b border-chesscom-100 bg-chesscom-50/40 px-1 dark:border-chesscom-700 dark:bg-chesscom-900/40 sm:gap-1 sm:px-2">
                   <TabBtn active={tab === 'moves'} onClick={() => setTab('moves')} icon={ListOrdered} label={t('review.moves', { defaultValue: 'Moves' })} />
                   <TabBtn active={tab === 'report'} onClick={() => setTab('report')} icon={FileText} label={t('review.gameReport', { defaultValue: 'AI report' })} />
                   <TabBtn active={tab === 'moments'} onClick={() => setTab('moments')} icon={Sparkles} label={t('review.keyMoments', { defaultValue: 'Key moments' })} />
-                  <TabBtn active={tab === 'coach'} onClick={() => setTab('coach')} icon={Lightbulb} label={t('coach.title', { defaultValue: 'Coach' })} />
                   <button onClick={() => setShowDepthControl((s) => !s)} className="btn-ghost ms-auto p-1.5" title={t('review.depth')}>
                     <SettingsIcon className="h-3.5 w-3.5" />
                   </button>
                 </div>
                 <div className="p-3">
+                  {tab === 'moves' && pick && (
+                    <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-gold-500/40 bg-gold-50/60 px-2 py-1.5 text-xs dark:bg-gold-700/10">
+                      <span className="min-w-0 flex-1 truncate">
+                        <span className="font-semibold">{t(`classification.${pick.classification}`)}</span>
+                        <span className="text-chesscom-500"> · {pick.side === 'both' ? t('review.pickBoth', { defaultValue: 'both sides' }) : t(`review.${pick.side}`)}</span>
+                      </span>
+                      <span className="font-mono tabular-nums text-chesscom-500">{pickIndex >= 0 ? pickIndex + 1 : '–'}/{pickedPlies.length}</span>
+                      <button onClick={() => stepPick(-1)} className="btn-ghost p-1" title={t('review.prev')}><ChevronLeft className="h-4 w-4" /></button>
+                      <button onClick={() => stepPick(1)} className="btn-ghost p-1" title={t('review.next')}><ChevronRight className="h-4 w-4" /></button>
+                      <button onClick={() => setPick(null)} className="btn-ghost p-1" title={t('common.close', { defaultValue: 'Close' })}><X className="h-4 w-4" /></button>
+                    </div>
+                  )}
+                  {tab === 'moves' && move && (
+                    <MoveExplanation
+                      move={move}
+                      userColor={data.game.user_color}
+                      coachConfigured={coachConfigured}
+                      coachRequest={coachReq}
+                    />
+                  )}
                   {tab === 'moves' && (
                     <MoveList
                       moves={analysis.moves.map((m) => ({ ply: m.ply, san: m.san, classification: m.classification }))}
                       current={ply}
                       onSelect={jump}
                       phaseSplit={analysis.phase_split}
+                      highlight={pickedSet}
                       maxHeight={typeof window !== 'undefined' && window.innerWidth < 768 ? 320 : 460}
                     />
                   )}
@@ -602,6 +654,7 @@ export default function GameAnalyzer() {
                       initial={reviewProse}
                       onMomentJump={jump}
                       onGenerated={setReviewProse}
+                      userColor={data.game.user_color}
                     />
                   )}
                   {tab === 'moments' && (
@@ -618,24 +671,12 @@ export default function GameAnalyzer() {
                           best_san: m.best_san,
                           title: proseHit?.title,
                           prose: proseHit?.prose,
+                          mine: data.game.user_color ? m.side === data.game.user_color : undefined,
                         };
                       })}
                       current={ply}
                       onSelect={jump}
                     />
-                  )}
-                  {tab === 'coach' && coachReq && (
-                    <CoachPanel
-                      systemConfigured={coachConfigured}
-                      request={coachReq}
-                      autoPlay
-                      triggerKey={ply}
-                      debounceMs={700}
-                      compact
-                    />
-                  )}
-                  {tab === 'coach' && !coachReq && (
-                    <div className="p-4 text-sm text-chesscom-500">{t('review.coachIdleHint', { defaultValue: 'Step into a move to see what the coach has to say.' })}</div>
                   )}
                 </div>
               </div>

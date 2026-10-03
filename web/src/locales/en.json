@@ -264,6 +264,30 @@
       "generic": "The import failed. Please try again later.",
       "chesscom_unavailable": "Chess.com can't be reached right now. Try again later."
     },
+    "pickMoves": "Show these moves",
+    "pickBoth": "both sides",
+    "why": {
+      "yourMove": "Your move",
+      "opponentMove": "Opponent's move",
+      "whiteMove": "White's move",
+      "blackMove": "Black's move",
+      "winChance": "Win chance for the side that moved: before → after",
+      "engineWanted": "The engine wanted:",
+      "line": "Line",
+      "coachSays": "In plain words",
+      "brilliant": "The engine's top move — and it gives up material. The sacrifice works: the position stays sound ({{after}}% win chance) because the opponent can't safely take what was offered.",
+      "great": "A critical move: the engine's first choice in a position where the alternatives were clearly worse, or one that saved a bad position ({{before}}% → {{after}}%).",
+      "best": "Exactly the engine's first choice — nothing better was available.",
+      "excellent": "Almost as good as the best move — the win chance barely moved ({{before}}% → {{after}}%).",
+      "good": "A reasonable move, a little weaker than the best one: the win chance dropped by {{drop}}% ({{before}}% → {{after}}%).",
+      "book": "A known opening move — straight from theory.",
+      "forced": "The only legal move — there was no choice.",
+      "inaccuracy": "An inaccuracy: the win chance dropped by {{drop}}% ({{before}}% → {{after}}%), about {{pawns}} pawns. Not a disaster, but there was a clearly better move.",
+      "mistake": "A mistake: the win chance dropped by {{drop}}% ({{before}}% → {{after}}%), about {{pawns}} pawns — a real chunk of the advantage went away.",
+      "blunder": "A blunder: the win chance collapsed by {{drop}}% ({{before}}% → {{after}}%), about {{pawns}} pawns. This kind of move usually loses material or allows a decisive attack.",
+      "miss": "A miss: the position was winning ({{before}}% win chance) and this move let the win slip ({{after}}%). There was a much stronger move on the board."
+    },
+    "regenerateReport": "Write it again",
     "importedOf": "Imported {{n}} new games ({{total}} found)",
     "importAllSlow": "Importing your whole history — with thousands of games this can take a few minutes. You can keep using Patzer meanwhile.",
     "importScope": {
@@ -700,7 +724,48 @@
     "nextPuzzle": "Next puzzle",
     "openInReview": "Open this position in the full review",
     "correct": "Correct!",
-    "wrong": "Not quite — the engine prefers"
+    "wrong": "Not quite — the engine prefers",
+    "tabs": {
+      "mine": "From your games",
+      "puzzles": "Puzzles"
+    },
+    "puzzles": {
+      "intro": "Tactic puzzles from the Lichess puzzle database, chosen to match your puzzle rating. The first try counts: solve it and your rating goes up.",
+      "loadError": "Couldn't load a puzzle.",
+      "allDone": "You've tried every puzzle here – impressive!",
+      "yourRating": "Your puzzle rating",
+      "solvedOf": "{{solved}} of {{played}} solved",
+      "provisional": "Still settling in – it moves a lot in your first puzzles.",
+      "watch": "Watch your opponent’s move …",
+      "findWhite": "White to move. Find the best move!",
+      "findBlack": "Black to move. Find the best move!",
+      "wrong": "Not the best move – the board went back. Try again!",
+      "solved": "Solved!",
+      "solvedLate": "Solved – but not at the first try, so it counts as not solved.",
+      "showing": "Here is the solution …",
+      "shownDone": "That was the solution.",
+      "notRated": "This puzzle already counts as not solved – but finish it anyway.",
+      "hint": "Hint",
+      "hintMove": "Show the move",
+      "solution": "Show solution",
+      "tryIt": "Try it yourself",
+      "next": "Next puzzle",
+      "puzzleRating": "Puzzle rating {{rating}}",
+      "onLichess": "On lichess.org",
+      "credit": "Puzzles from the Lichess puzzle database (CC0):",
+      "rules": "A wrong move, a hint or the solution and the puzzle counts as not solved. Every puzzle comes only once.",
+      "themes": {
+        "all": "All",
+        "mate": "Checkmate",
+        "fork": "Fork",
+        "pin": "Pin & skewer",
+        "discovered": "Discovered attack",
+        "sacrifice": "Sacrifice",
+        "hanging": "Hanging & trapped pieces",
+        "defence": "Defence",
+        "endgame": "Endgame"
+      }
+    }
   },
   "learn": {
     "nav": "Learn",
@@ -713,6 +778,7 @@
     "levelUp": "Level {{n}} reached!",
     "toNextLevel_one": "{{count}} more star to level {{n}}",
     "toNextLevel_other": "{{count}} more stars to level {{n}}",
+    "starsExplained": "Each lesson gives up to 3 stars – the fewer hints and wrong tries, the more. Your stars add up to your level, and you can repeat any lesson to collect the ones you missed.",
     "lessonsDone": "{{done}}/{{total}} lessons",
     "startHere": "Start here",
     "nextUp": "Next lesson",
@@ -732,7 +798,7 @@
       },
       "beginner": {
         "title": "Beginner",
-        "desc": "Basic checkmates, first tactics and how to start a game."
+        "desc": "Basic checkmates, first tactics, defending, and how to start a game."
       },
       "intermediate": {
         "title": "Intermediate",
@@ -740,7 +806,7 @@
       },
       "advanced": {
         "title": "Advanced",
-        "desc": "Quiet moves, zugzwang, deeper combinations and rook endgames."
+        "desc": "Quiet moves, zugzwang, rare mating patterns, mate in four, and rook, queen and minor-piece endgames."
       }
     },
     "readAloud": "Read aloud",
@@ -868,7 +934,13 @@
       "win": "win",
       "loss": "loss",
       "draw": "draw"
-    }
+    },
+    "moveQuality": "Move quality",
+    "moveQualityTotal_one": "{{count}} move of yours",
+    "moveQualityTotal_other": "{{count}} moves of yours",
+    "brilliantMoves": "Your brilliant moves",
+    "noBrilliant": "No brilliant move yet – a brilliant move is a good sacrifice. It will show up here.",
+    "vsOpponent": "vs {{name}}"
   },
   "openings": {
     "nav": "Openings",
@@ -969,6 +1041,24 @@
       "reviewDone": "All done for today!",
       "reviewScore": "{{right}} of {{total}} right.",
       "back": "Back to the lines",
+      "branchCount_one": "{{count}} deviation",
+      "branchCount_other": "{{count}} deviations",
+      "practiseBranches_one": "Practise the deviation",
+      "practiseBranches_other": "Practise the {{count}} deviations",
+      "practiseBranchesDesc": "Patzer leaves the main line: the other moves you will meet, and a few tempting ones to punish.",
+      "repertoireBranches_one": "Your opponents left this line once in a way you can practise too — after the line, choose “Practise the deviation”.",
+      "repertoireBranches_other": "Your opponents left this line in {{count}} ways you can practise too — after the line, choose “Practise the deviations”.",
+      "branchOf": "Deviation {{i}} of {{n}}",
+      "branchText": "Patzer plays {{move}} instead of {{main}}. How do you go on?",
+      "branchTextNoMain": "Patzer plays {{move}}. How do you go on?",
+      "branchTrap": "Patzer plays {{move}} instead of {{main}} — it looks tempting, but it can be punished. How?",
+      "branchGames_one": "From your games (once).",
+      "branchGames_other": "From your games ({{count}} times).",
+      "branchPlayed_one": "From your games (once). You answered with {{played}} — the analysis found a better move.",
+      "branchPlayed_other": "From your games ({{count}} times). You answered with {{played}} — the analysis found a better move.",
+      "branchDoneTitle": "Deviation done!",
+      "nextBranch": "Next deviation",
+      "branchesAllDone": "That was the last deviation of this line.",
       "lineNames": {
         "italian": "Italian Game: Giuoco Pianissimo",
         "ruy-lopez": "Ruy Lopez: Closed",

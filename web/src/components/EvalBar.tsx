@@ -52,20 +52,20 @@ export default function EvalBar({ cp, mate, orientation = 'white', height }: Pro
   return (
     <div className="relative" style={wrapStyle} dir="ltr">
       <div
-        className={`relative flex h-full w-full flex-col overflow-hidden rounded-l-md border border-chesscom-300 bg-chesscom-200 shadow-soft dark:border-chesscom-700 ${isMate ? 'shadow-glow' : ''}`}
+        className={`relative flex h-full w-full ${flip ? 'flex-col-reverse' : 'flex-col'} overflow-hidden rounded-l-md border border-chesscom-300 bg-chesscom-200 shadow-soft dark:border-chesscom-700 ${isMate ? 'shadow-glow' : ''}`}
       >
         <motion.div
           className={`flex items-start justify-center text-[10px] font-semibold tabular-nums text-white/90 ${
             isMate && !whiteAdvantage ? 'bg-bad' : 'bg-chesscom-900'
           }`}
-          animate={{ height: `${flip ? whitePct : blackPct}%` }}
+          animate={{ height: `${blackPct}%` }}
           transition={{ type: 'tween', duration: 0.28, ease }}
         />
         <motion.div
           className={`flex items-end justify-center text-[10px] font-semibold tabular-nums text-chesscom-900 ${
             isMate && whiteAdvantage ? 'bg-warn' : 'bg-white'
           }`}
-          animate={{ height: `${flip ? blackPct : whitePct}%` }}
+          animate={{ height: `${whitePct}%` }}
           transition={{ type: 'tween', duration: 0.28, ease }}
         />
         {/* 0-tick: thin board-green line at the midpoint so 0.0 is always visible. */}

@@ -27,7 +27,7 @@ and 40.95 s), 0.32 s long, high-passed at 60 Hz, faded out and loudness-matched 
 
 ## Lichess puzzle database (CC0)
 
-The tactic, mate and endgame tasks of the Learn section (`web/src/learn/content/*.json`, steps with a `src` field) are puzzles from the [Lichess puzzle database](https://database.lichess.org/#puzzles), released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/). No permission or attribution is required; we keep each puzzle's id anyway, and the lesson page links to it on lichess.org. The lesson texts and all other positions are written for Patzer.
+The tactic, mate and endgame tasks of the Learn section (`web/src/learn/content/*.json`, steps with a `src` field) are puzzles from the [Lichess puzzle database](https://database.lichess.org/#puzzles), released under [CC0](https://creativecommons.org/publicdomain/zero/1.0/). No permission or attribution is required; we keep each puzzle's id anyway, and the lesson page links to it on lichess.org. The lesson texts and all other positions are written for Patzer. The general tactic puzzles of the Train page (`server/src/chess/tacticsSet.json`, about 4,000 puzzles with their ids, solutions, ratings and theme tags, chosen by `scripts/build-tactics-set.mjs`) come from the same database, under the same license (it covers the whole export, solutions and metadata included); the page credits the database in its footer, and each puzzle links to its page on lichess.org once solved.
 
 ## Other notable dependencies
 

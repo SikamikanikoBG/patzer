@@ -287,6 +287,28 @@ db.exec(`CREATE TABLE IF NOT EXISTS learn_progress (
   PRIMARY KEY (user_id, lesson_id)
 )`);
 
+// Tactic puzzles (Train → Puzzles): puzzles from the Lichess database that
+// ship with Patzer (see chess/tactics.ts). One row per puzzle you tried —
+// only the first try is rated, so `solved` and the ratings are from that try —
+// and one puzzle rating per profile (Glicko-1, like the game ratings).
+db.exec(`CREATE TABLE IF NOT EXISTS tactics_attempts (
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  puzzle_id TEXT NOT NULL,
+  solved INTEGER NOT NULL CHECK(solved IN (0, 1)),
+  rating_before REAL NOT NULL,
+  rating_after REAL NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, puzzle_id)
+)`);
+db.exec(`CREATE INDEX IF NOT EXISTS idx_tactics_attempts_user ON tactics_attempts(user_id, created_at DESC)`);
+db.exec(`CREATE TABLE IF NOT EXISTS tactics_ratings (
+  user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  rating REAL NOT NULL,
+  rd REAL NOT NULL,
+  best REAL NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+)`);
+
 // v7.0.0 — Improvement Plan goals. Each goal is a one-week target with a kind
 // (puzzles_solve / opening_play / review_games / accuracy / win_streak), a
 // numeric target, and free-form metadata. Progress is computed live from

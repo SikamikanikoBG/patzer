@@ -19,6 +19,19 @@
           ]
         },
         {
+          "id": "discovered-check",
+          "icon": "discovered",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "5r2/k1K3R1/4P3/p3n3/P7/8/8/8 w - - 7 64", "orientation": "white", "demo": ["c7d6", "a7b6", "d6e5"]},
+            {"id": "p1", "type": "move", "fen": "8/1r6/5k2/2RK4/8/8/8/8 b - - 8 69", "pre": "f6f5", "line": ["d5c6", "f5e4", "c6b7"], "src": "GsYvl"},
+            {"id": "p2", "type": "move", "fen": "r1b2rk1/1pp1b2p/p4n1n/3P1p2/1PB1p3/P3P1NP/1B1P1PP1/R3K2R b KQ - 3 18", "pre": "f8d8", "line": ["d5d6", "g8f8", "d6e7"], "src": "lhoEc"},
+            {"id": "p3", "type": "move", "fen": "3rkr2/7R/2p5/7p/1bB1K1b1/3PB3/PP6/6R1 w - - 13 31", "pre": "e3h6", "line": ["g4f5", "e4f3", "f5h7"], "src": "QBM6d"},
+            {"id": "p4", "type": "move", "fen": "r1bq1r1k/4b2p/p3p1R1/3pPp1N/2pP4/2P1P2Q/3B2PP/1R4K1 b - - 0 25", "pre": "h7g6", "line": ["h5f6", "h8g7", "h3h7"], "goal": "mate", "src": "RJhuX"},
+            {"id": "p5", "type": "move", "fen": "r7/6p1/k1r1Pn1p/pqBpQp2/1p3P2/3P4/2P1B1PP/5RK1 b - - 12 30", "pre": "b5c5", "line": ["d3d4", "c5b5", "e2b5"], "src": "tuouE"},
+            {"id": "p6", "type": "move", "fen": "8/4k3/p1r1nR2/4Rp1P/4nP2/4K3/PBp5/8 b - - 0 51", "pre": "e7f6", "line": ["e5c5", "f6f7", "c5c6"], "src": "wVjP2"}
+          ]
+        },
+        {
           "id": "double-check",
           "icon": "double",
           "steps": [
@@ -95,6 +108,19 @@
             {"id": "p5", "type": "move", "fen": "2q1kb1r/Qp3ppp/2r1p3/3n4/8/2P2N2/PP3PPP/R1B1K2R w KQk - 1 14", "pre": "f3d4", "line": ["c6a6", "a7a6", "b7a6"], "src": "ZThvJ"},
             {"id": "p6", "type": "move", "fen": "rnb1k2r/1p1n1ppp/p3p3/3pP3/1q6/P1NB1N2/1PP1Q1PP/R4RK1 b kq - 0 13", "pre": "b4b2", "line": ["c3a4", "b2a1", "f1a1"], "src": "ti6tz"}
           ]
+        },
+        {
+          "id": "exposed-king",
+          "icon": "K",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "r1b2r2/b2n3k/3p2q1/1p1PpN2/p1p1P1Qp/2P5/PPBR1PP1/R5K1 w - - 0 31", "orientation": "white", "demo": ["g4h4", "h7g8", "f5e7", "g8g7", "e7g6"]},
+            {"id": "p1", "type": "move", "fen": "r3r1k1/p7/2pq2pQ/2p2p2/N1Pp4/3P1Pb1/PP3P2/R3R1K1 w - - 0 23", "pre": "f2g3", "line": ["d6g3", "g1h1", "e8e1", "a1e1", "g3e1"], "src": "Xmz4H"},
+            {"id": "p2", "type": "move", "fen": "r6k/p1p2p2/3p1P2/2p2Np1/2P1PpP1/3P1R2/q5P1/7K b - - 1 30", "pre": "h8h7", "line": ["f3h3", "h7g8", "f5e7", "g8f8", "h3h8"], "goal": "mate", "src": "TBWnu"},
+            {"id": "p3", "type": "move", "fen": "r5r1/1pp2p2/p2p4/P4P2/1P6/2P1R2K/5k2/4RB2 w - - 1 35", "pre": "f1d3", "line": ["g8h8", "h3g4", "a8g8", "g4f4", "h8h4"], "goal": "mate", "src": "u80rj"},
+            {"id": "p4", "type": "move", "fen": "r7/Pk2b3/8/4Np1p/6p1/4P1P1/3K3P/R7 b - - 10 41", "pre": "a8a7", "line": ["a1a7", "b7a7", "e5c6", "a7b6", "c6e7"], "src": "j28jV"},
+            {"id": "p5", "type": "move", "fen": "8/1bqp2k1/4n3/6r1/1p5N/4Q2P/1P3PP1/4R2K b - - 12 33", "pre": "c7d6", "line": ["e3g5", "e6g5", "h4f5", "g7f6", "f5d6"], "src": "4PMxS"},
+            {"id": "p6", "type": "move", "fen": "6k1/1b1q2b1/pp2p1Q1/4P2N/P5R1/1Pr5/5PPK/3q4 b - - 1 36", "pre": "d1g4", "line": ["h5f6", "g8f8", "f6d7", "f8e7", "g6g4"], "src": "Jw0sQ"}
+          ]
         }
       ]
     },
@@ -152,6 +178,45 @@
             {"id": "p4", "type": "move", "fen": "8/8/6kp/1QN3n1/6Pb/8/PP3rK1/8 w - - 0 39", "pre": "g2g1", "line": ["g5f3", "g1h1", "f2h2"], "goal": "mate", "src": "ykUnp"},
             {"id": "p5", "type": "move", "fen": "r7/p4Rk1/1p1Nn1p1/2pN3p/2P5/1P4PP/q7/6K1 b - - 0 32", "pre": "g7g8", "line": ["d5f6", "g8h8", "f7h7"], "goal": "mate", "src": "Y3GSc"},
             {"id": "p6", "type": "move", "fen": "2b3r1/p5k1/1p4R1/3N1P2/1P6/P5P1/4p1KP/3r4 b - - 2 43", "pre": "g7h7", "line": ["d5f6", "h7h8", "g6g8"], "goal": "mate", "src": "amkWB"}
+          ]
+        },
+        {
+          "id": "opera",
+          "icon": "R",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "5rk1/1pp4p/3p1qp1/3P4/1p1QP3/6Pb/PPN1P2P/R5K1 b - - 6 25", "orientation": "black", "demo": ["f6f1", "a1f1", "f8f1"]},
+            {"id": "p1", "type": "move", "fen": "6k1/6p1/3bpr1p/1b1p3P/1P1P2B1/4B3/r1p1R1P1/2R1N1K1 w - - 2 36", "pre": "e2c2", "line": ["f6f1"], "goal": "mate", "src": "oHxmU"},
+            {"id": "p2", "type": "move", "fen": "r7/1pp1kr1p/p2b2pB/8/4R1BP/1P5K/2P3P1/8 b - - 0 33", "pre": "e7f6", "line": ["e4e6"], "goal": "mate", "src": "MWRVG"},
+            {"id": "p3", "type": "move", "fen": "3rk2r/pRp2p1p/2n3pb/8/8/B1p2NQ1/P1P2PPP/1K2q3 w k - 0 18", "pre": "f3e1", "line": ["d8d1", "a3c1", "d1c1"], "goal": "mate", "src": "SX6Fx"},
+            {"id": "p4", "type": "move", "fen": "8/5Rkp/1b2B1p1/6P1/3r3P/p7/2K5/8 b - - 0 41", "pre": "g7h8", "line": ["f7f8", "h8g7", "f8g8"], "goal": "mate", "src": "BKzsn"},
+            {"id": "p5", "type": "move", "fen": "3r3k/p5R1/2n4P/4pb2/2N4b/1BP1K3/PP1B1r2/R7 w - - 16 37", "pre": "a1h1", "line": ["d8d3"], "goal": "mate", "src": "imHeO"},
+            {"id": "p6", "type": "move", "fen": "5n2/4k3/bP2r2p/3p3R/5p2/2P4Q/2P3PP/R3r1K1 w - - 1 45", "pre": "a1e1", "line": ["e6e1", "g1f2", "e1f1"], "goal": "mate", "src": "v3hB1"}
+          ]
+        },
+        {
+          "id": "hook",
+          "icon": "N",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "6k1/4p2p/p2pN1p1/3P4/2R1P3/6rP/5r2/7K w - - 10 43", "orientation": "white", "demo": ["c4c8", "g8f7", "c8f8"]},
+            {"id": "p1", "type": "move", "fen": "1k1r4/1p2bpp1/pN5p/P3q3/1P6/1p1QP1P1/5PP1/2R2RK1 b - - 0 29", "pre": "d8d3", "line": ["c1c8", "b8a7", "c8a8"], "goal": "mate", "src": "hbgrP"},
+            {"id": "p2", "type": "move", "fen": "6k1/6p1/3qp2r/3Nn3/1p2p3/1Q2P1P1/P4P2/3R1RK1 w - - 1 30", "pre": "d5f4", "line": ["e5f3", "g1g2", "h6h2"], "goal": "mate", "src": "RQYAw"},
+            {"id": "p3", "type": "move", "fen": "8/r4kpp/2R2p2/4p3/3pP3/1PnP1N1P/2P2PP1/5K2 w - - 1 36", "pre": "f1e1", "line": ["a7a1", "e1d2", "a1d1"], "goal": "mate", "src": "HHmzn"},
+            {"id": "p4", "type": "move", "fen": "4r3/pp6/b1p2R1k/7p/7N/6P1/P6P/6K1 b - - 7 36", "pre": "h6g5", "line": ["f6g6"], "goal": "mate", "src": "iw6LH"},
+            {"id": "p5", "type": "move", "fen": "6k1/6p1/1p4Np/2p2P2/2P5/6P1/rr5P/4R1K1 b - - 0 36", "pre": "b2h2", "line": ["e1e8", "g8f7", "e8f8"], "goal": "mate", "src": "AFp0W"},
+            {"id": "p6", "type": "move", "fen": "5k2/1p3p2/p3pN1p/3pPr2/1P1P4/P1n1K3/5P2/2R5 b - - 3 34", "pre": "c3e4", "line": ["c1c8", "f8e7", "c8e8"], "goal": "mate", "src": "F2jzv"}
+          ]
+        },
+        {
+          "id": "pillsbury",
+          "icon": "B",
+          "steps": [
+            {"id": "intro", "type": "info", "fen": "3r1r1k/2p3p1/p1n5/1p2p3/1P2p1q1/PBP1B3/2KnN3/R7 w - - 0 31", "orientation": "white", "demo": ["a1h1", "g4h5", "h1h5"]},
+            {"id": "p1", "type": "move", "fen": "6k1/p3r2q/1p2R3/2b5/8/P1B4Q/1PP3P1/7K w - - 1 46", "pre": "h3h7", "line": ["e7h7", "e6h6", "h7h6"], "goal": "mate", "src": "rmYbl"},
+            {"id": "p2", "type": "move", "fen": "5b1k/p1pR4/1p3R1p/1P4pb/P4n2/1BP5/3NrK1P/8 w - - 12 38", "pre": "f2g3", "line": ["e2g2"], "goal": "mate", "src": "vYyIU"},
+            {"id": "p3", "type": "move", "fen": "r7/pp3pk1/6p1/2PQ1b2/1P1Pn3/P3b3/1B2B1Pr/R4R1K w - - 0 22", "pre": "h1h2", "line": ["a8h8", "e2h5", "h8h5"], "goal": "mate", "src": "IvTwv"},
+            {"id": "p4", "type": "move", "fen": "1k5r/ppp1Rp1p/3p4/2bP4/2B2Pnr/8/PPP3PP/R1B4K w - - 1 20", "pre": "g2g3", "line": ["h4h2"], "goal": "mate", "src": "plgmV"},
+            {"id": "p5", "type": "move", "fen": "5r2/pp5R/8/2b1p1k1/B7/8/PP4P1/7K w - - 0 33", "pre": "h7b7", "line": ["f8h8", "b7h7", "h8h7"], "goal": "mate", "src": "jr27z"},
+            {"id": "p6", "type": "move", "fen": "6k1/pp3p2/6r1/8/4b3/2P5/P2B1P1P/2R3K1 w - - 5 22", "pre": "g1f1", "line": ["e4d3", "f1e1", "g6g1"], "goal": "mate", "src": "bDHAK"}
           ]
         }
       ]

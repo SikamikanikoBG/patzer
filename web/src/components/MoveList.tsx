@@ -14,12 +14,14 @@ interface Props {
   phaseSplit?: PhaseSplit | null;
   /** Optional pixel cap; defaults to 420. */
   maxHeight?: number;
+  /** Plies to make stand out (the rest is dimmed) — see MoveRow. */
+  highlight?: Set<number> | null;
 }
 
 // Two-column move-pair-per-row list. The badge sits to the right of each SAN,
 // the current half-move is highlighted, and the row's left edge is tinted by
 // the worst classification in the pair (matching chess.com Game Review).
-export default function MoveList({ moves, current, onSelect, phaseSplit, maxHeight = 420 }: Props) {
+export default function MoveList({ moves, current, onSelect, phaseSplit, maxHeight = 420, highlight }: Props) {
   const { t } = useTranslation();
   const rows: { num: number; white?: Move; black?: Move }[] = [];
   for (let i = 0; i < moves.length; i += 2) {
@@ -64,6 +66,7 @@ export default function MoveList({ moves, current, onSelect, phaseSplit, maxHeig
               black={r.black}
               current={current}
               onSelect={onSelect}
+              highlight={highlight}
             />
           </Fragment>
         );

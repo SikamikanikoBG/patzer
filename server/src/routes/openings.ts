@@ -17,7 +17,7 @@ import { lookupOpeningByEpd, fenToEpd } from '../chess/openings.js';
 import { masterStats } from '../chess/explorer.js';
 import {
   TRAINER_LINES, LEARNED_AFTER, MAX_LINE_PLIES, MAX_REPERTOIRE_PLIES,
-  replayLine, lineName, repertoireLine, recordMiss, removeMiss, queueSummary, dueReviews, answerReview, checkReview, dayOf,
+  replayLine, lineName, repertoireLine, repertoireBranches, recordMiss, removeMiss, queueSummary, dueReviews, answerReview, checkReview, dayOf,
 } from '../chess/openingTrainer.js';
 import type { AnalyzedMove, Color } from '../types.js';
 
@@ -219,9 +219,9 @@ router.get('/trainer/repertoire', (c) => {
     WHERE g.user_id = ? AND a.scoring_version >= ?
     ORDER BY g.end_time DESC, g.id DESC
   `).all(me.id, SCORING_VERSION) as { pgn: string; user_color: Color | null; moves_json: string }[];
-  const byColor: Record<Color, { games: string[][]; flawed: boolean[][] }> = {
-    white: { games: [], flawed: [] },
-    black: { games: [], flawed: [] },
+  const byColor: Record<Color, { games: string[][]; flawed: boolean[][]; best: (string | null)[][] }> = {
+    white: { games: [], flawed: [], best: [] },
+    black: { games: [], flawed: [], best: [] },
   };
   for (const r of rows) {
     if (r.user_color !== 'white' && r.user_color !== 'black') continue;
@@ -234,10 +234,13 @@ router.get('/trainer/repertoire', (c) => {
     try { analysed = JSON.parse(r.moves_json) as AnalyzedMove[]; } catch { /* no verdicts, then */ }
     byColor[r.user_color].games.push(sans);
     byColor[r.user_color].flawed.push(sans.map((san, i) => analysed[i]?.san === san && FLAWS.has(analysed[i]!.classification)));
+    byColor[r.user_color].best.push(sans.map((san, i) => (analysed[i]?.san === san ? analysed[i]!.best_move_san ?? null : null)));
   }
   const result = (color: Color) => {
-    const line = repertoireLine(byColor[color].games, sans, undefined, undefined, { color, flawed: byColor[color].flawed });
-    return { ...line, name: lineName(line.moves) };
+    const { games, flawed, best } = byColor[color];
+    const line = repertoireLine(games, sans, undefined, undefined, { color, flawed });
+    const branches = repertoireBranches(games, line.moves, sans.length, color, flawed, best);
+    return { ...line, name: lineName(line.moves), branches };
   };
   return c.json({ white: result('white'), black: result('black') });
 });

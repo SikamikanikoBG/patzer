@@ -6,14 +6,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowRight, Check, Eye, GraduationCap, Lightbulb, Repeat, RotateCcw, Target, Trash2, Trophy, X } from 'lucide-react';
+import { ArrowRight, Check, Eye, GitBranch, GraduationCap, Lightbulb, Repeat, RotateCcw, Target, Trash2, Trophy, X, Zap } from 'lucide-react';
 import ChessBoard from './ChessBoard';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
 import {
-  type DrillLine, type Side,
-  formatMoves, isExpectedMove, isUserPly, localDay, moveSquares, positionAfter, sideOfPly, userMoveCount,
+  type Branch, type DrillLine, type Side,
+  branchDrills, formatMoves, isExpectedMove, isUserPly, localDay, moveLabel, moveSquares, positionAfter, sideOfPly, userMoveCount,
 } from '../lib/openingTrainer';
 
 export interface TrainerInfo {
@@ -24,7 +24,7 @@ export interface TrainerInfo {
   learned: number;
 }
 
-interface RepertoireSide { games: number; moves: string[]; name: string | null; stoppedBefore?: string }
+interface RepertoireSide { games: number; moves: string[]; name: string | null; stoppedBefore?: string; branches: Branch[] }
 interface ReviewItem { id: number; line_name: string; line_id: string | null; color: Side; moves: string[]; fen: string; misses: number; streak: number }
 interface ReviewAnswer { correct: boolean; expected_san: string; expected_uci: string; streak: number; learned: boolean }
 /** A first wrong try in the review: nothing given away, one more go. */
@@ -47,7 +47,8 @@ type Phase = 'ask' | 'watch' | 'test';
 
 type Mode =
   | { kind: 'pick' }
-  | { kind: 'drill'; line: DrillLine; run: number; phase: Phase }
+  // `queue`: the branches still to come after this one, of `total`.
+  | { kind: 'drill'; line: DrillLine; run: number; phase: Phase; queue?: DrillLine[]; total?: number }
   | { kind: 'review'; run: number };
 
 export default function OpeningTrainer({ repertoirePrefix, onClearRepertoire, startLine, onStartLineUsed }: {
@@ -76,17 +77,24 @@ export default function OpeningTrainer({ repertoirePrefix, onClearRepertoire, st
   useEffect(() => { window.scrollTo({ top: 0 }); }, [mode]);
 
   const startReview = () => setMode({ kind: 'review', run: Date.now() });
+  // One branch after the other, each starting just before the other move.
+  const startBranches = (drills: DrillLine[], total = drills.length) =>
+    setMode({ kind: 'drill', line: drills[0]!, queue: drills.slice(1), total, run: Date.now(), phase: 'test' });
 
   if (mode.kind === 'drill') {
+    const { line, queue, total } = mode;
     return (
       <Drill
         key={mode.run}
-        line={mode.line}
+        line={line}
         phase={mode.phase}
         due={info?.due ?? 0}
         onRestart={(phase) => setMode({ ...mode, phase: phase ?? mode.phase, run: mode.run + 1 })}
         onExit={() => setMode({ kind: 'pick' })}
         onReview={startReview}
+        onBranches={!line.branch && line.branches?.length ? () => startBranches(branchDrills(line)) : undefined}
+        onNextBranch={queue?.length ? () => startBranches(queue, total) : undefined}
+        branchPos={line.branch && total ? { i: total - (queue?.length ?? 0), n: total } : undefined}
       />
     );
   }
@@ -239,10 +247,16 @@ function RepertoireCard({ prefix, onClose, onStart }: {
             <div className="mt-2 text-xs text-chesscom-500">{t('openings.trainer.yourHabits')}</div>
           )}
           {own === 0 && <div className="mt-2 text-xs text-move-mistake">{t('openings.trainer.tooShort')}</div>}
+          {own > 0 && side.branches.length > 0 && (
+            <div className="mt-2 flex items-start gap-1.5 text-xs text-chesscom-500">
+              <GitBranch className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span>{t('openings.trainer.repertoireBranches', { count: side.branches.length })}</span>
+            </div>
+          )}
 
           <button
             disabled={own === 0}
-            onClick={() => onStart({ name: side.name ?? t('openings.trainer.myLine'), color, moves: side.moves })}
+            onClick={() => onStart({ name: side.name ?? t('openings.trainer.myLine'), color, moves: side.moves, branches: side.branches })}
             className="btn-primary mt-3 w-full text-sm"
           >
             {t('openings.trainer.start')} <ArrowRight className="h-4 w-4" />
@@ -277,6 +291,7 @@ function LineGroup({ title, lines, onStart }: {
             </div>
             <div className="mt-1 text-[11px] text-chesscom-400">
               {t('openings.trainer.movesToFind', { count: userMoveCount(line.moves, line.color) })}
+              {!!line.branches?.length && <> · {t('openings.trainer.branchCount', { count: line.branches.length })}</>}
             </div>
           </button>
         ))}
@@ -287,7 +302,7 @@ function LineGroup({ title, lines, onStart }: {
 
 // ---- Practising a line ---------------------------------------------------
 
-function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
+function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview, onBranches, onNextBranch, branchPos }: {
   line: DrillLine;
   phase: Phase;
   due: number;
@@ -295,6 +310,11 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
   onRestart: (phase?: Phase) => void;
   onExit: () => void;
   onReview: () => void;
+  /** Practise the line's branches (offered on a main line that has some). */
+  onBranches?: () => void;
+  /** On to the next branch, when this is a branch and more follow. */
+  onNextBranch?: () => void;
+  branchPos?: { i: number; n: number };
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -302,7 +322,9 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
   const lineName = useLineName();
   const [phase, setPhase] = useState<Phase>(startPhase);
   const watching = phase === 'watch';
-  const [ply, setPly] = useState(0);
+  // A branch starts just before the opponent's other move.
+  const start = line.branch?.at ?? 0;
+  const [ply, setPly] = useState(start);
   // Moves that went into the review queue, and moves not found at the first try.
   const [missed, setMissed] = useState<Set<number>>(() => new Set());
   const [slipped, setSlipped] = useState<Set<number>>(() => new Set());
@@ -314,8 +336,8 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
   const done = ply >= total;
   const userTurn = phase !== 'ask' && !done && isUserPly(ply, line.color);
   const { fen, lastMove } = useMemo(() => positionAfter(line.moves, ply), [line.moves, ply]);
-  const ownTotal = userMoveCount(line.moves, line.color);
-  const ownDone = userMoveCount(line.moves.slice(0, ply), line.color);
+  const ownTotal = userMoveCount(line.moves, line.color, start);
+  const ownDone = userMoveCount(line.moves.slice(0, ply), line.color, start);
   const wrong = wrongAt === ply;
 
   // Patzer plays the other side after a short pause, so you see each move arrive.
@@ -324,9 +346,9 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
     const id = window.setTimeout(() => {
       soundForMove(inferMoveFlagsFromSan(line.moves[ply]!));
       setPly(ply + 1);
-    }, ply === 0 ? 700 : 450);
+    }, ply === start ? (line.branch ? 900 : 700) : 450);
     return () => window.clearTimeout(id);
-  }, [phase, ply, done, userTurn, line.moves]);
+  }, [phase, ply, done, userTurn, line.moves, line.branch, start]);
 
   const arrows = useMemo(() => {
     if (!(hint || watching) || !userTurn) return [];
@@ -385,6 +407,12 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
           <Target className="h-4 w-4 shrink-0" />
           <span><span className="font-semibold">{t('openings.trainer.practiseNow')}</span><br /><span className="text-xs font-normal text-chesscom-500">{t('openings.trainer.practiseNowDesc')}</span></span>
         </button>
+        {onBranches && (
+          <button onClick={onBranches} className="btn-secondary w-full justify-start text-left text-sm">
+            <GitBranch className="h-4 w-4 shrink-0" />
+            <span><span className="font-semibold">{t('openings.trainer.practiseBranches', { count: line.branches!.length })}</span><br /><span className="text-xs font-normal text-chesscom-500">{t('openings.trainer.practiseBranchesDesc')}</span></span>
+          </button>
+        )}
       </div>
     );
   } else if (done && watching) {
@@ -408,12 +436,23 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
     status = (
       <div className="card border-board-dark bg-board-dark/5 p-4">
         <div className="flex items-center gap-2 text-sm font-semibold">
-          <Trophy className="h-4 w-4 text-gold-500" /> {t('openings.trainer.doneTitle')}
+          <Trophy className="h-4 w-4 text-gold-500" /> {t(line.branch ? 'openings.trainer.branchDoneTitle' : 'openings.trainer.doneTitle')}
         </div>
         <div className="mt-1 text-sm text-chesscom-700 dark:text-chesscom-200">
           {t('openings.trainer.doneScore', { first: firstTry, total: ownTotal })}
         </div>
         {missed.size > 0 && <div className="mt-1 text-xs text-chesscom-500">{t('openings.trainer.doneMissed')}</div>}
+        {line.branch && !onNextBranch && <div className="mt-1 text-xs text-chesscom-500">{t('openings.trainer.branchesAllDone')}</div>}
+        {onNextBranch && (
+          <button onClick={onNextBranch} className="btn-primary mt-3 w-full text-sm">
+            <GitBranch className="h-4 w-4" /> {t('openings.trainer.nextBranch')} <ArrowRight className="h-4 w-4" />
+          </button>
+        )}
+        {onBranches && (
+          <button onClick={onBranches} className="btn-primary mt-3 w-full text-sm">
+            <GitBranch className="h-4 w-4" /> {t('openings.trainer.practiseBranches', { count: line.branches!.length })}
+          </button>
+        )}
         <div className="mt-3 flex flex-wrap gap-2">
           <button onClick={() => onRestart()} className="btn-secondary flex-1 text-sm">
             <RotateCcw className="h-4 w-4" /> {t('openings.trainer.again')}
@@ -469,6 +508,11 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
 
       <aside className="space-y-3 lg:w-[340px]">
         <LineHeader name={name} eco={line.eco ?? null} color={line.color}>
+          {branchPos && (
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gold-500/15 px-2 py-0.5 text-[11px] font-medium text-gold-700 dark:text-gold-300">
+              <GitBranch className="h-3 w-3" /> {t('openings.trainer.branchOf', { i: branchPos.i, n: branchPos.n })}
+            </div>
+          )}
           {phase !== 'ask' && (
             <>
               <div className="mt-3 flex items-center justify-between text-xs text-chesscom-500">
@@ -481,6 +525,8 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
             </>
           )}
         </LineHeader>
+
+        {line.branch && ply > line.branch.at && <BranchNote line={line} />}
 
         {status}
 
@@ -495,6 +541,34 @@ function Drill({ line, phase: startPhase, due, onRestart, onExit, onReview }: {
           <button onClick={onExit} className="btn-ghost flex-1 text-sm">{t('openings.trainer.otherLine')}</button>
         </div>
       </aside>
+    </div>
+  );
+}
+
+/** What the opponent did differently in a branch, once it's on the board. */
+function BranchNote({ line }: { line: DrillLine }) {
+  const { t } = useTranslation();
+  const b = line.branch!;
+  const move = moveLabel(line.moves, b.at);
+  const main = b.mainMove ? moveLabel([...line.moves.slice(0, b.at), b.mainMove], b.at) : null;
+  const Icon = b.trap ? Zap : GitBranch;
+  return (
+    <div className={`card p-4 text-sm ${b.trap ? 'border-gold-500/60 bg-gold-500/5' : ''}`}>
+      <div className="flex items-start gap-2 text-chesscom-700 dark:text-chesscom-200">
+        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-gold-600" />
+        <span>
+          {main
+            ? t(b.trap ? 'openings.trainer.branchTrap' : 'openings.trainer.branchText', { move, main })
+            : t('openings.trainer.branchTextNoMain', { move })}
+        </span>
+      </div>
+      {b.games != null && (
+        <div className="mt-1 text-xs text-chesscom-500">
+          {b.played
+            ? t('openings.trainer.branchPlayed', { count: b.games, played: b.played })
+            : t('openings.trainer.branchGames', { count: b.games })}
+        </div>
+      )}
     </div>
   );
 }
