@@ -47,8 +47,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   linked to SSO, or *SSO* for accounts created by a single sign-on login.
 - **Clear errors.** A failed SSO login returns to the login page with the
   reason in the user's language (provider unreachable, cancelled, took too
-  long, no account, already linked, waiting for the admin), and an
-  `[auth] sso_…` line in the log.
+  long, no account, already linked, waiting for the admin, too many
+  attempts), and an `[auth] sso_…` line in the log.
+- **Hardened against abuse.**
+  - SSO callbacks are rate-limited per IP, so Patzer can't be used to flood
+    the provider.
+  - The redirects are `no-store`.
+  - Control characters and bidi overrides are stripped from provider names.
+  - Outside values are sanitized before they reach the log.
+  - Patzer warns at startup when SSO runs without `PUBLIC_BASE_URL`.
+  - What this protects and where its limits are: the *Security* section of
+    [docs/OIDC.md](docs/OIDC.md).
 - **Tests.**
   - `server/test/oidc.test.ts`, `oidc-first-run.test.ts` and
     `oidc-mixed.test.ts` cover account matching, emails, the admin group, both

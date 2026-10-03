@@ -274,3 +274,39 @@ describe('Admin → Users', () => {
     expect(byId[created]).toEqual({ created_via: 'sso', sso_linked: 1 });
   });
 });
+
+describe('hardening', () => {
+  it('provider text loses control characters and bidi overrides, keeps real letters and joiners', () => {
+    expect(oidc.cleanText('we\nird\u202Egnp.exe')).toBe('weirdgnp.exe');
+    expect(oidc.cleanText('  Zoë 👨\u200D👩\u200D👧  ')).toBe('Zoë 👨\u200D👩\u200D👧');
+    expect(oidc.cleanText('\u0000\u202E')).toBeNull();
+    expect(oidc.cleanText(42)).toBeNull();
+  });
+
+  it('values written to the log cannot start a new line, and are capped', () => {
+    expect(oidc.logSafe('x\n[auth] sso_login_ok forged')).toBe('x?[auth] sso_login_ok forged');
+    expect(oidc.logSafe('a'.repeat(500)).length).toBe(201);
+  });
+
+  it('SSO redirects are never cached', async () => {
+    const res = await auth.request('/oidc/start');
+    expect(res.headers.get('cache-control')).toBe('no-store');
+  });
+
+  it('SSO callbacks are capped per IP, before anything reaches the provider', async () => {
+    const hit = () => auth.request('/oidc/callback?code=x&state=y', { headers: { 'X-Forwarded-For': '203.0.113.9' } });
+    for (let i = 0; i < 20; i++) expect((await hit()).headers.get('location')).toBe('/login?sso_error=expired');
+    expect((await hit()).headers.get('location')).toBe('/login?sso_error=rate_limited');
+    // Another IP is unaffected.
+    const other = await auth.request('/oidc/callback?code=x&state=y', { headers: { 'X-Forwarded-For': '203.0.113.10' } });
+    expect(other.headers.get('location')).toBe('/login?sso_error=expired');
+  });
+
+  it('warns when the callback URL would come from request headers', () => {
+    delete process.env.PUBLIC_BASE_URL;
+    expect(oidc.warnIfNoPublicBaseUrl()).toBe(true);
+    process.env.PUBLIC_BASE_URL = 'https://chess.example.com';
+    expect(oidc.warnIfNoPublicBaseUrl()).toBe(false);
+    delete process.env.PUBLIC_BASE_URL;
+  });
+});

@@ -119,8 +119,24 @@ export interface OidcIdentity {
   language: Language;
 }
 
-function str(v: unknown): string | null {
-  return typeof v === 'string' && v.trim() !== '' ? v.trim() : null;
+// Control characters and bidi overrides have no business in a username or a
+// display name, and would let a provider profile spoof names in the admin
+// list ("evil\u202Egnp.exe") or break log lines. Joiners (ZWJ/ZWNJ) stay:
+// emoji and some scripts need them.
+const UNSAFE_CHARS = /[\u0000-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069\ufeff]/g;
+
+export function cleanText(v: unknown): string | null {
+  if (typeof v !== 'string') return null;
+  const clean = v.replace(UNSAFE_CHARS, '').trim();
+  return clean === '' ? null : clean;
+}
+
+// For values that come from outside (the provider, the callback URL) and end
+// up in a log line: no line breaks or other controls that could forge
+// entries, and a length cap.
+export function logSafe(v: unknown, max = 200): string {
+  const s = String(v).replace(UNSAFE_CHARS, '?');
+  return s.length > max ? `${s.slice(0, max)}…` : s;
 }
 
 function pickLanguage(c: Context): Language {
@@ -176,7 +192,7 @@ export async function finishOidcLogin(c: Context): Promise<{ identity: OidcIdent
   try {
     info = { ...info, ...(await client.fetchUserInfo(cfg, tokens.access_token, claims.sub)) };
   } catch (err) {
-    console.warn(`[oidc] userinfo failed, using ID token claims only: ${(err as Error).message}`);
+    console.warn(`[oidc] userinfo failed, using ID token claims only: ${logSafe((err as Error).message)}`);
   }
 
   return {
@@ -184,10 +200,10 @@ export async function finishOidcLogin(c: Context): Promise<{ identity: OidcIdent
     identity: {
       issuer: claims.iss,
       subject: claims.sub,
-      username: str(info.preferred_username),
-      email: str(info.email),
+      username: cleanText(info.preferred_username),
+      email: cleanText(info.email),
       emailVerified: info.email_verified === true || info.email_verified === 'true',
-      displayName: str(info.name),
+      displayName: cleanText(info.name),
       groups: Array.isArray(info.groups) ? info.groups.filter((g): g is string => typeof g === 'string') : null,
       language: pickLanguage(c),
     },
@@ -358,6 +374,18 @@ export function prepareSsoOnlyFirstRun(): boolean {
   return true;
 }
 
+// Without a fixed public address, the callback URL is built from the request's
+// Host / X-Forwarded-Host headers. The provider's strict redirect URI check
+// stops that from leaking codes, but the setup is fragile and should be fixed.
+export function warnIfNoPublicBaseUrl(): boolean {
+  if (!config.oidc.enabled || getSetting('public_base_url') || process.env.PUBLIC_BASE_URL) return false;
+  console.warn(
+    '[oidc] PUBLIC_BASE_URL is not set, so the SSO callback URL is built from request headers. '
+    + 'Set it to the address people use, e.g. https://chess.example.com',
+  );
+  return true;
+}
+
 // ---- Logout ----------------------------------------------------------------
 
 // The provider's end-session URL for an SSO session (RP-initiated logout), or
@@ -373,7 +401,7 @@ export async function oidcLogoutUrl(c: Context, idToken: string): Promise<string
       post_logout_redirect_uri: `${publicBaseUrl(c)}/login`,
     }).href;
   } catch (err) {
-    console.warn(`[oidc] could not build the logout URL: ${(err as Error).message}`);
+    console.warn(`[oidc] could not build the logout URL: ${logSafe((err as Error).message)}`);
     return null;
   }
 }

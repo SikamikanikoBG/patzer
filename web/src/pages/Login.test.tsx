@@ -71,6 +71,11 @@ describe('Login page and single sign-on', () => {
     expect(await screen.findByText(/waiting for its administrator to sign in first/)).toBeTruthy();
   });
 
+  it('tells a rate-limited user to wait', async () => {
+    renderLogin({ oidc_enabled: true }, '/login?sso_error=rate_limited');
+    expect(await screen.findByText(/Too many attempts/)).toBeTruthy();
+  });
+
   it('an unknown error code still says something useful', async () => {
     renderLogin({ oidc_enabled: true }, '/login?sso_error=whatever');
     expect(await screen.findByText(/Single sign-on didn't work/)).toBeTruthy();

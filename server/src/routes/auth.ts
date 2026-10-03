@@ -29,7 +29,7 @@ import {
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE_SECONDS,
 } from '../auth/sessions.js';
-import { beginOidcLogin, finishOidcLogin, resolveOidcUser, oidcLogoutUrl, OidcError } from '../auth/oidc.js';
+import { beginOidcLogin, finishOidcLogin, resolveOidcUser, oidcLogoutUrl, OidcError, logSafe } from '../auth/oidc.js';
 import type { Profile, Role } from '../types.js';
 
 const router = new Hono();
@@ -75,6 +75,22 @@ function rateLimit(ip: string, username: string): { allowed: boolean; retryAfter
   ipBucket.count++;
   userBucket.count++;
   return { allowed: true, retryAfter: 0 };
+}
+
+// Every SSO callback that passes the local checks costs a request to the
+// provider's token endpoint, so an unauthenticated caller with a flow cookie
+// of their own could make Patzer hammer the provider. Same window as password
+// logins; a family behind one IP still gets far more than it will ever use.
+const SSO_MAX_CALLBACKS = 20;
+const ssoBuckets = new Map<string, Bucket>();
+
+function ssoRateLimited(ip: string): boolean {
+  const now = Date.now();
+  if (ssoBuckets.size > 1000) for (const [k, v] of ssoBuckets) if (v.resetAt <= now) ssoBuckets.delete(k);
+  const bucket = takeBucket(ssoBuckets, ip, now);
+  if (bucket.count >= SSO_MAX_CALLBACKS) return true;
+  bucket.count++;
+  return false;
 }
 
 function clientIp(c: { req: { header: (k: string) => string | undefined } }): string {
@@ -175,11 +191,13 @@ router.post('/logout', async (c) => {
 // to the provider.
 router.get('/oidc/start', async (c) => {
   if (!config.oidc.enabled) return c.notFound();
+  // The redirect carries one-time state; nothing in between may cache it.
+  c.header('Cache-Control', 'no-store');
   try {
     return c.redirect(await beginOidcLogin(c));
   } catch (err) {
     const code = err instanceof OidcError ? err.code : 'failed';
-    console.error(`[auth] sso_start_failed reason=${code}: ${(err as Error).message}`);
+    console.error(`[auth] sso_start_failed reason=${code}: ${logSafe((err as Error).message)}`);
     return c.redirect(`/login?sso_error=${code}`);
   }
 });
@@ -187,18 +205,23 @@ router.get('/oidc/start', async (c) => {
 // The provider sends the browser back here with an authorization code.
 router.get('/oidc/callback', async (c) => {
   if (!config.oidc.enabled) return c.notFound();
+  c.header('Cache-Control', 'no-store');
   // On a fresh install the setup wizard creates the admin first; letting SSO
   // create the first account would skip it. In SSO-only mode there is no
   // wizard, and the first SSO login creates the admin instead.
   if (userCount() === 0 && !config.oidc.only) return c.redirect('/');
   const ip = clientIp(c);
+  if (ssoRateLimited(ip)) {
+    console.warn(`[auth] sso_rate_limited ip=${logSafe(ip)}`);
+    return c.redirect('/login?sso_error=rate_limited');
+  }
 
   let login: Awaited<ReturnType<typeof finishOidcLogin>>;
   try {
     login = await finishOidcLogin(c);
   } catch (err) {
     const code = err instanceof OidcError ? err.code : 'failed';
-    console.warn(`[auth] sso_failed ip=${ip} reason=${code}: ${(err as Error).message}`);
+    console.warn(`[auth] sso_failed ip=${logSafe(ip)} reason=${code}: ${logSafe((err as Error).message)}`);
     return c.redirect(`/login?sso_error=${code}`);
   }
 
@@ -213,7 +236,7 @@ router.get('/oidc/callback', async (c) => {
     ssoOnly: config.oidc.only,
   });
   if ('error' in result) {
-    console.warn(`[auth] sso_rejected ip=${ip} sub=${identity.subject} user=${identity.username ?? '-'} reason=${result.error}`);
+    console.warn(`[auth] sso_rejected ip=${logSafe(ip)} sub=${logSafe(identity.subject)} user=${logSafe(identity.username ?? '-')} reason=${result.error}`);
     return c.redirect(`/login?sso_error=${result.error}`);
   }
 
@@ -222,7 +245,7 @@ router.get('/oidc/callback', async (c) => {
   if (existing) destroySession(existing);
   setCookie(c, SESSION_COOKIE_NAME, createSession(result.userId, { oidcIdToken: login.idToken }), sessionCookieOpts());
   const notes = [result.roleChanged && 'role_changed', result.emailAdded && 'email_added'].filter(Boolean).join(' ');
-  console.log(`[auth] sso_login_ok ip=${ip} user_id=${result.userId} sub=${identity.subject} account=${result.outcome} role=${result.role}${notes ? ` ${notes}` : ''}`);
+  console.log(`[auth] sso_login_ok ip=${logSafe(ip)} user_id=${result.userId} sub=${logSafe(identity.subject)} account=${result.outcome} role=${result.role}${notes ? ` ${notes}` : ''}`);
   return c.redirect('/');
 });
 

@@ -229,6 +229,45 @@ The *Sign-in* column shows how each account came to be:
   `sqlite3 chess.db "DELETE FROM oidc_identities WHERE user_id = <id>;"`.
   Deleting a user removes their link automatically.
 
+## Security
+
+What protects the sign-in:
+
+- **The protocol:** the authorization code flow with PKCE, `state` and
+  `nonce`, through `openid-client`, which also validates the ID token
+  (signature, issuer, audience, expiry) and the `iss` parameter of the
+  callback.
+- **The short-lived login cookie:** the values tying a callback to the browser
+  that started it live in a signed, `HttpOnly`, `SameSite=Lax` cookie scoped
+  to `/api/auth/oidc` and valid for ten minutes. A code that arrives in
+  another browser, with an altered `state`, or a second time, is refused.
+- **The redirects:** they never take a destination from the request. The
+  login always goes back to `/`, and errors go to `/login`.
+- **The session:** a new one is issued at every SSO login, replacing any
+  session the browser already had.
+- **Rate limit:** callbacks are limited per client IP (20 per 5 minutes), so
+  nobody can use Patzer to flood the provider's token endpoint.
+- **Provider-supplied text:** control characters and bidi overrides are
+  removed from provider usernames and names, and every outside value written
+  to the log is sanitized, so a profile or a crafted URL can't forge log lines.
+
+Things to know:
+
+- **Set `PUBLIC_BASE_URL`.** Without it, the callback and logout URLs are
+  built from the request's `Host` / `X-Forwarded-Host` headers. The provider's
+  strict redirect URI check keeps codes from going anywhere else, but don't
+  rely on it. Patzer warns at startup when it's missing.
+- **Removing someone at the provider doesn't end their Patzer session.**
+  Sessions last 30 days, and the provider doesn't tell Patzer when an account
+  is disabled or leaves a group. The admin group is checked again at the
+  user's next SSO login. To cut someone off right away, delete them or change
+  their role in *Admin → Users*, which takes effect immediately.
+- **Matching trusts the provider's username or verified email** for accounts
+  that aren't linked yet. See [First run](#two-ways-to-run-it) and
+  [How accounts are found](#how-accounts-are-found).
+- **The ID token is stored** with the session, as logout needs it, and is
+  deleted with it. It holds the profile claims (name, email, groups).
+
 ## Troubleshooting
 
 The server logs every SSO attempt with an `[auth] sso_…` line that names the
@@ -242,6 +281,7 @@ reason. The login page shows a short message for each of these:
 | *Single sign-on didn't work* | Usually a redirect URI mismatch: the provider has to list the callback URL built from `PUBLIC_BASE_URL` (or the Admin → System setting) exactly. A wrong client secret also lands here. |
 | *You don't have a Patzer account yet* | `OIDC_AUTO_PROVISION` is off and no account matched. |
 | *This account is already linked to a different sign-in* | See [How accounts are found](#how-accounts-are-found), step 2. |
+| *Too many attempts* | More than 20 SSO sign-ins from one IP address within five minutes. Wait a few minutes. |
 | *This server is waiting for its administrator to sign in first* | `OIDC_ADMIN_GROUP` is set and no admin exists yet: a member of the group has to sign in first. If a member gets this too, the provider isn't sending the `groups` claim (the log says so). |
 
 If logout returns to Patzer but you're still signed in at the provider, the

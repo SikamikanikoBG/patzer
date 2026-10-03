@@ -30,7 +30,7 @@ import { startChessComSync } from './autoImport.js';
 import learnRoutes from './routes/learn.js';
 import { attachPlayWebSocket } from './ws/play.js';
 import { attachLobbyWebSocket } from './ws/lobby.js';
-import { prepareSsoOnlyFirstRun } from './auth/oidc.js';
+import { prepareSsoOnlyFirstRun, warnIfNoPublicBaseUrl } from './auth/oidc.js';
 
 const app = new Hono();
 app.use('*', logger());
@@ -152,6 +152,7 @@ import type { Server } from 'node:http';
 
 // SSO-only on a fresh install: no setup wizard, the first SSO login is the admin.
 prepareSsoOnlyFirstRun();
+warnIfNoPublicBaseUrl();
 
 const server = serve({ fetch: app.fetch, port: config.port, hostname: config.host }, (info) => {
   console.log(`[chess] listening on http://${info.address}:${info.port}`);

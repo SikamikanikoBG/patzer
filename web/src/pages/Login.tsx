@@ -18,6 +18,7 @@ const SSO_ERROR_KEYS: Record<string, string> = {
   not_provisioned: 'sso.errNotProvisioned',
   conflict: 'sso.errConflict',
   admin_first: 'sso.errAdminFirst',
+  rate_limited: 'auth.errRateLimited',
 };
 
 export default function Login() {
