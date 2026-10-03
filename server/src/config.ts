@@ -36,6 +36,39 @@ function parseBool(v: string | undefined, fallback: boolean): boolean {
   return /^(1|true|yes|on)$/i.test(v);
 }
 
+// Single sign-on (OpenID Connect). SSO is on when OIDC_ISSUER and
+// OIDC_CLIENT_ID are both set; everything else has a safe default.
+export type OidcMatchBy = 'none' | 'username' | 'email';
+
+function loadOidcConfig() {
+  const issuer = (process.env.OIDC_ISSUER ?? '').trim();
+  const clientId = (process.env.OIDC_CLIENT_ID ?? '').trim();
+  const enabled = issuer !== '' && clientId !== '';
+  if (issuer && !clientId) console.warn('[oidc] OIDC_ISSUER is set but OIDC_CLIENT_ID is not, so SSO stays off');
+
+  const rawMatch = (process.env.OIDC_MATCH_BY ?? 'none').trim().toLowerCase();
+  const matchBy: OidcMatchBy = rawMatch === 'username' || rawMatch === 'email' ? rawMatch : 'none';
+  if (matchBy !== rawMatch) console.warn(`[oidc] unknown OIDC_MATCH_BY="${rawMatch}", using "none"`);
+
+  // Never lock everyone out: OIDC_ONLY without a working SSO config is ignored.
+  let only = parseBool(process.env.OIDC_ONLY, false);
+  if (only && !enabled) {
+    console.warn('[oidc] OIDC_ONLY is set but SSO is not configured, so password login stays on');
+    only = false;
+  }
+
+  return {
+    enabled,
+    issuer,
+    clientId,
+    clientSecret: process.env.OIDC_CLIENT_SECRET ?? '',
+    only,
+    buttonText: (process.env.OIDC_BUTTON_TEXT ?? '').trim(),
+    autoProvision: parseBool(process.env.OIDC_AUTO_PROVISION, false),
+    matchBy,
+  };
+}
+
 export const config = {
   port: Number(process.env.PORT ?? 8800),
   host: process.env.HOST ?? '0.0.0.0',
@@ -44,4 +77,5 @@ export const config = {
   stockfishPathHint: process.env.STOCKFISH_PATH || undefined,
   projectRoot: PROJECT_ROOT,
   cookieSecure: parseBool(process.env.COOKIE_SECURE, false),
+  oidc: loadOidcConfig(),
 };

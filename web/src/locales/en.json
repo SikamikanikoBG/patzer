@@ -64,6 +64,17 @@
     "submitting": "Signing in…",
     "invalid": "Invalid username or password"
   },
+  "sso": {
+    "signIn": "Sign in with SSO",
+    "or": "or",
+    "errUnavailable": "The sign-in service can't be reached right now. Please try again in a moment",
+    "errExpired": "That sign-in took too long. Please try again",
+    "errDenied": "Sign-in was cancelled or not allowed",
+    "errNotProvisioned": "You don't have a Patzer account yet. Ask the admin to create one",
+    "errConflict": "This account is already linked to a different sign-in. Ask the admin for help",
+    "errFailed": "Single sign-on didn't work. Please try again",
+    "errPasswordDisabled": "Password sign-in is turned off on this server. Use single sign-on instead"
+  },
   "play": {
     "newGame": "New Game",
     "difficulty": "Difficulty",

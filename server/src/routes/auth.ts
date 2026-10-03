@@ -25,9 +25,11 @@ import {
   createSession,
   destroySession,
   lookupUser,
+  sessionOidcIdToken,
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE_SECONDS,
 } from '../auth/sessions.js';
+import { beginOidcLogin, finishOidcLogin, resolveOidcUser, oidcLogoutUrl, OidcError } from '../auth/oidc.js';
 import type { Profile, Role } from '../types.js';
 
 const router = new Hono();
@@ -99,6 +101,7 @@ function sessionCookieOpts() {
 }
 
 router.post('/login', async (c) => {
+  if (config.oidc.only) return c.json({ error: 'password_login_disabled' }, 403);
   const body = await c.req.json().catch(() => null);
   const parsed = loginSchema.safeParse(body);
   if (!parsed.success) return c.json({ error: 'invalid_input' }, 400);
@@ -155,11 +158,62 @@ router.post('/login', async (c) => {
   return c.json({ user: { id: row.id, username: row.username, role: row.role, profile } });
 });
 
-router.post('/logout', (c) => {
+router.post('/logout', async (c) => {
   const signed = getCookie(c, SESSION_COOKIE_NAME);
+  // Read before destroying: an SSO session also ends at the provider, by
+  // sending the browser to its end-session URL (the web app follows logout_url).
+  const idToken = signed && config.oidc.enabled ? sessionOidcIdToken(signed) : null;
   if (signed) destroySession(signed);
   deleteCookie(c, SESSION_COOKIE_NAME, { path: '/' });
-  return c.json({ ok: true });
+  const logoutUrl = idToken ? await oidcLogoutUrl(c, idToken) : null;
+  return c.json(logoutUrl ? { ok: true, logout_url: logoutUrl } : { ok: true });
+});
+
+// ---- Single sign-on (OpenID Connect) ---------------------------------------
+
+// The login page's SSO button is a plain link here; we answer with a redirect
+// to the provider.
+router.get('/oidc/start', async (c) => {
+  if (!config.oidc.enabled) return c.notFound();
+  try {
+    return c.redirect(await beginOidcLogin(c));
+  } catch (err) {
+    const code = err instanceof OidcError ? err.code : 'failed';
+    console.error(`[auth] sso_start_failed reason=${code}: ${(err as Error).message}`);
+    return c.redirect(`/login?sso_error=${code}`);
+  }
+});
+
+// The provider sends the browser back here with an authorization code.
+router.get('/oidc/callback', async (c) => {
+  if (!config.oidc.enabled) return c.notFound();
+  // On a fresh install the setup wizard creates the admin first. Letting SSO
+  // create the first account would skip the wizard and leave no admin.
+  if (userCount() === 0) return c.redirect('/');
+  const ip = clientIp(c);
+
+  let login: Awaited<ReturnType<typeof finishOidcLogin>>;
+  try {
+    login = await finishOidcLogin(c);
+  } catch (err) {
+    const code = err instanceof OidcError ? err.code : 'failed';
+    console.warn(`[auth] sso_failed ip=${ip} reason=${code}: ${(err as Error).message}`);
+    return c.redirect(`/login?sso_error=${code}`);
+  }
+
+  const { identity } = login;
+  const result = resolveOidcUser(identity, { matchBy: config.oidc.matchBy, autoProvision: config.oidc.autoProvision });
+  if ('error' in result) {
+    console.warn(`[auth] sso_rejected ip=${ip} sub=${identity.subject} user=${identity.username ?? '-'} reason=${result.error}`);
+    return c.redirect(`/login?sso_error=${result.error}`);
+  }
+
+  // Same rotation as password login.
+  const existing = getCookie(c, SESSION_COOKIE_NAME);
+  if (existing) destroySession(existing);
+  setCookie(c, SESSION_COOKIE_NAME, createSession(result.userId, { oidcIdToken: login.idToken }), sessionCookieOpts());
+  console.log(`[auth] sso_login_ok ip=${ip} user_id=${result.userId} sub=${identity.subject} account=${result.outcome}`);
+  return c.redirect('/');
 });
 
 router.get('/me', (c) => {
@@ -175,8 +229,17 @@ router.get('/me', (c) => {
 // "Sign up" and "Forgot password?" affordances without guessing.
 // signup_enabled stays for older front-ends: true for 'open' and 'invite'.
 router.get('/config', (c) => {
-  const mode = signupMode();
-  return c.json({ signup_enabled: mode !== 'closed', signup_mode: mode, email_enabled: isMailerConfigured() });
+  const only = config.oidc.only;
+  const mode = only ? 'closed' : signupMode();
+  return c.json({
+    signup_enabled: mode !== 'closed',
+    signup_mode: mode,
+    // Drives the "Forgot password?" link, which means nothing without passwords.
+    email_enabled: !only && isMailerConfigured(),
+    oidc_enabled: config.oidc.enabled,
+    oidc_only: only,
+    oidc_button_text: config.oidc.buttonText || null,
+  });
 });
 
 // Lets the signup page say "this invite has expired" before anyone fills in
@@ -208,6 +271,7 @@ class InviteSpent extends Error {}
 
 router.post('/register', async (c) => {
   if (userCount() === 0) return c.json({ error: 'setup_required' }, 409);
+  if (config.oidc.only) return c.json({ error: 'signup_disabled' }, 403);
   const mode = signupMode();
   if (mode === 'closed') return c.json({ error: 'signup_disabled' }, 403);
 
@@ -315,6 +379,7 @@ const emailOnlySchema = z.object({ email: z.string().trim().email().max(200) });
 // Generic-success on purpose: we never reveal whether an address has an account
 // (account-enumeration guard). The work only happens when it lines up.
 router.post('/forgot', async (c) => {
+  if (config.oidc.only) return c.json({ error: 'password_login_disabled' }, 403);
   const body = await c.req.json().catch(() => null);
   const parsed = emailOnlySchema.safeParse(body);
   // Even malformed input gets the same opaque 200 — no oracle.
@@ -349,6 +414,7 @@ const resetSchema = z.object({
 });
 
 router.post('/reset', async (c) => {
+  if (config.oidc.only) return c.json({ error: 'password_login_disabled' }, 403);
   const body = await c.req.json().catch(() => null);
   const parsed = resetSchema.safeParse(body);
   if (!parsed.success) return c.json({ error: 'invalid_input', details: parsed.error.flatten() }, 400);

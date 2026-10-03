@@ -56,6 +56,17 @@
     "submitting": "Iniciando sesión…",
     "invalid": "Usuario o contraseña inválidos"
   },
+  "sso": {
+    "signIn": "Iniciar sesión con SSO",
+    "or": "o",
+    "errUnavailable": "El servicio de inicio de sesión no está disponible ahora. Inténtalo de nuevo en un momento",
+    "errExpired": "El inicio de sesión tardó demasiado. Inténtalo de nuevo",
+    "errDenied": "El inicio de sesión se canceló o no está permitido",
+    "errNotProvisioned": "Todavía no tienes una cuenta en Patzer. Pide al administrador que te cree una",
+    "errConflict": "Esta cuenta ya está vinculada a otro inicio de sesión. Pide ayuda al administrador",
+    "errFailed": "El inicio de sesión único falló. Inténtalo de nuevo",
+    "errPasswordDisabled": "El inicio de sesión con contraseña está desactivado en este servidor. Usa el inicio de sesión único"
+  },
   "play": {
     "newGame": "Juego nuevo",
     "difficulty": "Dificultad",

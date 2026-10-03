@@ -60,7 +60,7 @@ npm run build
 ```
 
 All three must be green. CI runs them on Node 20 and 22, plus the regression suites below
-(`test:e2e`, `test:resume`, `test:ui`, `test:resume-ui`) against a real server, a Docker image
+(`test:e2e`, `test:resume`, `test:oidc`, `test:ui`, `test:resume-ui`) against a real server, a Docker image
 build that has to boot, and — when lesson content changes — `verify:lessons`. A PR is only
 merged with all of it green.
 
@@ -81,6 +81,11 @@ rating and classification math is exactly the code where a silent regression hur
 
 `npm run test:e2e` boots a real server on a throwaway SQLite file and drives two WebSocket clients through a
 full PvP game (moves, clocks, draw offers, takebacks, rematch). Run it whenever you touch `server/src/ws/play.ts`.
+
+`npm run test:oidc` boots a real server next to a real OpenID Connect provider
+([oidc-provider](https://github.com/panva/node-oidc-provider), a dev dependency) and walks a simulated browser
+through single sign-on: linking, provisioning, a cancelled login and the logout round trip through the provider.
+Run it whenever you touch `server/src/auth/oidc.ts` or the auth routes.
 
 `npm run test:ui` does the same thing through the actual interface, with two real browsers clicking the board.
 It needs playwright, which is deliberately *not* a project dependency (it would pull browser binaries into

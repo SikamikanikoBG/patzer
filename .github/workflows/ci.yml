@@ -75,6 +75,9 @@ jobs:
       - name: Reconnect and resume (test:resume)
         run: npm run test:resume
 
+      - name: Single sign-on against a real OpenID provider (test:oidc)
+        run: npm run test:oidc
+
       - name: PvP in two browsers (test:ui)
         run: npm run test:ui
 

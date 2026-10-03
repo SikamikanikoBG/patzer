@@ -4,6 +4,44 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Single sign-on (OpenID Connect)
+
+- **Sign in with Authentik, Keycloak or any OpenID Connect provider.** Set
+  `OIDC_ISSUER`, `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET`, and the login page
+  gets a button whose label you choose with `OIDC_BUTTON_TEXT`. Authorization
+  code flow with PKCE, state and nonce, through `openid-client`. Nothing changes
+  until those variables are set. Guide: [docs/OIDC.md](docs/OIDC.md).
+- **SSO-only mode.** `OIDC_ONLY=true` removes password login, sign-up,
+  "forgot password" and password reset, in the interface and on the server.
+  Set by mistake without a working SSO configuration, it is ignored with a
+  warning instead of locking everyone out.
+- **Logging out of Patzer logs you out of the provider too.** A session that
+  came from SSO remembers its ID token. Logout sends the browser to the
+  provider's end-session endpoint, which sends it back to the login page, so
+  the next person at a shared computer has to sign in again.
+- **Your choice of who gets in.** `OIDC_AUTO_PROVISION=true` creates an
+  ordinary account for someone the provider lets in. It takes their
+  username (or the next free `name-2`), display name, email and browser
+  language, and gives the account no password. `OIDC_MATCH_BY=username|email`
+  links a first SSO login to an existing account instead: username ignoring
+  case, email only when the provider marks it verified. An identity stays
+  linked to its account from then on, and an account takes only one identity
+  per provider, so a second match is refused rather than guessed.
+- **The setup wizard still comes first.** SSO never creates the first
+  account, so a fresh install always gets its admin from the wizard. Use the
+  same username as at the provider, and `OIDC_MATCH_BY=username` links them on
+  the first SSO login.
+- **Clear errors.** A failed SSO login returns to the login page with the
+  reason in the user's language (provider unreachable, cancelled, took too
+  long, no account, already linked), and an `[auth] sso_…` line in the log.
+- **Tests.** `server/test/oidc.test.ts` covers the account-matching rules and the
+  SSO-only guards, `web/src/pages/Login.test.tsx` the three login page modes,
+  and `npm run test:oidc` (also in CI) runs the whole thing against a real
+  OpenID provider: linking, provisioning, a cancelled login and the logout
+  round trip.
+
 ## [7.18.0] — 2026-10-03
 
 ### Game Review explains itself

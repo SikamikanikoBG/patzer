@@ -64,6 +64,17 @@
     "submitting": "Anmeldung läuft…",
     "invalid": "Benutzername oder Passwort ist falsch"
   },
+  "sso": {
+    "signIn": "Mit SSO anmelden",
+    "or": "oder",
+    "errUnavailable": "Der Anmeldedienst ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal",
+    "errExpired": "Die Anmeldung hat zu lange gedauert. Bitte versuche es erneut",
+    "errDenied": "Die Anmeldung wurde abgebrochen oder nicht erlaubt",
+    "errNotProvisioned": "Du hast noch kein Patzer-Konto. Bitte den Admin, eins anzulegen",
+    "errConflict": "Dieses Konto ist bereits mit einer anderen Anmeldung verknüpft. Wende dich an den Admin",
+    "errFailed": "Single Sign-on hat nicht geklappt. Bitte versuche es erneut",
+    "errPasswordDisabled": "Die Anmeldung mit Passwort ist auf diesem Server deaktiviert. Nutze Single Sign-on"
+  },
   "play": {
     "newGame": "Neue Partie",
     "difficulty": "Schwierigkeit",
