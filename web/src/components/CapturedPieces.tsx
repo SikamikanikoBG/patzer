@@ -12,8 +12,8 @@ const START: Record<string, number> = { Q: 1, R: 2, B: 2, N: 2, P: 8 };
 
 // Returns captured pieces for each side and the material balance (white perspective).
 function counts(fen: string) {
-  let white: Record<string, number> = { Q: 0, R: 0, B: 0, N: 0, P: 0 };
-  let black: Record<string, number> = { Q: 0, R: 0, B: 0, N: 0, P: 0 };
+  const white: Record<string, number> = { Q: 0, R: 0, B: 0, N: 0, P: 0 };
+  const black: Record<string, number> = { Q: 0, R: 0, B: 0, N: 0, P: 0 };
   try {
     const c = new Chess(fen);
     for (const row of c.board()) {
@@ -41,20 +41,23 @@ export default function CapturedPieces({ fen, side, size = 'sm' }: Props) {
   const oppKey = side === 'white' ? 'black' : 'white';
   const opp = (side === 'white' ? c.black : c.white);
 
+  const own = (side === 'white' ? c.white : c.black);
+
   const captured: { type: string; sym: string; value: number }[] = [];
-  let mat = 0;
   for (const k of ['Q', 'R', 'B', 'N', 'P']) {
     const missing = (START[k] ?? 0) - (opp[k] ?? 0);
     for (let i = 0; i < missing; i++) {
       captured.push({ type: k, sym: PIECE_SYMBOL[k]![oppKey === 'black' ? 'black' : 'white'], value: VALUE[k] ?? 0 });
-      mat += VALUE[k] ?? 0;
     }
   }
-  // Material balance (white perspective): white captured value − black captured value
-  // For display next to a single side, just show that side's haul value.
+  // Like chess.com: the number is the material lead on the board (this side's
+  // pieces minus the opponent's), shown only next to the side that is ahead —
+  // not the total value this side has captured.
+  const material = (set: Record<string, number>) => Object.entries(set).reduce((sum, [k, n]) => sum + (VALUE[k] ?? 0) * n, 0);
+  const mat = material(own) - material(opp);
 
   const sizeCls = size === 'sm' ? 'text-xl' : 'text-3xl';
-  if (captured.length === 0) return <div className="h-6" />;
+  if (captured.length === 0 && mat <= 0) return <div className="h-6" />;
 
   return (
     <div className="flex items-center gap-1 overflow-hidden">

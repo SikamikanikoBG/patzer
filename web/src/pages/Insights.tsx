@@ -7,7 +7,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import * as Icons from 'lucide-react';
-import { Activity, BarChart3, Target, TrendingUp, Flame, AlertTriangle, BookOpen, Award, Lock } from 'lucide-react';
+import { Activity, BarChart3, Target, TrendingUp, Flame, AlertTriangle, BookOpen, Award, Lock, Sparkles, ChevronRight } from 'lucide-react';
 import { api } from '../api';
 
 type Achievement = {
@@ -37,6 +37,10 @@ interface InsightsV2 {
   };
   phase_accuracy: { opening: number; middlegame: number; endgame: number };
   accuracy_trend: { t: string; acc: number; result: string | null }[];
+  move_quality?: {
+    counts: Record<string, number>;
+    brilliant: { game_id: number; ply: number; san: string; end_time: string | null; opponent: string }[];
+  };
 }
 
 export default function Insights() {
@@ -90,6 +94,8 @@ export default function Insights() {
         <TimeClassCard data={data.time_class_stats} />
       </div>
 
+      {data.move_quality && <MoveQualityCard data={data.move_quality} />}
+
       {/* Activity heatmap */}
       <ActivityHeatmap data={data.activity_heatmap} />
 
@@ -105,6 +111,84 @@ export default function Insights() {
         <OpeningRepertoireCard data={data.opening_repertoire} />
       </div>
     </div>
+  );
+}
+
+/* ───── Move quality ───────────────────────────────────────────────────── */
+// Your moves by classification (chess.com's colors), and your brilliant
+// moves to jump back to. Tailwind needs the class names spelled out.
+const QUALITY_ROWS: { key: string; symbol: string; bar: string; text: string }[] = [
+  { key: 'brilliant', symbol: '!!', bar: 'bg-move-brilliant', text: 'text-move-brilliant' },
+  { key: 'great', symbol: '!', bar: 'bg-move-great', text: 'text-move-great' },
+  { key: 'best', symbol: '★', bar: 'bg-move-best', text: 'text-move-best' },
+  { key: 'excellent', symbol: '✓', bar: 'bg-move-excellent', text: 'text-move-excellent' },
+  { key: 'good', symbol: '·', bar: 'bg-move-good', text: 'text-move-good' },
+  { key: 'book', symbol: '📖', bar: 'bg-move-book', text: 'text-move-book' },
+  { key: 'inaccuracy', symbol: '?!', bar: 'bg-move-inaccuracy', text: 'text-move-inaccuracy' },
+  { key: 'mistake', symbol: '?', bar: 'bg-move-mistake', text: 'text-move-mistake' },
+  { key: 'miss', symbol: '✗', bar: 'bg-move-miss', text: 'text-move-miss' },
+  { key: 'blunder', symbol: '??', bar: 'bg-move-blunder', text: 'text-move-blunder' },
+];
+
+/** "12." for White's move, "12…" for Black's. */
+function moveNumber(ply: number): string {
+  const n = Math.ceil(ply / 2);
+  return ply % 2 === 1 ? `${n}.` : `${n}…`;
+}
+
+function MoveQualityCard({ data }: { data: NonNullable<InsightsV2['move_quality']> }) {
+  const { t, i18n } = useTranslation();
+  const total = QUALITY_ROWS.reduce((sum, r) => sum + (data.counts[r.key] ?? 0), 0);
+  const max = Math.max(1, ...QUALITY_ROWS.map((r) => data.counts[r.key] ?? 0));
+  const date = (s: string | null) => (s ? new Date(`${s.slice(0, 10)}T12:00:00`).toLocaleDateString(i18n.language) : '');
+  return (
+    <section className="card p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-move-brilliant" />
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-chesscom-500">{t('insights.moveQuality')}</h2>
+        <span className="ml-auto text-[11px] text-chesscom-400">{t('insights.moveQualityTotal', { count: total })}</span>
+      </div>
+      <div className="grid gap-5 md:grid-cols-[1.2fr_1fr]">
+        <div className="space-y-1.5">
+          {QUALITY_ROWS.map((r) => {
+            const n = data.counts[r.key] ?? 0;
+            return (
+              <div key={r.key} className="flex items-center gap-2 text-xs">
+                <span className={`w-6 shrink-0 text-center font-mono font-bold ${r.text}`}>{r.symbol}</span>
+                <span className="w-28 shrink-0 truncate text-chesscom-700 dark:text-chesscom-200">{t(`classification.${r.key}`)}</span>
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-chesscom-100 dark:bg-chesscom-700/60">
+                  <div className={`h-full rounded-full ${r.bar}`} style={{ width: `${(n / max) * 100}%` }} />
+                </div>
+                <span className="w-10 shrink-0 text-right font-mono tabular-nums text-chesscom-900 dark:text-chesscom-100">{n}</span>
+                <span className="w-10 shrink-0 text-right font-mono tabular-nums text-chesscom-400">{total ? `${Math.round((n / total) * 100)}%` : '—'}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-chesscom-500">{t('insights.brilliantMoves')}</div>
+          {data.brilliant.length === 0 ? (
+            <div className="rounded-md bg-chesscom-50/70 p-3 text-xs text-chesscom-500 dark:bg-chesscom-900/40">{t('insights.noBrilliant')}</div>
+          ) : (
+            <ul className="space-y-1">
+              {data.brilliant.map((b) => (
+                <li key={`${b.game_id}-${b.ply}`}>
+                  <Link
+                    to={`/review/${b.game_id}?ply=${b.ply}`}
+                    className="group flex items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-chesscom-100 dark:hover:bg-chesscom-700/40"
+                  >
+                    <span className="font-mono font-semibold text-move-brilliant">{moveNumber(b.ply)}{b.san}!!</span>
+                    <span className="truncate text-chesscom-600 dark:text-chesscom-300">{t('insights.vsOpponent', { name: b.opponent })}</span>
+                    <span className="ml-auto shrink-0 text-chesscom-400">{date(b.end_time)}</span>
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-chesscom-400 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 

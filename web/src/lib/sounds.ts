@@ -27,11 +27,17 @@ let enabled = true;
 let soundSet: SoundSet = 'classic';
 let moveSoundSet: MoveSoundSet = 'classic';
 
-// Decoded recordings; filled in the background once 'board' is chosen and
-// the AudioContext exists. Until then (or if loading fails) moves fall back
-// to the synthesized knocks, so a move is never silent.
+// The recordings: downloaded as soon as 'board' is chosen (no AudioContext
+// needed for that), decoded once the context exists. A move sound that comes
+// while they're still loading waits for them up to BOARD_WAIT_MS — otherwise
+// the first move after a page load (a puzzle's opening move, a lesson's first
+// move) would still be the synthesized knock. If they can't be loaded, moves
+// fall back to the synthesized knocks, so a move is never silent.
 const boardSamples: { move?: AudioBuffer; capture?: AudioBuffer } = {};
+let boardFiles: Promise<{ move: ArrayBuffer; capture: ArrayBuffer }> | null = null;
 let boardLoading: Promise<void> | null = null;
+let boardState: 'idle' | 'loading' | 'ready' | 'failed' = 'idle';
+const BOARD_WAIT_MS = 400;
 // The recordings are normalised to the same loudness; this puts them level
 // with the check / game-end sounds through the shared compressor.
 const BOARD_GAIN = 0.62;
@@ -74,16 +80,30 @@ function ensureBus(): Bus | null {
   return { c: ctx, dry: dryBus!, wet: wetBus!, now: ctx.currentTime };
 }
 
+function fetchBoardFiles() {
+  boardFiles ??= (async () => {
+    const get = async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`board sound: HTTP ${res.status}`);
+      return res.arrayBuffer();
+    };
+    const [move, capture] = await Promise.all([get(boardMoveUrl), get(boardCaptureUrl)]);
+    return { move, capture };
+  })();
+  return boardFiles;
+}
+
 function loadBoardSamples(c: AudioContext): Promise<void> {
   // One attempt per page load: if it fails (offline, blocked), moves simply
   // keep the synthesized knocks instead of retrying on every sound.
-  boardLoading ??= Promise.all(
-    (['move', 'capture'] as const).map(async (k) => {
-      const res = await fetch(k === 'move' ? boardMoveUrl : boardCaptureUrl);
-      if (!res.ok) throw new Error(`board sound ${k}: HTTP ${res.status}`);
-      boardSamples[k] = await c.decodeAudioData(await res.arrayBuffer());
-    }),
-  ).then(() => undefined, () => undefined);
+  if (!boardLoading) {
+    boardState = 'loading';
+    boardLoading = fetchBoardFiles().then(async (files) => {
+      boardSamples.move = await c.decodeAudioData(files.move);
+      boardSamples.capture = await c.decodeAudioData(files.capture);
+      boardState = 'ready';
+    }).catch(() => { boardState = 'failed'; });
+  }
   return boardLoading;
 }
 
@@ -249,7 +269,9 @@ export function getSoundEnabled() { return enabled; }
 export function setSoundSet(set: SoundSet) { soundSet = set === 'soft' ? 'soft' : 'classic'; }
 export function setMoveSoundSet(set: MoveSoundSet) {
   moveSoundSet = set === 'board' ? 'board' : 'classic';
-  if (moveSoundSet === 'board' && ctx) void loadBoardSamples(ctx);
+  if (moveSoundSet !== 'board') return;
+  if (ctx) void loadBoardSamples(ctx);
+  else void fetchBoardFiles().catch(() => { /* loadBoardSamples notes the failure */ });
 }
 
 /** Resolves once the chosen move sounds can play — e.g. so a settings preview
@@ -270,6 +292,23 @@ export function unlockAudio() {
 
 export function playSound(kind: SoundKind) {
   if (!enabled) return;
+  const b = ensureBus();
+  if (!b) return;
+  if (moveSoundSet === 'board' && boardState === 'loading' && (kind === 'move' || kind === 'capture' || kind === 'castle')) {
+    // Wait for the recordings — but not so long that the sound lags the move.
+    let done = false;
+    const fallback = setTimeout(() => { done = true; playNow(kind); }, BOARD_WAIT_MS);
+    void boardLoading!.then(() => {
+      if (done) return;
+      clearTimeout(fallback);
+      playNow(kind);
+    });
+    return;
+  }
+  playNow(kind);
+}
+
+function playNow(kind: SoundKind) {
   const b = ensureBus();
   if (!b) return;
   const t = b.now + 0.005; // tiny lead-in so the first sample isn't clipped

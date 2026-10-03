@@ -50,6 +50,27 @@ describe('built-in lines', () => {
     }
   });
 
+  it('have legal branches that leave the line at one of the opponent’s moves', () => {
+    for (const line of trainer.TRAINER_LINES) {
+      expect(line.branches.length, line.id).toBeGreaterThanOrEqual(2);
+      const seen = new Set<string>();
+      for (const b of line.branches) {
+        const label = `${line.id} @${b.at} ${b.moves[b.at]}`;
+        expect(trainer.sideOfPly(b.at), label).not.toBe(line.color);
+        expect(b.moves.slice(0, b.at), label).toEqual(line.moves.slice(0, b.at));
+        expect(b.moves[b.at], label).not.toBe(line.moves[b.at]);
+        const key = b.moves.slice(0, b.at + 1).join(' ');
+        expect(seen.has(key), label).toBe(false);
+        seen.add(key);
+        const replayed = trainer.replayLine(b.moves);
+        expect(replayed?.map((m) => m.san), label).toEqual(b.moves);
+        expect(b.moves.length, label).toBeLessThanOrEqual(trainer.MAX_LINE_PLIES);
+        const own = b.moves.slice(b.at + 1).filter((_, i) => trainer.sideOfPly(b.at + 1 + i) === line.color).length;
+        expect(own, label).toBeGreaterThanOrEqual(2);
+      }
+    }
+  });
+
   it('offer lines for both colors', () => {
     expect(trainer.TRAINER_LINES.some((l) => l.color === 'white')).toBe(true);
     expect(trainer.TRAINER_LINES.some((l) => l.color === 'black')).toBe(true);
@@ -111,6 +132,48 @@ describe('repertoireLine', () => {
     // The opponent's mistakes are theirs to make — a Black line still stops only at Black's moves.
     expect(trainer.repertoireLine(games, [], 2, 20, { color: 'black', flawed }).moves)
       .toEqual(['e4', 'e5', 'Nf3', 'Nc6', 'Bc4']);
+  });
+});
+
+describe('repertoireBranches', () => {
+  // Newest first. You play White: 1.e4 e5 2.Nf3 Nc6 3.Bc4 most of the time.
+  const games = [
+    ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Bc5', 'c3'],
+    ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Nf6', 'd3'],
+    ['e4', 'e5', 'Nf3', 'd6', 'd4', 'exd4', 'Nxd4'],
+    ['e4', 'e5', 'Nf3', 'd6', 'Bc4', 'Be7'],
+    ['e4', 'c5', 'Nf3', 'd6', 'd4'],
+    ['e4', 'e5', 'Nf3', 'f6', 'Bc4', 'Ne7'],
+  ];
+  const none = games.map((g) => g.map(() => false));
+  const noBest = games.map((g) => g.map(() => null));
+  const main = ['e4', 'e5', 'Nf3', 'Nc6', 'Bc4'];
+
+  it('lists the opponent’s other moves, most frequent first, in board order', () => {
+    const b = trainer.repertoireBranches(games, main, 0, 'white', none, noBest);
+    expect(b.map((x) => [x.at, x.moves[x.at], x.games])).toEqual([[1, 'c5', 1], [3, 'd6', 2], [3, 'f6', 1]]);
+    // Each follows the games that played it — on a tie, the newer one.
+    expect(b[1]!.moves).toEqual(['e4', 'e5', 'Nf3', 'd6', 'd4', 'exd4', 'Nxd4']);
+    expect(b.every((x) => x.played === undefined)).toBe(true);
+  });
+
+  it('only looks past the chosen position, and keeps at most `max`', () => {
+    expect(trainer.repertoireBranches(games, main, 2, 'white', none, noBest).map((x) => x.at)).toEqual([3, 3]);
+    expect(trainer.repertoireBranches(games, main, 0, 'white', none, noBest, 1).map((x) => x.moves[x.at])).toEqual(['d6']);
+  });
+
+  it('ends with the engine’s move where your reply was a mistake', () => {
+    // After 2...f6 you played 3.Bc4 — the analysis calls it a mistake, 3.Nxe5 was best.
+    const flawed = games.map((g, n) => g.map((_, i) => n === 5 && i === 4));
+    const best = games.map((g, n) => g.map((_, i) => (n === 5 && i === 4 ? 'Nxe5' : null)));
+    const f6 = trainer.repertoireBranches(games, main, 0, 'white', flawed, best).find((x) => x.moves[3] === 'f6')!;
+    expect(f6.moves).toEqual(['e4', 'e5', 'Nf3', 'f6', 'Nxe5']);
+    expect(f6.played).toBe('Bc4');
+  });
+
+  it('drops a branch with no move of yours left to find', () => {
+    const b = trainer.repertoireBranches([['e4', 'e5', 'Nf3', 'Nc6'], ['e4', 'd5']], ['e4', 'e5', 'Nf3', 'Nc6'], 0, 'white', [[], []], [[], []]);
+    expect(b).toEqual([]);
   });
 });
 

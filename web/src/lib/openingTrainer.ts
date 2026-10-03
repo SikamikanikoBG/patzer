@@ -14,6 +14,41 @@ export interface DrillLine {
   color: Side;
   /** SAN from the starting position. */
   moves: string[];
+  /** Where the opponent leaves this line, and how to go on then. */
+  branches?: Branch[];
+  /** Set when this line *is* a branch: the drill starts just before the
+   *  opponent's other move, and the moves before it aren't asked again. */
+  branch?: Branch & { mainMove?: string };
+}
+
+/** The line when the opponent plays something else at index `at` — `moves`
+ *  is the whole line from the start. `trap`: a tempting move to punish;
+ *  `games`/`played`: from your own games, where you replied with `played`
+ *  and the analysis knew better. */
+export interface Branch {
+  at: number;
+  moves: string[];
+  trap?: boolean;
+  games?: number;
+  played?: string;
+}
+
+/** The branches of a line as lines of their own, ready to drill in turn. */
+export function branchDrills(line: DrillLine): DrillLine[] {
+  return (line.branches ?? []).map((b) => ({
+    id: line.id,
+    name: line.name,
+    eco: line.eco,
+    color: line.color,
+    moves: b.moves,
+    branch: { ...b, mainMove: line.moves[b.at] },
+  }));
+}
+
+/** "3…Nf6" / "4.Nxe5" — move `i` of a line with its number. */
+export function moveLabel(moves: string[], i: number): string {
+  const n = Math.floor(i / 2) + 1;
+  return `${n}${i % 2 === 0 ? '.' : '…'}${moves[i] ?? ''}`;
 }
 
 /** Whose move is at 0-based index `ply` of a line. */
@@ -25,9 +60,9 @@ export function isUserPly(ply: number, color: Side): boolean {
   return sideOfPly(ply) === color;
 }
 
-/** How many moves of the line are yours to find. */
-export function userMoveCount(moves: string[], color: Side): number {
-  return moves.filter((_, i) => isUserPly(i, color)).length;
+/** How many moves of the line are yours to find (from index `from` on). */
+export function userMoveCount(moves: string[], color: Side, from = 0): number {
+  return moves.filter((_, i) => i >= from && isUserPly(i, color)).length;
 }
 
 /** Board state after the first `n` moves: FEN plus the squares of the last

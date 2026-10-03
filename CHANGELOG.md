@@ -71,6 +71,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   zstd (22.15+) or the `zstd` tool, which the Docker image now includes.
 - Train keeps the puzzles from your own games.
 
+## [7.18.0] — 2026-10-03
+
+### Game Review explains itself
+
+- **Why a move got its label.** The Moves tab now opens with a card for the
+  current move: whose move it was, its label, the win chance before and after
+  ("62% → 30%"), one sentence on why the engine called it that (a blunder:
+  the win chance collapsed by 32%, about 3 pawns; a miss: the position was
+  winning and this move let it slip; …), the move the engine wanted with how
+  its line goes on, and then the coach in plain words — what the move did or
+  allowed, and what the better move would have achieved. (The coach used to
+  live in its own tab; it is now right here, so the separate Coach tab is
+  gone.)
+- **Pick a category, walk its moves.** The counts in the Game Report table
+  (Black's 2 misses, White's 3 inaccuracies, …) are now clickable: the move
+  list highlights those moves, dims the rest, jumps to the first one, and
+  ‹ › arrows step through them. Clicking the category name picks both sides.
+- **The AI report knows whose move it is.** Key moments used to be written as
+  if every move was yours, so the opponent's blunder read as "you played …".
+  Each moment is now marked *Your move* / *Opponent's move*, and an opponent's
+  moment is about what it gave you and whether your answer took the chance.
+  Key moments also get the coach's facts (what the move allowed, the best
+  answer to it, the better move), so they say something concrete.
+- **A summary with something in it.** The summary used to get nothing but
+  accuracy and Elo, so all it could do was repeat them. It now gets the story
+  of the game — the result, the turning point, your costliest moves with the
+  better ones, your best finds, the opponent's gifts and whether you used
+  them, your weakest phase — and is told not to repeat numbers the page
+  already shows. Phase texts no longer get cut off after three lines, and key
+  moments are shown in full. Reports written by an older version are
+  rewritten on request ("Write it again" under every report).
+
+### Fixed
+
+- **The eval bar was upside down for Black.** With the board turned for
+  Black, the bar put White's share at the top in Black's colour: when Black
+  was better, the white part grew. The colours now stay with their side.
+- **Material count like chess.com.** The number next to the captured pieces
+  was the total value one side had captured; it is now the material lead on
+  the board, and only next to the side that is ahead (a knight for two pawns
+  is +1, not +3).
+
+### Merged contributions (thanks, @eric-gpu)
+
+- **Real-board move sounds from the very first move.** With "Real board"
+  chosen, the first move after opening a page still played the synthesized
+  knock — the recordings only started loading with the first sound. Most
+  noticeable where Patzer moves first by itself, like the opponent's first
+  move in the opening trainer, or the first move in a lesson. The recordings
+  now download as soon as the setting is known, and a move sound that comes
+  while they're still loading waits for them (at most 0.4 s).
+
+- **Insights: move quality.** A new card counts your own moves by
+  classification — brilliant, great, best, … down to blunders — across your
+  analyzed games, with a bar and a share for each, and lists your most recent
+  brilliant moves; one click opens Game Review on that very move.
+
+- **Opening trainer: deviations.** Real opponents rarely stay on the main
+  line. Every built-in line now comes with the opponent's most common other
+  moves and a few tempting ones a beginner meets (2...f6 against the Italian,
+  3...Nd4, the Albin Counter-Gambit, 2.Qh5 against 1...e5) — 47 in all. After
+  a line, or straight from "Do you know this line?", choose *Practise the
+  deviations*: each starts just before the other move, Patzer plays it, and
+  you find how to go on (or how to punish it). Every one of your moves in them
+  is checked with Stockfish at depth 18: none is more than half a pawn worse
+  than the engine's best. Lines from your own repertoire get their deviations
+  from your games: where your opponents played something else, and — where
+  the analysis called your reply a mistake — the engine's move instead, so
+  you practise what you should have played. Missed moves go into the daily
+  review like any other.
+
+- **Train: puzzles (beta).** A second tab next to the puzzles from your own
+  games: about 4,000 popular Lichess puzzles (CC0) from rating 400 to 2600,
+  shipped with Patzer, no network needed. Each profile gets a puzzle rating
+  (Glicko-1, like the game ratings, starting at 1200); the next puzzle is one
+  you haven't tried, close to your rating. Like on chess.com the first try
+  counts — a wrong move, a hint or "show solution" and it counts as not
+  solved, but you can still finish it. Multi-move solutions, the opponent's
+  replies played for you, any checkmate accepted on the last move, and filters
+  for checkmate, forks, pins, discovered attacks, sacrifices, hanging pieces,
+  defence and endgames. When your own puzzles run out, the empty page points
+  here. The set is one JSON file (`server/src/chess/tacticsSet.json`,
+  460 KB); `npm run build:tactics` rebuilds it from the Lichess puzzle
+  database, and the page credits the database in its footer.
+- **Learn: 15 new lessons** (69 in all), each with an explanation and six
+  tasks. Beginner: *Defend!*, *The weak point f7* and *Pawn on the run*.
+  Intermediate: *Discovered check*, *The exposed king*, and three more mating
+  patterns — the Opera mate, the hook mate and Pillsbury's mate. Advanced:
+  *The only move*, a new course *Rare mating patterns* (Boden's mate, the
+  dovetail, the bishop pair, mate in four) and a new course *Queen and
+  minor-piece endgames*. As before, every task is a Lichess puzzle (CC0) that
+  Stockfish confirmed at depth 20 to have exactly one right answer, and no
+  puzzle appears twice; texts in English and German, with kid versions.
+- **Learn:** the overview now explains how stars and levels work.
+
 ## [7.17.1] — 2026-09-27
 
 ### Finished games no longer hang on "Saving game…"

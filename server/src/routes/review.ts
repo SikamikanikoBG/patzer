@@ -90,7 +90,7 @@ router.post('/:id/review', async (c) => {
   return streamSSE(c, async (stream) => {
     try {
       const review = await buildGameReview({
-        pgn: game.pgn, analysis, language, audience, userColor,
+        pgn: game.pgn, analysis, language, audience, userColor, userId: user.id,
         onProgress: async (ev) => {
           await stream.writeSSE({ event: 'progress', data: JSON.stringify(ev) });
         },

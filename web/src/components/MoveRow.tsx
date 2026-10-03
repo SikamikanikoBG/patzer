@@ -11,13 +11,16 @@ interface Props {
   black?: Move;
   current: number;
   onSelect: (ply: number) => void;
+  /** When set, only these plies stand out (a category picked in the Game
+   *  Report); the rest of the list is dimmed. */
+  highlight?: Set<number> | null;
 }
 
 // Single move-pair row. Tints the row's left edge by the worst classification
 // of the two half-moves so a glance down the list reveals where the game
 // tilted (matches chess.com Game Review). No alternate-row striping —
 // chess.com uses only 1px hairlines between move pairs.
-export default function MoveRow({ num, white, black, current, onSelect }: Props) {
+export default function MoveRow({ num, white, black, current, onSelect, highlight }: Props) {
   const { t } = useTranslation();
   const wCur = white?.ply === current;
   const bCur = black?.ply === current;
@@ -57,17 +60,19 @@ export default function MoveRow({ num, white, black, current, onSelect }: Props)
       )}
     >
       <div className="flex items-center justify-end pe-2 text-xs tabular-nums text-chesscom-400">{num}.</div>
-      <Half move={white} current={wCur} onSelect={onSelect} t={t} />
-      <Half move={black} current={bCur} onSelect={onSelect} t={t} />
+      <Half move={white} current={wCur} onSelect={onSelect} t={t} highlight={highlight} />
+      <Half move={black} current={bCur} onSelect={onSelect} t={t} highlight={highlight} />
     </div>
   );
 }
 
 function Half({
-  move, current, onSelect, t,
-}: { move?: Move; current: boolean; onSelect: (p: number) => void; t: (k: string) => string }) {
+  move, current, onSelect, t, highlight,
+}: { move?: Move; current: boolean; onSelect: (p: number) => void; t: (k: string) => string; highlight?: Set<number> | null }) {
   if (!move) return <div />;
   const style = displayStyleFor(move.classification, move.san);
+  const picked = !!highlight?.has(move.ply);
+  const dimmed = !!highlight && !picked && !current;
   return (
     <button
       onClick={() => onSelect(move.ply)}
@@ -77,6 +82,8 @@ function Half({
         current
           ? 'bg-chesscom-900 text-white dark:bg-chesscom-100 dark:text-chesscom-900'
           : 'hover:bg-chesscom-100 dark:hover:bg-chesscom-800',
+        picked && !current && 'bg-gold-50 ring-1 ring-inset ring-gold-500/60 dark:bg-gold-700/15',
+        dimmed && 'opacity-35',
       )}
     >
       <span className="truncate font-medium tabular-nums">{move.san}</span>

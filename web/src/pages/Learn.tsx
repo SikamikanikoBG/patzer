@@ -201,6 +201,7 @@ function Overview({ cur, progress, totalStars, onOpenLesson, onOpenCourse }: {
               />
             </div>
             <div className="mt-1.5 text-[11px] text-white/60">{t('learn.toNextLevel', { count: lvl.next - totalStars, n: lvl.level + 1 })}</div>
+            <div className="mt-2 border-t border-white/10 pt-2 text-[11px] leading-relaxed text-white/60">{t('learn.starsExplained')}</div>
           </div>
         </div>
       </motion.section>

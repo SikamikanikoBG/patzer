@@ -6,6 +6,8 @@
 //   - mistake_taxonomy   bucketed personal mistake patterns
 //   - time_class_stats   per-time-class W/D/L + accuracy
 //   - accuracy_trend     last-N-games accuracy series
+//   - move_quality       how often each move classification was yours,
+//                        plus your most recent brilliant moves
 //
 // All templated (no LLM); fast page render.
 
@@ -13,7 +15,7 @@ import { Hono } from 'hono';
 import { db } from '../db.js';
 import { requireAuth } from '../auth/middleware.js';
 import { SCORING_VERSION } from '../chess/classifier.js';
-import type { AnalyzedMove, GamePhase, PhaseSplit, Color } from '../types.js';
+import type { AnalyzedMove, Classification, GamePhase, PhaseSplit, Color } from '../types.js';
 import { phaseFor, hasBackRankSignature } from '../chess/phases.js';
 
 const router = new Hono();
@@ -30,7 +32,15 @@ interface AnalysisRow {
   moves_json: string;
   phase_split_json: string | null;
   accuracy_user: number | null;
+  white: string;
+  black: string;
 }
+
+const CLASSIFICATIONS: Classification[] = [
+  'brilliant', 'great', 'best', 'excellent', 'good', 'book', 'forced', 'inaccuracy', 'mistake', 'miss', 'blunder',
+];
+/** How many of your brilliant moves the page lists. */
+const BRILLIANT_LIST = 10;
 
 router.get('/', (c) => {
   const me = c.get('user');
@@ -99,7 +109,7 @@ router.get('/', (c) => {
   // SCORING_VERSION gate so old analyses don't bleed v5 numbers in.
   const rows = db.prepare(`
     SELECT a.game_id, g.user_color, g.end_time, g.result, g.time_class,
-           g.eco, g.opening_name, a.moves_json, a.phase_split_json,
+           g.eco, g.opening_name, a.moves_json, a.phase_split_json, g.white, g.black,
            CASE WHEN g.user_color='white' THEN a.accuracy_white ELSE a.accuracy_black END AS accuracy_user
     FROM analyses a JOIN games g ON g.id = a.game_id
     WHERE g.user_id = ? AND a.scoring_version >= ?
@@ -126,6 +136,11 @@ router.get('/', (c) => {
   const phaseAcc: Record<GamePhase, { sum: number; n: number }> = {
     opening: { sum: 0, n: 0 }, middlegame: { sum: 0, n: 0 }, endgame: { sum: 0, n: 0 },
   };
+
+  // Move quality — your moves only, per classification; the brilliant ones
+  // (newest game first) also as a list to jump back to.
+  const quality = Object.fromEntries(CLASSIFICATIONS.map((k) => [k, 0])) as Record<Classification, number>;
+  const brilliant: { game_id: number; ply: number; san: string; end_time: string | null; opponent: string }[] = [];
 
   // Accuracy trend — most recent N games (ascending for the chart)
   const accTrend: { t: string; acc: number; result: string | null }[] = [];
@@ -172,6 +187,10 @@ router.get('/', (c) => {
     for (const m of moves) {
       const side: Color = m.ply % 2 === 1 ? 'white' : 'black';
       if (side !== userColor) continue;
+      if (m.classification in quality) quality[m.classification]++;
+      if (m.classification === 'brilliant' && brilliant.length < BRILLIANT_LIST) {
+        brilliant.push({ game_id: r.game_id, ply: m.ply, san: m.san, end_time: r.end_time, opponent: userColor === 'white' ? r.black : r.white });
+      }
       const phase = phaseFor(m.ply, split);
       if (m.classification === 'blunder' || m.classification === 'mistake') {
         if (m.centipawn_loss >= 200) tax.hung_pieces++;
@@ -225,6 +244,7 @@ router.get('/', (c) => {
       endgame: phaseAcc.endgame.n ? Math.round((phaseAcc.endgame.sum / phaseAcc.endgame.n) * 10) / 10 : 0,
     },
     accuracy_trend: accTrend.slice(0, 50).reverse(),
+    move_quality: { counts: quality, brilliant },
   });
 });
 

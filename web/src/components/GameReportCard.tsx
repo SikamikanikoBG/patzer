@@ -27,16 +27,37 @@ interface Props {
   currentPly?: number;
   /** Jump to a ply. When set, each classification row opens the list of its moves. */
   onSelectPly?: (ply: number) => void;
+  /** Clicking a count picks those moves (the move list then walks them). */
+  onPick?: (pick: MovePick) => void;
+  picked?: MovePick | null;
 }
+
+/** A category of moves picked in the table: one side's, or both sides'. */
+export interface MovePick { classification: Classification; side: 'white' | 'black' | 'both' }
 
 export default function GameReportCard({
   whiteName, blackName, accuracyW, accuracyB,
-  eloW, eloB, perfW, perfB, moves, phaseSplit, userColor, currentPly, onSelectPly,
+  eloW, eloB, perfW, perfB, moves, phaseSplit, userColor, currentPly, onSelectPly, onPick, picked,
 }: Props) {
   const { t } = useTranslation();
   const [openCls, setOpenCls] = useState<Classification | null>(null);
   const w = countByCls(moves, 'white');
   const b = countByCls(moves, 'black');
+  const isPicked = (c: Classification, side: MovePick['side']) => picked?.classification === c && picked.side === side;
+  const cell = (c: Classification, side: 'white' | 'black', n: number) => {
+    const base = 'mx-auto flex h-7 w-10 items-center justify-center rounded-md font-mono tabular-nums';
+    if (n === 0 || !onPick) return <span className={`${base} ${n > 0 ? '' : 'opacity-30'}`}>{n}</span>;
+    return (
+      <button
+        type="button"
+        onClick={() => onPick({ classification: c, side })}
+        title={t('review.pickMoves', { defaultValue: 'Show these moves' })}
+        className={`${base} cursor-pointer underline decoration-dotted underline-offset-4 transition-colors hover:bg-gold-500/15 ${isPicked(c, side) ? 'bg-gold-500/25 font-bold ring-1 ring-gold-500/60' : ''}`}
+      >
+        {n}
+      </button>
+    );
+  };
 
   return (
     <div className="card overflow-hidden">
@@ -47,8 +68,8 @@ export default function GameReportCard({
 
       <div className="grid grid-cols-[1fr_3rem_3rem] items-center gap-2 border-t border-chesscom-200 bg-chesscom-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-chesscom-500 dark:border-chesscom-700 dark:bg-chesscom-900/50">
         <span>{t('review.moves', { defaultValue: 'Move' })}</span>
-        <span className="text-center">W</span>
-        <span className="text-center">B</span>
+        <span className="text-center">{t('review.sideShort.white', { defaultValue: 'W' })}</span>
+        <span className="text-center">{t('review.sideShort.black', { defaultValue: 'B' })}</span>
       </div>
       {([...Object.keys(CLASS_STYLE)] as Classification[])
         .sort((a, b) => CLASS_STYLE[a].order - CLASS_STYLE[b].order)
@@ -58,34 +79,35 @@ export default function GameReportCard({
           if (wc === 0 && bc === 0) return null;
           const s = CLASS_STYLE[c];
           const open = openCls === c;
-          const cells = (
-            <>
-              <div className="flex items-center gap-2">
-                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white ${s.bgClass}`}>
-                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">{GLYPH_SVG[s.glyph]}</svg>
-                </span>
-                <span>{t(`classification.${s.labelKey}`)}</span>
-                {onSelectPly && <ChevronDown className={`h-3.5 w-3.5 text-chesscom-400 transition-transform ${open ? 'rotate-180' : ''}`} />}
-              </div>
-              <span className={`text-center font-mono tabular-nums ${wc > 0 ? '' : 'opacity-30'}`}>{wc}</span>
-              <span className={`text-center font-mono tabular-nums ${bc > 0 ? '' : 'opacity-30'}`}>{bc}</span>
-            </>
-          );
-          const rowCls = 'grid w-full grid-cols-[1fr_3rem_3rem] items-center gap-2 px-4 py-1.5 text-start text-sm';
           return (
             <div key={c} className="border-b border-chesscom-100 last:border-b-0 dark:border-chesscom-800">
-              {onSelectPly ? (
-                <button
-                  type="button"
-                  onClick={() => setOpenCls(open ? null : c)}
-                  aria-expanded={open}
-                  className={`${rowCls} transition-colors hover:bg-chesscom-50 dark:hover:bg-chesscom-800/60`}
-                >
-                  {cells}
-                </button>
-              ) : (
-                <div className={rowCls}>{cells}</div>
-              )}
+              <div className="grid grid-cols-[1fr_3rem_3rem] items-center gap-2 px-4 py-1 text-sm">
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={!onPick}
+                    onClick={() => onPick?.({ classification: c, side: 'both' })}
+                    className={`-mx-1 flex items-center gap-2 rounded-md px-1 py-0.5 text-start ${onPick ? 'cursor-pointer hover:bg-chesscom-100 dark:hover:bg-chesscom-800' : ''} ${isPicked(c, 'both') ? 'bg-gold-500/20' : ''}`}
+                  >
+                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white ${s.bgClass}`}>
+                      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">{GLYPH_SVG[s.glyph]}</svg>
+                    </span>
+                    <span>{t(`classification.${s.labelKey}`)}</span>
+                  </button>
+                  {onSelectPly && (
+                    <button
+                      type="button"
+                      onClick={() => setOpenCls(open ? null : c)}
+                      aria-expanded={open}
+                      className="rounded-md p-1 text-chesscom-400 transition-colors hover:bg-chesscom-100 dark:hover:bg-chesscom-800"
+                    >
+                      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+                    </button>
+                  )}
+                </div>
+                {cell(c, 'white', wc)}
+                {cell(c, 'black', bc)}
+              </div>
               {open && onSelectPly && (
                 <div className="space-y-1.5 px-4 pb-2.5 pt-0.5" dir="ltr">
                   {(['white', 'black'] as const).map((side) => {
@@ -141,7 +163,7 @@ function PlayerColumn({ name, accuracy, elo, perf, side, highlighted }: { name: 
     <div className={`rounded-md border bg-white p-3 dark:bg-chesscom-800 ${highlighted ? 'border-s-4 border-gold-500 border-y-chesscom-200 border-e-chesscom-200 dark:border-y-chesscom-700 dark:border-e-chesscom-700' : 'border-chesscom-200 dark:border-chesscom-700'}`}>
       <div className="flex items-center gap-2">
         <span className={`h-3 w-3 rounded-full ${sideDot}`} />
-        <span className="truncate text-xs font-semibold uppercase tracking-wide text-chesscom-500">{side === 'white' ? 'White' : 'Black'}</span>
+        <span className="truncate text-xs font-semibold uppercase tracking-wide text-chesscom-500">{side === 'white' ? t('review.white') : t('review.black')}</span>
       </div>
       <div className="mt-1 truncate text-sm font-semibold">{name}</div>
       {/* Wraps the ratings under the donut when the column is too narrow for

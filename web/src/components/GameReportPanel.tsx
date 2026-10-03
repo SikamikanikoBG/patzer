@@ -23,6 +23,8 @@ export interface GameReviewProse {
     ply: number; side: 'white' | 'black'; san: string;
     classification: string; cp_loss: number; win_pct_delta: number;
     best_san: string | null; title: string; prose: string;
+    /** v4+: whether it was the player's own move. */
+    by_user?: boolean;
   }>;
 }
 
@@ -34,6 +36,8 @@ interface Props {
   onMomentJump?: (ply: number) => void;
   /** Called when prose is freshly generated; parent caches in component state. */
   onGenerated?: (review: GameReviewProse) => void;
+  /** The player's colour — older reports don't say whose move a moment was. */
+  userColor?: 'white' | 'black' | null;
 }
 
 interface ProgressEvent {
@@ -43,7 +47,7 @@ interface ProgressEvent {
   index?: number;
 }
 
-export default function GameReportPanel({ gameId, initial, onMomentJump, onGenerated }: Props) {
+export default function GameReportPanel({ gameId, initial, onMomentJump, onGenerated, userColor }: Props) {
   const { t } = useTranslation();
   const [review, setReview] = useState<GameReviewProse | null>(initial);
   const [busy, setBusy] = useState(false);
@@ -161,15 +165,17 @@ export default function GameReportPanel({ gameId, initial, onMomentJump, onGener
           {review.opening.eco && <span className="ms-1 font-mono">({review.opening.eco})</span>} — {review.opening.prose}
         </div>
       )}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="flex flex-col gap-2">
         {(['opening', 'middlegame', 'endgame'] as const).map((k) => {
           const p = review.phases[k];
           if (!p) return null;
           return (
             <div key={k} className="rounded-lg bg-chesscom-50 p-2 text-xs dark:bg-chesscom-900/40">
-              <div className="font-semibold capitalize">{t(`review.${k}`, { defaultValue: k })}</div>
-              <div className="mt-0.5 font-mono text-chesscom-500">{p.accuracy.toFixed(1)}%</div>
-              <div className="mt-1 line-clamp-3">{p.prose}</div>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="font-semibold capitalize">{t(`review.${k}`, { defaultValue: k })}</span>
+                <span className="font-mono text-chesscom-500">{p.accuracy.toFixed(1)}%</span>
+              </div>
+              <div className="mt-1 leading-relaxed">{p.prose}</div>
             </div>
           );
         })}
@@ -177,19 +183,29 @@ export default function GameReportPanel({ gameId, initial, onMomentJump, onGener
       {review.key_moments.length > 0 && (
         <div className="space-y-1.5">
           <div className="text-[11px] uppercase tracking-wide text-chesscom-500">{t('review.keyMoments')}</div>
-          {review.key_moments.map((m) => (
+          {review.key_moments.map((m) => {
+            const mine = m.by_user ?? (userColor ? m.side === userColor : true);
+            return (
             <button key={m.ply}
               onClick={() => onMomentJump?.(m.ply)}
               className="block w-full rounded-lg border border-chesscom-200 bg-white px-3 py-2 text-start text-xs hover:border-gold-500/40 hover:bg-gold-50/40 dark:border-chesscom-700 dark:bg-chesscom-800 dark:hover:bg-chesscom-900/40">
               <div className="flex items-baseline gap-2">
                 <span className="font-mono text-[11px] tabular-nums text-chesscom-500">#{Math.ceil(m.ply / 2)}{m.side === 'black' ? '…' : '.'}</span>
                 <span className="font-semibold">{m.title}</span>
+                <span className={`ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${mine ? 'bg-gold-500/15 text-gold-700 dark:text-gold-300' : 'bg-chesscom-100 text-chesscom-500 dark:bg-chesscom-700 dark:text-chesscom-300'}`}>
+                  {mine ? t('review.why.yourMove') : t('review.why.opponentMove')}
+                </span>
               </div>
-              <div className="mt-0.5 text-chesscom-700 dark:text-chesscom-200">{m.prose}</div>
+              <div className="mt-0.5 leading-relaxed text-chesscom-700 dark:text-chesscom-200">{m.prose}</div>
             </button>
-          ))}
+            );
+          })}
         </div>
       )}
+      <button onClick={generate} disabled={busy} className="btn-ghost self-start px-2 py-1 text-xs">
+        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+        {t('review.regenerateReport', { defaultValue: 'Write it again' })}
+      </button>
     </div>
   );
 }

@@ -14,7 +14,7 @@
     },
     "tactics-1": {
       "title": "First tactics",
-      "desc": "Hanging pieces, forks, pins and skewers – the tricks that win material."
+      "desc": "Hanging pieces, forks, pins, skewers, the weak f7, runaway pawns – and how to defend."
     },
     "openings-1": {
       "title": "Opening principles",
@@ -22,11 +22,11 @@
     },
     "tactics-2": {
       "title": "Tactics II",
-      "desc": "Discovered attacks, double checks, deflection, decoys, removing the defender, in-between moves and trapped pieces."
+      "desc": "Discovered attacks and checks, double checks, deflection, decoys, removing the defender, in-between moves, trapped pieces and the exposed king."
     },
     "mates-2": {
       "title": "Mating patterns",
-      "desc": "Mate in two, and the classic patterns: smothered, Anastasia's and the Arabian mate."
+      "desc": "Mate in two, and the classic patterns: smothered, Anastasia's, Arabian, Opera, hook and Pillsbury's mate."
     },
     "pawn-endings": {
       "title": "Pawn endgames",
@@ -34,11 +34,19 @@
     },
     "tactics-3": {
       "title": "Master tactics",
-      "desc": "Mate in three, quiet moves, zugzwang, clearance, interference, x-rays and underpromotion."
+      "desc": "Mate in three, quiet moves, zugzwang, the only move, clearance, interference, x-rays and underpromotion."
+    },
+    "mates-3": {
+      "title": "Rare mating patterns",
+      "desc": "Boden's mate, the dovetail, the bishop pair – and mate in four."
     },
     "rook-endings": {
       "title": "Rook endgames",
       "desc": "The most common endgame: active rooks, the Lucena and the Philidor position."
+    },
+    "endgames-2": {
+      "title": "Queen and minor-piece endgames",
+      "desc": "Bishops, knights and queens in the endgame: tempo, tactics and runaway pawns."
     }
   },
   "board": {
@@ -344,6 +352,30 @@
     "task": "{{side}} to move. Find the skewer!",
     "task_kid": "{{side}} to move. Check the big piece – and grab the one behind it!"
   },
+  "defend": {
+    "title": "Defend!",
+    "desc": "Not every move is an attack: save what is threatened.",
+    "intro": "Not every good move is an attack. When your king is in check or a piece is attacked, look for the defence that holds everything together: step away, block, or protect. Here Black gives check with Qg1+. White blocks with **Ng2** – and now the rook on c1 attacks the queen! Black can only take the rook (**Qxc1**), and after **Qxc1** White has won the queen for a rook.",
+    "intro_kid": "Danger! When something is attacked, first save it. Here the knight jumps in front of the king – and suddenly the black queen is trapped!",
+    "task": "{{side}} to move. Something is under attack – find the move that saves it!",
+    "task_kid": "{{side}} to move. Danger! Find the move that saves everything!"
+  },
+  "attack-f7": {
+    "title": "The weak point f7",
+    "desc": "Early in the game, f7 and f2 are guarded only by the king.",
+    "intro": "At the start of the game the pawn on **f7** is protected only by the king (for White it's **f2**). That makes it the favourite target of early attacks. Here the queen strikes: **Qxf7+** – the king has to go to d8, and **Qd7#**. The knight on e5 protects the queen.",
+    "intro_kid": "The pawn next to the king is only guarded by the king himself. Attack it with the queen – and it's checkmate!",
+    "task": "{{side}} to move. Strike at the weak point next to the king!",
+    "task_kid": "{{side}} to move. Attack the weak square next to the king!"
+  },
+  "advanced-pawn": {
+    "title": "Pawn on the run",
+    "desc": "A pawn close to promotion is worth almost a queen.",
+    "intro": "A pawn that has almost reached the last rank is worth nearly a queen – often it pays to give up a piece to let it through. Here White trades rooks with **Rxc7**. After **…Rxc7** the black rook has left the back rank, nothing guards a8 any more, and **a8=Q+** makes a new queen with check.",
+    "intro_kid": "One more step and the pawn becomes a queen! First get the rook out of the way – then the pawn walks to the end of the board.",
+    "task": "{{side}} to move. Help your pawn reach the last rank!",
+    "task_kid": "{{side}} to move. Help your pawn become a queen!"
+  },
   "center": {
     "title": "Control the center",
     "desc": "Why the middle of the board matters.",
@@ -412,6 +444,14 @@
     "intro_kid": "A sneaky trick: one piece steps aside, and suddenly the piece behind it attacks! Here the knight jumps away – now the queen gives check, and the knight attacks the white queen at the same time.",
     "task": "{{side}} to move. Uncover an attack!"
   },
+  "discovered-check": {
+    "title": "Discovered check",
+    "desc": "One piece steps aside – the piece behind it gives check.",
+    "intro": "A **discovered check**: one piece moves out of the way and uncovers a check by the piece behind it. The opponent has to answer the check – so the piece that moved can do whatever it likes. Here the white king stands between its rook and the black king. **Kd6+** – the rook on g7 gives check! Black has to deal with it (**…Kb6**), and **Kxe5** wins the knight.",
+    "intro_kid": "One piece jumps aside – and the piece behind it gives check! While the king is busy, the first piece grabs something.",
+    "task": "{{side}} to move. Uncover a check – and win something with the piece that moves!",
+    "task_kid": "{{side}} to move. Move one piece away so the one behind it gives check!"
+  },
   "double-check": {
     "title": "Double check",
     "desc": "Two checks at once – only the king can run.",
@@ -454,6 +494,14 @@
     "intro_kid": "If a piece has no way out, you can trap it! The queen went hunting for a pawn – and now she's stuck.",
     "task": "{{side}} to move. Trap a piece!"
   },
+  "exposed-king": {
+    "title": "The exposed king",
+    "desc": "A king without pawns around it is easy prey.",
+    "intro": "A king without its pawn shield is in danger: checks come from every side, and every check can hide a second threat. Here the black king has no pawns left around it. **Qxh4+** – after **…Kg8** the knight jumps in with check: **Ne7+** attacks the king **and** the queen on g6. **…Kg7 Nxg6** wins the queen.",
+    "intro_kid": "The king has lost his guards! Give check after check – and grab what's left unprotected.",
+    "task": "{{side}} to move. Go after the unprotected king!",
+    "task_kid": "{{side}} to move. The king has no guards – attack!"
+  },
   "mate-in-two": {
     "title": "Mate in two",
     "desc": "Checks first – then the finishing blow.",
@@ -481,6 +529,27 @@
     "intro": "The **Arabian mate** is one of the oldest known mating patterns: a rook mates the king in the corner, while a knight protects the rook and guards the escape square. Here: **Nf6+** Kh8, and **Rh7#** – the knight on f6 protects the rook and covers g8.",
     "intro_kid": "Rook and knight are best friends here: the knight protects the rook, and the rook gives checkmate in the corner!",
     "task": "{{side}} to move. Mate with rook and knight!"
+  },
+  "opera": {
+    "title": "Opera mate",
+    "desc": "A rook mates on the edge, a bishop guards the rook.",
+    "intro": "The **Opera mate** (named after a famous game Paul Morphy played in a Paris opera box): a rook mates on the back rank, and a bishop protects it. Here Black even sacrifices the queen: **Qf1+!** – **Rxf1** is forced, and **Rxf1#**. The bishop on h3 protects the rook and guards g2.",
+    "intro_kid": "The rook gives checkmate on the bottom row, and the bishop protects it from far away – the king can't take it!",
+    "task": "{{side}} to move. Mate with rook and bishop!"
+  },
+  "hook": {
+    "title": "Hook mate",
+    "desc": "Rook, knight and pawn catch the king together.",
+    "intro": "The **hook mate**: a rook gives mate right next to the king, a knight protects the rook, and a pawn protects the knight – a chain the king can't break. Here: **Rc8+** Kf7, and **Rf8#**. The knight on e6 protects the rook and covers g7, the pawn on d5 protects the knight, and the black pawns on e7 and g6 block the rest.",
+    "intro_kid": "Rook, knight and pawn hold hands: the pawn protects the knight, the knight protects the rook – and the rook gives checkmate!",
+    "task": "{{side}} to move. Rook and knight: mate!"
+  },
+  "pillsbury": {
+    "title": "Pillsbury's mate",
+    "desc": "A rook on the open g-file, a bishop on the long diagonal.",
+    "intro": "**Pillsbury's mate**: a rook gives mate, and a bishop from far away takes the king's last escape square. Here the black king on h8 has only g8 to go to – but the bishop on b3 looks right at it. **Rh1+** – Black can only put the queen in between (**…Qh5**), and **Rxh5#**.",
+    "intro_kid": "The rook gives check on the edge, and the bishop blocks the last way out from the other side of the board!",
+    "task": "{{side}} to move. Rook and bishop against the castled king – find the mate!"
   },
   "square": {
     "title": "The rule of the square",
@@ -542,6 +611,13 @@
     "intro_kid": "Zugzwang is when you'd love to say “I pass!” – but in chess you always have to move, even when every move is bad.",
     "task": "{{side}} to move. Every tempo counts – find the best move!"
   },
+  "only-move": {
+    "title": "The only move",
+    "desc": "Under pressure, only one move holds. Find it.",
+    "intro": "Sometimes you are under attack and only one move doesn't lose. Before you move, look at **every** threat of your opponent: what is attacked, and what happens after each of your ideas? Here the black rook on d8 attacks the white queen. **Qxf6** saves the queen and takes a knight on the way. After **…Qa6+** only **Kf3** keeps everything – any other move loses material.",
+    "intro_kid": "Your opponent attacks! Only one move saves you. Look carefully at what is attacked before you move.",
+    "task": "{{side}} to move. Only one move saves you – which one?"
+  },
   "clearance": {
     "title": "Clearance",
     "desc": "Get out of the way – with tempo.",
@@ -569,6 +645,34 @@
     "intro": "A pawn almost always becomes a queen – but not always! Here **e1=N+** gives check **and** attacks the queen on f3: a fork that a new queen on e1 could not make. After Kf2 the knight takes the queen: **Nxf3**.",
     "intro_kid": "Surprise! Instead of a queen, the pawn turns into a knight – because only a knight can attack king and queen at the same time here.",
     "task": "{{side}} to move. Which piece should the pawn become?"
+  },
+  "boden": {
+    "title": "Boden's mate",
+    "desc": "Two bishops on crossing diagonals mate a king that castled long.",
+    "intro": "**Boden's mate**: two bishops on crossing diagonals mate a king whose own pieces are in the way – typical after the king castled queenside. The way there is often a queen sacrifice that opens a diagonal. Here: **Qxc6+!** **…bxc6** and **Ba6#**. The bishop on a6 gives check, the one on f4 covers b8, and the black rook and knight block d8 and d7.",
+    "intro_kid": "Two bishops make an X in front of the king – and his own pieces stand in his way. First the queen sacrifices herself to open the way!",
+    "task": "{{side}} to move. Mate with the two bishops!"
+  },
+  "dovetail": {
+    "title": "Dovetail mate",
+    "desc": "The queen mates right next to the king, whose own pieces block the way out.",
+    "intro": "The **dovetail mate** (also called Cozio's mate): the queen gives mate from right next to the king, protected by another piece, and the king's own pieces block the squares behind it. Here: **Qxf4+** takes the rook with check, **…Kg6**, and **Qf5#**. The rook on f1 protects the queen, and the black pawns on g7 and h6 stand in the king's way.",
+    "intro_kid": "The queen stands right next to the king, and a friend protects her. The king's own pawns are in his way – checkmate!",
+    "task": "{{side}} to move. Bring the queen next to the king – mate!"
+  },
+  "double-bishop": {
+    "title": "The bishop pair mates",
+    "desc": "Two bishops side by side sweep a whole corner.",
+    "intro": "Two bishops side by side on neighbouring diagonals control a whole corner. Here the queen clears the long diagonal: **Qxc3+!** takes the black bishop, **…bxc3**, and **Bf6#**. The bishop on f6 gives check along the long diagonal, the bishop on e6 covers g8, and the pawn on h7 blocks the last square.",
+    "intro_kid": "Two bishops next to each other are like a big fence around the corner. First the queen makes room – then the bishop gives checkmate!",
+    "task": "{{side}} to move. Let the two bishops finish the king!"
+  },
+  "mate-in-four": {
+    "title": "Mate in four",
+    "desc": "Seven moves deep: the longest combinations of the course.",
+    "intro": "Mate in four means seeing seven moves ahead. The secret: forcing moves. When every move is a check, the opponent has almost no choice, and you only have to follow a few lines. Watch: **Bg6+** – the bishop steps aside, and the queen gives check (a discovered check). **…Kg8 Qh7+ Kf8 Qh8+ Ke7 Qe8#** – the bishop on g6 protects the queen for the final move.",
+    "intro_kid": "Four moves to checkmate! Give check every time – then the king can never breathe.",
+    "task": "{{side}} to move. Mate in four!"
   },
   "rook-endgames": {
     "title": "Rook endgames",
@@ -599,5 +703,19 @@
     "plan_wait": "Keep the rook on the 6th rank",
     "plan_king": "Run with the king to attack the pawn",
     "plan_done": "Right! From behind, the rook can check the white king again and again – a draw."
+  },
+  "minor-endgames": {
+    "title": "Bishop and knight endgames",
+    "desc": "Few pieces, every move counts: the king joins the fight.",
+    "intro": "With only bishops, knights and pawns left, every tempo counts, and the king is a fighting piece. Tactics still decide a lot: here the black knight on c5 is protected only by its king. **a5+** – the pawn gives check and lures the king away (**…Kxa5**), and **Kxc5** wins the knight.",
+    "intro_kid": "Only a few pieces are left – now the king fights too! Trick the other king away from his knight.",
+    "task": "{{side}} to move. Find the best move!"
+  },
+  "queen-endgames": {
+    "title": "Queen endgames",
+    "desc": "Checks, forks and runaway pawns: queens are fast.",
+    "intro": "Queen endgames are full of checks: a queen can give check from almost anywhere. Watch for forks – and for the moment when trading queens wins, because your pawns are faster. Here: **Qa1+ Kh2 Qe5+** – check, and the queens come off: **Qxe5 fxe5**. Now the black a-pawn is far away from the white king and runs to a1.",
+    "intro_kid": "Queens are the fastest pieces! Sometimes the best trick is to swap them – then your pawn wins the race.",
+    "task": "{{side}} to move. Find the best move!"
   }
 }
