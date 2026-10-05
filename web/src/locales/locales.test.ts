@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { createInstance } from 'i18next';
 import en from './en.json';
 import de from './de.json';
 import learnEn from './learn/en.json';
 import learnDe from './learn/de.json';
+import learnRu from './learn/ru.json';
 import ru from './ru.json';
+import { loadLearnTexts } from '../learn/content';
 import { goalText } from '../lib/goalText';
 
 type Tree = { [k: string]: string | Tree };
@@ -37,21 +40,29 @@ describe('de locale', () => {
   });
 });
 
-// The lesson texts are their own namespace; same rule. A missing German key
-// would put an English sentence into a German lesson.
-describe('de lesson texts', () => {
+// Lesson texts have their own namespace; missing keys must not silently put
+// English sentences into a translated lesson.
+describe.each([['de', learnDe], ['ru', learnRu]] as const)('%s lesson texts', (lang, texts) => {
   const enFlat = flatten(learnEn as Tree);
-  const deFlat = flatten(learnDe as Tree);
+  const translated = flatten(texts as Tree);
 
   it('has every key that en has, and nothing else', () => {
-    expect(Object.keys(deFlat).sort()).toEqual(Object.keys(enFlat).sort());
+    expect(Object.keys(translated).sort()).toEqual(Object.keys(enFlat).sort());
   });
 
   it('keeps every placeholder and every bold mark', () => {
     for (const key of Object.keys(enFlat)) {
-      expect(placeholders(deFlat[key] ?? ''), key).toEqual(placeholders(enFlat[key]!));
+      expect(placeholders(translated[key] ?? ''), key).toEqual(placeholders(enFlat[key]!));
       // **bold** pairs must stay pairs, or the markers would show as text.
-      expect((deFlat[key]!.match(/\*\*/g) ?? []).length % 2, key).toBe(0);
+      expect((translated[key]!.match(/\*\*/g) ?? []).length % 2, key).toBe(0);
+    }
+  });
+
+  it('loads the translated namespace used by lessons', async () => {
+    await loadLearnTexts(lang);
+    const { default: i18n } = await import('../i18n');
+    for (const [key, value] of Object.entries(translated)) {
+      expect(i18n.getResource(lang, 'learn', key), key).toBe(value);
     }
   });
 });
@@ -65,23 +76,10 @@ describe('ru locale', () => {
   const ruFlat = flatten(ru as Tree);
   const PLURAL = /_(one|few|many|other)$/;
   const RU_FORMS = ['one', 'few', 'many', 'other'];
-  // Keys that landed in the same release as Russian (7.16.0), before they
-  // could be translated. The trainer and Learn texts are still in beta and
-  // moving, so they wait until they settle; until then these fall back to
-  // English. Every other key — including any added later — must be in ru.json.
-  const PENDING = [
-    'openings.trainer.', 'openings.emptyTrainer', 'learn.', 'home.learn', 'shortcuts.goLearn',
-    'insights.ach.learning', 'common.beta',
-    'achievements.first_lesson.', 'achievements.eager_student.', 'achievements.star_collector.',
-    'admin.deepseek', 'admin.engineBackendNote', 'setup.llmHint', 'review.importError.import_in_progress',
-    'insights.moveQuality', 'insights.brilliantMoves', 'insights.noBrilliant', 'insights.vsOpponent',
-    'train.tabs.', 'train.puzzles.',
-  ];
 
   it('has every key that en has, and nothing else', () => {
     const expected = new Set<string>();
     for (const key of Object.keys(enFlat)) {
-      if (PENDING.some((p) => key.startsWith(p)) && !(key in ruFlat)) continue;
       if (PLURAL.test(key)) for (const f of RU_FORMS) expected.add(key.replace(PLURAL, `_${f}`));
       else expected.add(key);
     }
@@ -92,6 +90,22 @@ describe('ru locale', () => {
     for (const [key, value] of Object.entries(ruFlat)) {
       const enKey = PLURAL.test(key) ? key.replace(PLURAL, '_other') : key;
       expect(placeholders(value), key).toEqual(placeholders(enFlat[enKey]!));
+    }
+  });
+
+  it('uses Russian plurals for lesson and trainer counts', async () => {
+    const i18n = createInstance();
+    await i18n.init({ lng: 'ru', fallbackLng: 'en', resources: {
+      en: { translation: en }, ru: { translation: ru },
+    } });
+    for (const [count, form] of [[1, 'one'], [2, 'few'], [5, 'many'], [11, 'many'],
+      [21, 'one'], [22, 'few'], [25, 'many'], [1.5, 'other']] as const) {
+      for (const key of ['learn.tasks', 'learn.starsGained', 'learn.play.wonMate',
+        'openings.trainer.branchCount', 'openings.trainer.practiseBranches']) {
+        expect(i18n.t(key, { count }), `${key}: ${count}`).toBe(
+          ruFlat[`${key}_${form}`]!.replace('{{count}}', String(count)),
+        );
+      }
     }
   });
 });
