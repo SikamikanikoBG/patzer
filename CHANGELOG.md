@@ -4,6 +4,29 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [7.18.1] — 2026-10-05
+
+### Moves land the instant you drop them
+
+- **Fixed: a dropped piece jumped back to its square until the server
+  answered.** In a timed game the page redraws ten times a second for the
+  clock, and every redraw put the board back to the last position the server
+  had confirmed, so your move only appeared after a round trip. A drag still
+  in progress was reset on the next tick too, and arrows you had drawn
+  vanished. On bullet that felt like input lag. The board now only updates
+  when something on it actually changes, and your move is on the board, with
+  its sound, the moment you let go. The server's answer just confirms it, or
+  puts the board back if it rejects the move.
+- **Premoves right after your move.** Until the server confirmed your move
+  the board still thought it was your turn, so a quick premove was sent as a
+  real move and rejected. It is now queued as a premove.
+
+### Merged contributions (thanks, @Fristail27)
+
+- **Russian Learn, puzzles and opening trainer.** Every lesson text (kid
+  versions included), the tactic puzzles and the opening trainer are now in
+  Russian, and the locale check covers Russian lesson texts like German ones.
+
 ## [7.18.0] — 2026-10-03
 
 ### Game Review explains itself
