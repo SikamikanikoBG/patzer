@@ -25,13 +25,16 @@
     "test:resume": "tsx server/test/e2e/resume.ts",
     "test:ui": "tsx server/test/e2e/pvp-ui.ts",
     "test:resume-ui": "tsx server/test/e2e/resume-ui.ts",
+    "test:oidc": "tsx server/test/e2e/oidc-sso.ts",
     "verify:lessons": "node scripts/verify-lessons.mjs",
     "build:tactics": "node scripts/build-tactics-set.mjs"
   },
   "devDependencies": {
     "@testing-library/react": "^16.3.3",
+    "@types/oidc-provider": "^9.12.1",
     "concurrently": "^9.0.1",
     "happy-dom": "^20.14.5",
+    "oidc-provider": "^9.12.2",
     "typescript": "^5.6.3",
     "vitest": "^3.2.7"
   },

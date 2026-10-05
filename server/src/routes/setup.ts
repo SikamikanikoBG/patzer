@@ -10,8 +10,11 @@ import { connectionHint } from '../coach/connectionHint.js';
 
 const router = new Hono();
 
+// In SSO-only mode there's no wizard: nobody could use the local password it
+// asks for. The web app goes straight to the login page, and the first SSO
+// login creates the admin (see prepareSsoOnlyFirstRun in auth/oidc.ts).
 router.get('/status', (c) => {
-  return c.json({ setup_required: userCount() === 0 });
+  return c.json({ setup_required: userCount() === 0 && !config.oidc.only });
 });
 
 // Restrict the unauthenticated SSRF surface to hosts a sane Ollama deploy
@@ -53,6 +56,7 @@ export function isPrivateOllamaUrl(raw: string): boolean {
 // want to leak before any user has been created.
 router.post('/test-ollama', async (c) => {
   if (userCount() > 0) return c.json({ error: 'already_initialized' }, 409);
+  if (config.oidc.only) return c.json({ error: 'setup_disabled' }, 403);
   const body = await c.req.json().catch(() => null) as { url?: string } | null;
   const url = body?.url;
   if (!url) return c.json({ ok: false, error: 'no_url' });
@@ -75,6 +79,7 @@ const setupSchema = z.object({
 
 router.post('/init', async (c) => {
   if (userCount() > 0) return c.json({ error: 'already_initialized' }, 409);
+  if (config.oidc.only) return c.json({ error: 'password_login_disabled' }, 403);
 
   const body = await c.req.json().catch(() => null);
   const parsed = setupSchema.safeParse(body);

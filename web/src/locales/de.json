@@ -64,6 +64,18 @@
     "submitting": "Anmeldung läuft…",
     "invalid": "Benutzername oder Passwort ist falsch"
   },
+  "sso": {
+    "signIn": "Mit SSO anmelden",
+    "or": "oder",
+    "errUnavailable": "Der Anmeldedienst ist gerade nicht erreichbar. Bitte versuche es gleich noch einmal",
+    "errExpired": "Die Anmeldung hat zu lange gedauert. Bitte versuche es erneut",
+    "errDenied": "Die Anmeldung wurde abgebrochen oder nicht erlaubt",
+    "errNotProvisioned": "Du hast noch kein Patzer-Konto. Bitte den Admin, eins anzulegen",
+    "errConflict": "Dieses Konto ist bereits mit einer anderen Anmeldung verknüpft. Wende dich an den Admin",
+    "errAdminFirst": "Dieser Server wartet darauf, dass sich zuerst ein Admin anmeldet. Bitte versuche es später noch einmal",
+    "errFailed": "Single Sign-on hat nicht geklappt. Bitte versuche es erneut",
+    "errPasswordDisabled": "Die Anmeldung mit Passwort ist auf diesem Server deaktiviert. Nutze Single Sign-on"
+  },
   "play": {
     "newGame": "Neue Partie",
     "difficulty": "Schwierigkeit",
@@ -551,7 +563,13 @@
     "deepseekKeyEnv": "Kommt aus der Umgebungsvariable DEEPSEEK_API_KEY — dieses Feld wird ignoriert.",
     "deepseekKeySaved": "Ein Schlüssel ist gespeichert. Gib einen neuen ein, um ihn zu ersetzen, oder lass das Feld leer, um ihn zu behalten.",
     "deepseekKeyHint": "Wird in den Einstellungen dieses Servers gespeichert. Vor „Testen“ zuerst speichern.",
-    "engineBackendNote": "Die Partieanalyse nutzt standardmäßig das mitgelieferte lokale Stockfish. Für die gehostete Engine von chess-api.com setze stattdessen <code>ENGINE_BACKEND=chessapi</code> (Umgebungsvariable) oder die Einstellung <code>engine_backend</code> — z. B. für eine öffentliche Test-Instanz (DEMO_MODE, #27)."
+    "engineBackendNote": "Die Partieanalyse nutzt standardmäßig das mitgelieferte lokale Stockfish. Für die gehostete Engine von chess-api.com setze stattdessen <code>ENGINE_BACKEND=chessapi</code> (Umgebungsvariable) oder die Einstellung <code>engine_backend</code> — z. B. für eine öffentliche Test-Instanz (DEMO_MODE, #27).",
+    "colSignIn": "Anmeldung",
+    "signInSso": "SSO",
+    "signInPassword": "Passwort",
+    "signInSsoHint": "Durch eine Single-Sign-on-Anmeldung angelegt",
+    "signInPasswordHint": "Mit Benutzername und Passwort angelegt",
+    "ssoLinked": "mit SSO verknüpft"
   },
   "palette": {
     "switchLanguage": "Wechseln zu",

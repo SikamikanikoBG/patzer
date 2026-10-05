@@ -29,7 +29,8 @@ router.use('*', requireAdmin);
 
 router.get('/users', (c) => {
   const rows = db.prepare(`
-    SELECT u.id, u.username, u.role, u.created_at, u.email, u.email_verified,
+    SELECT u.id, u.username, u.role, u.created_at, u.email, u.email_verified, u.created_via,
+           EXISTS (SELECT 1 FROM oidc_identities o WHERE o.user_id = u.id) AS sso_linked,
            p.display_name, p.avatar_emoji, p.language, p.audience,
            i.code AS invite_code, i.note AS invite_note
     FROM users u JOIN profiles p ON p.user_id = u.id

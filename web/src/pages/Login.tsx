@@ -1,7 +1,7 @@
 import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, Link } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { KeyRound, LogIn } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
@@ -10,10 +10,23 @@ import { humanizeError } from '../lib/errors';
 import { LogoMark } from '../components/Logo';
 import { LANGUAGES, normalizeLanguage } from '../lib/languages';
 
+// /login?sso_error=<code> after a failed single sign-on (see server/src/auth/oidc.ts).
+const SSO_ERROR_KEYS: Record<string, string> = {
+  unavailable: 'sso.errUnavailable',
+  expired: 'sso.errExpired',
+  denied: 'sso.errDenied',
+  not_provisioned: 'sso.errNotProvisioned',
+  conflict: 'sso.errConflict',
+  admin_first: 'sso.errAdminFirst',
+  rate_limited: 'auth.errRateLimited',
+};
+
 export default function Login() {
   const { t, i18n } = useTranslation();
   const { refresh } = useAuth();
-  const { config } = useAuthConfig();
+  const { config, loaded } = useAuthConfig();
+  const [params] = useSearchParams();
+  const ssoError = params.get('sso_error');
   const nav = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -59,42 +72,70 @@ export default function Login() {
           <p className="mt-1 text-sm text-ink-500">{t('app.tagline')}</p>
         </div>
 
-        <form onSubmit={submit} className="card space-y-4 p-6 shadow-lift">
-          <h2 className="text-lg font-semibold">{t('login.title')}</h2>
-          <div>
-            <label className="label mb-1 block" htmlFor="login-username">{t('common.username')}</label>
-            <input id="login-username" className="input" autoComplete="username" autoFocus value={username} onChange={(e) => setUsername(e.target.value)} />
-          </div>
-          <div>
-            <label className="label mb-1 block" htmlFor="login-password">{t('common.password')}</label>
-            <input id="login-password" className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-          </div>
-          {error && (
-            <div role="alert" aria-live="assertive" className="rounded-lg border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-bad">
-              {error}
-              {unverified && (
-                <Link to="/verify-email" className="mt-1 block font-medium underline">{t('auth.resendVerification')}</Link>
-              )}
-            </div>
-          )}
-          <button type="submit" disabled={busy || !username || !password} className="btn-primary w-full">
-            <LogIn className="h-4 w-4" />
-            {busy ? t('login.submitting') : t('login.submit')}
-          </button>
+        {/* Wait for /api/auth/config, so SSO-only servers never flash the password form. */}
+        {loaded && (
+          <form onSubmit={submit} className="card space-y-4 p-6 shadow-lift">
+            <h2 className="text-lg font-semibold">{t('login.title')}</h2>
+            {ssoError && (
+              <div role="alert" className="rounded-lg border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-bad">
+                {t(SSO_ERROR_KEYS[ssoError] ?? 'sso.errFailed')}
+              </div>
+            )}
 
-          {(config.signup_enabled || config.email_enabled) && (
-            <div className="flex items-center justify-between pt-1 text-sm">
-              {config.signup_enabled
-                ? <Link to="/signup" className="font-medium text-accent-600 hover:underline">
-                    {config.signup_mode === 'invite' ? t('auth.haveInvite') : t('auth.createAccount')}
-                  </Link>
-                : <span />}
-              {config.email_enabled && (
-                <Link to="/forgot-password" className="text-ink-500 hover:underline">{t('auth.forgotPassword')}</Link>
-              )}
-            </div>
-          )}
-        </form>
+            {config.oidc_enabled && (
+              // A plain link, not fetch: the server answers with a redirect to the provider.
+              <a href="/api/auth/oidc/start" className={`${config.oidc_only ? 'btn-primary' : 'btn-secondary'} w-full`}>
+                <KeyRound className="h-4 w-4" />
+                {config.oidc_button_text || t('sso.signIn')}
+              </a>
+            )}
+            {config.oidc_enabled && !config.oidc_only && (
+              <div className="flex items-center gap-3 text-xs uppercase tracking-wide text-ink-400">
+                <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" />
+                {t('sso.or')}
+                <span className="h-px flex-1 bg-ink-200 dark:bg-ink-700" />
+              </div>
+            )}
+
+            {!config.oidc_only && (
+              <>
+                <div>
+                  <label className="label mb-1 block" htmlFor="login-username">{t('common.username')}</label>
+                  <input id="login-username" className="input" autoComplete="username" autoFocus value={username} onChange={(e) => setUsername(e.target.value)} />
+                </div>
+                <div>
+                  <label className="label mb-1 block" htmlFor="login-password">{t('common.password')}</label>
+                  <input id="login-password" className="input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                </div>
+                {error && (
+                  <div role="alert" aria-live="assertive" className="rounded-lg border border-bad/30 bg-bad/10 px-3 py-2 text-sm text-bad">
+                    {error}
+                    {unverified && (
+                      <Link to="/verify-email" className="mt-1 block font-medium underline">{t('auth.resendVerification')}</Link>
+                    )}
+                  </div>
+                )}
+                <button type="submit" disabled={busy || !username || !password} className="btn-primary w-full">
+                  <LogIn className="h-4 w-4" />
+                  {busy ? t('login.submitting') : t('login.submit')}
+                </button>
+
+                {(config.signup_enabled || config.email_enabled) && (
+                  <div className="flex items-center justify-between pt-1 text-sm">
+                    {config.signup_enabled
+                      ? <Link to="/signup" className="font-medium text-accent-600 hover:underline">
+                          {config.signup_mode === 'invite' ? t('auth.haveInvite') : t('auth.createAccount')}
+                        </Link>
+                      : <span />}
+                    {config.email_enabled && (
+                      <Link to="/forgot-password" className="text-ink-500 hover:underline">{t('auth.forgotPassword')}</Link>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </form>
+        )}
 
         <div className="mt-6 flex justify-center gap-3 text-xs text-ink-400">
           {LANGUAGES.map((l, i) => (

@@ -13,6 +13,8 @@ interface UserRow {
   display_name: string; avatar_emoji: string; language: Language; audience: string;
   email: string | null; email_verified: number;
   invite_code: string | null; invite_note: string | null;
+  // How the account was created, and whether a single sign-on identity is linked to it.
+  created_via: 'password' | 'sso'; sso_linked: number;
 }
 
 export default function AdminUsers() {
@@ -50,6 +52,7 @@ export default function AdminUsers() {
             <tr>
               <th className="px-4 py-2 text-left">{t('admin.colUser')}</th>
               <th className="px-4 py-2 text-left">{t('admin.role')}</th>
+              <th className="px-4 py-2 text-left">{t('admin.colSignIn')}</th>
               <th className="px-4 py-2 text-left">{t('common.language')}</th>
               <th className="px-4 py-2 text-left">{t('admin.audience')}</th>
               <th className="px-4 py-2"></th>
@@ -80,6 +83,20 @@ export default function AdminUsers() {
                   <span className={`badge ${u.role === 'admin' ? 'bg-accent-100 text-accent-700' : 'bg-ink-100 text-ink-600 dark:bg-ink-700 dark:text-ink-200'}`}>
                     {t(u.role === 'admin' ? 'admin.roleAdmin' : 'admin.roleUser')}
                   </span>
+                </td>
+                <td className="px-4 py-2">
+                  {u.created_via === 'sso' ? (
+                    <span className="badge bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300" title={t('admin.signInSsoHint')}>
+                      {t('admin.signInSso')}
+                    </span>
+                  ) : (
+                    <span className="badge bg-ink-100 text-ink-600 dark:bg-ink-700 dark:text-ink-200" title={t('admin.signInPasswordHint')}>
+                      {t('admin.signInPassword')}
+                    </span>
+                  )}
+                  {u.created_via !== 'sso' && !!u.sso_linked && (
+                    <div className="mt-0.5 text-xs text-ink-400">{t('admin.ssoLinked')}</div>
+                  )}
                 </td>
                 <td className="px-4 py-2 uppercase text-xs">{u.language}</td>
                 <td className="px-4 py-2 capitalize">{u.audience}</td>

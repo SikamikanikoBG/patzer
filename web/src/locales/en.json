@@ -64,6 +64,18 @@
     "submitting": "Signing in…",
     "invalid": "Invalid username or password"
   },
+  "sso": {
+    "signIn": "Sign in with SSO",
+    "or": "or",
+    "errUnavailable": "The sign-in service can't be reached right now. Please try again in a moment",
+    "errExpired": "That sign-in took too long. Please try again",
+    "errDenied": "Sign-in was cancelled or not allowed",
+    "errNotProvisioned": "You don't have a Patzer account yet. Ask the admin to create one",
+    "errConflict": "This account is already linked to a different sign-in. Ask the admin for help",
+    "errAdminFirst": "This server is waiting for its administrator to sign in first. Please try again later",
+    "errFailed": "Single sign-on didn't work. Please try again",
+    "errPasswordDisabled": "Password sign-in is turned off on this server. Use single sign-on instead"
+  },
   "play": {
     "newGame": "New Game",
     "difficulty": "Difficulty",
@@ -551,7 +563,13 @@
     "deepseekKeyEnv": "Supplied by the DEEPSEEK_API_KEY environment variable — this field is ignored.",
     "deepseekKeySaved": "A key is saved. Type a new one to replace it, or leave blank to keep it.",
     "deepseekKeyHint": "Saved in this server's settings. Save before clicking Test.",
-    "engineBackendNote": "Game Review runs on the bundled local Stockfish by default. To use the hosted chess-api.com engine instead, set <code>ENGINE_BACKEND=chessapi</code> (env) or the <code>engine_backend</code> setting — e.g. for a public try-it instance (DEMO_MODE, #27)."
+    "engineBackendNote": "Game Review runs on the bundled local Stockfish by default. To use the hosted chess-api.com engine instead, set <code>ENGINE_BACKEND=chessapi</code> (env) or the <code>engine_backend</code> setting — e.g. for a public try-it instance (DEMO_MODE, #27).",
+    "colSignIn": "Sign-in",
+    "signInSso": "SSO",
+    "signInPassword": "Password",
+    "signInSsoHint": "Created by a single sign-on login",
+    "signInPasswordHint": "Created with a username and password",
+    "ssoLinked": "linked to SSO"
   },
   "palette": {
     "switchLanguage": "Switch to",
