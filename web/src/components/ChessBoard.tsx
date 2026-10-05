@@ -123,6 +123,15 @@ export default function ChessBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Compare by value: the page builds a fresh `lastMove`/`arrows` array every
+  // render, and during a timed game it renders ten times a second for the
+  // clock. Keyed on identity, every tick re-`set()` the board to the last
+  // position the server confirmed — a piece you had just dropped jumped back
+  // to its square until the server answered, a drag in progress was reset,
+  // and drawn arrows vanished. On bullet that read as input lag.
+  const lastMoveKey = lastMove ? lastMove.join('') : '';
+  const arrowsKey = arrows ? arrows.map((a) => `${a.orig}${a.dest}${a.brush ?? ''}`).join(',') : '';
+
   // Sync on prop changes (also when resetKey bumps — used to roll back illegal/cancelled moves)
   useEffect(() => {
     if (!apiRef.current) return;
@@ -144,7 +153,8 @@ export default function ChessBoard({
       apiRef.current.setShapes([]);
     }
     syncBounds();
-  }, [fen, orientation, turnColor, lastMove, movable, arrows, resetKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fen, orientation, turnColor, lastMoveKey, movable, arrowsKey, resetKey]);
 
   function pickPromotion(piece: PieceLetter) {
     if (!promotion) return;

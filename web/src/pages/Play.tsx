@@ -197,6 +197,13 @@ export default function Play() {
   premovesRef.current = premoves;
   const [boardKey, setBoardKey] = useState(0);
   const forceBoardSync = () => setBoardKey((k) => k + 1);
+  // The move we just played, shown on the board before the server confirms
+  // it. Without it the board's position stayed the pre-move one for a round
+  // trip, and the next drag (a premove, in bullet) was offered from a
+  // position where it was still our turn.
+  const [pending, setPending] = useState<{ fen: string; from: string; to: string } | null>(null);
+  // uci of our move whose sound already played on the drop; its echo stays quiet.
+  const soundedRef = useRef<string | null>(null);
 
   const tickRef = useRef<number | null>(null);
   const fenBeforeMoveRef = useRef<string>(fen);
@@ -382,6 +389,7 @@ export default function Play() {
     setGameOverDismissed(false);
     setDrawOffer(null); setTakeback(null); setRematch(null); setRematchDeclined(false);
     setMoreOpen(false); setSheetOpen(false);
+    setPending(null);
     clearPremoves();
   }
 
@@ -421,6 +429,7 @@ export default function Play() {
         const alreadyOver = !!resultRef.current;
         setPhase(alreadyOver ? 'over' : 'playing');
         const startFen = msg.fen ?? START_FEN;
+        setPending(null);
         if (msg.fen) setFen(msg.fen);
         if (msg.your_color) setUserColor(msg.your_color);
         if (msg.opponent) setOpponent({ display_name: msg.opponent.display_name, online: msg.opponent.online });
@@ -451,7 +460,7 @@ export default function Play() {
         setTakeback(null);
         break;
       case 'takeback_applied': {
-        setTakeback(null); setDrawOffer(null); clearPremoves();
+        setTakeback(null); setDrawOffer(null); clearPremoves(); setPending(null);
         if (msg.fen) setFen(msg.fen);
         loadHistory(msg.history, msg.fen ?? START_FEN);
         if (msg.whiteTimeMs !== undefined) setWhiteMs(msg.whiteTimeMs);
@@ -481,10 +490,12 @@ export default function Play() {
         setOpponent((o) => o ? { ...o, online: !!msg.online } : o);
         break;
       case 'move_made': {
+        setPending(null);
         if (msg.fen) setFen(msg.fen);
         if (msg.san && msg.uci) {
-          const flags = inferMoveFlagsFromSan(msg.san);
-          soundForMove(flags);
+          // Our own move already made its sound when it was dropped.
+          if (soundedRef.current === msg.uci) soundedRef.current = null;
+          else soundForMove(inferMoveFlagsFromSan(msg.san));
           setMoves((m) => [...m, { ply: m.length + 1, san: msg.san!, uci: msg.uci! }]);
         }
         if (msg.fen && msg.uci) {
@@ -509,6 +520,7 @@ export default function Play() {
             if (next && isLegalIn(msg.fen, next)) {
               premovesRef.current = rest;
               setPremoves(rest);
+              playLocally(msg.fen, next.uci, true);
               commitMove(next.uci);
             } else {
               clearPremoves();
@@ -544,7 +556,7 @@ export default function Play() {
       }
       case 'preview_result': {
         setPreviewing(false);
-        if (!msg.ok) { setBlunder(null); break; }
+        if (!msg.ok) { setBlunder(null); setPending(null); forceBoardSync(); break; }
         const cls = msg.classification!;
         // If kid mode AND it's a mistake/blunder/miss, prompt
         if ((cls === 'mistake' || cls === 'blunder' || cls === 'miss') && user?.profile.blunder_warning) {
@@ -564,6 +576,7 @@ export default function Play() {
       }
       case 'game_over':
         clearPremoves();
+        setPending(null);
         setPhase('over');
         playSound('game_end');
         if (msg.result) setResult({ result: msg.result, reason: msg.reason ?? '', gameId: msg.game_id });
@@ -590,6 +603,7 @@ export default function Play() {
         // Server rejected something (illegal move etc) — re-sync the board and
         // drop the queue: whatever we thought the position was, it isn't.
         clearPremoves();
+        setPending(null); soundedRef.current = null;
         forceBoardSync();
         setPreviewing(false);
         break;
@@ -604,7 +618,7 @@ export default function Play() {
   /** Board move handler. Plays immediately when it's our turn and nothing is
    *  queued; otherwise adds to the premove queue. */
   function onBoardMove(uci: string) {
-    const myTurnNow = turn === userColor && premoves.length === 0;
+    const myTurnNow = boardTurn === userColor && premoves.length === 0;
     if (myTurnNow) { attemptMove(uci); return; }
     if (phase !== 'playing' || isBrowsing || blunder || previewing) return;
     const from = uci.slice(0, 2), to = uci.slice(2, 4);
@@ -625,11 +639,26 @@ export default function Play() {
     const enableWarning = !!user?.profile.blunder_warning;
     fenBeforeMoveRef.current = fen;
     if (enableWarning) {
+      // Shown, but not sounded: the warning may still take it back.
+      playLocally(fen, uci, false);
       setPreviewing(true);
       socket().send({ type: 'preview_move', uci });
     } else {
+      playLocally(fen, uci, true);
       commitMove(uci);
     }
+  }
+
+  /** Put our move on the board (and play its sound) now, not when the server
+   *  echoes it back — `move_made` then only confirms it. */
+  function playLocally(baseFen: string, uci: string, sound: boolean) {
+    try {
+      const c = new Chess(baseFen);
+      const m = c.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4) || undefined });
+      if (!m) return;
+      setPending({ fen: c.fen(), from: m.from, to: m.to });
+      if (sound) { soundForMove(inferMoveFlagsFromSan(m.san)); soundedRef.current = uci; }
+    } catch { /* illegal here — the server will say so and the board re-syncs */ }
   }
 
   function commitMove(uci: string) {
@@ -639,6 +668,7 @@ export default function Play() {
 
   function tryAnotherMove() {
     setBlunder(null);
+    setPending(null);
     forceBoardSync(); // roll back the chessground visual to the authoritative FEN
   }
 
@@ -681,11 +711,17 @@ export default function Play() {
   const displayedPos = positions[browseIndex ?? liveIndex] ?? positions[0]!;
   // The board shows the queue already played, which is the "trace" — you see
   // where your pieces will be, not just arrows.
-  const shadowFen = applyPremoves(fen, premoves, userColor);
+  // The board runs on our move already played; the clocks and the rest of the
+  // page wait for the server's `fen`.
+  const boardFen = pending?.fen ?? fen;
+  const boardTurn = boardFen.split(' ')[1] === 'w' ? 'white' : 'black';
+  const shadowFen = applyPremoves(boardFen, premoves, userColor);
   const displayedFen = isBrowsing ? displayedPos.fen : shadowFen;
-  const displayedLastMove: [string, string] | undefined = displayedPos.lastFrom && displayedPos.lastTo
-    ? [displayedPos.lastFrom, displayedPos.lastTo]
-    : undefined;
+  const displayedLastMove: [string, string] | undefined = pending && !isBrowsing
+    ? [pending.from, pending.to]
+    : displayedPos.lastFrom && displayedPos.lastTo
+      ? [displayedPos.lastFrom, displayedPos.lastTo]
+      : undefined;
   // Premoving means the board stays live on the opponent's clock. The shadow
   // position always has us to move, so chessground offers our own pieces.
   const premoveArrows = premoves.map((p) => ({ orig: p.from, dest: p.to, brush: 'yellow' }));
@@ -695,7 +731,7 @@ export default function Play() {
   // guessing past that point is fiction.
   const canQueueMore = shadowTurn === userColor && premoves.length < MAX_PREMOVES;
   const movable = phase === 'playing' && !blunder && !previewing && !isBrowsing
-    && (turn === userColor ? true : canQueueMore);
+    && (boardTurn === userColor ? true : canQueueMore);
   const goToLive = () => setBrowseIndex(null);
   const stepBack = () => setBrowseIndex((b) => Math.max(0, (b ?? liveIndex) - 1));
   const stepForward = () => setBrowseIndex((b) => {
