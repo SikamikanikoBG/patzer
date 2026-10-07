@@ -84,10 +84,13 @@ export default function ChessBoard({
       orientation,
       turnColor,
       coordinates: true,
-      // No slide animation. In a real game the 200ms tween is dead time: you
-      // see the piece arrive later than the board already knows, and on a fast
-      // time control that reads as lag. Pieces appear where they are.
-      animation: { enabled: false, duration: 0 },
+      // Pieces slide to their square. Only moves the board is told about
+      // (opponent's move, click-click moves, stepping through a game) tween —
+      // a dragged piece is already where you dropped it. Off for
+      // `prefers-reduced-motion`.
+      animation: prefersReducedMotion()
+        ? { enabled: false, duration: 0 }
+        : { enabled: true, duration: 200 },
       highlight: { lastMove: true, check: true },
       movable: {
         ...(movable
@@ -218,6 +221,11 @@ export function PromotionPicker({ color, square, orientation, onPick, onCancel }
       </div>
     </>
   );
+}
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined'
+    && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
 function legalDests(fen: string): Map<Key, Key[]> {
