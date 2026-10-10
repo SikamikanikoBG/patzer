@@ -116,7 +116,7 @@ function PlayerColumn({ name, accuracy, elo, perf, side, highlighted }: { name: 
         <span className="truncate text-xs font-semibold uppercase tracking-wide text-chesscom-500">{side === 'white' ? t('review.white') : t('review.black')}</span>
       </div>
       <div className="mt-1 truncate text-sm font-semibold">{name}</div>
-      <div className="mt-3 flex items-center gap-3">
+      <div className="mt-3 flex flex-col items-center gap-3">
         <AccuracyDonut value={accuracy} size={96} showBand />
         <div className="flex flex-col gap-1 text-xs">
           {elo != null && (
