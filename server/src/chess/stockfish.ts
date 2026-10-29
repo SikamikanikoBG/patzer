@@ -56,9 +56,26 @@ export interface EngineMultiEval extends EngineEval {
   candidates: PvCandidate[]; // sorted by multipv ascending; index 0 == best
 }
 
+const activeStockfishEngines = new Set<StockfishEngine>();
+
+function terminateAllActiveEngines(): void {
+  for (const engine of activeStockfishEngines) {
+    try {
+      if (engine.proc && engine.proc.exitCode === null && !engine.proc.killed) {
+        engine.proc.kill('SIGKILL');
+      }
+    } catch { /* ignore */ }
+  }
+  activeStockfishEngines.clear();
+}
+
+process.once('exit', terminateAllActiveEngines);
+process.once('SIGINT', () => { terminateAllActiveEngines(); process.exit(130); });
+process.once('SIGTERM', () => { terminateAllActiveEngines(); process.exit(143); });
+
 export class StockfishEngine {
   readonly kind = 'local' as const;
-  private proc: ChildProcessWithoutNullStreams | null = null;
+  proc: ChildProcessWithoutNullStreams | null = null;
   private buffer = '';
   private waiters: ((line: string) => void)[] = [];
   // Reject callbacks for in-flight evaluate()/bestMove() promises. quit() walks
@@ -89,6 +106,7 @@ export class StockfishEngine {
 
   async start(): Promise<void> {
     this.proc = spawn(this.path, [], { stdio: ['pipe', 'pipe', 'pipe'] });
+    activeStockfishEngines.add(this);
     this.proc.stdout.setEncoding('utf8');
     this.proc.stdout.on('data', (chunk: string) => this.onData(chunk));
     this.proc.on('error', (err) => console.error('[stockfish]', err));
@@ -296,30 +314,57 @@ export class StockfishEngine {
   }
 
   // Async, idempotent shutdown. Sends `stop` + `quit` so any in-flight `go`
-  // finishes promptly, awaits the `bestmove`, then guarantees the OS process
-  // is gone within ~250 ms. Rejects pending waiters so callers stop hanging.
+  // finishes promptly, closes stdin, then guarantees the OS process is gone
+  // via SIGTERM / SIGKILL. Rejects pending waiters so callers never deadlock.
   async quit(): Promise<void> {
     const proc = this.proc;
     if (!proc) return;
     this.proc = null;
     this.ready = false;
-    try { proc.stdin.write('stop\nquit\n'); } catch { /* ignore */ }
-
-    const exited = new Promise<void>((res) => {
-      if (proc.exitCode !== null) return res();
-      proc.once('exit', () => res());
-    });
-    const killed = new Promise<void>((res) => setTimeout(() => {
-      if (proc.exitCode === null) { try { proc.kill('SIGKILL'); } catch { /* ignore */ } }
-      res();
-    }, 250));
-    await Promise.race([exited, killed]);
+    activeStockfishEngines.delete(this);
 
     // Reject every dangling waiter so consumers don't deadlock.
     const handlers = Array.from(this.deathHandlers);
     this.deathHandlers.clear();
     this.waiters = [];
     for (const h of handlers) h(new Error('engine_terminated'));
+
+    try {
+      proc.stdin.write('stop\nquit\n');
+      proc.stdin.end();
+    } catch { /* ignore */ }
+
+    if (proc.exitCode !== null || proc.killed) return;
+
+    await new Promise<void>((res) => {
+      let done = false;
+      const finish = () => {
+        if (!done) {
+          done = true;
+          clearTimeout(termTimer);
+          clearTimeout(killTimer);
+          res();
+        }
+      };
+
+      proc.once('exit', finish);
+      proc.once('close', finish);
+
+      // Give graceful UCI quit 250ms, then try SIGTERM
+      const termTimer = setTimeout(() => {
+        if (proc.exitCode === null && !proc.killed) {
+          try { proc.kill('SIGTERM'); } catch { /* ignore */ }
+        }
+      }, 250);
+
+      // If still not exited after 600ms, force SIGKILL
+      const killTimer = setTimeout(() => {
+        if (proc.exitCode === null && !proc.killed) {
+          try { proc.kill('SIGKILL'); } catch { /* ignore */ }
+        }
+        finish();
+      }, 600);
+    });
   }
 
   isReady(): boolean { return this.ready; }
