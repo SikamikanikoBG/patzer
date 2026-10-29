@@ -251,36 +251,39 @@ export async function analyzePgnFull(
   const history = chess.history({ verbose: true });
 
   const engine = createAnalysisEngine();
+  const engineKind = engine.kind;
   await engine.start();
-  await engine.setOption('Skill Level', 20);
-  // Operational tunables — bigger boxes can spend more. Defaults match v6.
-  const threads = Math.max(1, Math.min(16, Number(process.env.STOCKFISH_THREADS) || 2));
-  const hashMb = Math.max(16, Math.min(4096, Number(process.env.STOCKFISH_HASH) || 128));
-  await engine.setOption('Threads', String(threads));
-  await engine.setOption('Hash', String(hashMb));
-  // `ucinewgame` clears the transposition table so this analysis isn't
-  // polluted by state from whatever the engine was doing last (the engine
-  // is reused across plies of *this* PGN but should start fresh per game).
-  await engine.newGame();
 
   // Replay through positions — from the game's own start for a game played
   // from a position.
   const replay = new Chess(startFenOf(chess));
   const moves: AnalyzedMove[] = [];
-
-  // Pre-evaluate starting position with MultiPV=3 so we can detect "Great"
-  // (only-good-move) and gap-aware "Brilliant" via the second-best candidate.
-  let prevEval = await engine.evaluateMulti(replay.fen(), depth, 3);
-  // Depth each search actually reached. The local engine always reaches the
-  // requested depth; a time-capped remote one (chess-api.com) stops short.
-  const reachedDepths: number[] = [prevEval.depth];
-  let prevWhiteCp = normalizeEval(prevEval.cp, prevEval.mate, replay.turn());
-
+  const reachedDepths: number[] = [];
   // Per-side per-move accuracy + win-pct timeline for the new aggregator.
   const whitePoints: MoveAccPoint[] = [];
   const blackPoints: MoveAccPoint[] = [];
   let whiteCplSum = 0, whiteCplN = 0;
   let blackCplSum = 0, blackCplN = 0;
+
+  try {
+    await engine.setOption('Skill Level', 20);
+    // Operational tunables — bigger boxes can spend more. Defaults match v6.
+    const threads = Math.max(1, Math.min(16, Number(process.env.STOCKFISH_THREADS) || 2));
+    const hashMb = Math.max(16, Math.min(4096, Number(process.env.STOCKFISH_HASH) || 128));
+    await engine.setOption('Threads', String(threads));
+    await engine.setOption('Hash', String(hashMb));
+    // `ucinewgame` clears the transposition table so this analysis isn't
+    // polluted by state from whatever the engine was doing last (the engine
+    // is reused across plies of *this* PGN but should start fresh per game).
+    await engine.newGame();
+
+    // Pre-evaluate starting position with MultiPV=3 so we can detect "Great"
+    // (only-good-move) and gap-aware "Brilliant" via the second-best candidate.
+    let prevEval = await engine.evaluateMulti(replay.fen(), depth, 3);
+    // Depth each search actually reached. The local engine always reaches the
+    // requested depth; a time-capped remote one (chess-api.com) stops short.
+    reachedDepths.push(prevEval.depth);
+    let prevWhiteCp = normalizeEval(prevEval.cp, prevEval.mate, replay.turn());
 
   // ECO-based book tracking. Once a position falls out of the bundled ECO map,
   // every subsequent ply is non-book even if it transposes back into a known
@@ -421,9 +424,9 @@ export async function analyzePgnFull(
     prevEval = nextEval;
     prevWhiteCp = nextWhiteCp;
   }
-
-  const engineKind = engine.kind;
-  await engine.quit();
+} finally {
+  await engine.quit().catch(() => { /* ignore */ });
+}
 
   // CAPS-style game accuracy (volatility-weighted + harmonic mean).
   const accuracy_white = Math.round(gameAccuracy(whitePoints) * 10) / 10;

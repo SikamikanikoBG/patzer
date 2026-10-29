@@ -970,8 +970,12 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
     if (!session) return;
     if (me.ws === ws) me.ws = null;
     if (opp.ws) send(opp.ws, 'opponent_status', { online: false });
-    // If neither side connected and game not saved, keep session for reconnect (ephemeral)
-    // GC: drop after a while if both gone — left simple for v1.
+    // If neither side is connected, kill any running analysis engine immediately
+    // so it doesn't linger in memory. Reconnecting players recreate it on demand.
+    if (!me.ws && !opp.ws && session.analysisEngine) {
+      session.analysisEngine.quit().catch(() => { /* ignore */ });
+      session.analysisEngine = null;
+    }
   });
 }
 
