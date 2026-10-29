@@ -66,7 +66,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     cover the screens.
   - `npm run test:oidc` (also in CI) runs the whole thing against a real
     OpenID provider.
-    
+
+## [7.20.0] — 2026-10-29
+
+### Added
+- **Full LM Studio support as an AI Coach provider.** Point Patzer at your local LM Studio instance (`http://localhost:1234` by default) in **Admin → System**.
+  - Independent URL and model configuration, alongside Ollama, vLLM and DeepSeek.
+  - Full OpenAI-compatible chat completions and JSON structured outputs for move explanations, threat analysis, and game reviews.
+  - Automatic model listing and connection testing via LM Studio's `/v1/models` endpoint.
+  - Tailored Docker connection hints guiding users to enable "Serve on Local Network" and use `http://host.docker.internal:1234`.
+  - Comprehensive multilingual localization (English, German, Russian, Spanish, Bulgarian).
+  - Complete integration test suite covering URL variations, streaming responses, JSON reviews, and settings isolation (`server/test/llm-providers.test.ts`).
+
 ## [7.19.0] — 2026-10-18
 
 ### Tactic Trainer: see your move, and hear why the better one is better

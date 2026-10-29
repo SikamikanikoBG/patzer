@@ -48,7 +48,11 @@
     "ollamaFailed": "Не успях да се свържа: {{error}}",
     "finish": "Завърши настройката",
     "creating": "Създава…",
-    "passwordHint": "Поне 10 символа."
+    "passwordHint": "Поне 10 символа.",
+    "llmHint": {
+      "lmstudio_docker_localhost": "Patzer работи в Docker, където \"localhost\" е самият контейнер, а не твоят компютър. Използвай http://host.docker.internal:1234 или мрежовия адрес на твоя компютър, напр. http://192.168.1.20:1234. В LM Studio се увери, че локалният сървър е стартиран и 'Serve on Local Network' е включено.",
+      "lmstudio_unreachable": "Нищо не отговори на този адрес. Провери дали LM Studio работи, зареден е модел, локалният сървър е стартиран (порт 1234 по подразбиране) и 'Serve on Local Network' е активирано."
+    }
   },
   "login": {
     "title": "Добре дошъл отново",
@@ -463,6 +467,8 @@
     "sendTestEmailHint": "Първо запазете — тестът използва запазените настройки.",
     "send": "Изпрати",
     "testEmailSent": "Тестовият имейл е изпратен.",
+    "lmstudioUrl": "LM Studio адрес",
+    "lmstudioModel": "LM Studio модел",
     "colSignIn": "Вход",
     "signInSso": "SSO",
     "signInPassword": "Парола",

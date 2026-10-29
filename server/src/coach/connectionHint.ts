@@ -5,7 +5,7 @@ import { existsSync } from 'node:fs';
 // Docker, where `localhost` is the container itself, and Ollama by default
 // only listens on the host's own loopback. The UI turns these codes into a
 // short how-to (see `setup.llmHint.*` in the locales).
-export type ConnectionHint = 'docker_localhost' | 'unreachable';
+export type ConnectionHint = 'docker_localhost' | 'unreachable' | 'lmstudio_docker_localhost' | 'lmstudio_unreachable';
 
 // Docker writes /.dockerenv into every container, Podman /run/.containerenv.
 const IN_CONTAINER = existsSync('/.dockerenv') || existsSync('/run/.containerenv');
@@ -21,9 +21,13 @@ function isLoopback(host: string): boolean {
 const NO_ANSWER = /^fetch failed$|timeout|timed out/i;
 
 /** Hint for a failed connection test, given the error the test returned. */
-export function connectionHint(url: string, error: string, inContainer = IN_CONTAINER): ConnectionHint | undefined {
+export function connectionHint(url: string, error: string, inContainer = IN_CONTAINER, provider = 'ollama'): ConnectionHint | undefined {
   if (!NO_ANSWER.test(error)) return undefined;
   let host: string;
   try { host = new URL(url).hostname; } catch { return undefined; }
-  return inContainer && isLoopback(host) ? 'docker_localhost' : 'unreachable';
+  const isLoop = inContainer && isLoopback(host);
+  if (provider === 'lmstudio') {
+    return isLoop ? 'lmstudio_docker_localhost' : 'lmstudio_unreachable';
+  }
+  return isLoop ? 'docker_localhost' : 'unreachable';
 }

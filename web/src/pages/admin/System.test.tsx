@@ -40,4 +40,13 @@ describe('Admin → System → model', () => {
     fireEvent.change(select, { target: { value: 'gpt-oss:20b' } });
     expect(select.value).toBe('gpt-oss:20b');
   });
+
+  it('switches to LM Studio provider tab with correct placeholders', async () => {
+    renderPage();
+    const tab = await screen.findByRole('button', { name: 'LM Studio' });
+    fireEvent.click(tab);
+    expect(await screen.findByPlaceholderText('http://localhost:1234')).toBeDefined();
+    expect(screen.getByText('LM Studio-URL')).toBeDefined();
+    expect(screen.getByText('LM Studio-Modell')).toBeDefined();
+  });
 });

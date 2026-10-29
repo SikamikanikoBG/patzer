@@ -55,7 +55,9 @@
     "next": "Weiter",
     "llmHint": {
       "docker_localhost": "Patzer läuft in Docker – dort ist „localhost“ der Container selbst, nicht dein Computer. Nimm http://host.docker.internal:11434 (bei Docker Desktop unter Windows und Mac eingebaut; unter Linux erst nach Einschalten der extra_hosts-Zeilen in docker-compose.yml) oder die Netzwerkadresse deines Computers, z. B. http://192.168.1.20:11434. Außerdem muss der KI-Server Verbindungen aus dem Netzwerk annehmen – bei Ollama: OLLAMA_HOST=0.0.0.0 setzen und Ollama neu starten.",
-      "unreachable": "Unter dieser Adresse hat niemand geantwortet. Prüfe, ob der KI-Server läuft, ob Adresse und Port stimmen und ob er Verbindungen aus dem Netzwerk annimmt (bei Ollama: OLLAMA_HOST=0.0.0.0 setzen, dann neu starten). Auch eine Firewall auf diesem Computer kann den Port blockieren."
+      "unreachable": "Unter dieser Adresse hat niemand geantwortet. Prüfe, ob der KI-Server läuft, ob Adresse und Port stimmen und ob er Verbindungen aus dem Netzwerk annimmt (bei Ollama: OLLAMA_HOST=0.0.0.0 setzen, dann neu starten). Auch eine Firewall auf diesem Computer kann den Port blockieren.",
+      "lmstudio_docker_localhost": "Patzer läuft in Docker, wo „localhost“ der Container selbst ist, nicht dein Computer. Verwende http://host.docker.internal:1234 (in Docker Desktop für Windows und Mac enthalten; unter Linux erst nach Aktivierung der extra_hosts-Zeilen in docker-compose.yml) oder die Netzwerkadresse deines Computers, z. B. http://192.168.1.20:1234. Stelle in LM Studio sicher, dass der lokale Server gestartet und „Serve on Local Network“ aktiviert ist.",
+      "lmstudio_unreachable": "Unter dieser Adresse hat nichts geantwortet. Prüfe, ob LM Studio läuft, ein Modell geladen ist, der lokale Server gestartet ist (Standardport 1234) und „Serve on Local Network“ aktiviert ist, wenn du aus Docker oder von einem anderen Gerät verbindest."
     }
   },
   "login": {
@@ -539,7 +541,9 @@
     "sendTestEmailHint": "Zuerst speichern — der Test verwendet die gespeicherten Einstellungen.",
     "send": "Senden",
     "testEmailSent": "Test-E-Mail wurde gesendet.",
-    "llmDesc": "Sprachmodell für den KI-Coach — ein lokaler Ollama- oder OpenAI-kompatibler vLLM-Server oder die gehostete DeepSeek-API. Jeder Anbieter wird getrennt eingerichtet, ein Wechsel verliert also keine Einstellungen.",
+    "llmDesc": "Sprachmodell für den KI-Coach — ein lokaler Ollama-, LM Studio- oder OpenAI-kompatibler vLLM-Server oder die gehostete DeepSeek-API. Jeder Anbieter wird getrennt eingerichtet, ein Wechsel verliert also keine Einstellungen.",
+    "lmstudioUrl": "LM Studio-URL",
+    "lmstudioModel": "LM Studio-Modell",
     "vllmUrl": "vLLM-URL",
     "vllmModel": "vLLM-Modell",
     "testAllModels": "ALLE Modelle testen",

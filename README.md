@@ -6,7 +6,7 @@
 
 <p align="center">
   <b>Your private Chess.com.</b> Self-hosted, AI-coached, family-friendly.<br/>
-  Stockfish + your own LLM (Ollama or vLLM), in one Docker container.
+  Stockfish + your own LLM (Ollama, LM Studio or vLLM), in one Docker container.
 </p>
 
 <p align="center">
@@ -36,7 +36,7 @@
 ## Why Patzer
 
 - **Your games stay home.** Single Docker container on a Pi / NAS / old laptop. No cloud, no telemetry, no upsell.
-- **Bring your own LLM.** The AI coach runs against your own [Ollama](https://ollama.com) or [vLLM](https://docs.vllm.ai) host. The coach teaches, but never analyses: Stockfish, chess.js and your own game history work out the facts server-side, so a small local model can't hallucinate moves or pieces.
+- **Bring your own LLM.** The AI coach runs against your own [Ollama](https://ollama.com), [LM Studio](https://lmstudio.ai) or [vLLM](https://docs.vllm.ai) host. The coach teaches, but never analyses: Stockfish, chess.js and your own game history work out the facts server-side, so a small local model can't hallucinate moves or pieces.
 - **Made for a household, not a stadium.** Multi-user with admin console, per-profile language, kid-mode blunder warnings, "horsey" piece names for the youngest profiles.
 
 ## What it is
@@ -47,7 +47,7 @@ Patzer is a tiny, self-hosted take on the Chess.com / Lichess workflow you actua
 - **Play vs Bot** — full games against Stockfish at seven named tiers (Kid → Stockfish max), all standard time controls, a queue of up to six premoves shown on the board, kid-mode blunder warnings.
 - **Play vs Friend** — real-time PvP between profiles on the same server over WebSocket, with draw offers, takebacks and one-click rematch. Playing across the internet is a tunnel away — see the [FAQ](docs/FAQ.md#can-i-play-a-friend-who-lives-somewhere-else).
 - **Players & profiles** — a directory of everyone on your server with a rating leaderboard, live presence and public profiles (record, per-time-class ratings, your head-to-head), challenge-from-profile, and a "missed invitations" rail.
-- **AI Coach (your LLM)** — point at any [Ollama](https://ollama.com) or [vLLM](https://docs.vllm.ai) host (or, if you have no GPU to spare, the hosted DeepSeek API). A coach, not a commentator: it explains *why* a move works or fails (what it allows, hangs or wins, and the opponent's best answer), shows the better move and other good ones with what they achieve, connects the mistake to your own recent games ("4 of your last 10 games: leaving a piece unprotected", your weakest phase, positions you missed in the opening trainer) and links a matching Learn lesson. Hints point you at what matters without giving the move away. It never contradicts the engine: an answer that praises a mistake is caught before you see it. Audience-tuned for Kid / Beginner / Intermediate / Advanced.
+- **AI Coach (your LLM)** — point at any [Ollama](https://ollama.com), [LM Studio](https://lmstudio.ai) or [vLLM](https://docs.vllm.ai) host (or, if you have no GPU to spare, the hosted DeepSeek API). A coach, not a commentator: it explains *why* a move works or fails (what it allows, hangs or wins, and the opponent's best answer), shows the better move and other good ones with what they achieve, connects the mistake to your own recent games ("4 of your last 10 games: leaving a piece unprotected", your weakest phase, positions you missed in the opening trainer) and links a matching Learn lesson. Hints point you at what matters without giving the move away. It never contradicts the engine: an answer that praises a mistake is caught before you see it. Audience-tuned for Kid / Beginner / Intermediate / Advanced.
 - **Family-ready** — multi-user with admin console, open / invite-only / closed sign-up, per-profile language, kid-mode blunder warnings, "horsey" piece names for the youngest profiles.
 - **Single sign-on (optional)** — sign in with Authentik, Keycloak or any other OpenID Connect provider: SSO next to passwords or SSO only, admins chosen by a provider group, automatic accounts, and a logout that ends the provider session too. See [docs/OIDC.md](docs/OIDC.md).
 - **Learn (beta)** — 69 interactive lessons in four levels, from how the pieces move to tactics, mating patterns and endgames. Stars and progress per profile; kid mode tells the same lessons in simpler words.
@@ -133,7 +133,7 @@ volumes:
 > move classification, accuracy %, eval graph, opening detection. The setup wizard takes you
 > straight to a working board.
 >
-> **What needs an LLM:** the AI Coach commentary voice. Until you point Patzer at an Ollama or
+> **What needs an LLM:** the AI Coach commentary voice. Until you point Patzer at an Ollama, LM Studio or
 > vLLM host, the *Coach* panel just shows the engine facts in plain text.
 >
 > **What needs a Chess.com or Lichess username:** importing your public games for review. Without it
@@ -141,7 +141,7 @@ volumes:
 
 You'll want, optionally:
 
-- **For the AI Coach:** an [Ollama](https://ollama.com) or [vLLM](https://docs.vllm.ai) server reachable from the Patzer container (pick the provider in *Admin → System*). The wizard validates the URL and lists available models for you. Patzer accepts loopback / RFC1918 / `*.local` / `host.docker.internal` Ollama hosts only — public-Internet model proxies aren't supported here. The one hosted exception is DeepSeek, which you opt into with an API key in *Admin → System*.
+- **For the AI Coach:** an [Ollama](https://ollama.com), [LM Studio](https://lmstudio.ai) or [vLLM](https://docs.vllm.ai) server reachable from the Patzer container (pick the provider in *Admin → System*). The wizard validates the URL and lists available models for you. Patzer accepts loopback / RFC1918 / `*.local` / `host.docker.internal` Ollama/LM Studio hosts only — public-Internet model proxies aren't supported here. The one hosted exception is DeepSeek, which you opt into with an API key in *Admin → System*.
 - **For Game Review on your own games:** a Chess.com and/or Lichess username (entered later in *Settings*).
 
 To use a different host port, run with `-p 9000:8800` (or set `HOST_PORT=9000` if you're using `docker compose`).
@@ -291,7 +291,7 @@ Estimated Elo comes from average centipawn loss on a piecewise curve calibrated 
 
 - **Server:** Node 20 · TypeScript · [Hono](https://hono.dev) · [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) · [chess.js](https://github.com/jhlywa/chess.js) · `ws` · native [Stockfish](https://stockfishchess.org/)
 - **Web:** React 18 · Vite · Tailwind CSS · [chessground](https://github.com/lichess-org/chessground) · framer-motion · react-i18next · TanStack Query
-- **Coach:** [Ollama](https://ollama.com) or [vLLM](https://docs.vllm.ai) (default model: `gemma3:1b`; something like `qwen2.5:7b` gives a nicer voice)
+- **Coach:** [Ollama](https://ollama.com), [LM Studio](https://lmstudio.ai) or [vLLM](https://docs.vllm.ai) (default model: `gemma3:1b`; something like `qwen2.5:7b` gives a nicer voice)
 - **Tests:** [vitest](https://vitest.dev) unit suites + an end-to-end PvP run against a real server
 - **TTS:** browser Web Speech API (uses installed OS voices)
 - **Persistence:** single SQLite file in `./data/`
