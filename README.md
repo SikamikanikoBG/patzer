@@ -129,6 +129,14 @@ volumes:
   patzer-data:
 ```
 
+**`nix run` (no Docker required)**
+
+```bash
+nix run github:SikamikanikoBG/patzer
+```
+
+Or from a local clone: `nix run`. Stockfish and Node.js are provisioned automatically. Full guide: [docs/NIX.md](docs/NIX.md).
+
 > **What works without any extras:** play vs Stockfish, play vs friend on the same server,
 > move classification, accuracy %, eval graph, opening detection. The setup wizard takes you
 > straight to a working board.
@@ -175,7 +183,9 @@ The coach teaches from facts it is handed and never analyses on its own: the ser
 
 ## Local development
 
-Requirements: Node.js ≥ 20.11.
+Requirements: Node.js ≥ 20.11 (or Nix).
+
+### Standard setup
 
 ```bash
 git clone https://github.com/SikamikanikoBG/patzer.git
@@ -184,6 +194,28 @@ npm install
 npm run setup   # downloads Stockfish 17 into ./bin/ (Windows, Linux, macOS)
 npm run dev
 ```
+
+### With Nix (Flakes / nix-shell / direnv)
+
+If you use [Nix](https://nixos.org/), Node.js 22 and Stockfish are provided automatically:
+
+```bash
+# One-command start (installs dependencies if needed and launches dev servers):
+nix run
+
+# Or run the compiled production bundle:
+nix run .#prod
+
+# Or enter the isolated dev shell:
+nix develop
+# (or with classic nix-shell:)
+nix-shell
+
+# Inside the shell:
+npm run dev
+```
+
+Direnv users can simply run `direnv allow`. See [docs/NIX.md](docs/NIX.md) for full documentation, architectures, options, and troubleshooting.
 
 - Server: <http://localhost:8800>
 - Vite dev server (HMR): <http://localhost:5173> — proxies `/api` and `/ws` to the server.

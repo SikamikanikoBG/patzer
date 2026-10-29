@@ -58,6 +58,10 @@ running on a desktop or NAS on the same LAN; the Pi just hosts the web app.
 That said, the coach only *phrases* facts computed by Stockfish, so a 1B
 model on a modest CPU produces perfectly readable commentary.
 
+## Can I run Patzer with Nix or NixOS without Docker?
+
+Yes. Patzer provides first-class support for Nix Flakes and classic `nix-shell`, automatically providing Node.js 22 and Stockfish for your system architecture without needing Docker or manual compilation. See [docs/NIX.md](NIX.md).
+
 ## Can I play a friend who lives somewhere else?
 
 Yes — PvP just needs both browsers to reach the *same* Patzer instance, so

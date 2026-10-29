@@ -66,7 +66,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     cover the screens.
   - `npm run test:oidc` (also in CI) runs the whole thing against a real
     OpenID provider.
-    
+
+## [7.19.2] — 2026-10-30
+
+### Changed
+- **Nix Stockfish defaults & configurable thread scaling.** Configured default Stockfish threads to 2 and hash to 512 MB in `flake.nix` (`runDevScript`, `runProdScript`, and `devShells`) and `shell.nix`, overridable via `STOCKFISH_THREADS` and `STOCKFISH_HASH`.
+- **Dynamic Stockfish thread and hash options across analysis endpoints.** Single position evaluation (`/api/analyze/position`) and move validation in trainer now respect `STOCKFISH_THREADS` and `STOCKFISH_HASH` rather than fixed static limits.
+
+## [7.19.1] — 2026-10-29
+
+### Added
+- **Nix environment support.** Added `flake.nix`, `shell.nix`, `default.nix`, and `.envrc` providing out-of-the-box development and runtime environments with Node.js 22 and Stockfish on Linux and macOS.
+- Launch Patzer with `nix run` or enter a complete development shell using `nix develop` or `nix-shell`.
+
 ## [7.19.0] — 2026-10-18
 
 ### Tactic Trainer: see your move, and hear why the better one is better
