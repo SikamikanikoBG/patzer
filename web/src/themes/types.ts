@@ -61,7 +61,9 @@ export type ThemePieces =
         light: { white: PiecePalette; black: PiecePalette };
         dark: { white: PiecePalette; black: PiecePalette };
       };
-    };
+    }
+  /** An image of 6 columns (see SHEET_COLUMNS in css.ts), white on top, black below. */
+  | { kind: 'sheet'; url: string };
 
 export interface Theme {
   /** Lowercase letters, digits and dashes. Stored on the profile, so don't rename it. */

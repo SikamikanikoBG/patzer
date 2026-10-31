@@ -1,12 +1,13 @@
 import { useSyncExternalStore } from 'react';
 import classic from './classic';
+import { JELLY_THEMES } from './jelly';
 import { PIXEL_THEMES } from './pixel';
 import { themeCss } from './css';
 import type { Theme } from './types';
 
 // Every theme the app knows, in the order Settings shows them. To add one, see
 // README.md in this folder: a new folder, and one line here.
-export const THEMES: readonly Theme[] = [classic, ...PIXEL_THEMES];
+export const THEMES: readonly Theme[] = [classic, ...PIXEL_THEMES, ...JELLY_THEMES];
 
 export const DEFAULT_THEME = classic;
 

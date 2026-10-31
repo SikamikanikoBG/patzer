@@ -35,6 +35,12 @@ The pieces (`web/src/themes/pixel/sprites.ts`) were drawn for the Nectar project
 
 The font (`web/src/themes/pixel/m6x11-400.woff2`) is not under the MIT license. It is [m6x11](https://managore.itch.io/m6x11) by Daniel Linssen, with the Cyrillic extension [m6x11cyrillic](https://nattogames.itch.io/m6x11cyrillic) by Natto Games, both "free to use with attribution": see `web/src/themes/pixel/CREDITS.txt`.
 
+## Jelly themes
+
+The images in `web/src/themes/jelly/assets/` are not under the MIT license. They are cut from [Jelly Chess Assets](https://mightea.itch.io/jelly-chess-assets) by mightea by `scripts/extract-jelly-assets.py`. Its terms: "Free to use, modify, and adapt in any of your commercial or non-commercial games! Attribution is appreciated but never required. (Redistribution or reselling of the raw asset files on their own is strictly prohibited.)" See `web/src/themes/jelly/CREDITS.txt`. If you reuse this code outside Patzer, get these images from the author rather than copying them from here.
+
+The font is Nunito, under the SIL Open Font License 1.1, through `@fontsource-variable/nunito`.
+
 ## Other notable dependencies
 
 | Package | License |

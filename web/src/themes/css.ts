@@ -61,6 +61,19 @@ function pieceRules(selector: string, sprites: PieceSprites, palette: { white: P
   return rules;
 }
 
+// The column of each piece in a sheet.
+const SHEET_COLUMNS: readonly PieceType[] = ['r', 'n', 'b', 'q', 'k', 'p'];
+
+function sheetRules(selector: string, url: string): string[] {
+  const rules = [`${selector} .cg-wrap piece{background-size:600% 200%}`];
+  SHEET_COLUMNS.forEach((type, column) => {
+    (['white', 'black'] as const).forEach((side, row) => {
+      rules.push(`${selector} .cg-wrap piece.${PIECE_NAMES[type]}.${side}{background-image:url("${url}");background-position:${column * 20}% ${row * 100}%}`);
+    });
+  });
+  return rules;
+}
+
 /** The stylesheet that makes a theme active: its tokens and its piece images. */
 export function themeCss(theme: Theme): string {
   const root = `:root[data-theme="${theme.id}"]`;
@@ -74,6 +87,8 @@ export function themeCss(theme: Theme): string {
   if (theme.pieces?.kind === 'sprites') {
     rules.push(...pieceRules(light, theme.pieces.sprites, theme.pieces.palette.light));
     rules.push(...pieceRules(dark, theme.pieces.sprites, theme.pieces.palette.dark));
+  } else if (theme.pieces?.kind === 'sheet') {
+    rules.push(...sheetRules(root, theme.pieces.url));
   }
   return rules.join('\n');
 }
