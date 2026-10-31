@@ -44,6 +44,25 @@ export interface ThemeShape {
   shadowGlow: string;
 }
 
+export type PieceType = 'p' | 'n' | 'b' | 'r' | 'q' | 'k';
+
+/** A pixel sprite per piece, one string per row and one character per pixel. */
+export type PieceSprites = Record<PieceType, readonly string[]>;
+
+/** Maps a sprite's pixel characters to colours for one side. */
+export type PiecePalette = Record<string, string>;
+
+/** Replaces the board's cburnett pieces, here and in the small piece icons. */
+export type ThemePieces =
+  | {
+      kind: 'sprites';
+      sprites: PieceSprites;
+      palette: {
+        light: { white: PiecePalette; black: PiecePalette };
+        dark: { white: PiecePalette; black: PiecePalette };
+      };
+    };
+
 export interface Theme {
   /** Lowercase letters, digits and dashes. Stored on the profile, so don't rename it. */
   id: string;
@@ -55,6 +74,7 @@ export interface Theme {
   shape: ThemeShape;
   /** Sets the board's colours itself, so Settings hides the board picker. */
   ownsBoard?: boolean;
+  pieces?: ThemePieces;
   /** Extra custom properties for the theme's own stylesheet, per scheme. */
   vars?: { light: Record<string, string>; dark: Record<string, string> };
 }
