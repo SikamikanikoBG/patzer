@@ -30,6 +30,7 @@ import IncomingChallengeModal from './components/IncomingChallengeModal';
 import CommandPalette from './components/CommandPalette';
 import ShortcutsModal from './components/ShortcutsModal';
 import { LogoMark } from './components/Logo';
+import { applyTheme } from './themes';
 
 export default function App() {
   const { loading, setupRequired, user, refresh } = useAuth();
@@ -136,6 +137,12 @@ export default function App() {
     }
     return undefined;
   }, [user?.profile?.site_theme]);
+
+  // Apply the profile's theme. Logged out, the last one stays (applyStoredTheme).
+  const uiTheme = user?.profile?.ui_theme;
+  useEffect(() => {
+    if (uiTheme) applyTheme(uiTheme);
+  }, [uiTheme]);
 
   if (loading) {
     return (

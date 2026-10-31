@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { LANGUAGES, type Language } from '../lib/languages';
 import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
 import { api } from '../api';
+import { THEMES, findTheme } from '../themes';
+import type { Theme } from '../themes/types';
 import { useAuth, type Profile, type BoardTheme, type SiteTheme, type SoundSet, type MoveSoundSet } from '../state/auth';
 import { getVoices, onVoicesReady, speak } from '../lib/tts';
 import { moveSoundsReady, playSound, setMoveSoundSet, setSoundSet } from '../lib/sounds';
@@ -44,6 +46,7 @@ export default function Settings() {
       board_theme: form.board_theme,
       piece_set: form.piece_set,
       site_theme: form.site_theme,
+      ui_theme: form.ui_theme,
       sound_enabled: !!form.sound_enabled,
       sound_set: form.sound_set,
       move_sound_set: form.move_sound_set,
@@ -56,6 +59,7 @@ export default function Settings() {
     setTimeout(() => setSaved(false), 1800);
   }
 
+  const formTheme = findTheme(form.ui_theme);
   const langVoices = voices.filter((v) => v.lang.toLowerCase().startsWith(form.language));
 
   // Play check then game-end in the given set, then fall back to the saved
@@ -163,6 +167,14 @@ export default function Settings() {
         </div>
         <div className="space-y-6 p-5">
           <div>
+            <label className="label mb-2 block">{t('settings.uiTheme')}</label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {THEMES.map((theme) => (
+                <ThemeOption key={theme.id} theme={theme} selected={formTheme === theme} onPick={() => set('ui_theme', theme.id)} />
+              ))}
+            </div>
+          </div>
+          <div>
             <label className="label mb-2 block">{t('settings.siteTheme')}</label>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {(['light','dark','auto'] as SiteTheme[]).map((th) => (
@@ -170,14 +182,16 @@ export default function Settings() {
               ))}
             </div>
           </div>
-          <div>
-            <label className="label mb-2 block">{t('settings.boardTheme')}</label>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {(['wood','green','blue'] as BoardTheme[]).map((th) => (
-                <BoardThemeOption key={th} value={th} selected={form.board_theme === th} onPick={() => set('board_theme', th)} label={t(`settings.board${th[0]!.toUpperCase()}${th.slice(1)}`)} />
-              ))}
+          {!formTheme.ownsBoard && (
+            <div>
+              <label className="label mb-2 block">{t('settings.boardTheme')}</label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {(['wood','green','blue'] as BoardTheme[]).map((th) => (
+                  <BoardThemeOption key={th} value={th} selected={form.board_theme === th} onPick={() => set('board_theme', th)} label={t(`settings.board${th[0]!.toUpperCase()}${th.slice(1)}`)} />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -362,6 +376,33 @@ function MoodPreview({ moodClass, glyph, title, desc }: { moodClass: string; gly
       <div className="text-sm font-semibold">{title}</div>
       <div className="mt-0.5 text-xs leading-snug text-ink-500">{desc}</div>
     </div>
+  );
+}
+
+function ThemeOption({ theme, selected, onPick }: { theme: Theme; selected: boolean; onPick: () => void }) {
+  const { page, surface, accent, boardLight, boardDark } = theme.preview;
+  return (
+    <button type="button" onClick={onPick} aria-pressed={selected}
+      className={`group relative overflow-hidden rounded-xl border p-2 text-xs font-medium transition-all
+        ${selected ? 'border-ink-900 ring-2 ring-accent-500/30 dark:border-cream' : 'border-ink-200 hover:border-ink-300 dark:border-ink-700 dark:hover:border-ink-600'}`}>
+      <div className="relative flex h-16 gap-2 overflow-hidden rounded-lg p-2" style={{ background: page }}>
+        <div className="grid aspect-square h-full grid-cols-4 grid-rows-4">
+          {Array.from({ length: 16 }).map((_, i) => (
+            <div key={i} style={{ background: (i % 4 + Math.floor(i / 4)) % 2 ? boardDark : boardLight }} />
+          ))}
+        </div>
+        <div className="flex flex-1 flex-col gap-1 rounded p-1" style={{ background: surface }}>
+          <div className="h-1 w-3/4" style={{ background: accent }} />
+          <div className="mt-auto h-3 w-3" style={{ background: accent }} />
+        </div>
+        {selected && (
+          <div className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white shadow">
+            <Check className="h-3 w-3" />
+          </div>
+        )}
+      </div>
+      <div className="mt-2">{theme.name}</div>
+    </button>
   );
 }
 

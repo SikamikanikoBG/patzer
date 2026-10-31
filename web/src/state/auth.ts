@@ -28,6 +28,8 @@ export interface Profile {
   board_theme: BoardTheme;
   piece_set: string;
   site_theme: SiteTheme;
+  /** A theme id from src/themes. */
+  ui_theme: string;
   blunder_warning: number;
   sound_enabled: number;
   sound_set: SoundSet;
