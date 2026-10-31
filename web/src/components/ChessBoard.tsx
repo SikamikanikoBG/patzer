@@ -108,6 +108,9 @@ export default function ChessBoard({
       // for premove-dest squares was already in place but the config wasn't.
       premovable: { enabled: true, showDests: true, castle: true },
       drawable: { enabled: true, defaultSnapToValidMove: true },
+      // A press only selects. With autoDistance, chessground treats it as a drag that
+      // has already started and snaps the piece's centre to the pointer: it jumps.
+      draggable: { autoDistance: false },
     };
     apiRef.current = Chessground(ref.current, config);
     rectRef.current = measure();

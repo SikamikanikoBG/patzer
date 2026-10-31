@@ -65,6 +65,9 @@ export default function LessonBoard({
       highlight: { lastMove: true, check: true },
       premovable: { enabled: false },
       drawable: { enabled: false, visible: true },
+      // A press only selects. With autoDistance, chessground treats it as a drag that
+      // has already started and snaps the piece's centre to the pointer: it jumps.
+      draggable: { autoDistance: false },
       movable: { free: false, showDests: true, events: { after } },
       events: { select: (key) => latest.current.onSquare?.(key) },
     });
