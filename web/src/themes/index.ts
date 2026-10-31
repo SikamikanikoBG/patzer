@@ -54,6 +54,21 @@ export function applyTheme(id: string | null | undefined): void {
   }
 }
 
+/**
+ * Set light, dark or auto: toggles `dark` on <html>. Returns a function that
+ * stops following the system's setting, which only `auto` does.
+ */
+export function applyScheme(scheme: 'light' | 'dark' | 'auto'): () => void {
+  const system = window.matchMedia('(prefers-color-scheme: dark)');
+  const apply = () => {
+    document.documentElement.classList.toggle('dark', scheme === 'dark' || (scheme === 'auto' && system.matches));
+  };
+  apply();
+  if (scheme !== 'auto') return () => {};
+  system.addEventListener('change', apply);
+  return () => system.removeEventListener('change', apply);
+}
+
 /** Before the first render, so the login page and the reload wear the last theme. */
 export function applyStoredTheme(): void {
   applyTheme(readStored());

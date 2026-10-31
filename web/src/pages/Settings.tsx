@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { LANGUAGES, type Language } from '../lib/languages';
 import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
 import { api } from '../api';
-import { THEMES, findTheme } from '../themes';
+import { applyScheme, applyTheme, THEMES, findTheme } from '../themes';
 import type { Theme } from '../themes/types';
 import { useAuth, type Profile, type BoardTheme, type SiteTheme, type SoundSet, type MoveSoundSet } from '../state/auth';
 import { getVoices, onVoicesReady, speak } from '../lib/tts';
@@ -13,7 +13,7 @@ const EMOJIS = ['♟','♞','♝','♜','♛','♚','🦊','🐯','🦁','🐻',
 
 export default function Settings() {
   const { t, i18n } = useTranslation();
-  const { user, refresh } = useAuth();
+  const { user, refresh, setUser } = useAuth();
   const [form, setForm] = useState<Profile | null>(null);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [saved, setSaved] = useState(false);
@@ -21,6 +21,19 @@ export default function Settings() {
 
   useEffect(() => { if (user) setForm({ ...user.profile }); }, [user]);
   useEffect(() => onVoicesReady(() => setVoices(getVoices())), []);
+
+  // Show a picked theme and colour scheme straight away. Saving keeps them, and
+  // leaving without saving goes back to the saved ones.
+  const previewTheme = form?.ui_theme;
+  const previewScheme = form?.site_theme;
+  useEffect(() => { if (previewTheme) applyTheme(previewTheme); }, [previewTheme]);
+  useEffect(() => (previewScheme ? applyScheme(previewScheme) : undefined), [previewScheme]);
+  useEffect(() => () => {
+    const saved = useAuth.getState().user?.profile;
+    if (!saved) return;
+    applyTheme(saved.ui_theme);
+    applyScheme(saved.site_theme)();
+  }, []);
 
   if (!form) return null;
 
@@ -31,7 +44,7 @@ export default function Settings() {
 
   async function save() {
     if (!form) return;
-    await api.patch('/api/settings/profile', {
+    const { profile } = await api.patch<{ profile: Profile }>('/api/settings/profile', {
       display_name: form.display_name,
       avatar_emoji: form.avatar_emoji,
       language: form.language,
@@ -53,6 +66,8 @@ export default function Settings() {
       blunder_warning: !!form.blunder_warning,
       kid_piece_emotions: !!form.kid_piece_emotions,
     });
+    // refresh() unmounts this page, which restores the saved look: it must be this one.
+    if (user) setUser({ ...user, profile });
     await i18n.changeLanguage(form.language);
     await refresh();
     setSaved(true); setDirty(false);
