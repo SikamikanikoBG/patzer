@@ -183,4 +183,20 @@ export const PIXEL_THEMES: readonly Theme[] = [
       last: 'rgb(212 224 74 / 45%)', selected: 'rgb(0 107 120 / 28%)', hint: 'rgb(24 39 31 / 35%)',
     },
   ),
+  // Deep plum with hot pink and orange, like a synthwave arcade cabinet.
+  pixelTheme(
+    'pixel-sunset',
+    'Pixel Sunset',
+    {
+      bg: '#170d24', surface: '#24143a', raised: '#321e4e', line: '#54386f', ink: '#fdf1e6', muted: '#c4aac9',
+      brand: '#ff5fa2', focus: '#ffb347',
+      last: 'rgb(255 179 71 / 30%)', selected: 'rgb(255 95 162 / 38%)', hint: 'rgb(255 179 71 / 55%)',
+      blackPiece: { highlight: '#5a3d66', body: '#2a1a38', shade: '#0f0716' },
+    },
+    {
+      bg: '#fdf1e6', surface: '#fffaf4', raised: '#f6e2d2', line: '#e3c2b4', ink: '#2c1530', muted: '#6e4a66',
+      brand: '#c2185b', focus: '#b4530a',
+      last: 'rgb(255 179 71 / 45%)', selected: 'rgb(194 24 91 / 28%)', hint: 'rgb(44 21 48 / 35%)',
+    },
+  ),
 ];
