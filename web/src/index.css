@@ -13,17 +13,12 @@
 html, body, #root { height: 100%; }
 html, body { overflow-x: clip; }
 body {
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  font-size: 14px;
-  line-height: 1.45;
-  /* v5 chess.com palette: light = warm off-white, dark = deep sage. */
-  background: #f1f1f0;
-  color: #262421;
-}
-
-.dark body {
-  background: #262421;
-  color: #f1f1f0;
+  font-family: var(--font-sans);
+  font-size: var(--body-size);
+  line-height: var(--body-leading);
+  /* The active theme sets these, per colour scheme: see src/themes. */
+  background: var(--page-bg);
+  color: var(--page-fg);
 }
 
 /* Polished chessground tweaks */
