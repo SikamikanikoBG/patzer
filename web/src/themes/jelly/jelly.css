@@ -90,6 +90,66 @@
     }
   }
 
+  /* Every icon in fat, rounded strokes with a little depth. */
+  svg.lucide {
+    filter: drop-shadow(0 1px 0 rgb(0 0 0 / 20%));
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2.7;
+  }
+
+  /* Icons the asset sheet has its own art for replace the drawn one. */
+  svg:is(.lucide-house, .lucide-home, .lucide-settings, .lucide-x, .lucide-plus, .lucide-volume-2, .lucide-volume-x, .lucide-play, .lucide-pause, .lucide-rotate-ccw, .lucide-refresh-cw) {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+
+    > * {
+      display: none;
+    }
+  }
+
+  svg:is(.lucide-house, .lucide-home) {
+    background-image: url('./assets/icon-house.webp');
+  }
+
+  svg:is(.lucide-settings) {
+    background-image: url('./assets/icon-settings.webp');
+  }
+
+  svg:is(.lucide-x) {
+    background-image: url('./assets/icon-x.webp');
+  }
+
+  svg:is(.lucide-plus) {
+    background-image: url('./assets/icon-plus.webp');
+  }
+
+  svg:is(.lucide-volume-2) {
+    background-image: url('./assets/icon-volume-2.webp');
+  }
+
+  svg:is(.lucide-volume-x) {
+    background-image: url('./assets/icon-volume-x.webp');
+  }
+
+  svg:is(.lucide-play) {
+    background-image: url('./assets/icon-play.webp');
+  }
+
+  svg:is(.lucide-pause) {
+    background-image: url('./assets/icon-pause.webp');
+  }
+
+  svg:is(.lucide-rotate-ccw, .lucide-refresh-cw) {
+    background-image: url('./assets/icon-rotate-ccw.webp');
+  }
+
+  /* The marks on moves, with a gloss like the squares. */
+  .move-badge {
+    box-shadow: inset 0 2px 1px rgb(255 255 255 / 55%), 0 2px 0 rgb(0 0 0 / 25%);
+  }
+
   /* Arrows sit on the board like the pieces, with a soft shadow. */
   svg.cg-shapes {
     filter: drop-shadow(0 2px 1px rgb(0 0 0 / 30%));

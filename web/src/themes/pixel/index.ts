@@ -1,6 +1,7 @@
 import './pixel.css';
 import { mix } from '../css';
 import type { Theme, ThemeArrows } from '../types';
+import { PIXEL_MOVE_GLYPHS } from './moveGlyphs';
 import { SPRITES } from './sprites';
 
 // Nectar's chess pixel art: its 24×24 pieces, the Balatro theme's m6x11 font
@@ -115,6 +116,7 @@ export function pixelTheme(id: string, name: string, dark: DarkPalette, light: P
       },
     },
     shape: SHAPE,
+    moveGlyphs: PIXEL_MOVE_GLYPHS,
     pieces: {
       kind: 'sprites',
       sprites: SPRITES,

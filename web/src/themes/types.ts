@@ -1,3 +1,6 @@
+import type { ReactNode } from 'react';
+import type { GlyphKind } from '../lib/classification';
+
 // What a theme has to provide. Everything here is required on purpose: a theme
 // that misses a token fails `tsc`, rather than rendering a transparent button.
 
@@ -88,6 +91,8 @@ export interface Theme {
   /** Sets the board's colours itself, so Settings hides the board picker. */
   ownsBoard?: boolean;
   pieces?: ThemePieces;
+  /** The marks on moves (best, blunder and so on), drawn in a 24×24 box. */
+  moveGlyphs?: Record<GlyphKind, ReactNode>;
   credits?: readonly ThemeCredit[];
   /** Extra custom properties for the theme's own stylesheet, per scheme. */
   vars?: { light: Record<string, string>; dark: Record<string, string> };

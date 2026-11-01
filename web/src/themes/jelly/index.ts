@@ -3,6 +3,7 @@ import './jelly.css';
 import classic from '../classic';
 import { mix } from '../css';
 import type { Theme, ThemeArrows, ThemeColors } from '../types';
+import { JELLY_MOVE_GLYPHS } from './moveGlyphs';
 
 // Every asset by file name, as a URL: nothing downloads until a rule needs it.
 const assets = import.meta.glob<string>('./assets/*.webp', { eager: true, import: 'default' });
@@ -143,6 +144,7 @@ function jellyTheme(key: string, r: Recipe): Theme {
       shadowSoft: '0 3px 0 rgb(0 0 0 / 8%)',
       shadowLift: '0 6px 0 rgb(0 0 0 / 12%)',
     },
+    moveGlyphs: JELLY_MOVE_GLYPHS,
     pieces: { kind: 'sheet', url: asset(`pieces-${r.pieces}`)! },
     vars: {
       light: { ...vars, '--jelly-gloss': 'rgb(255 255 255 / 45%)' },

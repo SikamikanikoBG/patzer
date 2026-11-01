@@ -3,6 +3,7 @@
 // the colour, glyph, and label stay in sync across the review screen.
 
 import type { ReactNode } from 'react';
+import { useTheme } from '../themes';
 import type { Classification } from '../types';
 
 export interface ClassificationStyle {
@@ -46,6 +47,12 @@ export const GLYPH_SVG: Record<GlyphKind, ReactNode> = {
   lightning:      <path d="M13 2 L4 14 H11 L9 22 L20 9 H12 Z" fill="currentColor" />,
   lock:           <path d="M8 11 V8 a4 4 0 1 1 8 0 V11 H17 a1 1 0 0 1 1 1 v8 a1 1 0 0 1-1 1 H7 a1 1 0 0 1-1-1 v-8 a1 1 0 0 1 1-1 Z M10 11 H14 V8 a2 2 0 1 0-4 0 Z" fill="currentColor"/>,
 };
+
+/** A move's mark, in the active theme's drawing if it has its own. */
+export function MoveGlyph({ kind }: { kind: GlyphKind }) {
+  const glyphs = useTheme().moveGlyphs;
+  return <>{glyphs?.[kind] ?? GLYPH_SVG[kind]}</>;
+}
 
 export function styleFor(c: string | undefined | null): ClassificationStyle | null {
   if (!c) return null;

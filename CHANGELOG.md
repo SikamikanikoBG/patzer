@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Arrows follow the theme.** Each theme colours the board's arrows to suit its
   board, keeping what each colour means, and can restyle them: Pixel's have hard
   edges.
+- **Icons follow the theme.** Pixel and Jelly have their own marks on moves, every
+  app icon takes the theme's style, and Jelly uses its own art where the set has one.
 - **Easy to add.** A theme is one folder and one line in `web/src/themes`: see
   the README there.
 

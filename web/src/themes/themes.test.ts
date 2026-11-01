@@ -5,6 +5,8 @@ import tailwindConfig from '../../tailwind.config.js';
 import { applyStoredTheme, applyTheme, DEFAULT_THEME, findTheme, THEMES } from './index';
 import { mix, spriteSvg, themeCss } from './css';
 import { ARROW_BRUSHES } from './arrows';
+import { GLYPH_SVG } from '../lib/classification';
+import { GLYPH_BITMAPS } from './pixel/moveGlyphs';
 import type { ThemeColors } from './types';
 
 function luminance(hex: string): number {
@@ -35,6 +37,11 @@ describe.each(THEMES.map((t) => [t.id, t] as const))('theme %s', (id, theme) => 
     expect(used.size).toBeGreaterThan(40);
     const css = themeCss(theme);
     for (const name of used) expect(css, name).toContain(`${name}:`);
+  });
+
+  it('draws every move mark, if it draws any', () => {
+    if (!theme.moveGlyphs) return;
+    expect(Object.keys(theme.moveGlyphs).sort()).toEqual(Object.keys(GLYPH_SVG).sort());
   });
 
   it('defines every colour the arrows use', () => {
@@ -84,6 +91,13 @@ describe.each(THEMES.map((t) => [t.id, t] as const))('theme %s', (id, theme) => 
       expect(sprite).toHaveLength(sprite[0]!.length);
       for (const row of sprite) expect(row).toHaveLength(sprite[0]!.length);
     }
+  });
+});
+
+describe('Pixel move marks', () => {
+  it.each(Object.entries(GLYPH_BITMAPS))('%s is a 12×12 bitmap', (_kind, rows) => {
+    expect(rows).toHaveLength(12);
+    for (const row of rows) expect(row).toMatch(/^[#.]{12}$/);
   });
 });
 

@@ -24,6 +24,7 @@ Many themes only need colours. Add these only if yours needs them:
 | `vars` | That stylesheet needs its own colours or images per theme or scheme | `--px-*` in `pixel/index.ts` |
 | `credits` | The theme uses someone else's art or font. It's shown in Settings, because the notices file isn't in the running app. Add the license terms to `THIRD_PARTY_NOTICES.md` too | `pixel/index.ts` |
 | `ownsBoard: true` | The theme draws the board itself, so Settings hides the board picker | Pixel, Heroes, Jelly |
+| `moveGlyphs` | The theme draws the marks on moves itself | `pixel/moveGlyphs.tsx`, `jelly/moveGlyphs.tsx` |
 | `pieces` | The theme has its own pieces: `sprites` as text, or an image `sheet` | `pixel/sprites.ts`, `jelly/assets/pieces-1.webp` |
 | A font file or package, imported from the stylesheet or `index.ts` | The theme has its own font. Browsers only download it while the theme is active | `m6x11` in `pixel.css`, Nunito in `jelly/index.ts` |
 
@@ -46,5 +47,6 @@ The images in `jelly/assets/` come from `scripts/extract-jelly-assets.py`, which
 - `tailwind.config.js` points the app's colours, type sizes, radii, shadows and fonts at CSS variables, so components use the same classes in every theme.
 - `applyTheme()` writes the active theme's variables into one `<style>` and sets `data-theme` on `<html>`.
 - The chosen theme is saved in `profiles.ui_theme`, and in `localStorage` so the login page and reloads start on it.
+- App icons are `svg.lucide` in the DOM, so a theme's stylesheet can restyle all of them, or swap one for its own image with `svg.lucide-<name>`, as `jelly/jelly.css` does.
 - Board arrows use the theme's `arrows` colours, through the brushes in `arrows.ts`. A theme's stylesheet can restyle them with `svg.cg-shapes`.
 - Move classifications (`move-*`), Tailwind's own colours such as `amber-*`, and the hex colours in charts aren't themed, because their colours carry meaning.

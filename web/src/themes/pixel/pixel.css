@@ -25,6 +25,14 @@
     letter-spacing: 0;
   }
 
+  /* Every icon in hard, square strokes. */
+  svg.lucide {
+    shape-rendering: crispEdges;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+    stroke-width: 2.5;
+  }
+
   /* Buttons press down onto a solid lip. */
   :is(.btn, .btn-primary, .btn-secondary, .btn-ghost) {
     margin-bottom: 4px;

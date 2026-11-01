@@ -34,6 +34,14 @@ BUTTONS = {
 }
 
 
+# Icons on ui_icons.png, a grid of 128px cells: name, column, row. Named after the
+# icon they replace.
+ICONS = {
+    'house': (0, 0), 'settings': (1, 0), 'x': (2, 0), 'plus': (3, 0), 'volume-2': (4, 0), 'volume-x': (5, 0),
+    'play': (2, 1), 'pause': (3, 1), 'rotate-ccw': (4, 1),
+}
+
+
 def cell(sheet, col, row, inset=0):
     box = (round(col * CELL) + inset, round(row * CELL) + inset, round((col + 1) * CELL) - inset, round((row + 1) * CELL) - inset)
     return sheet.crop(box).resize((SQUARE, SQUARE), Image.LANCZOS)
@@ -69,6 +77,11 @@ def main(source):
             save(square(sheet, 6), 'square-last')
             save(square(sheet, 7), 'square-selected')
             save(square(sheet, 8), 'square-target')
+
+    icons = Image.open(source / 'ui_icons.png').convert('RGBA')
+    for name, (col, row) in ICONS.items():
+        icon = icons.crop((col * 128, row * 128, (col + 1) * 128, (row + 1) * 128))
+        save(icon.crop(icon.getbbox()).resize((64, 64), Image.LANCZOS), f'icon-{name}', quality=92)
 
     buttons = Image.open(source / 'ui_buttons_01.png').convert('RGBA')
     for name, box in BUTTONS.items():

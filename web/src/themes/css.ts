@@ -1,19 +1,26 @@
 import type { PiecePalette, PieceSprites, PieceType, Theme, ThemeColors, ThemeShape } from './types';
 
-/** The sprite as SVG: one crisp rectangle per run of same-coloured pixels in a row. */
-export function spriteSvg(sprite: readonly string[], palette: PiecePalette): string {
-  const rects: string[] = [];
+/** Each run of the same character in a sprite's rows, so one rectangle can draw it. */
+export function spriteRuns(sprite: readonly string[]): { pixel: string; x: number; y: number; width: number }[] {
+  const runs: { pixel: string; x: number; y: number; width: number }[] = [];
   sprite.forEach((row, y) => {
     let x = 0;
     while (x < row.length) {
       const pixel = row[x]!;
       let end = x + 1;
       while (row[end] === pixel) end++;
-      const colour = palette[pixel];
-      if (colour) rects.push(`<rect x="${x}" y="${y}" width="${end - x}" height="1" fill="${colour}"/>`);
+      runs.push({ pixel, x, y, width: end - x });
       x = end;
     }
   });
+  return runs;
+}
+
+/** The sprite as SVG, with crisp rectangles. */
+export function spriteSvg(sprite: readonly string[], palette: PiecePalette): string {
+  const rects = spriteRuns(sprite)
+    .filter((run) => palette[run.pixel])
+    .map((run) => `<rect x="${run.x}" y="${run.y}" width="${run.width}" height="1" fill="${palette[run.pixel]}"/>`);
   const width = sprite[0]?.length ?? 0;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${sprite.length}" shape-rendering="crispEdges">${rects.join('')}</svg>`;
 }
