@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { api } from '../api';
+import { useStarPreview } from '../components/GitHubStar';
 import { useAuth, type Profile, type User } from '../state/auth';
 import { applyTheme } from '../themes';
 import Settings from './Settings';
@@ -42,6 +43,15 @@ describe('Settings appearance preview', () => {
     expect(screen.getByRole('link', { name: /Daniel Linssen/ }).getAttribute('href')).toBe('https://managore.itch.io/m6x11');
     fireEvent.click(screen.getByRole('button', { name: 'Jelly Mint' }));
     expect(screen.getByRole('link', { name: /mightea/ })).toBeTruthy();
+  });
+
+  it('previews hiding the GitHub star, and goes back when leaving without saving', () => {
+    const { unmount } = render(<Settings />);
+    expect(useStarPreview.getState().preview).toBe(true);
+    fireEvent.click(screen.getByRole('checkbox', { name: /settings\.showGithubStar/ }));
+    expect(useStarPreview.getState().preview).toBe(false);
+    unmount();
+    expect(useStarPreview.getState().preview).toBeNull();
   });
 
   it('goes back to the saved look when leaving without saving', () => {

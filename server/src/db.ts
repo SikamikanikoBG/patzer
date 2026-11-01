@@ -136,6 +136,8 @@ ensureColumn('profiles', 'kid_piece_emotions', `INTEGER NOT NULL DEFAULT 0`);
 // The app-wide look, a theme id from web/src/themes. Separate from site_theme,
 // which is the colour scheme, and from board_theme.
 ensureColumn('profiles', 'ui_theme', `TEXT NOT NULL DEFAULT 'classic'`);
+// Whether the "Star on GitHub" link shows for this profile.
+ensureColumn('profiles', 'show_github_star', `INTEGER NOT NULL DEFAULT 1`);
 // Which synthesized sound set plays check / game-end. 'classic' is the
 // original bells and stays the default so nobody's game changes sound
 // under them; 'soft' swaps those two for marimba-style wooden bars.

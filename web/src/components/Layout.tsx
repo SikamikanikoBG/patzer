@@ -7,7 +7,7 @@ import UpdateNotice from './UpdateNotice';
 import { useAuth } from '../state/auth';
 import { cn } from '../lib/utils';
 import ChangelogModal from './ChangelogModal';
-import GitHubStar from './GitHubStar';
+import GitHubStar, { useShowGitHubStar } from './GitHubStar';
 import { LogoMark, LogoLockup } from './Logo';
 import { LANGUAGES, normalizeLanguage } from '../lib/languages';
 import { endSession } from '../lib/logout';
@@ -24,6 +24,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) {
+  const showStar = useShowGitHubStar();
   const { t, i18n } = useTranslation();
   const uiLang = normalizeLanguage(i18n.language);
   const { user, refresh } = useAuth();
@@ -367,7 +368,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
               Patzer v{version}
             </button>
           )}
-          {version && <span aria-hidden="true">·</span>}
+          {version && showStar && <span aria-hidden="true">·</span>}
           <GitHubStar />
         </div>
       </footer>

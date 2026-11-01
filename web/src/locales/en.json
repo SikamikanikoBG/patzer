@@ -378,6 +378,8 @@
     "ttsPreviewText": "Hello, I am your chess coach.",
     "saved": "Saved",
     "appearance": "Appearance",
+    "showGithubStar": "Show “Star on GitHub”",
+    "showGithubStarDesc": "The link in the footer and changelog. Turning it off also stops the daily request to GitHub for its count.",
     "uiTheme": "Theme",
     "siteTheme": "Site theme",
     "siteThemeLight": "Light",

@@ -378,6 +378,8 @@
     "ttsPreviewText": "Hallo, ich bin dein Schachtrainer.",
     "saved": "Gespeichert",
     "appearance": "Darstellung",
+    "showGithubStar": "„Star auf GitHub“ anzeigen",
+    "showGithubStarDesc": "Der Link in der Fußzeile und im Changelog. Ausgeschaltet entfällt auch die tägliche Anfrage an GitHub für die Anzahl.",
     "uiTheme": "Design",
     "siteTheme": "Farbschema",
     "siteThemeLight": "Hell",

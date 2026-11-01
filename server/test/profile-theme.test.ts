@@ -59,3 +59,18 @@ describe('profile theme', () => {
     },
   );
 });
+
+describe('profile GitHub star', () => {
+  const saved = () => (db.prepare('SELECT show_github_star FROM profiles WHERE user_id = 1').get() as { show_github_star: number }).show_github_star;
+
+  it('starts on, and can be turned off', async () => {
+    expect(saved()).toBe(1);
+    const res = await settings.request('/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      body: JSON.stringify({ show_github_star: false }),
+    });
+    expect(res.status).toBe(200);
+    expect(saved()).toBe(0);
+  });
+});

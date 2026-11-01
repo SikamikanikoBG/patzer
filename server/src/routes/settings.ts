@@ -29,6 +29,7 @@ const profileSchema = z.object({
   sound_set: z.enum(['classic', 'soft']).optional(),
   move_sound_set: z.enum(['classic', 'board']).optional(),
   kid_piece_emotions: z.boolean().optional(),
+  show_github_star: z.boolean().optional(),
 });
 
 router.get('/profile', (c) => {

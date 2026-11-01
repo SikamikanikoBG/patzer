@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Easy to add.** A theme is one folder and one line in `web/src/themes`: see
   the README there.
 
+### Settings
+
+- **Hide "Star on GitHub".** *Settings → Appearance* can turn the link off for a
+  profile, in the footer and the changelog. It also stops the daily request to
+  GitHub for the count. The login page has no profile, so it keeps the link.
+
 ### Fixed
 
 - **A piece no longer jumps when you click it.** Pressing a piece only selects

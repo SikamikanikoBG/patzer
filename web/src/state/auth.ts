@@ -35,6 +35,7 @@ export interface Profile {
   sound_set: SoundSet;
   move_sound_set: MoveSoundSet;
   kid_piece_emotions: number;
+  show_github_star: number;
 }
 
 export interface User {

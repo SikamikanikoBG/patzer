@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { LANGUAGES, type Language } from '../lib/languages';
 import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
 import { api } from '../api';
+import { useStarPreview } from '../components/GitHubStar';
 import { applyScheme, applyTheme, THEMES, findTheme } from '../themes';
 import type { Theme } from '../themes/types';
 import { useAuth, type Profile, type BoardTheme, type SiteTheme, type SoundSet, type MoveSoundSet } from '../state/auth';
@@ -28,11 +29,14 @@ export default function Settings() {
   const previewScheme = form?.site_theme;
   useEffect(() => { if (previewTheme) applyTheme(previewTheme); }, [previewTheme]);
   useEffect(() => (previewScheme ? applyScheme(previewScheme) : undefined), [previewScheme]);
+  const previewStar = form ? form.show_github_star !== 0 : null;
+  useEffect(() => useStarPreview.setState({ preview: previewStar }), [previewStar]);
   useEffect(() => () => {
     const saved = useAuth.getState().user?.profile;
     if (!saved) return;
     applyTheme(saved.ui_theme);
     applyScheme(saved.site_theme)();
+    useStarPreview.setState({ preview: null });
   }, []);
 
   if (!form) return null;
@@ -65,6 +69,7 @@ export default function Settings() {
       move_sound_set: form.move_sound_set,
       blunder_warning: !!form.blunder_warning,
       kid_piece_emotions: !!form.kid_piece_emotions,
+      show_github_star: form.show_github_star !== 0,
     });
     // refresh() unmounts this page, which restores the saved look: it must be this one.
     if (user) setUser({ ...user, profile });
@@ -214,6 +219,13 @@ export default function Settings() {
               </div>
             </div>
           )}
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-ink-50 dark:hover:bg-ink-700/50">
+            <input type="checkbox" className="mt-1" checked={form.show_github_star !== 0} onChange={(e) => set('show_github_star', e.target.checked ? 1 : 0)} />
+            <div>
+              <div className="text-sm font-medium">{t('settings.showGithubStar')}</div>
+              <div className="text-xs text-ink-500">{t('settings.showGithubStarDesc')}</div>
+            </div>
+          </label>
         </div>
       </section>
 
