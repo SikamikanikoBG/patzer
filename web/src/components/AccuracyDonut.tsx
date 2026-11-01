@@ -61,7 +61,7 @@ export default function AccuracyDonut({ value, size = 96, label, showBand, strok
           textAnchor="middle" dominantBaseline="central"
           fontSize={size * 0.32}
           fontWeight={700}
-          fontFamily='"Roboto Mono", ui-monospace, monospace'
+          style={{ fontFamily: 'var(--font-mono)' }}
           fill="currentColor"
           dx={v == null ? 0 : -size * 0.05}
         >
@@ -74,7 +74,7 @@ export default function AccuracyDonut({ value, size = 96, label, showBand, strok
             textAnchor="start" dominantBaseline="central"
             fontSize={size * 0.14}
             fontWeight={600}
-            fontFamily='"Roboto Mono", ui-monospace, monospace'
+            style={{ fontFamily: 'var(--font-mono)' }}
             fill="currentColor"
             dx={size * 0.10}
             dy={size * 0.06}

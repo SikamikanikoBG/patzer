@@ -1,5 +1,5 @@
 import { cn } from '../lib/utils';
-import { styleFor, GLYPH_SVG } from '../lib/classification';
+import { styleFor, MoveGlyph } from '../lib/classification';
 
 interface Props {
   classification: string;
@@ -47,13 +47,13 @@ export default function ClassificationBadge({ classification, square, orientatio
     >
       <div
         className={cn(
-          'flex h-full w-full items-center justify-center rounded-full text-white shadow-lift ring-2 ring-white/90 dark:ring-chesscom-900/90',
+          'move-badge flex h-full w-full items-center justify-center rounded-full text-white shadow-lift ring-2 ring-white/90 dark:ring-chesscom-900/90',
           style.bgClass,
         )}
         title={classification}
       >
         <svg viewBox="0 0 24 24" width="70%" height="70%" aria-hidden="true">
-          {GLYPH_SVG[style.glyph]}
+          <MoveGlyph kind={style.glyph} />
         </svg>
       </div>
     </div>

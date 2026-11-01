@@ -22,11 +22,14 @@ const profileSchema = z.object({
   board_theme: z.enum(['wood', 'green', 'blue']).optional(),
   piece_set: z.string().optional(),
   site_theme: z.enum(['light', 'dark', 'auto']).optional(),
+  // Any well-formed id: the web app owns the list and falls back on an unknown one.
+  ui_theme: z.string().regex(/^[a-z0-9-]{1,32}$/).optional(),
   blunder_warning: z.boolean().optional(),
   sound_enabled: z.boolean().optional(),
   sound_set: z.enum(['classic', 'soft']).optional(),
   move_sound_set: z.enum(['classic', 'board']).optional(),
   kid_piece_emotions: z.boolean().optional(),
+  show_github_star: z.boolean().optional(),
 });
 
 router.get('/profile', (c) => {

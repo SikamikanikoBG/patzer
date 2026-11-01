@@ -1,3 +1,11 @@
+// The variables hold "r g b" (see themes/css.ts), so opacity modifiers like
+// `bg-gold-500/20` work, in every browser Tailwind's own colours do.
+const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
+const scale = (name, steps) => Object.fromEntries(steps.map((step) => [step, token(`${name}-${step}`)]));
+const NEUTRAL = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+const TEXT = ['xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl'];
+const radius = (value) => `calc(${value} * var(--radius-scale))`;
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
@@ -5,51 +13,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        // v5 chess.com-faithful palette. The legacy ink/cream/accent aliases
-        // are retained as redirects to the chesscom scale so any unmigrated
-        // callsite still renders in the right family (gradual purge — the
-        // tokens point to neutral greys instead of slate-blue, which is what
-        // was clashing with chess.com chrome before).
-        chesscom: {
-          50:  '#f7f6f5',
-          100: '#ebe9e7',
-          200: '#d6d2cd',
-          300: '#a09a93',
-          400: '#7d7670',
-          500: '#5d5955',
-          600: '#4b4744',
-          700: '#3a3735',
-          800: '#312e2b', // primary panel bg in dark mode
-          900: '#262421', // top nav bg
-          950: '#1a1816',
-        },
-        // Board + brand-green family (also used for the primary "Play" CTA).
-        board: { dark: '#769656', light: '#eeeed2', dest: '#baca44' },
-        green: {
-          50:  '#e8efd8',
-          100: '#d3e0b8',
-          400: '#81b64c',  // best-move / success
-          500: '#769656',  // dark squares + primary CTA bg
-          600: '#5d8a3a',  // primary CTA hover
-          700: '#4e7837',  // primary CTA active
-        },
-        gold: {
-          50:  '#fffaeb',
-          100: '#fff3c7',
-          300: '#ffd766',
-          500: '#ffc934',  // focus rings, last-move highlight, active-nav underline only
-          600: '#e6a700',
-          700: '#a8780a',
-        },
-        panel: '#f1f1f0',
-        hi:    '#e0c34a',
-
-        // Legacy palette — redirected to chesscom-equivalent values so any
-        // unmigrated component renders in the chess.com family even before its
-        // callsite is touched. v6 fully eliminates these.
-        ink:    { 50: '#f7f6f5', 100: '#ebe9e7', 200: '#d6d2cd', 300: '#a09a93', 400: '#7d7670', 500: '#5d5955', 600: '#4b4744', 700: '#3a3735', 800: '#312e2b', 900: '#262421' },
-        cream:  '#f7f6f5',
-        accent: { 50: '#e8efd8', 100: '#d3e0b8', 300: '#abc986', 500: '#769656', 600: '#5d8a3a', 700: '#4e7837' },
+        // The neutral ramp, brand and focus colours come from the active theme:
+        // see src/themes. The old ink/accent names point at the same variables.
+        chesscom: scale('neutral', NEUTRAL),
+        ink: scale('neutral', NEUTRAL.filter((step) => step !== 950)),
+        cream: token('neutral-50'),
+        green: scale('brand', [50, 100, 400, 500, 600, 700]),
+        accent: scale('brand', [50, 100, 300, 500, 600, 700]),
+        gold: scale('focus', [50, 100, 300, 500, 600, 700]),
+        panel: token('panel'),
+        hero: token('hero'),
+        // Components use board-dark as a brand colour, so it follows the theme.
+        board: { dark: token('brand-500'), light: '#eeeed2', dest: '#baca44' },
         warn:   '#ffa459',
         bad:    '#fa412d',
         // Move classification colors — chess.com-faithful hex values.
@@ -68,18 +43,26 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['"Inter"', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
-        mono: ['"Roboto Mono"', 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
+        sans: 'var(--font-sans)',
+        mono: 'var(--font-mono)',
       },
-      // Chess.com-style shadows — pure black alpha base reads warmer over the
-      // sage/cream chrome than the slate-blue base v4 used.
+      fontSize: Object.fromEntries(TEXT.map((name) => [name, [`var(--text-${name})`, { lineHeight: `var(--leading-${name})` }]])),
+      borderRadius: {
+        sm: radius('0.125rem'),
+        DEFAULT: radius('0.25rem'),
+        md: radius('0.375rem'),
+        lg: radius('0.5rem'),
+        xl: radius('0.75rem'),
+        '2xl': radius('1rem'),
+        '3xl': radius('1.5rem'),
+        full: radius('9999px'),
+      },
       boxShadow: {
-        soft: '0 1px 2px rgba(0,0,0,0.04), 0 2px 8px -2px rgba(0,0,0,0.06)',
-        lift: '0 2px 4px rgba(0,0,0,0.06), 0 12px 24px -8px rgba(0,0,0,0.16)',
-        board: '0 4px 16px rgba(0,0,0,0.18)',
-        glow: '0 0 0 2px rgba(255,201,52,0.45), 0 0 12px -2px rgba(255,201,52,0.30)',
+        soft: 'var(--shadow-soft)',
+        lift: 'var(--shadow-lift)',
+        board: 'var(--shadow-board)',
+        glow: 'var(--shadow-glow)',
       },
-      // Default Tailwind radii (no overrides — chess.com uses tight 4-8px).
       keyframes: {
         'pulse-soft': {
           '0%, 100%': { opacity: '1', transform: 'scale(1)' },

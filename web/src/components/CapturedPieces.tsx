@@ -1,4 +1,6 @@
 import { Chess } from 'chess.js';
+import { useTheme } from '../themes';
+import { PieceIcon } from './learn/LessonIcon';
 
 const PIECE_SYMBOL: Record<string, Record<'white' | 'black', string>> = {
   Q: { white: '♕', black: '♛' },
@@ -36,6 +38,7 @@ interface Props {
 
 export default function CapturedPieces({ fen, side, size = 'sm' }: Props) {
   const c = counts(fen);
+  const ownPieces = !!useTheme().pieces;
   // The pieces this `side` has captured = the OPPOSITE side's missing pieces.
   // If we're displaying "side=white", they captured black pieces (so we render black symbols).
   const oppKey = side === 'white' ? 'black' : 'white';
@@ -63,7 +66,9 @@ export default function CapturedPieces({ fen, side, size = 'sm' }: Props) {
     <div className="flex items-center gap-1 overflow-hidden">
       <div className={`flex flex-wrap gap-0 leading-none ${sizeCls}`}>
         {captured.map((p, i) => (
-          <span key={i} className="-ml-1 first:ml-0">{p.sym}</span>
+          <span key={i} className="-ml-1 first:ml-0">
+            {ownPieces ? <PieceIcon piece={p.type} color={oppKey} className={size === 'sm' ? 'h-5 w-5' : 'h-8 w-8'} /> : p.sym}
+          </span>
         ))}
       </div>
       {mat > 0 && (

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Star } from 'lucide-react';
+import { create } from 'zustand';
 import { cn } from '../lib/utils';
+import { useAuth } from '../state/auth';
 
 // A quiet "star the repo" affordance. Patzer is free and self-hosted, so the
 // only currency a user can pay back with is a star — but a chess app is not
@@ -11,6 +13,9 @@ import { cn } from '../lib/utils';
 //
 // Once you click it we assume you starred — the browser can't actually know
 // without your GitHub auth — and the link goes muted for good on this device.
+//
+// A profile can turn it off in Settings. Logged out there is no profile, so the
+// login page always shows it.
 
 export const REPO_URL = 'https://github.com/SikamikanikoBG/patzer';
 
@@ -56,13 +61,26 @@ export function formatStars(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n);
 }
 
+/** What Settings shows while the checkbox isn't saved yet, or null. */
+export const useStarPreview = create<{ preview: boolean | null }>(() => ({ preview: null }));
+
+export function useShowGitHubStar(): boolean {
+  const saved = useAuth((state) => state.user?.profile.show_github_star !== 0);
+  const preview = useStarPreview((state) => state.preview);
+  return preview ?? saved;
+}
+
 interface Props {
   /** `footer` is the compact chip; `inline` carries a label and sits in prose. */
   variant?: 'footer' | 'inline';
   className?: string;
 }
 
-export default function GitHubStar({ variant = 'footer', className }: Props) {
+export default function GitHubStar(props: Props) {
+  return useShowGitHubStar() ? <StarLink {...props} /> : null;
+}
+
+function StarLink({ variant = 'footer', className }: Props) {
   const { t } = useTranslation();
   const count = useStarCount();
   const [starred, setStarred] = useState<boolean>(() => {

@@ -1,0 +1,5 @@
+Heroes Chess by Null Tale (https://nulltale.itch.io/heroes-chess), in the fantasy24 palette.
+License: Creative Commons Attribution 4.0 International
+(https://creativecommons.org/licenses/by/4.0/).
+Changes: assets/pieces.png drops the source's palette strip and ground shapes and
+rearranges the pieces into one sheet, with scripts/extract-heroes-assets.py.

@@ -13,17 +13,12 @@
 html, body, #root { height: 100%; }
 html, body { overflow-x: clip; }
 body {
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  font-size: 14px;
-  line-height: 1.45;
-  /* v5 chess.com palette: light = warm off-white, dark = deep sage. */
-  background: #f1f1f0;
-  color: #262421;
-}
-
-.dark body {
-  background: #262421;
-  color: #f1f1f0;
+  font-family: var(--font-sans);
+  font-size: var(--body-size);
+  line-height: var(--body-leading);
+  /* The active theme sets these, per colour scheme: see src/themes. */
+  background: var(--page-bg);
+  color: var(--page-fg);
 }
 
 /* Polished chessground tweaks */
@@ -122,7 +117,7 @@ cg-board square.last-move.premove-dest {
   .btn-primary { @apply btn bg-green-500 text-white hover:bg-green-600 active:bg-green-700 shadow-soft; }
   .btn-secondary { @apply btn bg-chesscom-100 text-chesscom-900 hover:bg-chesscom-200 dark:bg-chesscom-700 dark:text-chesscom-100 dark:hover:bg-chesscom-600; }
   .btn-ghost { @apply btn text-chesscom-700 hover:bg-chesscom-100 dark:text-chesscom-200 dark:hover:bg-chesscom-800; }
-  .btn-danger { @apply btn bg-bad text-white hover:bg-red-600; }
+  .btn-danger { @apply btn border border-bad/40 text-bad hover:bg-bad/10; }
   /* Alias for .btn-primary — kept for any unmigrated callsite. */
   .btn-play { @apply btn-primary; }
 

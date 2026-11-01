@@ -4,6 +4,9 @@ import type { Api as CgApi } from 'chessground/api';
 import type { Config } from 'chessground/config';
 import type { Key, Color } from 'chessground/types';
 import { Chess } from 'chess.js';
+import { useTheme } from '../themes';
+import { ARROW_BRUSHES } from '../themes/arrows';
+import { PieceIcon } from './learn/LessonIcon';
 
 interface Props {
   fen: string;
@@ -107,7 +110,10 @@ export default function ChessBoard({
       // arrives via the next `set()`. Free win for blitz/bullet — the CSS
       // for premove-dest squares was already in place but the config wasn't.
       premovable: { enabled: true, showDests: true, castle: true },
-      drawable: { enabled: true, defaultSnapToValidMove: true },
+      drawable: { enabled: true, defaultSnapToValidMove: true, brushes: ARROW_BRUSHES },
+      // A press only selects. With autoDistance, chessground treats it as a drag that
+      // has already started and snaps the piece's centre to the pointer: it jumps.
+      draggable: { autoDistance: false },
     };
     apiRef.current = Chessground(ref.current, config);
     rectRef.current = measure();
@@ -203,6 +209,7 @@ export function PromotionPicker({ color, square, orientation, onPick, onCancel }
     ? { bottom: `calc(${100 - rowPct}% + 6px)` }
     : { top: `calc(${rowPct + 12.5}% + 6px)` };
   const pieces: PieceLetter[] = ['q', 'r', 'b', 'n'];
+  const ownPieces = !!useTheme().pieces;
   const symbols: Record<PieceLetter, Record<'white' | 'black', string>> = {
     q: { white: '♕', black: '♛' },
     r: { white: '♖', black: '♜' },
@@ -221,7 +228,7 @@ export function PromotionPicker({ color, square, orientation, onPick, onCancel }
           <button key={p} onClick={(e) => { e.stopPropagation(); onPick(p); }}
             className="flex h-12 w-12 items-center justify-center rounded-lg text-3xl transition-colors hover:bg-accent-100 dark:hover:bg-accent-700/30"
             title={p.toUpperCase()}>
-            {symbols[p][color]}
+            {ownPieces ? <PieceIcon piece={p} color={color} className="h-10 w-10" /> : symbols[p][color]}
           </button>
         ))}
       </div>
