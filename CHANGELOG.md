@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Pixel and Pixel Sunset.** Pixel-art pieces, the m6x11 font (Latin and
   Cyrillic), arcade buttons and a flat board with its coordinates outside the
   squares.
+- **Heroes.** Knights against demons from Heroes Chess by Null Tale (CC BY 4.0),
+  on the Pixel look with a parchment and stone board from the same palette.
 - **Nine Jelly themes.** Glossy pieces, squares and buttons in three piece sets
   and nine board colours, each with matching interface colours.
 - **Easy to add.** A theme is one folder and one line in `web/src/themes`: see

@@ -9,7 +9,7 @@ A theme changes how the whole app looks. It sits beside the other two appearance
 
    ```ts
    import ocean from './ocean';
-   export const THEMES: readonly Theme[] = [classic, ...PIXEL_THEMES, ...JELLY_THEMES, ocean];
+   export const THEMES: readonly Theme[] = [classic, ...PIXEL_THEMES, heroes, ...JELLY_THEMES, ocean];
    ```
 
 3. Run `npm test`. `themes.test.ts` checks every theme in the list, including that its text can be read.
@@ -23,7 +23,7 @@ Many themes only need colours. Add these only if yours needs them:
 | A stylesheet next to `index.ts`, imported from it | The shapes change, not only the values. Nest every rule in `:root[data-theme="<id>"]` so it can't affect other themes | `pixel/pixel.css` |
 | `vars` | That stylesheet needs its own colours or images per theme or scheme | `--px-*` in `pixel/index.ts` |
 | `credits` | The theme uses someone else's art or font. It's shown in Settings, because the notices file isn't in the running app. Add the license terms to `THIRD_PARTY_NOTICES.md` too | `pixel/index.ts` |
-| `ownsBoard: true` | The theme draws the board itself, so Settings hides the board picker | Pixel, Jelly |
+| `ownsBoard: true` | The theme draws the board itself, so Settings hides the board picker | Pixel, Heroes, Jelly |
 | `pieces` | The theme has its own pieces: `sprites` as text, or an image `sheet` | `pixel/sprites.ts`, `jelly/assets/pieces-1.webp` |
 | A font file or package, imported from the stylesheet or `index.ts` | The theme has its own font. Browsers only download it while the theme is active | `m6x11` in `pixel.css`, Nunito in `jelly/index.ts` |
 
@@ -33,7 +33,7 @@ Images used in a stylesheet or `vars` are downloaded only while their theme is a
 
 ## Adding a Pixel colour scheme
 
-Add a `pixelTheme()` call to `PIXEL_THEMES` in `pixel/index.ts`, with an id starting `pixel-` and a palette for dark and light. The pieces, font and shapes are shared, and the board and piece colours come from the palette.
+Add a `pixelTheme()` call to `PIXEL_THEMES` in `pixel/index.ts`, with an id starting `pixel-` and a palette for dark and light. The pieces, font and shapes are shared, and the board and piece colours come from the palette. `heroes/index.ts` shows how to start from a Pixel theme and swap the pieces and board.
 
 ## Adding a Jelly colour combination
 

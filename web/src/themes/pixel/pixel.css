@@ -145,6 +145,11 @@
     }
   }
 
+  /* Hard edges for any theme here that draws its pieces from an image. */
+  .cg-wrap piece {
+    image-rendering: pixelated;
+  }
+
   .cg-wrap coords {
     opacity: 1;
     font-family: var(--font-sans);

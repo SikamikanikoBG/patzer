@@ -59,7 +59,7 @@ const SHAPE: Theme['shape'] = {
   shadowGlow: '0 0 0 3px var(--focus-500)',
 };
 
-function pixelTheme(id: string, name: string, dark: DarkPalette, light: Palette): Theme {
+export function pixelTheme(id: string, name: string, dark: DarkPalette, light: Palette): Theme {
   const squaresDark = { light: mix(dark.brand, 24, dark.raised), dark: mix(dark.brand, 6, dark.surface) };
   const squaresLight = { light: mix(light.brand, 10, light.surface), dark: mix(light.brand, 34, light.raised) };
   return {
