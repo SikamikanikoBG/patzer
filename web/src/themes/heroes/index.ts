@@ -20,7 +20,6 @@ const base = pixelTheme(
     brand: '#3c9f9c', focus: '#efac28',
     arrows: ARROWS,
     last: 'rgb(239 172 40 / 45%)', selected: 'rgb(60 159 156 / 50%)', hint: 'rgb(21 15 10 / 55%)',
-    blackPiece: { highlight: '#684c3c', body: '#392a1c', shade: '#150f0a' },
   },
   {
     bg: '#f4e6c3', surface: '#fbf3de', raised: '#ecd9ac', line: '#c9b384', ink: '#2a1d0d', muted: '#684c3c',

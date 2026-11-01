@@ -47,7 +47,8 @@ describe.each(THEMES.map((t) => [t.id, t] as const))('theme %s', (id, theme) => 
   it('defines every colour the arrows use', () => {
     const css = themeCss(theme);
     for (const brush of Object.values(ARROW_BRUSHES)) {
-      expect(css).toContain(`${brush.color.slice(4, -1)}:`);
+      const variable = /--[a-z-]+/.exec(brush.color)![0];
+      expect(css).toContain(`${variable}:`);
     }
   });
 
@@ -65,8 +66,10 @@ describe.each(THEMES.map((t) => [t.id, t] as const))('theme %s', (id, theme) => 
     expect(contrast(c.pageFg, c.pageBg)).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('names only assets that exist', () => {
-    expect(themeCss(theme)).not.toContain('undefined');
+  it('names only assets that exist, and colours are hex', () => {
+    const css = themeCss(theme);
+    expect(css).not.toContain('undefined');
+    expect(css).not.toContain('NaN');
   });
 
   it('only scopes its stylesheet to itself', () => {

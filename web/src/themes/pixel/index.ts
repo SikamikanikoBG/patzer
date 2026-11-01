@@ -27,10 +27,12 @@ interface Palette {
   hint: string;
 }
 
-/** The dark scheme's black pieces start from their own near-black tones. */
+/** The dark scheme's black pieces start from near-black tones, tinted by `brand`. */
 interface DarkPalette extends Palette {
-  blackPiece: { highlight: string; body: string; shade: string };
+  blackPiece?: { highlight: string; body: string; shade: string };
 }
+
+const BLACK_PIECE = { highlight: '#46545c', body: '#1b2329', shade: '#07090b' };
 
 const WHITE = '#ffffff';
 const BLACK = '#000000';
@@ -58,10 +60,11 @@ const SHAPE: Theme['shape'] = {
   shadowSoft: '3px 3px 0 rgb(0 0 0 / 25%)',
   shadowLift: '6px 6px 0 rgb(0 0 0 / 35%)',
   shadowBoard: 'none',
-  shadowGlow: '0 0 0 3px var(--focus-500)',
+  shadowGlow: '0 0 0 3px rgb(var(--focus-500))',
 };
 
 export function pixelTheme(id: string, name: string, dark: DarkPalette, light: Palette): Theme {
+  const blackPiece = dark.blackPiece ?? BLACK_PIECE;
   const squaresDark = { light: mix(dark.brand, 24, dark.raised), dark: mix(dark.brand, 6, dark.surface) };
   const squaresLight = { light: mix(light.brand, 10, light.surface), dark: mix(light.brand, 34, light.raised) };
   return {
@@ -129,9 +132,9 @@ export function pixelTheme(id: string, name: string, dark: DarkPalette, light: P
           white: { o: dark.bg, h: WHITE, b: mix(dark.brand, 18, dark.ink), s: mix(dark.brand, 45, dark.muted) },
           black: {
             o: mix(dark.brand, 15, dark.muted),
-            h: mix(dark.brand, 22, dark.blackPiece.highlight),
-            b: mix(dark.brand, 6, dark.blackPiece.body),
-            s: dark.blackPiece.shade,
+            h: mix(dark.brand, 22, blackPiece.highlight),
+            b: mix(dark.brand, 6, blackPiece.body),
+            s: blackPiece.shade,
           },
         },
       },
@@ -185,7 +188,6 @@ export const PIXEL_THEMES: readonly Theme[] = [
       brand: '#6ce8ed', focus: '#f5ff62',
       arrows: { green: '#bbf96b', red: '#ff7c91', blue: '#a5f3ff', yellow: '#f5ff62' },
       last: 'rgb(245 255 98 / 30%)', selected: 'rgb(108 232 237 / 38%)', hint: 'rgb(245 255 98 / 55%)',
-      blackPiece: { highlight: '#46545c', body: '#1b2329', shade: '#07090b' },
     },
     {
       bg: '#f0f4ed', surface: '#fcfef8', raised: '#e4ebdf', line: '#bacaba', ink: '#18271f', muted: '#4d6458',

@@ -18,6 +18,6 @@ export default defineConfig({
     sourcemap: false,
     chunkSizeWarningLimit: 1500,
     // Theme images load only while their theme is active, so never inline them.
-    assetsInlineLimit: (file) => (file.includes('/themes/') ? false : undefined),
+    assetsInlineLimit: (file) => (/[\\/]themes[\\/]/.test(file) ? false : undefined),
   },
 });

@@ -4,9 +4,9 @@ import type { GlyphKind } from '../lib/classification';
 // What a theme has to provide. Everything here is required on purpose: a theme
 // that misses a token fails `tsc`, rather than rendering a transparent button.
 
-export type NeutralStep = '50' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900' | '950';
-export type BrandStep = '50' | '100' | '300' | '400' | '500' | '600' | '700';
-export type FocusStep = '50' | '100' | '300' | '500' | '600' | '700';
+type NeutralStep = '50' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900' | '950';
+type BrandStep = '50' | '100' | '300' | '400' | '500' | '600' | '700';
+type FocusStep = '50' | '100' | '300' | '500' | '600' | '700';
 
 /** Green for hints, red for the move you played, blue for analysis, yellow for premoves. */
 export type ThemeArrows = Record<'green' | 'red' | 'blue' | 'yellow', string>;
@@ -32,7 +32,7 @@ export interface ThemeColors {
   hero: string;
 }
 
-export type TextSize =
+type TextSize =
   | 'xs' | 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
 
 /** Everything that doesn't change between light and dark. */
@@ -61,7 +61,7 @@ export type PieceSprites = Record<PieceType, readonly string[]>;
 export type PiecePalette = Record<string, string>;
 
 /** Replaces the board's cburnett pieces, here and in the small piece icons. */
-export type ThemePieces =
+type ThemePieces =
   | {
       kind: 'sprites';
       sprites: PieceSprites;
@@ -74,7 +74,7 @@ export type ThemePieces =
   | { kind: 'sheet'; url: string };
 
 /** Who made a theme's art or font. Shown in Settings under the theme picker. */
-export interface ThemeCredit {
+interface ThemeCredit {
   text: string;
   url: string;
 }

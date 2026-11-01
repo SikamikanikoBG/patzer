@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LANGUAGES, type Language } from '../lib/languages';
 import { Volume2, Save, User as UserIcon, Palette, Sparkles, Type, Check, Smile } from 'lucide-react';
@@ -12,6 +12,26 @@ import { moveSoundsReady, playSound, setMoveSoundSet, setSoundSet } from '../lib
 
 const EMOJIS = ['♟','♞','♝','♜','♛','♚','🦊','🐯','🦁','🐻','🐼','🐰','🐶','🐱','🐹','🐢','🐧','🐳','⭐','🌟'];
 
+/**
+ * Show a picked theme, colour scheme and GitHub star straight away. Saving keeps
+ * them, and leaving without saving goes back to the saved ones.
+ */
+function useAppearancePreview(form: Profile | null) {
+  const theme = form?.ui_theme;
+  const scheme = form?.site_theme;
+  const star = form ? form.show_github_star !== 0 : null;
+  useEffect(() => { if (theme) applyTheme(theme); }, [theme]);
+  useEffect(() => (scheme ? applyScheme(scheme) : undefined), [scheme]);
+  useEffect(() => { useStarPreview.setState({ preview: star }); }, [star]);
+  useEffect(() => () => {
+    useStarPreview.setState({ preview: null });
+    const saved = useAuth.getState().user?.profile;
+    if (!saved) return;
+    applyTheme(saved.ui_theme);
+    applyScheme(saved.site_theme)();
+  }, []);
+}
+
 export default function Settings() {
   const { t, i18n } = useTranslation();
   const { user, refresh, setUser } = useAuth();
@@ -23,21 +43,7 @@ export default function Settings() {
   useEffect(() => { if (user) setForm({ ...user.profile }); }, [user]);
   useEffect(() => onVoicesReady(() => setVoices(getVoices())), []);
 
-  // Show a picked theme and colour scheme straight away. Saving keeps them, and
-  // leaving without saving goes back to the saved ones.
-  const previewTheme = form?.ui_theme;
-  const previewScheme = form?.site_theme;
-  useEffect(() => { if (previewTheme) applyTheme(previewTheme); }, [previewTheme]);
-  useEffect(() => (previewScheme ? applyScheme(previewScheme) : undefined), [previewScheme]);
-  const previewStar = form ? form.show_github_star !== 0 : null;
-  useEffect(() => useStarPreview.setState({ preview: previewStar }), [previewStar]);
-  useEffect(() => () => {
-    const saved = useAuth.getState().user?.profile;
-    if (!saved) return;
-    applyTheme(saved.ui_theme);
-    applyScheme(saved.site_theme)();
-    useStarPreview.setState({ preview: null });
-  }, []);
+  useAppearancePreview(form);
 
   if (!form) return null;
 
@@ -413,13 +419,30 @@ function MoodPreview({ moodClass, glyph, title, desc }: { moodClass: string; gly
   );
 }
 
-function ThemeOption({ theme, selected, onPick }: { theme: Theme; selected: boolean; onPick: () => void }) {
-  const { page, surface, accent, boardLight, boardDark } = theme.preview;
+/** A picture you can pick, with its name below and a tick while it's selected. */
+function AppearanceCard({ selected, onPick, label, children }: { selected: boolean; onPick: () => void; label: string; children: ReactNode }) {
   return (
     <button type="button" onClick={onPick} aria-pressed={selected}
       className={`group relative overflow-hidden rounded-xl border p-2 text-xs font-medium transition-all
         ${selected ? 'border-ink-900 ring-2 ring-accent-500/30 dark:border-cream' : 'border-ink-200 hover:border-ink-300 dark:border-ink-700 dark:hover:border-ink-600'}`}>
-      <div className="relative flex h-16 gap-2 overflow-hidden rounded-lg p-2" style={{ background: page }}>
+      <div className="relative">
+        {children}
+        {selected && (
+          <div className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white shadow">
+            <Check className="h-3 w-3" />
+          </div>
+        )}
+      </div>
+      <div className="mt-2">{label}</div>
+    </button>
+  );
+}
+
+function ThemeOption({ theme, selected, onPick }: { theme: Theme; selected: boolean; onPick: () => void }) {
+  const { page, surface, accent, boardLight, boardDark } = theme.preview;
+  return (
+    <AppearanceCard selected={selected} onPick={onPick} label={theme.name}>
+      <div className="flex h-16 gap-2 overflow-hidden rounded-lg p-2" style={{ background: page }}>
         <div className="grid aspect-square h-full grid-cols-4 grid-rows-4">
           {Array.from({ length: 16 }).map((_, i) => (
             <div key={i} style={{ background: (i % 4 + Math.floor(i / 4)) % 2 ? boardDark : boardLight }} />
@@ -429,22 +452,14 @@ function ThemeOption({ theme, selected, onPick }: { theme: Theme; selected: bool
           <div className="h-1 w-3/4" style={{ background: accent }} />
           <div className="mt-auto h-3 w-3" style={{ background: accent }} />
         </div>
-        {selected && (
-          <div className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white shadow">
-            <Check className="h-3 w-3" />
-          </div>
-        )}
       </div>
-      <div className="mt-2">{theme.name}</div>
-    </button>
+    </AppearanceCard>
   );
 }
 
 function SiteThemeOption({ value, selected, onPick, label }: { value: SiteTheme; selected: boolean; onPick: () => void; label: string }) {
   return (
-    <button type="button" onClick={onPick}
-      className={`group relative overflow-hidden rounded-xl border p-2 text-xs font-medium transition-all
-        ${selected ? 'border-ink-900 ring-2 ring-accent-500/30 dark:border-cream' : 'border-ink-200 hover:border-ink-300 dark:border-ink-700 dark:hover:border-ink-600'}`}>
+    <AppearanceCard selected={selected} onPick={onPick} label={label}>
       <div className="relative h-16 overflow-hidden rounded-lg">
         {value === 'light' && <div className="h-full w-full bg-gradient-to-br from-cream to-amber-50">
           <div className="absolute inset-x-2 top-2 h-1 rounded bg-ink-200" />
@@ -460,14 +475,8 @@ function SiteThemeOption({ value, selected, onPick, label }: { value: SiteTheme;
           <div className="bg-cream"><div className="m-2 h-1 w-8 rounded bg-ink-300" /></div>
           <div className="bg-ink-900"><div className="m-2 h-1 w-8 rounded bg-ink-600" /></div>
         </div>}
-        {selected && (
-          <div className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white shadow">
-            <Check className="h-3 w-3" />
-          </div>
-        )}
       </div>
-      <div className="mt-2">{label}</div>
-    </button>
+    </AppearanceCard>
   );
 }
 
@@ -478,25 +487,15 @@ function BoardThemeOption({ value, selected, onPick, label }: { value: BoardThem
     blue:  { l: '#dee3e6', d: '#788a94' },
   }[value];
   return (
-    <button type="button" onClick={onPick}
-      className={`group relative overflow-hidden rounded-xl border p-2 text-xs font-medium transition-all
-        ${selected ? 'border-ink-900 ring-2 ring-accent-500/30 dark:border-cream' : 'border-ink-200 hover:border-ink-300 dark:border-ink-700 dark:hover:border-ink-600'}`}>
-      <div className="relative">
-        <div className="grid aspect-square w-full grid-cols-8 grid-rows-8 overflow-hidden rounded-lg shadow-inner">
-          {Array.from({ length: 64 }).map((_, i) => {
-            const x = i % 8; const y = Math.floor(i / 8);
-            const isDark = (x + y) % 2 === 1;
-            return <div key={i} style={{ background: isDark ? colors.d : colors.l }} />;
-          })}
-        </div>
-        {selected && (
-          <div className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent-500 text-white shadow">
-            <Check className="h-3 w-3" />
-          </div>
-        )}
+    <AppearanceCard selected={selected} onPick={onPick} label={label}>
+      <div className="grid aspect-square w-full grid-cols-8 grid-rows-8 overflow-hidden rounded-lg shadow-inner">
+        {Array.from({ length: 64 }).map((_, i) => {
+          const x = i % 8; const y = Math.floor(i / 8);
+          const isDark = (x + y) % 2 === 1;
+          return <div key={i} style={{ background: isDark ? colors.d : colors.l }} />;
+        })}
       </div>
-      <div className="mt-2">{label}</div>
-    </button>
+    </AppearanceCard>
   );
 }
 

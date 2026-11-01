@@ -1,6 +1,6 @@
-// Colours stay in hex in the themes, so opacity modifiers like `bg-gold-500/20`
-// are applied with color-mix.
-const token = (name) => `color-mix(in srgb, var(--${name}) calc(<alpha-value> * 100%), transparent)`;
+// The variables hold "r g b" (see themes/css.ts), so opacity modifiers like
+// `bg-gold-500/20` work, in every browser Tailwind's own colours do.
+const token = (name) => `rgb(var(--${name}) / <alpha-value>)`;
 const scale = (name, steps) => Object.fromEntries(steps.map((step) => [step, token(`${name}-${step}`)]));
 const NEUTRAL = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 const TEXT = ['xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl'];

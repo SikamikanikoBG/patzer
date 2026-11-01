@@ -5,8 +5,9 @@ import { mix } from '../css';
 import type { Theme, ThemeArrows, ThemeColors } from '../types';
 import { JELLY_MOVE_GLYPHS } from './moveGlyphs';
 
-// Every asset by file name, as a URL: nothing downloads until a rule needs it.
-const assets = import.meta.glob<string>('./assets/*.webp', { eager: true, import: 'default' });
+// These assets by file name, as URLs: nothing downloads until a rule needs it. The
+// icons aren't here, because jelly.css names them itself.
+const assets = import.meta.glob<string>('./assets/{board,button,pieces,square}-*.webp', { eager: true, import: 'default' });
 const asset = (name: string) => assets[`./assets/${name}.webp`];
 const cssUrl = (name: string) => `url("${asset(name)}")`;
 

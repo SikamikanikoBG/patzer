@@ -22,7 +22,6 @@ const text = (value: string, size: number) => (
 export const JELLY_MOVE_GLYPHS: Record<GlyphKind, ReactNode> = {
   check: jelly(<path d="M5.5 12.5 L10 17 L18.5 7" {...line} />),
   doubleCheck: jelly(<g {...line} strokeWidth={3.6}><path d="M3 13 L7 17 L13 9" /><path d="M11 16 L12.5 17 L21 7" /></g>),
-  star: jelly(<path d="M12 4 L14.4 9.7 L20.5 10.2 L15.8 14.2 L17.3 20 L12 16.9 L6.7 20 L8.2 14.2 L3.5 10.2 L9.6 9.7 Z" {...solid} />),
   dot: jelly(<circle cx="12" cy="11.5" r="4.6" fill="currentColor" />),
   book: jelly(<path d="M5 6 H10 Q12 6 12 8 V18 Q12 16 10 16 H5 Z M19 6 H14 Q12 6 12 8 V18 Q12 16 14 16 H19 Z" {...solid} />),
   questionMark: jelly(text('?', 20)),

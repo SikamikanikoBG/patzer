@@ -5,8 +5,8 @@ import { join } from 'node:path';
 
 // The routes open the real database on import, so point it at a throwaway
 // file first.
-const dir = mkdtempSync(join(tmpdir(), 'patzer-theme-'));
-process.env.DB_PATH = join(dir, 'theme.db');
+const dir = mkdtempSync(join(tmpdir(), 'patzer-appearance-'));
+process.env.DB_PATH = join(dir, 'appearance.db');
 
 type DbModule = typeof import('../src/db.js');
 type Router = { request: (path: string, init?: RequestInit) => Response | Promise<Response> };
