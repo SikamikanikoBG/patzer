@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A quieter Resign button.** It's now red text on a plain background, which fills
+  faintly on hover, instead of a solid red block next to the board.
 - **A piece no longer jumps when you click it.** Pressing a piece only selects
   it; dragging starts once the pointer really moves.
 

@@ -34,7 +34,7 @@
   }
 
   /* Buttons press down onto a solid lip. */
-  :is(.btn, .btn-primary, .btn-secondary, .btn-ghost) {
+  :is(.btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-danger) {
     margin-bottom: 4px;
     border: 3px solid var(--px-outline);
     background: var(--px-button);
@@ -61,6 +61,16 @@
       &:active {
         transform: none;
       }
+    }
+  }
+
+  .btn-danger {
+    background: transparent;
+    color: theme('colors.bad');
+    text-shadow: none;
+
+    &:hover {
+      background: transparent;
     }
   }
 
