@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   on the Pixel look with a parchment and stone board from the same palette.
 - **Nine Jelly themes.** Glossy pieces, squares and buttons in three piece sets
   and nine board colours, each with matching interface colours.
+- **Arrows follow the theme.** Each theme colours the board's arrows to suit its
+  board, keeping what each colour means, and can restyle them: Pixel's have hard
+  edges.
 - **Easy to add.** A theme is one folder and one line in `web/src/themes`: see
   the README there.
 

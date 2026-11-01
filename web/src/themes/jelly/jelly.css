@@ -90,6 +90,11 @@
     }
   }
 
+  /* Arrows sit on the board like the pieces, with a soft shadow. */
+  svg.cg-shapes {
+    filter: drop-shadow(0 2px 1px rgb(0 0 0 / 30%));
+  }
+
   .cg-wrap coords coord {
     color: #ffffff !important;
     font-weight: 800;

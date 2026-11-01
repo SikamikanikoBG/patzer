@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import tailwindConfig from '../../tailwind.config.js';
 import { applyStoredTheme, applyTheme, DEFAULT_THEME, findTheme, THEMES } from './index';
 import { mix, spriteSvg, themeCss } from './css';
+import { ARROW_BRUSHES } from './arrows';
 import type { ThemeColors } from './types';
 
 function luminance(hex: string): number {
@@ -34,6 +35,22 @@ describe.each(THEMES.map((t) => [t.id, t] as const))('theme %s', (id, theme) => 
     expect(used.size).toBeGreaterThan(40);
     const css = themeCss(theme);
     for (const name of used) expect(css, name).toContain(`${name}:`);
+  });
+
+  it('defines every colour the arrows use', () => {
+    const css = themeCss(theme);
+    for (const brush of Object.values(ARROW_BRUSHES)) {
+      expect(css).toContain(`${brush.color.slice(4, -1)}:`);
+    }
+  });
+
+  it('draws arrows that show on its own board', () => {
+    if (!theme.ownsBoard) return;
+    const { boardLight, boardDark } = theme.preview;
+    for (const [name, colour] of Object.entries(theme.colors.dark.arrows)) {
+      expect.soft(contrast(colour, boardLight), `${name} on light squares`).toBeGreaterThanOrEqual(1.4);
+      expect.soft(contrast(colour, boardDark), `${name} on dark squares`).toBeGreaterThanOrEqual(1.4);
+    }
   });
 
   it.each(['light', 'dark'] as const)('has readable text in %s', (scheme) => {

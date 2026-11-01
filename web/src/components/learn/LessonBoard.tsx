@@ -14,6 +14,7 @@ import { Star } from 'lucide-react';
 import { PromotionPicker, type PieceLetter } from '../ChessBoard';
 import { board as loadBoard, castleByRook, inCheck, sideToMove } from '../../learn/engine';
 import type { Side, Sq } from '../../learn/types';
+import { ARROW_BRUSHES } from '../../themes/arrows';
 
 export interface Flash { sq: Sq; kind: 'good' | 'bad'; id: number }
 
@@ -64,7 +65,7 @@ export default function LessonBoard({
       animation: { enabled: true, duration: 220 },
       highlight: { lastMove: true, check: true },
       premovable: { enabled: false },
-      drawable: { enabled: false, visible: true },
+      drawable: { enabled: false, visible: true, brushes: ARROW_BRUSHES },
       // A press only selects. With autoDistance, chessground treats it as a drag that
       // has already started and snaps the piece's centre to the pointer: it jumps.
       draggable: { autoDistance: false },

@@ -11,6 +11,7 @@ const colors: Omit<ThemeColors, 'pageBg' | 'pageFg'> = {
   brand: { 50: '#e8efd8', 100: '#d3e0b8', 300: '#abc986', 400: '#81b64c', 500: '#769656', 600: '#5d8a3a', 700: '#4e7837' },
   focus: { 50: '#fffaeb', 100: '#fff3c7', 300: '#ffd766', 500: '#ffc934', 600: '#e6a700', 700: '#a8780a' },
   panel: '#f1f1f0',
+  arrows: { green: '#15781B', red: '#882020', blue: '#003088', yellow: '#e68f00' },
   hero: '#3b4c2f',
 };
 

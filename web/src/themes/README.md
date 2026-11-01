@@ -46,4 +46,5 @@ The images in `jelly/assets/` come from `scripts/extract-jelly-assets.py`, which
 - `tailwind.config.js` points the app's colours, type sizes, radii, shadows and fonts at CSS variables, so components use the same classes in every theme.
 - `applyTheme()` writes the active theme's variables into one `<style>` and sets `data-theme` on `<html>`.
 - The chosen theme is saved in `profiles.ui_theme`, and in `localStorage` so the login page and reloads start on it.
+- Board arrows use the theme's `arrows` colours, through the brushes in `arrows.ts`. A theme's stylesheet can restyle them with `svg.cg-shapes`.
 - Move classifications (`move-*`), Tailwind's own colours such as `amber-*`, and the hex colours in charts aren't themed, because their colours carry meaning.

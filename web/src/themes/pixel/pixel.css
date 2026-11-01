@@ -145,6 +145,15 @@
     }
   }
 
+  /* Arrows with hard, stepped edges. */
+  svg.cg-shapes :is(line, path, circle) {
+    shape-rendering: crispEdges;
+  }
+
+  svg.cg-shapes line {
+    stroke-linecap: butt;
+  }
+
   /* Hard edges for any theme here that draws its pieces from an image. */
   .cg-wrap piece {
     image-rendering: pixelated;

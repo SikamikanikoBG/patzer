@@ -22,6 +22,7 @@ const PIECE_NAMES: Record<PieceType, string> = { p: 'pawn', n: 'knight', b: 'bis
 
 function colorVars(c: ThemeColors): Record<string, string> {
   const vars: Record<string, string> = { '--page-bg': c.pageBg, '--page-fg': c.pageFg, '--panel': c.panel, '--hero': c.hero };
+  for (const [name, value] of Object.entries(c.arrows)) vars[`--arrow-${name}`] = value;
   for (const [step, value] of Object.entries(c.neutral)) vars[`--neutral-${step}`] = value;
   for (const [step, value] of Object.entries(c.brand)) vars[`--brand-${step}`] = value;
   for (const [step, value] of Object.entries(c.focus)) vars[`--focus-${step}`] = value;

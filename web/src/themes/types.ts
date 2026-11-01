@@ -5,6 +5,9 @@ export type NeutralStep = '50' | '100' | '200' | '300' | '400' | '500' | '600' |
 export type BrandStep = '50' | '100' | '300' | '400' | '500' | '600' | '700';
 export type FocusStep = '50' | '100' | '300' | '500' | '600' | '700';
 
+/** Green for hints, red for the move you played, blue for analysis, yellow for premoves. */
+export type ThemeArrows = Record<'green' | 'red' | 'blue' | 'yellow', string>;
+
 /** Colours for one colour scheme (light or dark). */
 export interface ThemeColors {
   pageBg: string;
@@ -20,6 +23,8 @@ export interface ThemeColors {
   /** Focus rings and the active nav item: `gold-*`. */
   focus: Record<FocusStep, string>;
   panel: string;
+  /** Arrows on the board. Keep each recognisably its colour: they carry meaning. */
+  arrows: ThemeArrows;
   /** The middle of the Home and Learn banners' gradient. */
   hero: string;
 }
