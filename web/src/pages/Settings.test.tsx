@@ -35,6 +35,15 @@ describe('Settings appearance preview', () => {
     expect(api.patch).not.toHaveBeenCalled();
   });
 
+  it("credits the selected theme's art and fonts, and nothing for Classic", () => {
+    render(<Settings />);
+    expect(screen.queryByRole('link', { name: /m6x11/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Pixel Sunset' }));
+    expect(screen.getByRole('link', { name: /Daniel Linssen/ }).getAttribute('href')).toBe('https://managore.itch.io/m6x11');
+    fireEvent.click(screen.getByRole('button', { name: 'Jelly Mint' }));
+    expect(screen.getByRole('link', { name: /mightea/ })).toBeTruthy();
+  });
+
   it('goes back to the saved look when leaving without saving', () => {
     const { unmount } = render(<Settings />);
     fireEvent.click(screen.getByRole('button', { name: 'Pixel Sunset' }));

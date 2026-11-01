@@ -188,6 +188,13 @@ export default function Settings() {
                 <ThemeOption key={theme.id} theme={theme} selected={formTheme === theme} onPick={() => set('ui_theme', theme.id)} />
               ))}
             </div>
+            {formTheme.credits && (
+              <p className="mt-2 flex flex-wrap gap-x-3 text-xs text-chesscom-500">
+                {formTheme.credits.map((credit) => (
+                  <a key={credit.url} href={credit.url} target="_blank" rel="noreferrer" className="underline">{credit.text}</a>
+                ))}
+              </p>
+            )}
           </div>
           <div>
             <label className="label mb-2 block">{t('settings.siteTheme')}</label>

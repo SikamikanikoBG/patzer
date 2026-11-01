@@ -67,6 +67,10 @@ function pixelTheme(id: string, name: string, dark: DarkPalette, light: Palette)
     name,
     preview: { page: dark.bg, surface: dark.raised, accent: dark.brand, boardLight: squaresDark.light, boardDark: squaresDark.dark },
     ownsBoard: true,
+    credits: [
+      { text: 'Font: m6x11 by Daniel Linssen', url: 'https://managore.itch.io/m6x11' },
+      { text: 'Cyrillic: m6x11cyrillic by Natto Games', url: 'https://nattogames.itch.io/m6x11cyrillic' },
+    ],
     colors: {
       light: {
         pageBg: light.bg,

@@ -65,6 +65,12 @@ export type ThemePieces =
   /** An image of 6 columns (see SHEET_COLUMNS in css.ts), white on top, black below. */
   | { kind: 'sheet'; url: string };
 
+/** Who made a theme's art or font. Shown in Settings under the theme picker. */
+export interface ThemeCredit {
+  text: string;
+  url: string;
+}
+
 export interface Theme {
   /** Lowercase letters, digits and dashes. Stored on the profile, so don't rename it. */
   id: string;
@@ -77,6 +83,7 @@ export interface Theme {
   /** Sets the board's colours itself, so Settings hides the board picker. */
   ownsBoard?: boolean;
   pieces?: ThemePieces;
+  credits?: readonly ThemeCredit[];
   /** Extra custom properties for the theme's own stylesheet, per scheme. */
   vars?: { light: Record<string, string>; dark: Record<string, string> };
 }

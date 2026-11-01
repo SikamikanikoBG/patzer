@@ -118,6 +118,7 @@ function jellyTheme(key: string, r: Recipe): Theme {
     name: r.name,
     preview: { page: r.paper, surface: WHITE, accent: r.accent, boardLight: r.squares.light, boardDark: r.squares.dark },
     ownsBoard: true,
+    credits: [{ text: 'Art: Jelly Chess Assets by mightea', url: 'https://mightea.itch.io/jelly-chess-assets' }],
     colors: {
       light: { ...shared, pageBg: mix(r.accent, 8, r.paper), pageFg: r.deep, panel: r.paper },
       // Muted text sits on dark surfaces here, so its steps are lighter.
