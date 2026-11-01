@@ -6,6 +6,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Themes
+
+- **Themes for the whole app.** *Settings → Appearance* now has a theme picker
+  beside light, dark and auto, saved per profile. Picking a theme or a colour
+  scheme previews it at once; *Save* keeps it, and leaving without saving goes
+  back. Classic is the default and looks as before.
+- **Pixel and Pixel Sunset.** Pixel-art pieces, the m6x11 font (Latin and
+  Cyrillic), arcade buttons and a flat board with its coordinates outside the
+  squares.
+- **Nine Jelly themes.** Glossy pieces, squares and buttons in three piece sets
+  and nine board colours, each with matching interface colours.
+- **Easy to add.** A theme is one folder and one line in `web/src/themes`: see
+  the README there.
+
+### Fixed
+
+- **A piece no longer jumps when you click it.** Pressing a piece only selects
+  it; dragging starts once the pointer really moves.
+
 ### Single sign-on (OpenID Connect)
 
 - **Sign in with Authentik, Keycloak or any OpenID Connect provider.** Set
