@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   profile, in the footer and the changelog. It also stops the daily request to
   GitHub for the count. The login page has no profile, so it keeps the link.
 
+### Interface
+
+- **Every page fades in when it opens**, on the same timing as Learn. It respects
+  the reduced-motion setting.
+
 ### Fixed
 
 - **A piece no longer jumps when you click it.** Pressing a piece only selects

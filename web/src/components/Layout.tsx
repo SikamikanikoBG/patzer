@@ -8,6 +8,7 @@ import { useAuth } from '../state/auth';
 import { cn } from '../lib/utils';
 import ChangelogModal from './ChangelogModal';
 import GitHubStar, { useShowGitHubStar } from './GitHubStar';
+import { usePageFade } from '../lib/usePageFade';
 import { LogoMark, LogoLockup } from './Logo';
 import { LANGUAGES, normalizeLanguage } from '../lib/languages';
 import { endSession } from '../lib/logout';
@@ -30,6 +31,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
   const { user, refresh } = useAuth();
   const nav = useNavigate();
   const location = useLocation();
+  const mainRef = usePageFade<HTMLElement>(location.pathname);
   const [navOpen, setNavOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
@@ -350,7 +352,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
       )}
 
       {/* Main content */}
-      <main className="flex-1">
+      <main ref={mainRef} className="flex-1">
         <div className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6">
           <Outlet />
         </div>
