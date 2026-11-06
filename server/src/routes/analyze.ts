@@ -252,20 +252,27 @@ export async function analyzePgnFull(
 
   const engine = createAnalysisEngine();
   const engineKind = engine.kind;
-  await engine.start();
 
   // Replay through positions — from the game's own start for a game played
   // from a position.
   const replay = new Chess(startFenOf(chess));
   const moves: AnalyzedMove[] = [];
+
+  // Depth each search actually reached. The local engine always reaches the
+  // requested depth; a time-capped remote one (chess-api.com) stops short.
   const reachedDepths: number[] = [];
+
   // Per-side per-move accuracy + win-pct timeline for the new aggregator.
   const whitePoints: MoveAccPoint[] = [];
   const blackPoints: MoveAccPoint[] = [];
   let whiteCplSum = 0, whiteCplN = 0;
   let blackCplSum = 0, blackCplN = 0;
 
+  // Everything that touches the engine lives in here: a throw in the move
+  // loop, or a client that aborts mid-analysis, must not leave the Stockfish
+  // child running — it would sit on a core and slow every later analysis down.
   try {
+    await engine.start();
     await engine.setOption('Skill Level', 20);
     // Operational tunables — bigger boxes can spend more. Defaults match v6.
     const threads = Math.max(1, Math.min(16, Number(process.env.STOCKFISH_THREADS) || 2));
@@ -280,153 +287,151 @@ export async function analyzePgnFull(
     // Pre-evaluate starting position with MultiPV=3 so we can detect "Great"
     // (only-good-move) and gap-aware "Brilliant" via the second-best candidate.
     let prevEval = await engine.evaluateMulti(replay.fen(), depth, 3);
-    // Depth each search actually reached. The local engine always reaches the
-    // requested depth; a time-capped remote one (chess-api.com) stops short.
     reachedDepths.push(prevEval.depth);
     let prevWhiteCp = normalizeEval(prevEval.cp, prevEval.mate, replay.turn());
 
-  // ECO-based book tracking. Once a position falls out of the bundled ECO map,
-  // every subsequent ply is non-book even if it transposes back into a known
-  // line (chess.com's behaviour — book ends as soon as you leave theory).
-  let stillInBook = true;
+    // ECO-based book tracking. Once a position falls out of the bundled ECO map,
+    // every subsequent ply is non-book even if it transposes back into a known
+    // line (chess.com's behaviour — book ends as soon as you leave theory).
+    let stillInBook = true;
 
-  for (let i = 0; i < history.length; i++) {
-    const move = history[i];
-    if (!move) continue;
-    const sideToMove: Color = replay.turn() === 'w' ? 'white' : 'black';
-    const fenBefore = replay.fen();
-    const bestUci = prevEval.bestMoveUci;
+    for (let i = 0; i < history.length; i++) {
+      const move = history[i];
+      if (!move) continue;
+      const sideToMove: Color = replay.turn() === 'w' ? 'white' : 'black';
+      const fenBefore = replay.fen();
+      const bestUci = prevEval.bestMoveUci;
 
-    let bestSan: string | null = null;
-    if (bestUci) {
-      const probe = new Chess(fenBefore);
-      const m = probe.move({ from: bestUci.slice(0, 2), to: bestUci.slice(2, 4), promotion: bestUci.slice(4) || undefined });
-      if (m) bestSan = m.san;
-    }
-
-    const pvSan: string[] = [];
-    if (prevEval.pv.length) {
-      const pvProbe = new Chess(fenBefore);
-      for (const u of prevEval.pv.slice(0, 6)) {
-        const m = pvProbe.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u.slice(4) || undefined });
-        if (!m) break;
-        pvSan.push(m.san);
+      let bestSan: string | null = null;
+      if (bestUci) {
+        const probe = new Chess(fenBefore);
+        const m = probe.move({ from: bestUci.slice(0, 2), to: bestUci.slice(2, 4), promotion: bestUci.slice(4) || undefined });
+        if (m) bestSan = m.san;
       }
-    }
 
-    const legalMoveCount = new Chess(fenBefore).moves().length;
+      const pvSan: string[] = [];
+      if (prevEval.pv.length) {
+        const pvProbe = new Chess(fenBefore);
+        for (const u of prevEval.pv.slice(0, 6)) {
+          const m = pvProbe.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u.slice(4) || undefined });
+          if (!m) break;
+          pvSan.push(m.san);
+        }
+      }
 
-    const candidatePlayerCps: number[] = prevEval.candidates.map((cand) => {
-      if (cand.mate !== null) return cand.mate > 0 ? 10000 - cand.mate * 10 : -10000 - cand.mate * 10;
-      return cand.cp ?? 0;
-    });
+      const legalMoveCount = new Chess(fenBefore).moves().length;
 
-    replay.move({ from: move.from, to: move.to, promotion: move.promotion });
-    const fenAfter = replay.fen();
+      const candidatePlayerCps: number[] = prevEval.candidates.map((cand) => {
+        if (cand.mate !== null) return cand.mate > 0 ? 10000 - cand.mate * 10 : -10000 - cand.mate * 10;
+        return cand.cp ?? 0;
+      });
 
-    const nextEval = await engine.evaluateMulti(fenAfter, depth, 3);
-    reachedDepths.push(nextEval.depth);
-    const nextWhiteCp = normalizeEval(nextEval.cp, nextEval.mate, replay.turn());
+      replay.move({ from: move.from, to: move.to, promotion: move.promotion });
+      const fenAfter = replay.fen();
 
-    const wpBefore = cpToWinPct(prevWhiteCp);
-    const wpAfter = cpToWinPct(nextWhiteCp);
+      const nextEval = await engine.evaluateMulti(fenAfter, depth, 3);
+      reachedDepths.push(nextEval.depth);
+      const nextWhiteCp = normalizeEval(nextEval.cp, nextEval.mate, replay.turn());
 
-    const playerWinBefore = sideToMove === 'white' ? wpBefore : 100 - wpBefore;
-    const playerWinAfter = sideToMove === 'white' ? wpAfter : 100 - wpAfter;
-    // `acc` is recomputed below from wpDrop, which is mate-aware. Holding the
-    // value here keeps the existing flow but the consumer uses the corrected
-    // input.
+      const wpBefore = cpToWinPct(prevWhiteCp);
+      const wpAfter = cpToWinPct(nextWhiteCp);
 
-    const playerEvalBeforeCp = sideToMove === 'white' ? prevWhiteCp : -prevWhiteCp;
-    const playerEvalAfterCp = sideToMove === 'white' ? nextWhiteCp : -nextWhiteCp;
-    const cpLoss = cpLossForPly(playerEvalBeforeCp, playerEvalAfterCp);
-    // Capped variant for ACPL aggregation — a single mate-flip ply otherwise
-    // adds 1000/N to the average and tanks estimated Elo by ~400.
-    const cpLossAcpl = cpLossForAcpl(playerEvalBeforeCp, playerEvalAfterCp);
-    // Mate-in-N (white perspective) for the eval bar / graph. The raw cp value
-    // is ±~10000 when the engine sees mate; consumers need the actual M-count
-    // to render "M3" instead of decoding the spike heuristically. The engine
-    // returns mate in side-to-move perspective at each position.
-    const mateBefore = prevEval.mate !== null
-      ? (sideToMove === 'white' ? prevEval.mate : -prevEval.mate)
-      : null;
-    const mateAfter = nextEval.mate !== null
-      ? (sideToMove === 'white' ? -nextEval.mate : nextEval.mate)
-      : null;
-    // Mate-aware win-drop: a "+M3 → +M2" sequence is still mating, so the
-    // 0.5% drift through the sigmoid shouldn't bleed into accuracy. Spec bug #4.
-    const wpDrop = winDropForPly(playerEvalBeforeCp, playerEvalAfterCp, playerWinBefore, playerWinAfter);
-    const isBest = bestUci === move.from + move.to + (move.promotion ?? '');
-    const baseCls = classifyByWpDrop(wpDrop, cpLoss, isBest);
+      const playerWinBefore = sideToMove === 'white' ? wpBefore : 100 - wpBefore;
+      const playerWinAfter = sideToMove === 'white' ? wpAfter : 100 - wpAfter;
+      // `acc` is recomputed below from wpDrop, which is mate-aware. Holding the
+      // value here keeps the existing flow but the consumer uses the corrected
+      // input.
 
-    // ECO-based book: probe the position BEFORE the played move against the
-    // bundled map. Once we fall out, we stay out for the rest of the game.
-    let inBookEpd = false;
-    if (stillInBook) {
-      const epdBefore = fenToEpd(fenBefore);
-      if (lookupOpeningByEpd(epdBefore)) {
-        inBookEpd = true;
+      const playerEvalBeforeCp = sideToMove === 'white' ? prevWhiteCp : -prevWhiteCp;
+      const playerEvalAfterCp = sideToMove === 'white' ? nextWhiteCp : -nextWhiteCp;
+      const cpLoss = cpLossForPly(playerEvalBeforeCp, playerEvalAfterCp);
+      // Capped variant for ACPL aggregation — a single mate-flip ply otherwise
+      // adds 1000/N to the average and tanks estimated Elo by ~400.
+      const cpLossAcpl = cpLossForAcpl(playerEvalBeforeCp, playerEvalAfterCp);
+      // Mate-in-N (white perspective) for the eval bar / graph. The raw cp value
+      // is ±~10000 when the engine sees mate; consumers need the actual M-count
+      // to render "M3" instead of decoding the spike heuristically. The engine
+      // returns mate in side-to-move perspective at each position.
+      const mateBefore = prevEval.mate !== null
+        ? (sideToMove === 'white' ? prevEval.mate : -prevEval.mate)
+        : null;
+      const mateAfter = nextEval.mate !== null
+        ? (sideToMove === 'white' ? -nextEval.mate : nextEval.mate)
+        : null;
+      // Mate-aware win-drop: a "+M3 → +M2" sequence is still mating, so the
+      // 0.5% drift through the sigmoid shouldn't bleed into accuracy. Spec bug #4.
+      const wpDrop = winDropForPly(playerEvalBeforeCp, playerEvalAfterCp, playerWinBefore, playerWinAfter);
+      const isBest = bestUci === move.from + move.to + (move.promotion ?? '');
+      const baseCls = classifyByWpDrop(wpDrop, cpLoss, isBest);
+
+      // ECO-based book: probe the position BEFORE the played move against the
+      // bundled map. Once we fall out, we stay out for the rest of the game.
+      let inBookEpd = false;
+      if (stillInBook) {
+        const epdBefore = fenToEpd(fenBefore);
+        if (lookupOpeningByEpd(epdBefore)) {
+          inBookEpd = true;
+        } else {
+          stillInBook = false;
+        }
+      }
+      // Safety ceiling — chess.com almost never tags book past ply 20.
+      if ((i + 1) > 20) inBookEpd = false;
+
+      const cls = refineClassification({
+        base: baseCls,
+        isBest,
+        cpLoss,
+        fenBefore,
+        fenAfter,
+        sideToMove,
+        playerEvalBeforeCp,
+        playerEvalAfterCp,
+        ply: i + 1,
+        legalMoveCount,
+        candidatePlayerCps,
+        pvAfterPlayed: nextEval.pv,
+        inBook: inBookEpd,
+      });
+
+      const isBookMove = cls === 'book';
+      const isForcedMove = cls === 'forced';
+      // Book + Forced are both excluded from the accuracy aggregate: they were
+      // not the player's choice, so penalising them is unfair (chess.com same).
+      const excludeFromAggregate = isBookMove || isForcedMove;
+      const acc = moveAccuracy(playerWinBefore, playerWinBefore - wpDrop);
+      const point: MoveAccPoint = { acc, winPct: playerWinAfter, isBook: excludeFromAggregate };
+      if (sideToMove === 'white') {
+        whitePoints.push(point);
+        if (!excludeFromAggregate) { whiteCplSum += cpLossAcpl; whiteCplN++; }
       } else {
-        stillInBook = false;
+        blackPoints.push(point);
+        if (!excludeFromAggregate) { blackCplSum += cpLossAcpl; blackCplN++; }
       }
+
+      moves.push({
+        ply: i + 1,
+        san: move.san,
+        uci: move.from + move.to + (move.promotion ?? ''),
+        fen_before: fenBefore,
+        fen_after: fenAfter,
+        eval_before_cp: prevWhiteCp,
+        eval_after_cp: nextWhiteCp,
+        mate_before: mateBefore,
+        mate_after: mateAfter,
+        best_move_uci: bestUci,
+        best_move_san: bestSan,
+        best_pv: pvSan,
+        centipawn_loss: cpLoss,
+        classification: cls,
+      });
+
+      prevEval = nextEval;
+      prevWhiteCp = nextWhiteCp;
     }
-    // Safety ceiling — chess.com almost never tags book past ply 20.
-    if ((i + 1) > 20) inBookEpd = false;
-
-    const cls = refineClassification({
-      base: baseCls,
-      isBest,
-      cpLoss,
-      fenBefore,
-      fenAfter,
-      sideToMove,
-      playerEvalBeforeCp,
-      playerEvalAfterCp,
-      ply: i + 1,
-      legalMoveCount,
-      candidatePlayerCps,
-      pvAfterPlayed: nextEval.pv,
-      inBook: inBookEpd,
-    });
-
-    const isBookMove = cls === 'book';
-    const isForcedMove = cls === 'forced';
-    // Book + Forced are both excluded from the accuracy aggregate: they were
-    // not the player's choice, so penalising them is unfair (chess.com same).
-    const excludeFromAggregate = isBookMove || isForcedMove;
-    const acc = moveAccuracy(playerWinBefore, playerWinBefore - wpDrop);
-    const point: MoveAccPoint = { acc, winPct: playerWinAfter, isBook: excludeFromAggregate };
-    if (sideToMove === 'white') {
-      whitePoints.push(point);
-      if (!excludeFromAggregate) { whiteCplSum += cpLossAcpl; whiteCplN++; }
-    } else {
-      blackPoints.push(point);
-      if (!excludeFromAggregate) { blackCplSum += cpLossAcpl; blackCplN++; }
-    }
-
-    moves.push({
-      ply: i + 1,
-      san: move.san,
-      uci: move.from + move.to + (move.promotion ?? ''),
-      fen_before: fenBefore,
-      fen_after: fenAfter,
-      eval_before_cp: prevWhiteCp,
-      eval_after_cp: nextWhiteCp,
-      mate_before: mateBefore,
-      mate_after: mateAfter,
-      best_move_uci: bestUci,
-      best_move_san: bestSan,
-      best_pv: pvSan,
-      centipawn_loss: cpLoss,
-      classification: cls,
-    });
-
-    prevEval = nextEval;
-    prevWhiteCp = nextWhiteCp;
+  } finally {
+    await engine.quit().catch(() => { /* ignore */ });
   }
-} finally {
-  await engine.quit().catch(() => { /* ignore */ });
-}
 
   // CAPS-style game accuracy (volatility-weighted + harmonic mean).
   const accuracy_white = Math.round(gameAccuracy(whitePoints) * 10) / 10;
