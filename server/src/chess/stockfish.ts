@@ -56,26 +56,36 @@ export interface EngineMultiEval extends EngineEval {
   candidates: PvCandidate[]; // sorted by multipv ascending; index 0 == best
 }
 
+// Is the OS process still running? A child killed by a signal keeps
+// `exitCode === null` forever (the status lands in `signalCode` instead), and
+// `killed` only means "a signal was successfully *sent*" — neither alone is a
+// liveness check, and `killed` in particular must never gate an escalation:
+// SIGTERM sets it, which would make the SIGKILL below unreachable.
+function isRunning(proc: ChildProcessWithoutNullStreams): boolean {
+  return proc.exitCode === null && proc.signalCode === null;
+}
+
+// Every started engine, until its process is confirmed gone. The last line of
+// defence: on server shutdown or a `tsx watch` reload these children would
+// otherwise survive us and keep burning a core each. Entries are removed in
+// exactly one place — the child's own `exit` event — so an engine that dies on
+// its own (crash, OOM-kill, external SIGKILL) doesn't pin itself here forever.
 const activeStockfishEngines = new Set<StockfishEngine>();
 
-function terminateAllActiveEngines(): void {
-  for (const engine of activeStockfishEngines) {
-    try {
-      if (engine.proc && engine.proc.exitCode === null && !engine.proc.killed) {
-        engine.proc.kill('SIGKILL');
-      }
-    } catch { /* ignore */ }
-  }
+/** SIGKILL every engine whose process is still up. Sync — safe on `exit`. */
+export function terminateAllActiveEngines(): void {
+  for (const engine of activeStockfishEngines) engine.killNow();
   activeStockfishEngines.clear();
 }
 
-process.once('exit', terminateAllActiveEngines);
-process.once('SIGINT', () => { terminateAllActiveEngines(); process.exit(130); });
-process.once('SIGTERM', () => { terminateAllActiveEngines(); process.exit(143); });
-
 export class StockfishEngine {
   readonly kind = 'local' as const;
-  proc: ChildProcessWithoutNullStreams | null = null;
+  // The handle callers talk to; quit() clears it so no further UCI goes out.
+  private proc: ChildProcessWithoutNullStreams | null = null;
+  // The same child, held until its `exit` fires. quit() must not drop this:
+  // while the process is still winding down it has to stay reachable from the
+  // shutdown hook, or a slow teardown during a server stop leaks an orphan.
+  private child: ChildProcessWithoutNullStreams | null = null;
   private buffer = '';
   private waiters: ((line: string) => void)[] = [];
   // Reject callbacks for in-flight evaluate()/bestMove() promises. quit() walks
@@ -105,14 +115,32 @@ export class StockfishEngine {
   }
 
   async start(): Promise<void> {
-    this.proc = spawn(this.path, [], { stdio: ['pipe', 'pipe', 'pipe'] });
+    const proc = spawn(this.path, [], { stdio: ['pipe', 'pipe', 'pipe'] });
+    this.proc = proc;
+    this.child = proc;
     activeStockfishEngines.add(this);
-    this.proc.stdout.setEncoding('utf8');
-    this.proc.stdout.on('data', (chunk: string) => this.onData(chunk));
-    this.proc.on('error', (err) => console.error('[stockfish]', err));
+    // The only place an engine leaves the registry. Covers quit() *and* a
+    // process that dies without us asking (crash, OOM-kill, outside SIGKILL),
+    // which otherwise kept the engine object — and its buffer — alive for the
+    // lifetime of the server.
+    proc.once('exit', () => {
+      this.child = null;
+      this.ready = false;
+      activeStockfishEngines.delete(this);
+    });
+    proc.stdout.setEncoding('utf8');
+    proc.stdout.on('data', (chunk: string) => this.onData(chunk));
+    proc.on('error', (err) => console.error('[stockfish]', err));
     await this.send('uci');
     await this.waitFor((l) => l === 'uciok');
     this.ready = true;
+  }
+
+  /** Sync, unconditional SIGKILL. Used by the process-exit hook. */
+  killNow(): void {
+    const proc = this.child;
+    if (!proc || !isRunning(proc)) return;
+    try { proc.kill('SIGKILL'); } catch { /* ignore */ }
   }
 
   private onData(chunk: string) {
@@ -314,14 +342,19 @@ export class StockfishEngine {
   }
 
   // Async, idempotent shutdown. Sends `stop` + `quit` so any in-flight `go`
-  // finishes promptly, closes stdin, then guarantees the OS process is gone
-  // via SIGTERM / SIGKILL. Rejects pending waiters so callers never deadlock.
+  // finishes promptly, closes stdin (without which the engine sits blocked on
+  // a stdin read), then escalates SIGTERM -> SIGKILL until the OS process is
+  // actually gone. Rejects pending waiters so callers never deadlock.
+  //
+  // Each step is gated on `isRunning` only. An earlier version also checked
+  // `!proc.killed`, which SIGTERM sets — so the SIGKILL step could never run
+  // and quit() resolved on an engine that was still alive, exactly in the case
+  // it exists for (a large Hash takes a while to free).
   async quit(): Promise<void> {
     const proc = this.proc;
     if (!proc) return;
     this.proc = null;
     this.ready = false;
-    activeStockfishEngines.delete(this);
 
     // Reject every dangling waiter so consumers don't deadlock.
     const handlers = Array.from(this.deathHandlers);
@@ -334,36 +367,38 @@ export class StockfishEngine {
       proc.stdin.end();
     } catch { /* ignore */ }
 
-    if (proc.exitCode !== null || proc.killed) return;
+    if (!isRunning(proc)) return;
 
     await new Promise<void>((res) => {
       let done = false;
       const finish = () => {
-        if (!done) {
-          done = true;
-          clearTimeout(termTimer);
-          clearTimeout(killTimer);
-          res();
-        }
+        if (done) return;
+        done = true;
+        clearTimeout(termTimer);
+        clearTimeout(killTimer);
+        clearTimeout(giveUpTimer);
+        res();
       };
 
       proc.once('exit', finish);
       proc.once('close', finish);
 
-      // Give graceful UCI quit 250ms, then try SIGTERM
+      // Graceful UCI `quit` gets 250 ms, then SIGTERM.
       const termTimer = setTimeout(() => {
-        if (proc.exitCode === null && !proc.killed) {
-          try { proc.kill('SIGTERM'); } catch { /* ignore */ }
-        }
+        if (isRunning(proc)) { try { proc.kill('SIGTERM'); } catch { /* ignore */ } }
       }, 250);
 
-      // If still not exited after 600ms, force SIGKILL
+      // Still up 350 ms after SIGTERM: stop being polite.
       const killTimer = setTimeout(() => {
-        if (proc.exitCode === null && !proc.killed) {
-          try { proc.kill('SIGKILL'); } catch { /* ignore */ }
-        }
-        finish();
+        if (isRunning(proc)) { try { proc.kill('SIGKILL'); } catch { /* ignore */ } }
       }, 600);
+
+      // SIGKILL is not instantaneous, so give the kernel a moment to reap and
+      // let `exit` resolve us normally. If even that doesn't land we stop
+      // blocking the caller — but the engine stays in `activeStockfishEngines`
+      // (it is dropped on `exit`, not here), so the shutdown hook can still
+      // finish the job rather than leaving an orphan behind.
+      const giveUpTimer = setTimeout(finish, 1_500);
     });
   }
 
