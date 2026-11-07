@@ -37,3 +37,7 @@ docs/launch/
 
 # Test coverage
 coverage/
+
+# Local MCP secrets
+integrations/mcp/.env
+integrations/mcp/dist-plugin/
