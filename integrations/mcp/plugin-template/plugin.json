@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "patzer-chess-review",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Private self-hosted Stockfish chess analysis and AI coaching through Patzer MCP.",
   "author": {"name":"MousaXD"},
   "extensions": {"com.openai": {"interface": {
@@ -10,7 +10,7 @@
     "longDescription": "Connect to your own Patzer chess server to browse imported games, analyze positions, review mistakes and request AI game coaching.",
     "developerName": "MousaXD",
     "category": "Productivity",
-    "capabilities": ["Interactive"],
+    "capabilities": [],
     "defaultPrompt": "Review my latest chess game with Patzer."
   }}}
 }
