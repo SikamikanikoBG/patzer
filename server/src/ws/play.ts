@@ -970,8 +970,23 @@ async function handlePvpConnection(ws: WebSocket, user: AuthedUser, gameId: numb
     if (!session) return;
     if (me.ws === ws) me.ws = null;
     if (opp.ws) send(opp.ws, 'opponent_status', { online: false });
-    // If neither side connected and game not saved, keep session for reconnect (ephemeral)
-    // GC: drop after a while if both gone — left simple for v1.
+    // If neither side is connected, drop the analysis engine now instead of
+    // letting it idle until the 15-minute sweep. Reconnecting players get a
+    // fresh one from ensureAnalysisEngine on demand.
+    //
+    // Through the analysis queue, like the bot path: a hint or blunder preview
+    // may still be running on this engine, and killing it underneath its own
+    // evaluate() both fails that request and lets a reconnecting player start a
+    // replacement engine while this one is still winding down.
+    if (!me.ws && !opp.ws && session.analysisEngine) {
+      const dying = session;
+      void runOnAnalysisEngine(dying, async () => {
+        // Somebody came back while we waited our turn — keep their engine.
+        if (dying.white.ws || dying.black.ws) return;
+        await dying.analysisEngine?.quit().catch(() => { /* ignore */ });
+        dying.analysisEngine = null;
+      });
+    }
   });
 }
 

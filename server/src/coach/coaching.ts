@@ -28,38 +28,76 @@ import { moveMotifs, positionFeatures, type MoveMotifs, type PieceRef } from "./
 export interface EngineLine { cp: number | null; mate: number | null; pv: string[] }
 /** Top `n` lines for the side to move (cp/mate from White's point of view). */
 export type CoachEngine = (fen: string, n: number) => Promise<EngineLine[] | null>;
+/** Several positions in one go. See `stockfishLinesBatch` for why this exists. */
+export type CoachEngineBatch = (reqs: { fen: string; n: number }[]) => Promise<(EngineLine[] | null)[]>;
 
 const COACH_DEPTH = 12;
 const COACH_ENGINE_TIMEOUT_MS = 6000;
 
-const stockfishLines: CoachEngine = async (fen, n) => {
+/**
+ * Evaluate every requested position on ONE engine process.
+ *
+ * Spawning the bundled Stockfish costs ~250 ms of UCI handshake and a 76 MB
+ * image before it searches anything. explainCoaching wants two positions (the
+ * one before the move and the one after), and asking for them as two separate
+ * calls meant two concurrent children per explained move — twelve engine
+ * startups for a game review with six key moments.
+ *
+ * Measured, this is not about latency: the two spawns did overlap, so one
+ * explainCoaching takes about as long either way (~340 ms vs ~356 ms here). It
+ * halves what the coach costs while it runs — one process and one core instead
+ * of two — which is what matters on the small boxes this project targets, where
+ * those children also competed with the long-lived analysis engine.
+ *
+ * The timeout is the budget for the whole batch. On expiry the positions that
+ * did finish are returned and the rest come back null — partial facts still
+ * coach better than none.
+ */
+const stockfishLinesBatch: CoachEngineBatch = async (reqs) => {
+  if (!reqs.length) return [];
   const engine = createAnalysisEngine();
+  const out: (EngineLine[] | null)[] = reqs.map(() => null);
   let timer: NodeJS.Timeout | undefined;
   try {
     const run = (async () => {
       await engine.start();
       await engine.setOption("Threads", "1");
       await engine.setOption("Hash", "16");
-      const r = await engine.evaluateMulti(fen, COACH_DEPTH, n);
-      return r.candidates.map((c) => ({ cp: c.cp, mate: c.mate, pv: c.pv }));
+      for (const [i, req] of reqs.entries()) {
+        const r = await engine.evaluateMulti(req.fen, COACH_DEPTH, req.n);
+        out[i] = r.candidates.map((c) => ({ cp: c.cp, mate: c.mate, pv: c.pv }));
+      }
     })();
-    const timeout = new Promise<null>((res) => { timer = setTimeout(() => res(null), COACH_ENGINE_TIMEOUT_MS); });
-    return await Promise.race([run, timeout]);
+    const timeout = new Promise<void>((res) => { timer = setTimeout(res, COACH_ENGINE_TIMEOUT_MS); });
+    await Promise.race([run, timeout]);
+    return out;
   } catch {
     // No engine (no Stockfish binary, hosted engine down): coach from
     // chess.js alone rather than not at all.
-    return null;
+    return out;
   } finally {
     clearTimeout(timer);
     engine.quit().catch(() => {});
   }
 };
 
+const stockfishLines: CoachEngine = async (fen, n) => (await stockfishLinesBatch([{ fen, n }]))[0] ?? null;
+
 let coachEngine: CoachEngine = stockfishLines;
+let coachEngineBatch: CoachEngineBatch = stockfishLinesBatch;
 /** Swap the engine — tests use a scripted one. Returns the previous one. */
 export function setCoachEngine(e: CoachEngine): CoachEngine {
   const prev = coachEngine;
   coachEngine = e;
+  // Keep the batch path on whatever was injected: a scripted engine has no
+  // spawn cost to amortise, and a test must never reach a real Stockfish.
+  coachEngineBatch = e === stockfishLines
+    ? stockfishLinesBatch
+    : async (reqs) => {
+        const out: (EngineLine[] | null)[] = [];
+        for (const r of reqs) out.push(await e(r.fen, r.n));
+        return out;
+      };
   return prev;
 }
 
@@ -417,10 +455,15 @@ export async function explainCoaching(input: ExplainCoachingInput, lang: Languag
     fenAfter = c.fen();
   } catch { /* leave null */ }
 
-  const [before, after] = await Promise.all([
-    coachEngine(input.fen, 3),
-    fenAfter && !new Chess(fenAfter).isGameOver() ? coachEngine(fenAfter, 1) : Promise.resolve(null),
-  ]);
+  // Both positions on one engine process — see stockfishLinesBatch. Asking for
+  // them separately spawned a second Stockfish for a depth-12 single-line
+  // search, which costs more to start than to run.
+  const wantAfter = fenAfter !== null && !new Chess(fenAfter).isGameOver();
+  const reqs = [{ fen: input.fen, n: 3 }];
+  if (wantAfter) reqs.push({ fen: fenAfter!, n: 1 });
+  const lines = await coachEngineBatch(reqs);
+  const before = lines[0] ?? null;
+  const after = wantAfter ? lines[1] ?? null : null;
 
   // WHY — concrete consequences of the move on the board.
   const why: string[] = [];
