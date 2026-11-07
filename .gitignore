@@ -41,3 +41,6 @@ coverage/
 # Local MCP secrets
 integrations/mcp/.env
 integrations/mcp/dist-plugin/
+
+# Local Patzer credential file (created by secure setup script)
+integrations/mcp/.patzer-password

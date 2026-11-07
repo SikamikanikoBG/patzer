@@ -2,12 +2,12 @@
 /** Shared Patzer MCP tools for the stdio and local HTTP transports; no third-party dependencies. */
 
 // Node 22+ dotenv loader reads the private file without executing its contents as shell commands.
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 const envFile = new URL('./.env', import.meta.url);
 if (existsSync(envFile)) process.loadEnvFile(envFile);
 const apiBase = process.env.PATZER_URL || 'http://127.0.0.1:8800';
 const username = process.env.PATZER_USERNAME || '';
-const password = process.env.PATZER_PASSWORD || '';
+const password = process.env.PATZER_PASSWORD_FILE ? readFileSync(process.env.PATZER_PASSWORD_FILE, 'utf8') : (process.env.PATZER_PASSWORD || '');
 if (!username || !password) {
   console.error('Set PATZER_USERNAME and PATZER_PASSWORD locally.');
   process.exit(1);

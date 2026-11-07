@@ -1,5 +1,5 @@
 /** Real Patzer API integration test against an isolated disposable DB. Never touches the original DB. */
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import net from 'node:net';
@@ -17,6 +17,8 @@ const dbPath=join(tmp,'chess.db');
 const username='mcp_audit';
 const password='Temporary_Audit_Password_2026!';
 const key='x'.repeat(64);
+const passwordFile=join(tmp,'patzer-password');
+writeFileSync(passwordFile,password,{mode:0o600});
 const processes=[];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function port(){const s=net.createServer();await new Promise(r=>s.listen(0,'127.0.0.1',r));const p=s.address().port;await new Promise(r=>s.close(r));return p;}
@@ -34,7 +36,7 @@ try {
   const pgn='[Event "Audit"]\n[Site "Local"]\n[Date "2026.11.07"]\n[Round "1"]\n[White "Test"]\n[Black "Opponent"]\n[Result "1-0"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 1-0';
   const id=Number(db.prepare('INSERT INTO games (user_id,source,pgn,white,black,result,user_color) VALUES (1,\'imported\',?,?,?,?,?)').run(pgn,'Test','Opponent','win','white').lastInsertRowid);
   db.close();
-  const bridge=launch(process.execPath,[resolve(fileURLToPath(new URL('./server.mjs',import.meta.url)))],{env:{...process.env,MCP_API_KEY:key,PATZER_USERNAME:username,PATZER_PASSWORD:password,PATZER_URL:api,MCP_PORT:String(mcpPort)}});
+  const bridge=launch(process.execPath,[resolve(fileURLToPath(new URL('./server.mjs',import.meta.url)))],{env:{...process.env,MCP_API_KEY:key,PATZER_USERNAME:username,PATZER_PASSWORD_FILE:passwordFile,PATZER_PASSWORD:'',PATZER_URL:api,MCP_PORT:String(mcpPort)}});
   const mcp=`http://127.0.0.1:${mcpPort}/mcp`;
   try{await wait(`http://127.0.0.1:${mcpPort}/healthz`);}catch(e){throw Error(e.message+'; MCP stderr '+bridge._err);}
   const list=await rpc(mcp,'tools/call',{name:'list_games',arguments:{limit:10}});
