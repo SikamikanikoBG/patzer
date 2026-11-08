@@ -26,6 +26,7 @@ import Players from './pages/Players';
 import PlayerProfile from './pages/PlayerProfile';
 import AdminUsers from './pages/admin/Users';
 import AdminSystem from './pages/admin/System';
+import McpConnection from './pages/admin/McpConnection';
 import IncomingChallengeModal from './components/IncomingChallengeModal';
 import CommandPalette from './components/CommandPalette';
 import ShortcutsModal from './components/ShortcutsModal';
@@ -196,6 +197,7 @@ export default function App() {
           <Route path="/settings" element={<SettingsPage />} />
           {user.role === 'admin' && <Route path="/admin/users" element={<AdminUsers />} />}
           {user.role === 'admin' && <Route path="/admin/system" element={<AdminSystem />} />}
+          {user.role === 'admin' && <Route path="/admin/mcp" element={<McpConnection />} />}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
