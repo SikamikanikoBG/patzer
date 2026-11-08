@@ -110,3 +110,11 @@ As of November 2026 ChatGPT custom MCP connections support OAuth/no-auth, not ar
 - MCP source and tests: present at `~/projects/my-creations/chess/patzer-mcp/integrations/mcp/`; stdio transport works with MCP Inspector.
 - **Still not connected to ChatGPT**: no local Patzer credentials `.env`, no Platform tunnel ID or runtime key, and no live ChatGPT plugin setup. Do not expose the HTTP bridge publicly to bypass this.
 - Existing Chat On Steroids Tailscale gateway remains unchanged.
+
+### Patzer website MCP wizard
+
+On a localhost-only Linux/systemd installation, you can now configure and manage
+this tunnel directly from Patzer **Admin → ChatGPT / MCP**. The wizard stores
+runtime credentials once in a mode-600 local file, manages a persistent user
+service, and polls real control-plane tunnel readiness. See
+[`docs/MCP_CONNECTION_WIZARD.md`](../../docs/MCP_CONNECTION_WIZARD.md).
