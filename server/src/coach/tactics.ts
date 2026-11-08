@@ -75,6 +75,12 @@ export interface MoveMotifs {
   /** Minor piece leaving its home square. */
   develops: boolean;
   captured: PieceRef | null;
+  /** What the capture actually nets, in pawns, after the cheapest recapture;
+   *  null when the move is not a capture. 0 is an even trade, negative loses
+   *  material. Deliberately conservative: if the opponent still covers the
+   *  square at all, the moved piece is counted as paid for, so an even trade
+   *  is never reported as winning material. */
+  captureNet: number | null;
   /** Enemy pieces the moved piece attacks that are worth more than it or are
    *  undefended — two or more (or one plus check) is a fork. */
   fork: PieceRef[];
@@ -142,6 +148,15 @@ export function moveMotifs(fenBefore: string, san: string): MoveMotifs | null {
   const theirWasHanging = new Set(theirHangingBefore.map(key));
   const threatens = hangingPieces(after, them).filter((p) => !theirWasHanging.has(key(p)));
 
+  // Captures are not automatically material. Bxc6+ bxc6 and dxc5 Qxc5 are
+  // trades, and reporting them as "wins material" put a win that isn't there
+  // into the coach's facts, which the model then repeated word for word.
+  let captureNet: number | null = null;
+  if (m.captured) {
+    const recapturers = after.attackers(m.to, them);
+    captureNet = VALUE[m.captured] - (recapturers.length ? VALUE[piece.type] : 0);
+  }
+
   const allowsMate = after.isCheckmate() ? null : mateInOne(after);
   const passedAfter = passTurn(after);
   const threatensMate = !after.isGameOver() && passedAfter ? mateInOne(passedAfter) !== null : false;
@@ -155,6 +170,7 @@ export function moveMotifs(fenBefore: string, san: string): MoveMotifs | null {
     promotes: !!m.promotion,
     develops,
     captured: m.captured ? { type: m.captured, square: m.to } : null,
+    captureNet,
     fork: fork.length >= 2 || (fork.length === 1 && after.inCheck() && fork[0]!.type !== "k") ? fork : [],
     hangs,
     saves,
