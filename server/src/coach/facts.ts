@@ -33,6 +33,7 @@ const SECOND_PERSON_PERSPECTIVE: Record<Language, string> = {
   es: "tú",
   de: "du",
   ru: "ты",
+  uk: "ти",
 };
 /** FACTS payload for /api/coach/explain. */
 export function factsForExplain(
@@ -203,6 +204,16 @@ Lass einen Schritt aus, wenn sein Feld in FACTS leer ist. ${address} Höchstens 
 5. Закончи FACTS.takeaway как правилом на будущее или одним коротким вопросом, который заставит посмотреть на доску.
 Пропусти шаг, если его поле в FACTS пустое. Обращайся к игроку как "${persp}", без глаголов прошедшего времени с родом. Не больше ${n} предложений — это важнее блока аудитории. Только FACTS. Без шахматной нотации. Без JSON. Только естественный язык, по-русски.`;
   }
+  if (language === "uk") {
+    const persp = own ? "ти" : input.player === "White" ? "Білі" : "Чорні";
+    return `TASK: Розбери з гравцем цей хід як тренер, у такому порядку:
+1. Прямо скажи, що це за хід (FACTS.verdict).${tone === "correct" ? " Жодної похвали." : ""}
+2. Поясни, ЧОМУ, за FACTS.why та FACTS.opponent_reply — конкретний наслідок на дошці.
+3. Якщо є FACTS.better_move, покажи кращу ідею та що вона дає; назви один із FACTS.other_good_moves, якщо він є.
+4. Якщо у FACTS.player_history є запис, пов’яжи з ним цей хід одним реченням.
+5. Закінчи FACTS.takeaway як правилом на майбутнє або одним коротким запитанням, яке змусить подивитися на дошку.
+Пропусти крок, якщо його поле у FACTS порожнє. Звертайся до гравця як "${persp}", без дієслів минулого часу з родом. Не більше ${n} речень — це важливіше за блок аудиторії. Лише FACTS. Без шахової нотації. Без JSON. Лише природна мова, українською.`;
+  }
   const persp = own ? "you" : input.player;
   return `TASK: Coach the player on this move, in this order:
 1. Say plainly what kind of move it was (FACTS.verdict).${tone === "correct" ? " No praise at all." : ""}
@@ -238,6 +249,7 @@ export function correctionNote(language: Language, verdict: string): string {
     es: `IMPORTANTE: tu respuesta anterior contradecía FACTS.verdict ("${verdict}"). Empieza con ese veredicto y no elogies la jugada.`,
     de: `WICHTIG: Deine vorige Antwort widersprach FACTS.verdict ("${verdict}"). Beginne mit diesem Urteil und lobe den Zug nicht.`,
     ru: `ВАЖНО: твой прошлый ответ противоречил FACTS.verdict ("${verdict}"). Начни с этого вердикта и не хвали ход.`,
+    uk: `ВАЖЛИВО: твоя попередня відповідь суперечила FACTS.verdict ("${verdict}"). Почни з цього вердикту й не хвали хід.`,
   };
   return notes[language] ?? notes.en;
 }
@@ -271,6 +283,9 @@ export function hintPrompt(
   }
   if (language === "ru") {
     return `FACTS:\n${factsJson}\n\nTASK: Помоги игроку как тренер перед его ходом. НЕ называй лучший ход и вообще конкретные ходы. По FACTS.where_to_look и FACTS.best_move_idea покажи, что важно в позиции и почему; если в FACTS.player_history есть запись, напомни об этой привычке. Закончи одним вопросом, который заставит посмотреть на доску. Не больше ${n} предложений. Без шахматной нотации. Только естественный язык, по-русски.`;
+  }
+  if (language === "uk") {
+    return `FACTS:\n${factsJson}\n\nTASK: Допоможи гравцеві як тренер перед його ходом. НЕ називай найкращий хід і взагалі конкретні ходи. За FACTS.where_to_look та FACTS.best_move_idea покажи, що важливо в позиції й чому; якщо у FACTS.player_history є запис, нагадай про цю звичку. Закінчи одним запитанням, яке змусить подивитися на дошку. Не більше ${n} речень. Без шахової нотації. Лише природна мова, українською.`;
   }
   return `FACTS:\n${factsJson}\n\nTASK: Coach the player before their move. Do NOT name the best move or any concrete move. Using FACTS.where_to_look and FACTS.best_move_idea, point out what matters in this position and why; if FACTS.player_history has an entry, remind them of that habit. End with one question that makes them look at the board. At most ${n} sentences. No chess notation. Natural language only, in English.`;
 }

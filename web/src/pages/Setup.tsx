@@ -94,7 +94,7 @@ export default function Setup() {
                 <h2 className="text-lg font-semibold">{t('setup.step1')}</h2>
                 <div>
                   <label className="label mb-1 block">{t('common.language')}</label>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                     {LANGUAGES.map((l) => (
                       <LangBtn key={l.code} current={language} value={l.code} onClick={() => { setLanguage(l.code); void i18n.changeLanguage(l.code); }} lang={l.code}>{l.native}</LangBtn>
                     ))}

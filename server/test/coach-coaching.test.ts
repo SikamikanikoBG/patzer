@@ -197,7 +197,7 @@ describe('explainCoaching — the facts behind a blunder', () => {
   });
 
   it('speaks the player\'s language', async () => {
-    const expected = { bg: /дава мат веднага/, es: /dar mate de inmediato/, de: /sofort mattsetzen/, ru: /сразу ставит мат/ } as const;
+    const expected = { bg: /дава мат веднага/, es: /dar mate de inmediato/, de: /sofort mattsetzen/, ru: /сразу ставит мат/, uk: /одразу ставить мат/ } as const;
     for (const [lang, re] of Object.entries(expected)) {
       const c = await coaching.explainCoaching(blunderInput, lang as 'bg', 'beginner');
       expect((c.facts.why as string[])[0], lang).toMatch(re);
@@ -218,7 +218,7 @@ describe('contradiction — the guard', () => {
   it('catches praise for a mistake in every language', () => {
     const praise = {
       en: 'Nice move, the knight comes out.', bg: 'Страхотно развитие на коня.', es: 'Excelente desarrollo del caballo.',
-      de: 'Großartig, der Springer kommt raus.', ru: 'Отличное развитие коня.',
+      de: 'Großartig, der Springer kommt raus.', ru: 'Отличное развитие коня.', uk: 'Чудовий розвиток коня.',
     } as const;
     for (const [lang, text] of Object.entries(praise)) {
       expect(coaching.contradiction(text, 'blunder', lang as 'en'), lang).toBe('praise_for_mistake');
@@ -227,7 +227,7 @@ describe('contradiction — the guard', () => {
 
   it('catches a good move called a blunder in every language', () => {
     const blame = {
-      en: 'That is a blunder.', bg: 'Това е грешка.', es: 'Es un error.', de: 'Das ist ein Fehler.', ru: 'Это ошибка.',
+      en: 'That is a blunder.', bg: 'Това е грешка.', es: 'Es un error.', de: 'Das ist ein Fehler.', ru: 'Это ошибка.', uk: 'Це помилка.',
     } as const;
     for (const [lang, text] of Object.entries(blame)) {
       expect(coaching.contradiction(text, 'best', lang as 'en'), lang).toBe('blame_for_good_move');
@@ -240,7 +240,7 @@ describe('contradiction — the guard', () => {
     // answer quoting the verdict used to be rejected as praise.
     const { verdictPhrase } = await import('../src/coach/locales.js');
     const classes = ['brilliant', 'great', 'best', 'excellent', 'good', 'book', 'forced', 'inaccuracy', 'mistake', 'blunder', 'miss'] as const;
-    for (const lang of ['en', 'bg', 'es', 'de', 'ru'] as const) {
+    for (const lang of ['en', 'bg', 'es', 'de', 'ru', 'uk'] as const) {
       for (const cls of classes) {
         const v = verdictPhrase(cls, lang);
         expect(coaching.contradiction(`${v.charAt(0).toUpperCase()}${v.slice(1)}.`, cls, lang), `${lang} ${cls}`).toBeNull();
