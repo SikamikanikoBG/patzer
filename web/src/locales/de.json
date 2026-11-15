@@ -679,6 +679,10 @@
       "next": "Nächste Aufgabe",
       "puzzleRating": "Aufgaben-Wertung {{rating}}",
       "onLichess": "Auf lichess.org",
+
+      "originalGame": "Originalpartie",
+      "analyzeGame": "Originalpartie analysieren",
+      "gameUnavailable": "Die Originalpartie ist momentan nicht verfügbar.",
       "credit": "Aufgaben aus der Lichess-Puzzle-Datenbank (CC0):",
       "rules": "Ein falscher Zug, ein Tipp oder die Lösung – dann zählt die Aufgabe als nicht gelöst. Jede Aufgabe kommt nur einmal.",
       "themes": {

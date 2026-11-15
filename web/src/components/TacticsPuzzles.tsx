@@ -8,6 +8,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { originalMoves, type OriginalPuzzleGame } from '../lib/puzzleGame';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Check, Eye, Flame, Lightbulb, RotateCcw, Trophy, TrendingDown, TrendingUp, X, Zap } from 'lucide-react';
 import ChessBoard from './ChessBoard';
@@ -309,6 +311,8 @@ function Puzzle({ puzzle, stats, daily, onNext }: { puzzle: TacticsPuzzle; stats
           )}
         </div>
 
+        {finished && <OriginalGamePreview id={puzzle.id} />}
+
         <div className="card flex items-center justify-between p-3 text-xs text-chesscom-500">
           <span className="flex items-center gap-1.5"><Zap className="h-3.5 w-3.5 text-gold-600" /> {t('train.puzzles.puzzleRating', { rating: puzzle.rating })}</span>
           {finished && (
@@ -319,6 +323,39 @@ function Puzzle({ puzzle, stats, daily, onNext }: { puzzle: TacticsPuzzle; stats
         </div>
         {!finished && status !== 'shown' && <div className="px-1 text-[11px] leading-relaxed text-chesscom-400">{t('train.puzzles.rules')}</div>}
       </aside>
+    </div>
+  );
+}
+
+/** Only mounted after the answer is complete: no pre-solve history or spoilers. */
+function OriginalGamePreview({ id }: { id: string }) {
+  const { t } = useTranslation();
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['tactics-original-game', id],
+    queryFn: () => api.get<OriginalPuzzleGame>(`/api/tactics/game/${id}`),
+    retry: false,
+    staleTime: 24 * 60 * 60 * 1000,
+  });
+  const moves = useMemo(() => data ? originalMoves(data) : [], [data]);
+  return (
+    <div className="card space-y-2 p-3">
+      <div className="text-xs font-semibold text-chesscom-900 dark:text-chesscom-100">
+        {t('train.puzzles.originalGame', { defaultValue: 'Original game' })}
+      </div>
+      {isLoading && <div className="text-xs text-chesscom-500">{t('common.loading')}</div>}
+      {isError && <div className="text-xs text-chesscom-500">
+        {t('train.puzzles.gameUnavailable', { defaultValue: 'The original game is temporarily unavailable.' })}
+      </div>}
+      {data && <>
+        <div className="max-h-32 overflow-y-auto rounded bg-chesscom-50 p-2 font-mono text-xs leading-6 dark:bg-chesscom-800/50">
+          {moves.map((m, i) => <span key={i} className={i === moves.length - 1 ? 'rounded bg-board-dark/15 px-0.5' : 'px-0.5'}>
+            {i % 2 === 0 ? `${Math.floor(i / 2) + 1}. ` : ''}{m.san}{' '}
+          </span>)}
+        </div>
+        <Link className="btn-secondary flex w-full items-center justify-center gap-2 text-sm" to={`/lab?puzzle=${encodeURIComponent(id)}`}>
+          {t('train.puzzles.analyzeGame', { defaultValue: 'Analyze original game' })} <ArrowRight className="h-4 w-4" />
+        </Link>
+      </>}
     </div>
   );
 }

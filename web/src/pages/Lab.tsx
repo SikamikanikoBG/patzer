@@ -2,10 +2,10 @@
 // shuffle pieces, click Analyze, browse top-N candidate lines. Designed for
 // the "what does the engine think about this?" moment after a game.
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Chess } from 'chess.js';
 import {
   Microscope, RotateCcw, FlipVertical2, Wand2, Loader2, Swords,
@@ -16,6 +16,7 @@ import ExplorerPanel from '../components/ExplorerPanel';
 import { api } from '../api';
 import { useAuth } from '../state/auth';
 import { parseFromPosition, playFromPosition, playFromUrl } from '../lib/fromPosition';
+import { originalMoves, type OriginalPuzzleGame } from '../lib/puzzleGame';
 
 interface AnalyzeLine {
   uci: string;
@@ -41,6 +42,15 @@ interface HistoryEntry {
 export default function Lab() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const [params] = useSearchParams();
+  const puzzleId = params.get('puzzle');
+  const { data: puzzleGame, isError: puzzleGameError } = useQuery({
+    queryKey: ['tactics-original-game', puzzleId],
+    queryFn: () => api.get<OriginalPuzzleGame>(`/api/tactics/game/${puzzleId}`),
+    enabled: !!puzzleId && /^[A-Za-z0-9]{5}$/.test(puzzleId),
+    retry: false, staleTime: 24 * 60 * 60 * 1000,
+  });
+  const loadedPuzzleRef = useRef<string | null>(null);
 
   // Get the FEN from the hash location inside the current URI.
   // Hashes are client-only, therefore we're not scrambling anything up on the server side.
@@ -84,6 +94,28 @@ export default function Lab() {
   const analyze = useMutation({
     mutationFn: () => api.post<AnalyzeResponse>('/api/analyze/position', { fen, depth, lines }),
   });
+
+  // Import the entire original game exactly once. The Lab's existing move
+  // list, previous/next controls, free play and Stockfish now work on it.
+  useEffect(() => {
+    if (!puzzleId || !puzzleGame || loadedPuzzleRef.current === puzzleId) return;
+    try {
+      const imported = originalMoves(puzzleGame);
+      if (!imported.length) return;
+      loadedPuzzleRef.current = puzzleId;
+      startFenRef.current = new Chess().fen();
+      chessRef.current = new Chess(imported[imported.length - 1]!.fen);
+      setHistory(imported);
+      setHistoryIndex(imported.length);
+      setFenInput('');
+      setFenError(null);
+      analyze.reset();
+      setTick((k) => k + 1);
+    } catch {
+      setFenError(t('train.puzzles.gameUnavailable', { defaultValue: 'The original game is temporarily unavailable.' }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [puzzleId, puzzleGame]);
 
   function bump() { setTick((k) => k + 1); }
 
@@ -183,6 +215,10 @@ export default function Lab() {
         </div>
       </header>
 
+      {puzzleId && <div className="card p-3 text-sm text-chesscom-700 dark:text-chesscom-200">
+        {t('train.puzzles.originalGame', { defaultValue: 'Original game' })}: {puzzleId}
+        {puzzleGameError && <span className="ml-2 text-move-mistake">{t('train.puzzles.gameUnavailable', { defaultValue: 'The original game is temporarily unavailable.' })}</span>}
+      </div>}
       <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
         {/* Board pane */}
         <section className="space-y-3">

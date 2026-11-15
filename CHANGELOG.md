@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Original game context for Lichess puzzles.** After solving or revealing a puzzle, view the moves leading to it and open the full history in the Stockfish-powered Lab. The game is fetched on demand from Lichess, validated against the bundled puzzle and cached temporarily; puzzle scores and the running game remain unchanged.
+
 ### Single sign-on (OpenID Connect)
 
 - **Sign in with Authentik, Keycloak or any OpenID Connect provider.** Set

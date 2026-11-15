@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { requireAuth } from '../auth/middleware.js';
 import { THEME_FILTERS, dailyDone, dailyPuzzle, dailyStreak, nextPuzzle, recordAttempt, statsOf } from '../chess/tactics.js';
 import { dayOf } from '../chess/openingTrainer.js';
+import { originalPuzzleGame } from '../chess/puzzleGame.js';
 
 const router = new Hono();
 router.use('*', requireAuth);
@@ -51,6 +52,18 @@ router.get('/daily', (c) => {
   const me = c.get('user');
   const day = dayOf(c.req.query('today') ?? null);
   return c.json({ day, puzzle: dailyPuzzle(me.id, day), done: dailyDone(me.id, day), streak: dailyStreak(me.id, day) });
+});
+
+// Optional game context, loaded only after the user asks to inspect a puzzle.
+router.get('/game/:id', async (c) => {
+  const id = c.req.param('id');
+  if (!/^[A-Za-z0-9]{5}$/.test(id)) return c.json({ error: 'invalid_id' }, 400);
+  try {
+    const game = await originalPuzzleGame(id);
+    return game ? c.json(game) : c.json({ error: 'not_found' }, 404);
+  } catch {
+    return c.json({ error: 'source_unavailable' }, 502);
+  }
 });
 
 router.get('/stats', (c) => {
