@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Navigation titles stay visible in every language. When the pills do not fit,
+  the navigation scrolls sideways instead of switching to icons only: an arrow
+  appears on the side that has more, and the page you are on is always
+  scrolled into view.
+
 ### Single sign-on (OpenID Connect)
 
 - **Sign in with Authentik, Keycloak or any OpenID Connect provider.** Set
