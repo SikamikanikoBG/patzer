@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### French
+
+- **Patzer speaks French.** The interface, the Learn lessons and the coach:
+  move explanations, hints and Game Review are written in French, with French
+  piece names ("le cavalier prend le pion en e5", "petit roque") and the same
+  guard that stops the coach praising a blunder. Pick *Français* in Settings,
+  at sign-up or in an invite; a single sign-on provider can set it too.
+
 ### Fixed
 
 - Navigation titles stay visible in every language. When the pills do not fit,

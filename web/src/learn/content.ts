@@ -52,6 +52,7 @@ const TEXTS: Partial<Record<Language, () => Promise<{ default: unknown }>>> = {
   en: () => import('../locales/learn/en.json'),
   de: () => import('../locales/learn/de.json'),
   ru: () => import('../locales/learn/ru.json'),
+  fr: () => import('../locales/learn/fr.json'),
 };
 
 const loadedTexts = new Map<Language, Promise<void>>();

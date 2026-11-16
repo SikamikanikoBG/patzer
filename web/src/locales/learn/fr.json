@@ -1,0 +1,721 @@
+{
+  "courses": {
+    "pieces": {
+      "title": "Les pièces",
+      "desc": "Découvrez l'échiquier et apprenez comment chaque pièce se déplace."
+    },
+    "rules": {
+      "title": "Les règles",
+      "desc": "Prise, échec, échec et mat, roque et les autres règles spéciales."
+    },
+    "basic-mates": {
+      "title": "Les mats de base",
+      "desc": "Mat en un, le mat du couloir, et les mats de base avec la dame et les tours."
+    },
+    "tactics-1": {
+      "title": "Premières tactiques",
+      "desc": "Pièces en prise, fourchettes, clouages, enfilades, le point faible f7, les pions en fuite – et comment défendre."
+    },
+    "openings-1": {
+      "title": "Principes d'ouverture",
+      "desc": "Comment commencer une partie : centre, développement, sécurité du roi – et les pièges à éviter."
+    },
+    "tactics-2": {
+      "title": "Tactiques II",
+      "desc": "Attaques et échecs à la découverte, échecs doubles, déviation, attraction, suppression du défenseur, coups intermédiaires, pièces piégées et le roi exposé."
+    },
+    "mates-2": {
+      "title": "Schémas de mat",
+      "desc": "Mat en deux, et les schémas classiques : mat étouffé, d'Anastasie, arabe, de l'Opéra, du crochet et de Pillsbury."
+    },
+    "pawn-endings": {
+      "title": "Finales de pions",
+      "desc": "La règle du carré, l'opposition, et comment gagner avec roi et pion."
+    },
+    "tactics-3": {
+      "title": "Tactiques de maître",
+      "desc": "Mat en trois, coups tranquilles, zugzwang, le coup unique, dégagement, interception, rayons X et sous-promotion."
+    },
+    "mates-3": {
+      "title": "Schémas de mat rares",
+      "desc": "Le mat de Boden, la queue d'aronde, la paire de fous – et le mat en quatre."
+    },
+    "rook-endings": {
+      "title": "Finales de tours",
+      "desc": "La finale la plus courante : tours actives, la position de Lucena et celle de Philidor."
+    },
+    "endgames-2": {
+      "title": "Finales de dame et de pièces mineures",
+      "desc": "Fous, cavaliers et dames en finale : tempo, tactiques et pions en fuite."
+    }
+  },
+  "board": {
+    "title": "L'échiquier",
+    "desc": "64 cases et leurs noms.",
+    "intro": "L'échiquier a **64 cases**, claires et foncées en alternance. Il est toujours placé de sorte que la case du **coin inférieur droit soit claire** – elle est marquée ici.",
+    "intro_kid": "Voici un échiquier ! Il a 64 cases – des claires et des foncées, toujours en alternance. Regardez le coin en bas à droite : il est clair. C'est comme ça que l'échiquier se place toujours.",
+    "names": "Les lignes verticales s'appellent **colonnes**, de **a** à **h**. Les lignes horizontales s'appellent **rangées**, de **1** à **8**. Chaque case est nommée par sa colonne et sa rangée : la case marquée est **e4** – colonne e, rangée 4. Les lettres et les chiffres sont imprimés sur le bord de l'échiquier.",
+    "names_kid": "Chaque case a un nom, comme une place au cinéma ! La lettre (a à h) indique la colonne, le chiffre (1 à 8) la rangée. La case marquée s'appelle e4. Regardez les lettres et les chiffres sur le bord de l'échiquier.",
+    "find1": "Touchez la case **c6**.",
+    "find2": "Maintenant touchez **g2**.",
+    "corners": "Touchez les **quatre cases de coin**.",
+    "setup": "Voici comment une partie commence. Les Blancs sont en bas et jouent toujours le **premier coup**. Les pions se placent devant ; derrière eux, de gauche à droite : tour, cavalier, fou, dame, roi, fou, cavalier, tour.",
+    "setup_kid": "Voici comment toutes les pièces se placent au début. Les Blancs sont en bas et commencent toujours. Les petits pions sont devant, les grandes pièces derrière eux.",
+    "queen": "Une règle pratique : la dame commence sur **sa propre couleur** – la dame blanche sur une case claire, la dame noire sur une case foncée. Touchez la dame blanche.",
+    "queen_kid": "La dame aime sa propre couleur : la dame blanche se tient sur une case claire. Pouvez-vous la trouver ? Touchez-la !",
+    "king": "Les deux rois se font face sur la même colonne. Touchez le **roi noir**."
+  },
+  "rook": {
+    "title": "La tour",
+    "desc": "Lignes droites, aussi loin qu'elle veut.",
+    "intro": "La **tour** se déplace en lignes droites : en avant, en arrière, à gauche ou à droite – autant de cases qu'elle le souhaite. Elle ne peut pas sauter par-dessus les autres pièces.",
+    "intro_kid": "La tour est comme une voiture de course sur des routes droites : en avant, en arrière, à gauche, à droite – aussi loin qu'elle veut ! Mais elle ne peut pas sauter par-dessus les autres pièces.",
+    "s1": "Déplacez la tour sur l'étoile pour la récupérer.",
+    "s1_kid": "Conduisez la tour jusqu'à l'étoile !",
+    "s2": "Récupérez les deux étoiles. Combien de coups vous faut-il au minimum ?",
+    "s3": "Vos propres pions sont sur le chemin, et la tour ne peut pas sauter par-dessus. Récupérez les deux étoiles.",
+    "s3_kid": "Les pions sont des murs – la tour doit les contourner. Récupérez les deux étoiles !"
+  },
+  "bishop": {
+    "title": "Le fou",
+    "desc": "Lignes diagonales – et toujours la même couleur.",
+    "intro": "Le **fou** se déplace en diagonale, aussi loin qu'il le souhaite. C'est pourquoi il reste toujours sur des cases de **même couleur** : ce fou se tient sur une case foncée et n'atteindra jamais une case claire.",
+    "intro_kid": "Le fou ne marche qu'en diagonale, comme sur un toboggan. C'est pourquoi il reste toujours sur sa propre couleur : celui-ci vit sur les cases foncées.",
+    "s1": "Récupérez l'étoile avec le fou.",
+    "s2": "Récupérez les deux étoiles.",
+    "s3": "Ce fou vit sur les cases claires. Récupérez les trois étoiles.",
+    "color": "Ce fou peut-il un jour atteindre la case marquée **d4** ?",
+    "color_yes": "Oui",
+    "color_no": "Non",
+    "color_done": "Exact ! Ce fou se tient sur une case claire et reste toujours sur les cases claires – d4 est foncée."
+  },
+  "queen": {
+    "title": "La dame",
+    "desc": "La pièce la plus forte : tour et fou en un.",
+    "intro": "La **dame** est la pièce la plus forte. Elle se déplace comme une tour et un fou réunis : en ligne droite **et** en diagonale, aussi loin qu'elle le souhaite.",
+    "intro_kid": "La dame est la super-héroïne des échecs ! Elle peut aller tout droit comme la tour et en diagonale comme le fou – dans toutes les directions, aussi loin qu'elle veut.",
+    "s1": "Récupérez les deux étoiles avec la dame.",
+    "s2": "Quatre étoiles – trouvez le chemin le plus court !",
+    "s3": "Attention à vos propres pions. Récupérez les trois étoiles."
+  },
+  "king": {
+    "title": "Le roi",
+    "desc": "La pièce la plus importante – un pas à la fois.",
+    "intro": "Le **roi** est la pièce la plus importante : s'il est piégé, la partie est perdue. Il ne se déplace que d'**une seule case**, dans n'importe quelle direction.",
+    "intro_kid": "Le roi est la pièce la plus importante – vous devez le protéger ! Il est un peu lent : il ne marche qu'une case à la fois, mais dans toutes les directions.",
+    "s1": "Faites marcher le roi jusqu'aux deux étoiles.",
+    "danger": "Le roi ne peut **jamais** aller sur une case attaquée par une pièce ennemie – il y serait capturé. La tour noire attaque toute la 5e rangée.",
+    "danger_kid": "Attention ! Le roi ne doit jamais poser le pied sur une case visée par une pièce ennemie. La tour noire garde toute la ligne rouge.",
+    "where": "Touchez toutes les cases où le roi blanc **peut** aller.",
+    "s2": "Le cavalier noir garde certaines cases, le roi ne peut pas y aller. Récupérez quand même les deux étoiles."
+  },
+  "knight": {
+    "title": "Le cavalier",
+    "desc": "Le sauteur : un L par-dessus les autres pièces.",
+    "intro": "Le **cavalier** se déplace en **forme de L** : deux cases tout droit, puis une sur le côté. C'est la seule pièce qui peut **sauter** par-dessus les autres pièces.",
+    "intro_kid": "Le cavalier saute en L : deux pas tout droit, un pas sur le côté – hop ! C'est la seule pièce qui peut sauter par-dessus les autres.",
+    "where": "Le cavalier est entouré, mais il saute simplement par-dessus. Touchez toutes les cases où il peut atterrir.",
+    "s1": "Sautez jusqu'aux deux étoiles.",
+    "s2": "Le cavalier saute par-dessus les pions. Récupérez les trois étoiles.",
+    "s3": "Parfois le cavalier doit faire un détour. Amenez-le à l'étoile le plus vite possible !",
+    "s3_kid": "L'étoile est juste à côté, mais le cavalier doit faire le tour. Pouvez-vous trouver le chemin ?"
+  },
+  "pawn": {
+    "title": "Le pion",
+    "desc": "En avant seulement – et prise en diagonale.",
+    "intro": "Le **pion** se déplace uniquement vers l'avant, une case à la fois. Depuis sa case de départ, il peut aussi avancer de **deux cases** d'un coup. Il ne peut jamais reculer.",
+    "intro_kid": "Le pion est petit mais courageux : il ne marche qu'en avant, un pas à la fois. À son tout premier coup, il peut faire un grand saut de deux cases.",
+    "s1": "Récupérez les deux étoiles avec le pion.",
+    "capture": "Les pions capturent différemment de leur déplacement : **une case en diagonale vers l'avant**. Une pièce directement devant bloque le pion – il ne peut pas capturer tout droit.",
+    "capture_kid": "Les pions marchent tout droit mais capturent en diagonale ! Et si quelque chose se tient juste devant un pion, il est bloqué.",
+    "s2": "Le chemin est bloqué. Frayez-vous un chemin jusqu'aux deux étoiles en capturant !",
+    "where": "Où ce pion peut-il aller ? Touchez toutes les cases où il peut se déplacer ou capturer."
+  },
+  "capture": {
+    "title": "La prise",
+    "desc": "Retirer les pièces ennemies de l'échiquier.",
+    "intro": "Chaque pièce **sauf le pion** capture comme elle se déplace : elle va sur la case d'une pièce ennemie et la retire de l'échiquier. (Le pion capture en diagonale, comme vous l'avez vu.) Vous ne pouvez jamais capturer vos propres pièces.",
+    "intro_kid": "Capturer signifie que votre pièce va sur la case d'une pièce ennemie et la fait tomber de l'échiquier !",
+    "s1": "Capturez toutes les pièces noires avec la tour.",
+    "s2": "Maintenant avec le cavalier : capturez les trois pions.",
+    "safe": "Vous pouvez prendre le fou ou le cavalier. L'un des deux est **protégé** : une autre pièce noire pourrait reprendre si vous le capturez. Capturez celui qui n'est **pas protégé** !",
+    "safe_kid": "Vous pouvez prendre le fou ou le cavalier. Mais l'un des deux a un garde du corps ! Prenez celui qui est tout seul.",
+    "safe_done": "Exact ! Rien ne gardait le cavalier. Si vous aviez pris le fou, le pion en e6 aurait capturé votre dame."
+  },
+  "check": {
+    "title": "L'échec",
+    "desc": "Quand le roi est attaqué.",
+    "intro": "Quand une pièce attaque le roi, le roi est en **échec**. Le joueur en échec doit y mettre fin immédiatement – aucun autre coup n'est permis. Ici la tour blanche donne échec le long de la colonne e.",
+    "intro_kid": "Quand une pièce vise le roi, on appelle ça un échec ! Le roi doit sortir du danger tout de suite.",
+    "give1": "Donnez échec au roi noir !",
+    "give2": "Donnez échec avec le cavalier.",
+    "give3": "Même un pion peut donner échec. Essayez !"
+  },
+  "escape": {
+    "title": "Sortir de l'échec",
+    "desc": "Trois façons : bouger, bloquer, capturer.",
+    "intro": "Il y a trois façons de sortir d'échec :\n1. **Bouger** le roi sur une case sûre.\n2. **Bloquer** : mettre une pièce entre les deux.\n3. **Capturer** la pièce attaquante.\nLaquelle fonctionne dépend de la position.",
+    "intro_kid": "Votre roi est en échec – et maintenant ? Trois idées : fuir, mettre une pièce sur le chemin, ou capturer l'attaquant !",
+    "run": "Votre roi est en échec et n'a pas d'aide. Déplacez-le sur une case sûre.",
+    "block": "Le roi ne peut pas s'écarter – mais vous pouvez mettre une pièce entre les deux.",
+    "take": "Un cavalier donne échec. L'échec d'un cavalier ne peut pas être bloqué – capturez-le !"
+  },
+  "checkmate": {
+    "title": "L'échec et mat",
+    "desc": "Échec sans issue : la partie est gagnée.",
+    "intro": "Si le roi est en échec et qu'il n'y a **aucune issue** – pas de case libre, rien à mettre entre les deux, rien à capturer – c'est **échec et mat**. La partie est terminée, et celui qui donne échec et mat gagne. Ici les Noirs sont échec et mat : leurs propres pions bloquent la fuite du roi.",
+    "intro_kid": "L'échec et mat est le but du jeu ! Le roi est en échec et ne peut s'échapper nulle part. Alors la partie est finie – et celui qui donne échec et mat gagne !",
+    "q1": "Les Noirs sont-ils échec et mat ?",
+    "q1_yes": "Oui, c'est échec et mat",
+    "q1_no": "Non, le roi peut s'échapper",
+    "q1_done": "Exact – pas de mat. Le roi peut s'échapper en h7.",
+    "q2": "Et ici – les Noirs sont-ils échec et mat ?",
+    "q2_yes": "Oui, c'est échec et mat",
+    "q2_no": "Non, le roi peut s'échapper",
+    "q2_done": "Exact ! La dame donne échec, le roi blanc la protège, et toutes les cases autour du roi noir sont couvertes.",
+    "m1": "Faites échec et mat au roi noir en un coup !",
+    "m2": "Échec et mat en un coup avec la dame.",
+    "m3": "Encore un : échec et mat en un coup."
+  },
+  "castling": {
+    "title": "Le roque",
+    "desc": "Roi en sécurité, tour en jeu – en un seul coup.",
+    "intro": "Une fois par partie, vous pouvez **roquer** : le roi se déplace de **deux cases** vers une tour, et la tour passe de l'autre côté du roi, juste à côté de lui. Cela met votre roi à l'abri et fait entrer une tour en jeu. C'est le **petit roque**, vers l'**aile roi** – le côté où le roi commence.",
+    "intro_kid": "Le roque est un coup spécial : le roi fait deux pas sur le côté, et la tour passe de l'autre côté de lui. Maintenant le roi est bien à l'abri dans sa forteresse !",
+    "short": "Petit roque ! Déplacez le roi de deux cases vers la droite (ou déposez-le sur la tour) – la tour suit toute seule.",
+    "long": "Maintenant le **grand roque**, vers l'**aile dame** – le côté où la dame commence : le roi se déplace de deux cases vers la gauche.",
+    "rules": "C'est le **grand roque**. Vous ne pouvez roquer que si :\n• le roi et cette tour n'ont **pas encore bougé**,\n• il n'y a **rien** entre eux,\n• le roi n'est **pas en échec**, et ne passe ni n'arrive sur une **case attaquée**.",
+    "why": "Pourquoi les Blancs ne peuvent-ils **pas** faire le petit roque ici ?",
+    "why_check": "Le roi est en échec",
+    "why_through": "Le roi traverserait une case attaquée",
+    "why_blocked": "Une pièce est sur le chemin",
+    "why_moved": "Le roi a déjà bougé",
+    "why_done": "Exact ! Le fou noir attaque f1 – la case que le roi doit traverser. Donc le petit roque n'est pas permis."
+  },
+  "en-passant": {
+    "title": "La prise en passant",
+    "desc": "La capture spéciale du pion.",
+    "intro": "Une règle spéciale : si un pion ennemi avance de **deux cases** et atterrit **juste à côté** de votre pion, vous pouvez le capturer comme s'il n'avait avancé que d'une case. Cela s'appelle la **prise en passant**. Regardez : les Noirs jouent d7–d5, et les Blancs capturent en d6.",
+    "intro_kid": "Une astuce secrète du pion ! Si un pion ennemi saute de deux cases et atterrit juste à côté de votre pion, votre pion peut quand même le capturer – comme s'il n'avait fait qu'un pas.",
+    "ep1": "Les Noirs viennent de jouer d7–d5. Capturez en passant !",
+    "ep2": "Maintenant vous avez les Noirs. Les Blancs viennent de jouer c2–c4 – capturez en passant !",
+    "when": "Disons que vous avez raté le moment et joué un autre coup d'abord. Pouvez-vous encore capturer en passant après ?",
+    "when_yes": "Oui, à tout moment",
+    "when_no": "Non, seulement tout de suite",
+    "when_done": "Exact ! La prise en passant n'est permise qu'au coup immédiatement suivant – après, l'occasion est perdue."
+  },
+  "promotion": {
+    "title": "La promotion",
+    "desc": "Un pion sur la dernière rangée devient une nouvelle pièce.",
+    "intro": "Quand un pion atteint la **dernière rangée**, il est promu immédiatement : il devient une dame, une tour, un fou ou un cavalier – vous choisissez. Presque toujours on prend une **dame**.",
+    "intro_kid": "Quand un pion marche jusqu'à l'autre bout, il se transforme – en dame, par exemple ! Un petit pion devient la pièce la plus forte.",
+    "queen": "Avancez le pion et faites-en une dame !",
+    "mate": "Promouvez – et donnez échec et mat en même temps !"
+  },
+  "draw": {
+    "title": "Parties nulles et pat",
+    "desc": "Quand personne ne gagne.",
+    "stalemate": "Si le joueur au trait n'a **aucun coup légal** mais n'est **pas en échec**, c'est **pat** – une **partie nulle**, même si un camp a beaucoup plus de matériel ! Ici c'est aux Noirs de jouer : le roi n'est pas attaqué, mais toutes les cases autour de lui le sont.",
+    "stalemate_kid": "Le pat est un piège pour le gagnant ! Le roi n'est pas en échec, mais il ne peut aller nulle part – alors la partie est nulle, et personne ne gagne.",
+    "q1": "Aux Noirs de jouer. Échec et mat, pat, ou ni l'un ni l'autre ?",
+    "q1_mate": "Échec et mat",
+    "q1_stalemate": "Pat",
+    "q1_neither": "Ni l'un ni l'autre",
+    "q1_done": "Exact – pat. Le roi noir n'est pas en échec, mais toutes ses cases sont couvertes.",
+    "q2": "Et ici ? Aux Noirs de jouer.",
+    "q2_mate": "Échec et mat",
+    "q2_stalemate": "Pat",
+    "q2_neither": "Ni l'un ni l'autre",
+    "q2_done": "Exact – échec et mat ! Le roi est en échec, et le roi blanc protège la dame.",
+    "avoid": "Échec et mat en un coup – mais attention : beaucoup de coups ici seraient pat !",
+    "avoid_done": "Échec et mat ! Déplacer la dame en c7 aurait été pat – vérifiez toujours que le roi ennemi a encore un coup.",
+    "other": "Une partie est aussi nulle quand :\n• la **même position** se produit **trois fois**,\n• **50 coups** passent sans mouvement de pion ni capture,\n• aucun camp n'a assez de matériel pour donner échec et mat – comme ici, roi et fou contre roi,\n• ou les deux joueurs **acceptent** la nulle."
+  },
+  "values": {
+    "title": "Combien valent les pièces ?",
+    "desc": "La valeur de vos pièces – votre matériel.",
+    "intro": "Toutes vos pièces ensemble constituent votre **matériel**. Pour juger un échange, les joueurs les comptent en points :\n• pion **1**\n• cavalier **3**\n• fou **3**\n• tour **5**\n• dame **9**\nLe roi n'a pas de prix – le perdre signifie perdre la partie.",
+    "intro_kid": "Les pièces sont comme des pièces de monnaie de valeurs différentes : pion 1, cavalier 3, fou 3, tour 5, dame 9. Le roi est inestimable !",
+    "q1": "Quelle pièce vaut le plus ?",
+    "q1_rook": "La tour",
+    "q1_bishop": "Le fou",
+    "q1_done": "Exact : une tour vaut 5, un fou 3.",
+    "q2": "Vous pouvez échanger votre cavalier contre la tour noire. Est-ce un bon échange ?",
+    "q2_yes": "Oui",
+    "q2_no": "Non",
+    "q2_done": "Oui ! Vous donnez 3 points et vous en recevez 5.",
+    "q3": "Deux fous contre une dame – qui a le plus de matériel ?",
+    "q3_queen": "La dame",
+    "q3_bishops": "Les deux fous",
+    "q3_done": "Exact : la dame vaut 9, les deux fous ensemble 6.",
+    "take": "Votre cavalier peut capturer un pion ou une tour. Prenez la pièce la plus précieuse !",
+    "take_done": "Exact – une tour vaut 5 points, un pion seulement 1."
+  },
+  "notation": {
+    "title": "Lire les coups",
+    "desc": "Comment les coups d'échecs sont écrits.",
+    "intro": "Les joueurs d'échecs écrivent chaque coup. Un coup est la **lettre de la pièce** suivie de la **case** où elle va : **R** roi, **D** dame, **T** tour, **F** fou, **C** cavalier. Les pions n'ont pas de lettre. Regardez : **e4** (pion en e4), **e5**, **Cf3** (cavalier en f3).",
+    "intro_kid": "Chaque coup d'échecs a un nom court, comme un code secret ! Une grande lettre indique quelle pièce bouge (C pour cavalier, F pour fou, T pour tour, D pour dame, R pour roi), puis vient la case. Les pions n'ont pas de lettre : e4 signifie simplement qu'un pion va en e4.",
+    "target": "Dans le coup **Cc3**, un cavalier va sur une case. Touchez cette case.",
+    "target_kid": "Cc3 : le cavalier saute vers… quelle case ? Touchez-la !",
+    "symbols": "Quelques signes supplémentaires :\n• **x** = capture : **Cxe5** – le cavalier capture en e5\n• **+** = échec, **#** = échec et mat\n• **O-O** = petit roque, **O-O-O** = grand roque\n• **e8=D** = le pion est promu en dame\n• **1.** compte les coups ; **…** avant un coup signifie que les Noirs l'ont joué (**1…e5**).",
+    "q1": "Les Blancs jouent **Cxe5**. Qu'est-ce que cela signifie ?",
+    "q1_takes": "Le cavalier capture la pièce en e5",
+    "q1_moves": "Le cavalier va en e5 sans capturer",
+    "q1_check": "Le cavalier donne échec en e5",
+    "q1_done": "Exact – **x** signifie capture.",
+    "q2": "Le dernier coup était **Dxf7#**. Que s'est-il passé ?",
+    "q2_check": "La dame a capturé en f7 – échec, mais le roi peut s'échapper",
+    "q2_mate": "La dame a capturé en f7 – échec et mat",
+    "q2_moves": "La dame est allée en f7 sans capturer",
+    "q2_done": "Exact – **#** signifie échec et mat. Le roi ne peut pas s'échapper : le fou en c4 protège la dame.",
+    "play": "Maintenant jouez **Cf3** vous-même !",
+    "play_done": "C'est Cf3 – vous savez maintenant lire les coups d'échecs."
+  },
+  "mate-in-one": {
+    "title": "Mat en un",
+    "desc": "Repérez l'échec et mat en un seul coup.",
+    "intro": "La plupart des parties se terminent par échec et mat – entraînez votre œil ! Chaque exercice de cette leçon a un échec et mat en un coup. Astuce : regardez **chaque échec** que vous pouvez donner, et demandez-vous si le roi peut encore s'échapper. Ici Dh8 est mat.\nDésormais, beaucoup d'exercices viennent de vraies parties : d'abord votre adversaire joue (vous verrez le coup), puis l'échiquier se tourne de votre côté et c'est à vous de jouer.",
+    "intro_kid": "Maintenant, c'est vous qui chassez ! Dans chaque exercice, vous pouvez donner échec et mat en un coup. Essayez chaque échec et regardez si le roi peut encore s'enfuir.",
+    "task": "Aux {{side}} de jouer. Échec et mat en un coup !",
+    "task_kid": "Aux {{side}} de jouer. Un coup, et le roi est attrapé – trouvez-le !"
+  },
+  "back-rank": {
+    "title": "Le mat du couloir",
+    "desc": "Quand les propres pions du roi deviennent un piège.",
+    "intro": "Un roi roqué se tient souvent derrière ses propres pions. Cela le protège – jusqu'à ce qu'une tour ou une dame atteigne la **dernière rangée** (la rangée où le roi se tient). Alors les pions bloquent toute fuite, et c'est échec et mat. Regardez Te8.",
+    "intro_kid": "Le roi se cache derrière ses pions – mais ils sont aussi un mur qu'il ne peut franchir ! Une tour sur la dernière rangée donne échec et mat.",
+    "m1": "À vous : échec et mat sur la dernière rangée !",
+    "luft": "La défense : donnez de l'**air** à votre roi. Ici les Noirs ont joué …h6 – maintenant Te8 n'est qu'un échec, car le roi peut aller en **h7**. Souvenez-vous-en pour votre propre roi !",
+    "task": "Aux {{side}} de jouer. Frayez-vous un passage jusqu'à la dernière rangée et faites échec et mat en **deux coups** – parfois il faut d'abord **sacrifier** (donner une pièce volontairement) !",
+    "task_kid": "Aux {{side}} de jouer. Deux coups, et le roi est piégé derrière ses propres pions – parfois il faut d'abord donner une pièce !"
+  },
+  "ladder": {
+    "title": "Le mat de l'escalier",
+    "desc": "Deux tours font reculer le roi jusqu'au bord.",
+    "intro": "Avec deux tours, le mat est facile : une tour **coupe** une rangée, l'autre donne **échec** sur la suivante. Le roi doit reculer à chaque fois, et les tours montent derrière lui comme un escalier – jusqu'au mat sur le bord.",
+    "intro_kid": "Deux tours travaillent comme un escalier : l'une bloque, l'autre donne échec – pas à pas le roi doit reculer, jusqu'à ce qu'il soit coincé au bord. Échec et mat !",
+    "m1": "Terminez : échec et mat en un coup avec les deux tours.",
+    "play": "Maintenant jouez contre Patzer : faites échec et mat au roi noir avec vos deux tours. Astuce : gardez les tours loin du roi, pour qu'il ne puisse pas les attaquer."
+  },
+  "queen-mate": {
+    "title": "Mat avec dame et roi",
+    "desc": "Échec et mat au roi seul – sans pat.",
+    "intro": "Dame et roi contre un roi seul gagnent toujours. Le plan :\n1. Réduisez la boîte du roi avec la dame – à distance d'un **coup de cavalier** de lui, c'est une distance sûre.\n2. Approchez **votre propre roi**.\n3. Donnez mat sur le bord, avec votre roi protégeant la dame ou couvrant les cases de fuite.\nEt attention au **pat** !",
+    "intro_kid": "La dame pousse le roi vers le bord, votre propre roi vient aider, et puis – échec et mat ! Mais attention : ne laissez jamais le roi noir sans coup quand il n'est pas en échec. C'est le pat !",
+    "m1": "Échec et mat en un coup !",
+    "patt": "Que ferait Df7 ici ?",
+    "patt_mate": "Échec et mat",
+    "patt_stalemate": "Pat – partie nulle",
+    "patt_check": "Juste échec",
+    "patt_done": "Exact – pat ! Le roi n'est pas en échec mais n'a aucun coup. De8 ou Df8 aurait été échec et mat.",
+    "play": "À vous : faites échec et mat au roi noir avec dame et roi – Patzer défend. Ne laissez pas prendre la dame, et évitez le pat !"
+  },
+  "rook-mate": {
+    "title": "Mat avec tour et roi",
+    "desc": "La technique de base avec une seule tour.",
+    "intro": "Avec une seule tour, votre roi doit aider. La tour **coupe** le roi noir, votre roi avance jusqu'à ce que les deux rois **se fassent face** – puis la tour donne échec le long du bord. Ici Th8 est mat.",
+    "intro_kid": "Une seule tour ne peut pas y arriver – votre roi doit aider ! Quand les deux rois se font face et que la tour donne échec le long du bord : échec et mat !",
+    "m1": "Échec et mat en un coup.",
+    "play": "Maintenant le tout : échec et mat avec tour et roi. Poussez le roi noir vers le bord, rangée par rangée – prenez votre temps, vous avez plein de coups."
+  },
+  "hanging": {
+    "title": "Pièces en prise",
+    "desc": "Prenez ce qui est gratuit – et ne laissez pas vos propres pièces en prise.",
+    "intro": "Une pièce attaquée et **non défendue** est en prise – n'importe qui peut la prendre gratuitement. Ici rien ne protège le cavalier noir, alors la tour le prend simplement. Prenez l'habitude : avant chaque coup, demandez-vous ce qui est en prise – des **deux** côtés !",
+    "intro_kid": "Une pièce sans garde du corps est « en prise ». Ici personne ne protège le cavalier noir – alors la tour le prend ! Vérifiez toujours : que puis-je prendre gratuitement ?",
+    "task": "Aux {{side}} de jouer. Quelque chose est en prise – gagnez du matériel !",
+    "task_kid": "Aux {{side}} de jouer. Quelque chose est là sans protection – attrapez-le !"
+  },
+  "fork": {
+    "title": "La fourchette",
+    "desc": "Une pièce, deux cibles.",
+    "intro": "Une **fourchette** est une pièce qui attaque deux pièces ennemies (ou plus) à la fois – l'adversaire ne peut en sauver qu'une. Les cavaliers sont les grands spécialistes : ici Cf6+ attaque le roi **et** la dame. Le roi doit bouger, et la dame est perdue.",
+    "intro_kid": "Une fourchette est une double attaque : une pièce attaque deux choses à la fois ! Le cavalier donne échec et attaque aussi la dame – le roi doit fuir, et la dame est perdue.",
+    "task": "Aux {{side}} de jouer. Trouvez la fourchette !",
+    "task_kid": "Aux {{side}} de jouer. Attaquez deux choses à la fois !"
+  },
+  "pin": {
+    "title": "Le clouage",
+    "desc": "Une pièce qui ne peut pas s'écarter.",
+    "intro": "Un **clouage** attaque une pièce qui a une pièce plus précieuse derrière elle. Si la pièce derrière est le **roi**, la pièce clouée ne peut pas bouger du tout. Ici Fb5 cloue le cavalier noir sur son roi.",
+    "intro_kid": "Un clouage colle une pièce sur place ! Le cavalier aimerait bouger, mais alors le fou attaquerait le roi – donc ce n'est pas permis.",
+    "use": "Une pièce clouée ne peut pas non plus défendre. Ce pion g7 ne peut ni bouger ni capturer, car alors le fou attaquerait le roi en h8. Cherchez les défenseurs cloués dans les exercices !",
+    "task": "Aux {{side}} de jouer. Clouez une pièce – ou utilisez une pièce clouée – et gagnez du matériel !",
+    "task_kid": "Aux {{side}} de jouer. Collez une pièce sur place – et gagnez quelque chose !"
+  },
+  "skewer": {
+    "title": "L'enfilade",
+    "desc": "Attaquez la grosse pièce, gagnez celle derrière.",
+    "intro": "Une **enfilade** est un clouage à l'envers : vous attaquez une pièce précieuse – souvent le roi – et quand elle s'écarte, vous prenez la pièce **derrière** elle. Ici Td1+ chasse le roi de la colonne d, et la tour prend la dame.",
+    "intro_kid": "Une enfilade, c'est comme une brochette : échec au roi, il doit sauter de côté – et alors vous attrapez la pièce derrière lui !",
+    "task": "Aux {{side}} de jouer. Trouvez l'enfilade !",
+    "task_kid": "Aux {{side}} de jouer. Attaquez la grosse pièce – et attrapez celle derrière !"
+  },
+  "defend": {
+    "title": "Défendez-vous !",
+    "desc": "Tout coup n'est pas une attaque : sauvez ce qui est menacé.",
+    "intro": "Tout bon coup n'est pas une attaque. Quand votre roi est en échec ou qu'une pièce est attaquée, cherchez la défense qui tient tout ensemble : s'écarter, bloquer ou protéger. Ici les Noirs donnent échec avec Dg1+. Les Blancs bloquent avec **Cg2** – et maintenant la tour en c1 attaque la dame ! Les Noirs ne peuvent que prendre la tour (**Dxc1**), et après **Dxc1** les Blancs ont gagné la dame contre une tour.",
+    "intro_kid": "Danger ! Quand quelque chose est attaqué, sauvez-le d'abord. Ici le cavalier saute devant le roi – et soudain la dame noire est piégée !",
+    "task": "Aux {{side}} de jouer. Quelque chose est attaqué – trouvez le coup qui le sauve !",
+    "task_kid": "Aux {{side}} de jouer. Danger ! Trouvez le coup qui sauve tout !"
+  },
+  "attack-f7": {
+    "title": "Le point faible f7",
+    "desc": "En début de partie, f7 et f2 ne sont gardés que par le roi.",
+    "intro": "Au début de la partie, le pion en **f7** n'est protégé que par le roi (pour les Blancs c'est **f2**). Cela en fait la cible préférée des attaques précoces. Ici la dame frappe : **Dxf7+** – le roi doit aller en d8, et **Dd7#**. Le cavalier en e5 protège la dame.",
+    "intro_kid": "Le pion à côté du roi n'est gardé que par le roi lui-même. Attaquez-le avec la dame – et c'est échec et mat !",
+    "task": "Aux {{side}} de jouer. Frappez le point faible à côté du roi !",
+    "task_kid": "Aux {{side}} de jouer. Attaquez la case faible à côté du roi !"
+  },
+  "advanced-pawn": {
+    "title": "Le pion en fuite",
+    "desc": "Un pion proche de la promotion vaut presque une dame.",
+    "intro": "Un pion qui a presque atteint la dernière rangée vaut presque une dame – souvent cela vaut la peine de sacrifier une pièce pour le laisser passer. Ici les Blancs échangent les tours avec **Txc7**. Après **…Txc7** la tour noire a quitté la dernière rangée, plus rien ne garde a8, et **a8=D+** crée une nouvelle dame avec échec.",
+    "intro_kid": "Encore un pas et le pion devient une dame ! D'abord écartez la tour – puis le pion marche jusqu'au bout de l'échiquier.",
+    "task": "Aux {{side}} de jouer. Aidez votre pion à atteindre la dernière rangée !",
+    "task_kid": "Aux {{side}} de jouer. Aidez votre pion à devenir une dame !"
+  },
+  "center": {
+    "title": "Contrôler le centre",
+    "desc": "Pourquoi le milieu de l'échiquier est important.",
+    "intro": "Les quatre cases du milieu – **d4, e4, d5 et e5** – sont le **centre**. Les pièces au centre atteignent plus de cases et peuvent rapidement passer d'un côté à l'autre. C'est pourquoi les bonnes ouvertures commencent par se battre pour le centre.",
+    "intro_kid": "Les quatre cases du milieu sont le centre – les cases les plus importantes ! De là, vos pièces peuvent aller partout.",
+    "squares": "Touchez les quatre cases du centre.",
+    "first": "Votre premier coup : mettez un pion au centre !",
+    "first_done": "Bien joué ! 1.e4 et 1.d4 sont les premiers coups les plus populaires – ils prennent le centre et ouvrent des lignes pour vos pièces.",
+    "why": "Le cavalier au centre atteint 8 cases, celui dans le coin seulement 2. Pourquoi les joueurs se battent-ils pour le centre ?",
+    "why_reach": "Les pièces y atteignent plus de cases",
+    "why_rule": "Les règles le disent",
+    "why_safe": "Le roi y est le plus en sécurité",
+    "why_done": "Exact ! Au centre, vos pièces sont les plus fortes. (Le roi, lui, est plus en sécurité sur le côté, derrière ses pions – on en reparle bientôt.)"
+  },
+  "develop": {
+    "title": "Développez vos pièces",
+    "desc": "Cavaliers et fous dehors – rapidement.",
+    "intro": "**Développer** signifie amener vos pièces hors de la première rangée et dans le jeu. Les cavaliers et les fous d'abord, pointés vers le centre. En ouverture, chaque coup devrait amener une nouvelle pièce dans la partie.",
+    "intro_kid": "Au début, vos pièces dorment sur la première rangée. Réveillez-les ! Sortez d'abord les cavaliers et les fous.",
+    "knight": "Développez un cavalier – vers le centre.",
+    "knight_done": "Bien ! Un cavalier en f3 ou c3 contrôle des cases du centre.",
+    "rim": "Pourquoi Ch3 est-il généralement moins bon que Cf3 ?",
+    "rim_rim": "Sur le bord, le cavalier contrôle moins de cases",
+    "rim_slow": "Le cavalier ne peut jamais revenir",
+    "rim_illegal": "Ch3 n'est pas permis",
+    "rim_done": "Exact ! « Cavalier au bord, cavalier mort » : depuis h3 il atteint au plus 4 cases, depuis f3 jusqu'à 8 – dont le centre.",
+    "bishop": "Maintenant développez votre fou – sur une case d'où il vise le camp ennemi.",
+    "bishop_done": "Bien ! Fc4 vise f7, Fb5 met la pression sur le cavalier en c6 – deux coups classiques.",
+    "twice": "Devez-vous déplacer la même pièce deux fois en ouverture sans bonne raison ?",
+    "twice_yes": "Oui, pas de problème",
+    "twice_no": "Non – mieux vaut développer une nouvelle pièce",
+    "twice_done": "Exact ! Chaque coup supplémentaire avec la même pièce est un coup pendant lequel vos autres pièces restent endormies."
+  },
+  "king-safety": {
+    "title": "La sécurité du roi",
+    "desc": "Roquez tôt et gardez votre dame à la maison.",
+    "intro": "En ouverture, un roi au milieu est en danger – les lignes s'ouvrent vite là-bas. Donc **roquez tôt**, généralement dans les dix premiers coups. Ici les Blancs sont prêts : le roi peut faire le petit roque.",
+    "intro_kid": "Au milieu de l'échiquier, le roi est en danger. Roquez tôt et mettez-le bien à l'abri dans sa forteresse !",
+    "castle1": "Mettez votre roi en sécurité – roquez !",
+    "queen": "Lequel de ces choix est généralement une mauvaise idée en ouverture ?",
+    "queen_queen": "Sortir la dame tôt",
+    "queen_knights": "Développer les cavaliers",
+    "queen_castle": "Roquer tôt",
+    "queen_done": "Exact ! Une dame sortie tôt est chassée par les pièces ennemies – et chaque fois qu'elle doit fuir, votre adversaire développe une pièce gratuitement.",
+    "castle2": "Votre dame et les pièces de l'aile dame sont sorties. Cette fois, faites le **grand roque** !"
+  },
+  "traps": {
+    "title": "Pièges d'ouverture",
+    "desc": "Le mat du berger, le mat du lion – et comment les éviter.",
+    "intro": "Au début, la case la plus faible est **f7** (et **f2** pour les Blancs) : seul le roi la protège. Regardez le **mat du berger** : dame et fou attaquent f7 ensemble, les Noirs ne le remarquent pas – échec et mat en quatre coups !",
+    "intro_kid": "Attention à cette astuce : la dame et le fou s'attaquent au petit pion en f7 – et si les Noirs ne le remarquent pas, c'est déjà échec et mat !",
+    "defend": "Les Blancs menacent Dxf7, échec et mat. Défendez-vous !",
+    "defend_done": "Bien joué ! …g6 chasse la dame. …De7, …Df6 ou …Ch6 auraient aussi protégé f7.",
+    "fool": "Les Blancs ont gravement affaibli la position de leur roi. Trouvez l'échec et mat le plus rapide qui existe !",
+    "fool_done": "Le mat du lion – échec et mat au deuxième coup ! C'est pourquoi il ne faut pas pousser les pions f et g trop tôt.",
+    "f7": "Au début, quelle pièce protège seule f7 (et f2 pour les Blancs) ?",
+    "f7_king": "Le roi",
+    "f7_queen": "La dame",
+    "f7_knight": "Le cavalier",
+    "f7_done": "Exact – seulement le roi. C'est pourquoi f7 et f2 sont les cibles préférées des attaques précoces."
+  },
+  "discovered": {
+    "title": "L'attaque à la découverte",
+    "desc": "Bougez une pièce – et démasquez-en une autre.",
+    "intro": "Une **attaque à la découverte** : une pièce s'écarte et découvre une attaque de la pièce derrière elle. Si la pièce qui bouge attaque aussi quelque chose – ou si l'attaque découverte est un échec – l'adversaire ne peut pas s'occuper des deux. Un exemple d'une vraie partie : le cavalier en e2 se tient entre la dame noire et le roi blanc. **Cc3+** l'écarte – maintenant la dame en d3 donne échec, et le cavalier attaque la dame en d1. Après Rg1, **Cxd1** gagne la dame.",
+    "intro_kid": "Une astuce sournoise : une pièce s'écarte, et soudain la pièce derrière elle attaque ! Ici le cavalier s'écarte d'un bond – maintenant la dame donne échec, et le cavalier attaque la dame blanche en même temps.",
+    "task": "Aux {{side}} de jouer. Découvrez une attaque !"
+  },
+  "discovered-check": {
+    "title": "L'échec à la découverte",
+    "desc": "Une pièce s'écarte – celle derrière donne échec.",
+    "intro": "Un **échec à la découverte** : une pièce s'écarte et découvre un échec de la pièce derrière elle. L'adversaire doit répondre à l'échec – donc la pièce qui a bougé peut faire ce qu'elle veut. Ici le roi blanc se tient entre sa tour et le roi noir. **Rd6+** – la tour en g7 donne échec ! Les Noirs doivent s'en occuper (**…Rb6**), et **Rxe5** gagne le cavalier.",
+    "intro_kid": "Une pièce saute de côté – et la pièce derrière elle donne échec ! Pendant que le roi est occupé, la première pièce attrape quelque chose.",
+    "task": "Aux {{side}} de jouer. Découvrez un échec – et gagnez quelque chose avec la pièce qui bouge !",
+    "task_kid": "Aux {{side}} de jouer. Écartez une pièce pour que celle derrière donne échec !"
+  },
+  "double-check": {
+    "title": "L'échec double",
+    "desc": "Deux échecs à la fois – seul le roi peut fuir.",
+    "intro": "Dans un **échec double**, deux pièces donnent échec en même temps. Vous ne pouvez pas bloquer deux échecs ni capturer deux pièces avec un seul coup – donc le roi **doit** bouger. Ici **Cf3+** donne échec avec le cavalier et ouvre en même temps la diagonale de la dame de b6 à g1. Le roi va en h1, et le cavalier prend la dame : **Cxd2**.",
+    "intro_kid": "L'échec double signifie que deux pièces disent « échec ! » en même temps. Alors le roi ne peut se cacher derrière rien – il doit fuir !",
+    "task": "Aux {{side}} de jouer. Trouvez l'échec double !"
+  },
+  "deflection": {
+    "title": "La déviation",
+    "desc": "Attirez un défenseur loin de son travail.",
+    "intro": "La **déviation** consiste à forcer une pièce défensive à s'éloigner de ce qu'elle protège. Ici le roi blanc en e2 est le seul garde du fou en f3. **Ta2+** attaque le roi ; après Rd3 le fou a perdu son garde, et la tour en f8 le prend : **Txf3**.",
+    "intro_kid": "Chassez le garde du corps – puis attrapez ce qu'il protégeait !",
+    "task": "Aux {{side}} de jouer. Attirez un défenseur au loin !"
+  },
+  "attraction": {
+    "title": "L'attraction",
+    "desc": "Forcez une pièce sur une case fatale.",
+    "intro": "L'**attraction** (un leurre) force une pièce ennemie – souvent le roi – sur une case où elle tombe dans une tactique, généralement avec un sacrifice. Ici **Txh3+!** donne une tour pour attirer le roi en h3. Après Rxh3 vient **Th4#** – la dame en g5 couvre toutes les cases de fuite.",
+    "intro_kid": "Attirez le roi dans un piège ! Un sacrifice l'entraîne sur une case où il est échec et mat.",
+    "task": "Aux {{side}} de jouer. Attirez une pièce dans un piège !"
+  },
+  "defender": {
+    "title": "La suppression du défenseur",
+    "desc": "Éliminez le garde, puis prenez le trésor.",
+    "intro": "Si une pièce n'est protégée qu'une fois, **capturez son défenseur** – et la pièce tombe. Ici la tour blanche en f2 n'est gardée que par le cavalier en d1. **Txd1** prend le cavalier ; après Fxd1 la dame gagne la tour : **Dxf2**.",
+    "intro_kid": "Mettez le garde du corps hors jeu d'abord – puis la pièce qu'il protégeait est libre à prendre !",
+    "task": "Aux {{side}} de jouer. Supprimez le défenseur et gagnez du matériel !"
+  },
+  "intermezzo": {
+    "title": "Le coup intermédiaire",
+    "desc": "Ne reprenez pas en pilote automatique.",
+    "intro": "Quand une pièce est capturée, reprendre semble automatique. Mais parfois il y a quelque chose de mieux d'abord : un **coup intermédiaire** (en allemand : Zwischenzug), souvent un échec ou une capture. Ici les Blancs viennent de prendre en c6, et …Txc6 serait naturel. Mais d'abord, **Fxe3+** gagne la tour en e3 avec échec – et seulement après Rf1 les Noirs reprennent : **Txc6**.",
+    "intro_kid": "Avant de reprendre, arrêtez-vous et regardez : y a-t-il quelque chose d'encore mieux d'abord ? Ici les Noirs attrapent d'abord une tour avec échec – et seulement ensuite reprennent.",
+    "task": "Aux {{side}} de jouer. Cherchez un coup intermédiaire !"
+  },
+  "trapped": {
+    "title": "Pièces piégées",
+    "desc": "Attaquez une pièce qui n'a nulle part où aller.",
+    "intro": "Une pièce sans case sûre peut être **piégée** : attaquez-la, et elle est perdue. Les dames qui attrapent des pions profondément en territoire ennemi en sont des victimes classiques. Ici la dame noire vient de prendre en g2. **Ff3** l'attaque, et toutes les cases où elle pourrait fuir sont couvertes – au mieux elle prend la tour en h1, et **Fxh1** la gagne.",
+    "intro_kid": "Si une pièce n'a pas d'issue, vous pouvez la piéger ! La dame est partie chasser un pion – et maintenant elle est coincée.",
+    "task": "Aux {{side}} de jouer. Piégez une pièce !"
+  },
+  "exposed-king": {
+    "title": "Le roi exposé",
+    "desc": "Un roi sans pions autour est une proie facile.",
+    "intro": "Un roi sans son bouclier de pions est en danger : les échecs viennent de partout, et chaque échec peut cacher une seconde menace. Ici le roi noir n'a plus de pions autour de lui. **Dxh4+** – après **…Rg8** le cavalier saute avec échec : **Ce7+** attaque le roi **et** la dame en g6. **…Rg7 Cxg6** gagne la dame.",
+    "intro_kid": "Le roi a perdu ses gardes ! Donnez échec sur échec – et attrapez ce qui reste sans protection.",
+    "task": "Aux {{side}} de jouer. Attaquez le roi sans protection !",
+    "task_kid": "Aux {{side}} de jouer. Le roi n'a plus de gardes – attaquez !"
+  },
+  "mate-in-two": {
+    "title": "Mat en deux",
+    "desc": "D'abord les échecs – puis le coup final.",
+    "intro": "Pour un mat en deux, regardez d'abord les coups forçants : les **échecs**, puis les **captures**, puis les **menaces**. Ici **Dg6+** (la tour en g3 protège la dame) ne laisse au roi que h8, et **Dxh6** est échec et mat.",
+    "intro_kid": "Deux coups pour faire échec et mat ! Essayez d'abord les échecs – ils ne laissent aucun choix à l'adversaire.",
+    "task": "Aux {{side}} de jouer. Échec et mat en deux coups !"
+  },
+  "smothered": {
+    "title": "Le mat étouffé",
+    "desc": "Un cavalier mate un roi enfermé par ses propres pièces.",
+    "intro": "Un **mat étouffé** : le roi est entouré de ses propres pièces, et un cavalier donne échec et mat. Le chemin célèbre : **Ch3+** (un échec double) – le roi doit aller en h1. **Dg1+!!** – la dame se sacrifie, et la tour doit la prendre. **Cf2#**.",
+    "intro_kid": "Le roi est tellement entouré de ses propres pièces qu'il ne peut pas bouger – et le cavalier arrive d'un bond : échec et mat !",
+    "task": "Aux {{side}} de jouer. Étouffez le roi !"
+  },
+  "anastasia": {
+    "title": "Le mat d'Anastasie",
+    "desc": "Un cavalier et une tour ou une dame contre le roi sur le bord.",
+    "intro": "Le **mat d'Anastasie** : un cavalier prive le roi de ses cases de fuite, et une tour ou une dame mate le long de la colonne du bord. Ici **Ce7+** vient d'abord – c'est échec, et depuis e7 le cavalier couvre g8 et g6. Après Rh7, **Dxh5** est mat sur la colonne h.",
+    "intro_kid": "Un cavalier et une dame s'associent : le cavalier bloque les cases de fuite, la dame donne échec et mat le long du bord.",
+    "task": "Aux {{side}} de jouer. Trouvez le mat !"
+  },
+  "arabian": {
+    "title": "Le mat arabe",
+    "desc": "Tour et cavalier dans le coin.",
+    "intro": "Le **mat arabe** est l'un des schémas de mat les plus anciens connus : une tour mate le roi dans le coin, tandis qu'un cavalier protège la tour et garde la case de fuite. Ici : **Cf6+** Rh8, et **Th7#** – le cavalier en f6 protège la tour et couvre g8.",
+    "intro_kid": "Tour et cavalier sont les meilleurs amis ici : le cavalier protège la tour, et la tour donne échec et mat dans le coin !",
+    "task": "Aux {{side}} de jouer. Mat avec tour et cavalier !"
+  },
+  "opera": {
+    "title": "Le mat de l'Opéra",
+    "desc": "Une tour mate sur le bord, un fou garde la tour.",
+    "intro": "Le **mat de l'Opéra** (nommé d'après une célèbre partie que Paul Morphy joua dans une loge d'opéra à Paris) : une tour mate sur la dernière rangée, et un fou la protège. Ici les Noirs sacrifient même la dame : **Df1+!** – **Txf1** est forcé, et **Txf1#**. Le fou en h3 protège la tour et garde g2.",
+    "intro_kid": "La tour donne échec et mat sur la rangée du bas, et le fou la protège de loin – le roi ne peut pas la prendre !",
+    "task": "Aux {{side}} de jouer. Mat avec tour et fou !"
+  },
+  "hook": {
+    "title": "Le mat du crochet",
+    "desc": "Tour, cavalier et pion attrapent le roi ensemble.",
+    "intro": "Le **mat du crochet** : une tour mate juste à côté du roi, un cavalier protège la tour, et un pion protège le cavalier – une chaîne que le roi ne peut pas briser. Ici : **Tc8+** Rf7, et **Tf8#**. Le cavalier en e6 protège la tour et couvre g7, le pion en d5 protège le cavalier, et les pions noirs en e7 et g6 bloquent le reste.",
+    "intro_kid": "Tour, cavalier et pion se tiennent par la main : le pion protège le cavalier, le cavalier protège la tour – et la tour donne échec et mat !",
+    "task": "Aux {{side}} de jouer. Tour et cavalier : mat !"
+  },
+  "pillsbury": {
+    "title": "Le mat de Pillsbury",
+    "desc": "Une tour sur la colonne g ouverte, un fou sur la grande diagonale.",
+    "intro": "Le **mat de Pillsbury** : une tour donne mat, et un fou contrôle de loin la dernière case de fuite du roi. Ici le roi noir en h8 n'a que g8 où aller – mais le fou en b3 vise justement cette case. **Th1+** – les Noirs ne peuvent qu'interposer la dame (**…Dh5**), et **Txh5#**.",
+    "intro_kid": "La tour donne échec sur le bord, et le fou bloque la dernière issue depuis l'autre côté de l'échiquier !",
+    "task": "Aux {{side}} de jouer. Tour et fou contre le roi roqué – trouvez le mat !"
+  },
+  "square": {
+    "title": "La règle du carré",
+    "desc": "Le roi peut-il rattraper le pion ?",
+    "intro": "Un roi peut-il rattraper un pion en fuite ? Imaginez un **carré** du pion à sa rangée de promotion – ici de b4 à f8. Si le roi défenseur se tient à l'intérieur du carré, ou peut y entrer à son coup, il attrape le pion. Si c'est au pion de jouer, imaginez-le une case plus loin d'abord. (Un pion sur sa case de départ peut avancer de deux cases – comptez depuis une rangée plus loin.)",
+    "intro_kid": "Tracez un carré du pion jusqu'au bout de l'échiquier. Si le roi ennemi peut sauter dans le carré, il attrape le pion. Sinon – le pion devient une dame !",
+    "q1": "Aux Blancs de jouer. Le roi noir peut-il rattraper le pion ?",
+    "q1_yes": "Oui",
+    "q1_no": "Non",
+    "q1_done": "Exact : après b5 le carré est b5–e8, et le roi y entre directement avec …Re6.",
+    "q2": "Et ici, avec le roi en g6 ? Aux Blancs de jouer encore.",
+    "q2_yes": "Oui",
+    "q2_no": "Non",
+    "q2_done": "Exact : après b5 le carré est b5–e8, et depuis g6 le roi ne peut pas l'atteindre en un pas – le pion file et devient dame.",
+    "run": "Alors que jouent les Blancs ici ?",
+    "run_done": "Exactement – b5 tout de suite ! Tout coup de roi donnerait aux Noirs le temps d'entrer dans le carré."
+  },
+  "opposition": {
+    "title": "L'opposition",
+    "desc": "Quand les rois se font face, celui qui doit jouer cède le passage.",
+    "intro": "Quand les deux rois se font face avec **une case entre eux**, ils sont en **opposition**. Aucun ne peut s'approcher de l'autre, donc celui qui doit jouer doit céder. Ici c'est aux Blancs de jouer – donc les Noirs **ont l'opposition**.",
+    "intro_kid": "Deux rois se tiennent nez à nez avec une case entre eux – aucun ne peut s'approcher. Celui qui doit jouer doit s'écarter !",
+    "who": "Aux Noirs de jouer. Qui a l'opposition ?",
+    "who_white": "Les Blancs",
+    "who_black": "Les Noirs",
+    "who_done": "Exact – les Blancs. Les Noirs doivent jouer et doivent céder.",
+    "tempo": "Dans les finales de roi et pion, l'opposition décide de tout. Ici le roi blanc se tient devant son pion, mais c'est aux Blancs de jouer. L'astuce est un **coup de pion d'attente** : après **e3**, c'est aux Noirs de jouer et ils doivent céder – et le roi blanc avance.",
+    "draw": "Aux Blancs de jouer. Les Blancs peuvent-ils gagner ?",
+    "draw_yes": "Oui",
+    "draw_no": "Non, c'est nulle",
+    "draw_done": "Exact – nulle avec le meilleur jeu. Les Noirs ont l'opposition, et cette fois le pion n'a pas de coup d'attente : le roi blanc en e3 est sur son chemin.",
+    "play": "Maintenant, à vous de gagner : amenez votre roi devant le pion, prenez l'opposition, et promouvez. Patzer défend."
+  },
+  "pawn-endgames": {
+    "title": "Finales de pions",
+    "desc": "Comptez, calculez – chaque coup compte.",
+    "intro": "Dans les finales de pions, le roi devient un combattant, et chaque **tempo** (chaque coup) compte. Ici le roi noir attaque avec **Rc4** : le pion en d4 tente de s'échapper avec d5, mais le roi le suit simplement et le prend : **Rxd5**.",
+    "intro_kid": "En fin de partie, le roi devient un guerrier ! Ici il part à la chasse aux pions.",
+    "task": "Aux {{side}} de jouer. Trouvez le plan gagnant !"
+  },
+  "mate-in-three": {
+    "title": "Mat en trois",
+    "desc": "Combinaisons plus longues – échec après échec.",
+    "intro": "Un mat en trois nécessite un plan. Souvent chaque coup est un échec qui ne laisse aucun choix à l'adversaire. Regardez : **Td1+** Rf2, **Fc5+** Rg3, **Tg1#** – le roi est poussé dans un filet.",
+    "intro_kid": "Trois coups pour faire échec et mat ! Continuez de donner échec pour que le roi ne puisse jamais reprendre son souffle.",
+    "task": "Aux {{side}} de jouer. Échec et mat en trois coups !"
+  },
+  "quiet": {
+    "title": "Les coups tranquilles",
+    "desc": "Pas d'échec, pas de capture – et pourtant décisif.",
+    "intro": "Les coups les plus difficiles à trouver sont les coups **tranquilles** : pas d'échec, pas de capture – et pourtant ils décident la partie. Ici la tour noire en e2 garde la case de promotion. **Fe5!** bloque simplement la colonne e, et après Rb4 le pion devient dame : **e8=D**.",
+    "intro_kid": "Parfois le meilleur coup est un coup tranquille : pas d'échec, pas de capture – juste la bonne case !",
+    "task": "Aux {{side}} de jouer. Cherchez un coup tranquille !"
+  },
+  "zugzwang": {
+    "title": "Le zugzwang",
+    "desc": "Quand devoir jouer est le problème.",
+    "intro": "Le **zugzwang** (mot allemand signifiant « obligation de jouer ») : chaque coup empire les choses – mais vous ne pouvez pas passer. Ici, après **Rf4!**, le roi noir n'a plus de case, donc les Noirs doivent jouer …g3 – et **hxg3** est échec et mat.",
+    "intro_kid": "Le zugzwang, c'est quand vous aimeriez dire « je passe ! » – mais aux échecs vous devez toujours jouer, même quand chaque coup est mauvais.",
+    "task": "Aux {{side}} de jouer. Chaque tempo compte – trouvez le meilleur coup !"
+  },
+  "only-move": {
+    "title": "Le coup unique",
+    "desc": "Sous pression, un seul coup tient. Trouvez-le.",
+    "intro": "Parfois vous êtes sous attaque et un seul coup ne perd pas. Avant de jouer, regardez **toutes** les menaces de votre adversaire : qu'est-ce qui est attaqué, et que se passe-t-il après chacune de vos idées ? Ici la tour noire en d8 attaque la dame blanche. **Dxf6** sauve la dame et prend un cavalier au passage. Après **…Da6+**, seul **Rf3** tient tout – tout autre coup perd du matériel.",
+    "intro_kid": "Votre adversaire attaque ! Un seul coup vous sauve. Regardez bien ce qui est attaqué avant de jouer.",
+    "task": "Aux {{side}} de jouer. Un seul coup vous sauve – lequel ?"
+  },
+  "clearance": {
+    "title": "Le dégagement",
+    "desc": "Écartez-vous – avec tempo.",
+    "intro": "Un **dégagement** : une pièce quitte sa case ou sa ligne pour qu'une autre puisse l'utiliser – idéalement **avec tempo** (avec une menace à laquelle l'adversaire doit répondre). Ici le fou blanc en h7 se tient sur la case que la dame veut. **Fg8+** la libère avec un échec à la découverte de la tour en h3. Après Fh4 la dame atterrit sur la case libérée : **Dh7#**.",
+    "intro_kid": "Parfois votre propre pièce est sur le chemin ! Écartez-la avec un échec – et la case est libre pour la dame.",
+    "task": "Aux {{side}} de jouer. Libérez le passage !"
+  },
+  "interference": {
+    "title": "L'interception",
+    "desc": "Coupez la ligne entre un défenseur et ce qu'il défend.",
+    "intro": "L'**interception** coupe la ligne entre un défenseur et la pièce qu'il protège. Ici le fou noir en d4 garde la tour en h8 le long de la grande diagonale. Sur **Fg5+**, les Noirs répondent …f6 – et ce pion bloque maintenant la ligne du fou. **Dxh8** gagne la tour.",
+    "intro_kid": "Mettez quelque chose sur le chemin ! Le fou protégeait la tour – maintenant un pion bloque son passage.",
+    "task": "Aux {{side}} de jouer. Coupez une ligne !"
+  },
+  "xray": {
+    "title": "Les rayons X",
+    "desc": "Des attaques qui traversent une pièce.",
+    "intro": "Des **rayons X** : une pièce attaque à travers une autre pièce qui se tient sur sa ligne. Ici la tour noire en a1 se tient derrière la tour blanche en b1. **De1+!** – quand la tour prend la dame, elle quitte b1, et la tour en a1 donne mat : **Txe1#**.",
+    "intro_kid": "La tour voit à travers la tour ennemie, comme si elle avait des yeux à rayons X ! Dès que cette tour bouge, le passage est libre.",
+    "task": "Aux {{side}} de jouer. Regardez à travers les pièces !"
+  },
+  "underpromotion": {
+    "title": "La sous-promotion",
+    "desc": "Parfois un cavalier bat une dame.",
+    "intro": "Un pion devient presque toujours une dame – mais pas toujours ! Ici **e1=C+** donne échec **et** attaque la dame en f3 : une fourchette qu'une nouvelle dame en e1 ne pourrait pas faire. Après Rf2 le cavalier prend la dame : **Cxf3**.",
+    "intro_kid": "Surprise ! Au lieu d'une dame, le pion se transforme en cavalier – parce que seul un cavalier peut attaquer le roi et la dame en même temps ici.",
+    "task": "Aux {{side}} de jouer. En quelle pièce le pion doit-il se transformer ?"
+  },
+  "boden": {
+    "title": "Le mat de Boden",
+    "desc": "Deux fous sur des diagonales croisées matent un roi qui a fait le grand roque.",
+    "intro": "Le **mat de Boden** : deux fous sur des diagonales croisées matent un roi dont les propres pièces sont sur le chemin – typique après un grand roque. Le chemin y menant est souvent un sacrifice de dame qui ouvre une diagonale. Ici : **Dxc6+!** **…bxc6** et **Fa6#**. Le fou en a6 donne échec, celui en f4 couvre b8, et la tour et le cavalier noirs bloquent d8 et d7.",
+    "intro_kid": "Deux fous font un X devant le roi – et ses propres pièces sont sur son chemin. D'abord la dame se sacrifie pour ouvrir le passage !",
+    "task": "Aux {{side}} de jouer. Mat avec les deux fous !"
+  },
+  "dovetail": {
+    "title": "Le mat de la queue d'aronde",
+    "desc": "La dame mate juste à côté du roi, dont les propres pièces bloquent la sortie.",
+    "intro": "Le **mat de la queue d'aronde** (aussi appelé mat de Cozio) : la dame donne mat depuis juste à côté du roi, protégée par une autre pièce, et les propres pièces du roi bloquent les cases derrière lui. Ici : **Dxf4+** prend la tour avec échec, **…Rg6**, et **Df5#**. La tour en f1 protège la dame, et les pions noirs en g7 et h6 sont sur le chemin du roi.",
+    "intro_kid": "La dame se tient juste à côté du roi, et une amie la protège. Les propres pions du roi sont sur son chemin – échec et mat !",
+    "task": "Aux {{side}} de jouer. Amenez la dame à côté du roi – mat !"
+  },
+  "double-bishop": {
+    "title": "Le mat de la paire de fous",
+    "desc": "Deux fous côte à côte balaient tout un coin.",
+    "intro": "Deux fous côte à côte sur des diagonales voisines contrôlent tout un coin. Ici la dame libère la grande diagonale : **Dxc3+!** prend le fou noir, **…bxc3**, et **Ff6#**. Le fou en f6 donne échec le long de la grande diagonale, le fou en e6 couvre g8, et le pion en h7 bloque la dernière case.",
+    "intro_kid": "Deux fous côte à côte sont comme une grande clôture autour du coin. D'abord la dame fait de la place – puis le fou donne échec et mat !",
+    "task": "Aux {{side}} de jouer. Laissez les deux fous achever le roi !"
+  },
+  "mate-in-four": {
+    "title": "Mat en quatre",
+    "desc": "Sept coups en profondeur : les combinaisons les plus longues du cours.",
+    "intro": "Mat en quatre signifie voir sept coups à l'avance. Le secret : les coups forçants. Quand chaque coup est un échec, l'adversaire n'a presque aucun choix, et vous n'avez que quelques variantes à suivre. Regardez : **Fg6+** – le fou s'écarte, et la dame donne échec (un échec à la découverte). **…Rg8 Dh7+ Rf8 Dh8+ Re7 De8#** – le fou en g6 protège la dame pour le coup final.",
+    "intro_kid": "Quatre coups pour faire échec et mat ! Donnez échec à chaque fois – ainsi le roi ne peut jamais respirer.",
+    "task": "Aux {{side}} de jouer. Mat en quatre !"
+  },
+  "rook-endgames": {
+    "title": "Finales de tours",
+    "desc": "Tours actives, et la tour derrière le pion.",
+    "intro": "Les finales de tours sont les finales les plus courantes. Deux règles d'or : gardez votre tour **active**, et placez-la **derrière les pions passés** (les pions qu'aucun pion ennemi ne peut plus arrêter) – derrière les vôtres pour les pousser en avant, derrière ceux de l'ennemi pour les attaquer. Ici la tour blanche en a1 soutient le pion de la colonne a depuis l'arrière.",
+    "intro_kid": "Les tours adorent les lignes ouvertes ! Et elles aiment se tenir derrière un pion qui court vers l'autre côté.",
+    "task": "Aux {{side}} de jouer. Trouvez le meilleur coup !"
+  },
+  "lucena": {
+    "title": "La position de Lucena",
+    "desc": "Gagner avec tour et pion : construire un pont.",
+    "intro": "La **position de Lucena** : votre pion est sur la 7e rangée, votre roi se tient devant lui, et votre tour sur la colonne c tient le roi noir à distance. La tour noire sur la colonne a empêche votre roi de sortir de ce côté. Alors comment votre roi sort-il ?",
+    "bridge": "La réponse s'appelle **construire un pont**. 1.Td1+ repousse le roi noir d'une colonne de plus. 2.**Td4!** place la tour sur la 4e rangée. Maintenant le roi sort, la tour noire continue de donner échec – et quand le roi atteint b5, la tour bloque le dernier échec en **b4**. Plus rien ne peut arrêter le pion.",
+    "play": "À vous : gagnez la position de Lucena et promouvez le pion – Patzer défend. Astuce : repoussez d'abord le roi avec un échec, puis construisez le pont."
+  },
+  "philidor": {
+    "title": "La position de Philidor",
+    "desc": "La défense clé avec tour contre tour et pion.",
+    "intro": "Maintenant l'autre camp : comment **défendre** avec tour contre tour et pion. La **méthode de Philidor** : tant que le pion est sur la 5e rangée, la tour du défenseur attend sur la **6e rangée** (ici en b6). Le roi blanc ne peut pas avancer jusqu'à la 6e rangée sans être mis en échec.",
+    "where": "Aux Noirs de jouer, le pion est en e5. Que dit la méthode de Philidor – où va la tour noire ?",
+    "where_sixth": "Sur la 6e rangée (…Tb6)",
+    "where_behind": "En bas sur la 1re rangée",
+    "where_eighth": "Elle reste sur la 8e rangée",
+    "where_done": "Exact – …Tb6! Depuis la 6e rangée la tour tient le roi blanc à l'écart. D'autres coups peuvent aussi tenir, mais cette configuration est la plus fiable et facile à retenir.",
+    "checks": "Dès que le pion avance sur la **6e rangée**, le rôle de la tour change : le roi blanc ne peut plus se cacher des échecs devant son pion. Alors la tour va à l'extrémité de l'échiquier et **donne échec depuis l'arrière**.",
+    "plan": "Le pion a atteint e6. Que dit la méthode de Philidor aux Noirs de faire maintenant ?",
+    "plan_behind": "Tour sur la 1re rangée, puis échecs depuis l'arrière",
+    "plan_wait": "Garder la tour sur la 6e rangée",
+    "plan_king": "Courir avec le roi pour attaquer le pion",
+    "plan_done": "Exact ! Depuis l'arrière, la tour peut donner échec au roi blanc encore et encore – nulle."
+  },
+  "minor-endgames": {
+    "title": "Finales de fous et de cavaliers",
+    "desc": "Peu de pièces, chaque coup compte : le roi rejoint le combat.",
+    "intro": "Quand il ne reste que des fous, des cavaliers et des pions, chaque tempo compte, et le roi est une pièce combattante. La tactique décide encore de beaucoup de choses : ici le cavalier noir en c5 n'est protégé que par son roi. **a5+** – le pion donne échec et attire le roi au loin (**…Rxa5**), et **Rxc5** gagne le cavalier.",
+    "intro_kid": "Il ne reste que quelques pièces – maintenant le roi se bat aussi ! Éloignez l'autre roi de son cavalier.",
+    "task": "Aux {{side}} de jouer. Trouvez le meilleur coup !"
+  },
+  "queen-endgames": {
+    "title": "Finales de dames",
+    "desc": "Échecs, fourchettes et pions en fuite : les dames sont rapides.",
+    "intro": "Les finales de dames sont pleines d'échecs : une dame peut donner échec depuis presque partout. Surveillez les fourchettes – et le moment où échanger les dames gagne, parce que vos pions sont plus rapides. Ici : **Da1+ Rh2 De5+** – échec, et les dames s'échangent : **Dxe5 fxe5**. Maintenant le pion noir de la colonne a est loin du roi blanc et court vers a1.",
+    "intro_kid": "Les dames sont les pièces les plus rapides ! Parfois la meilleure astuce est de les échanger – alors votre pion gagne la course.",
+    "task": "Aux {{side}} de jouer. Trouvez le meilleur coup !"
+  }
+}

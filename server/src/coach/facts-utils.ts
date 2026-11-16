@@ -1,6 +1,6 @@
 import { Chess } from "chess.js";
 import type { Audience, Language } from "../types.js";
-import { deForm, pieceNames, ruForm, ruPlural } from "./locales.js";
+import { deForm, frForm, pieceNames, ruForm, ruPlural } from "./locales.js";
 import { sanToNatural } from "./moves.js";
 
 /** Natural-language label for a win-percentage value, from the player's
@@ -104,6 +104,24 @@ export function evaluationStateNatural(
           return "проигранная позиция";
       }
 
+    case "fr":
+      switch (key) {
+        case "winning":
+          return "position gagnante";
+        case "clearly_better":
+          return "nettement mieux";
+        case "slightly_better":
+          return "un peu mieux";
+        case "equal":
+          return "à peu près égal";
+        case "slightly_worse":
+          return "un peu moins bien";
+        case "clearly_worse":
+          return "nettement moins bien";
+        case "losing":
+          return "position perdante";
+      }
+
     case "en":
     default:
       switch (key) {
@@ -172,6 +190,9 @@ export function boardPiecesNatural(
           case "ru":
             location = `${pieceName} на ${sq}`;
             break;
+          case "fr":
+            location = `${pieceName} en ${sq}`;
+            break;
           default:
             location = `${pieceName} on ${sq}`;
         }
@@ -191,6 +212,8 @@ export function boardPiecesNatural(
         return n === 1 ? `${n} ${names.P}` : `${n} Bauern`;
       case "ru":
         return `${n} ${ruPlural(n, "пешка", "пешки", "пешек")}`;
+      case "fr":
+        return n === 1 ? `${n} ${names.P}` : `${n} pions`;
       case "en":
       default:
         return `${n} ${names.P}${n === 1 ? "" : "s"}`;
@@ -224,6 +247,7 @@ export function materialBalanceNatural(
     if (language === "es") return "el material está igualado";
     if (language === "de") return "das Material ist ausgeglichen";
     if (language === "ru") return "материал равен";
+    if (language === "fr") return "le matériel est égal";
     return "material is equal";
   }
 
@@ -237,6 +261,7 @@ export function materialBalanceNatural(
       else if (language === "es") pieceLabel = `${abs.toFixed(0)} peones`;
       else if (language === "de") pieceLabel = `${abs.toFixed(0)} Bauern`;
       else if (language === "ru") pieceLabel = `${abs.toFixed(0)} пешки`;
+      else if (language === "fr") pieceLabel = `${abs.toFixed(0)} pions`;
       else pieceLabel = `${abs.toFixed(0)} ${names.P}s`;
     } else {
       pieceLabel = names.P!;
@@ -260,6 +285,11 @@ export function materialBalanceNatural(
     // "на 2 пешки" is already declined; a single piece takes the accusative.
     const label = /^\d/.test(pieceLabel) ? pieceLabel : ruForm(pieceLabel, "acc");
     return ahead ? `у тебя на ${label} больше` : `у тебя на ${label} меньше`;
+  }
+  if (language === "fr") {
+    // "2 pions" already carries its number; a single piece needs "un"/"une".
+    const label = /^\d/.test(pieceLabel) ? pieceLabel : frForm(pieceLabel, "indef");
+    return ahead ? `vous avez ${label} de plus` : `vous avez ${label} de moins`;
   }
   return ahead ? `you are up a ${pieceLabel}` : `you are down a ${pieceLabel}`;
 }

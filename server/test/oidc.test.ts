@@ -125,6 +125,15 @@ describe('resolveOidcUser: new accounts', () => {
     expect(db.prepare('SELECT display_name, language FROM profiles WHERE user_id = ?').get(idOf(r))).toEqual({ display_name: 'Carol C.', language: 'de' });
   });
 
+  it('stores a French language preference from the provider', () => {
+    const r = oidc.resolveOidcUser(
+      identity({ subject: 'sub-francoise', username: 'francoise', displayName: 'Françoise F.', language: 'fr' }),
+      opts({ autoProvision: true }),
+    );
+    expect(r).toMatchObject({ outcome: 'created' });
+    expect(db.prepare('SELECT language FROM profiles WHERE user_id = ?').get(idOf(r))).toEqual({ language: 'fr' });
+  });
+
   it('get a suffix for a taken username, and no email if another account has it', () => {
     const r = oidc.resolveOidcUser(identity({ subject: 'sub-other-bob', username: 'bob', email: 'bob@example.com' }), opts({ autoProvision: true }));
     expect(userRow(idOf(r))).toMatchObject({ username: 'bob-2', email: null });

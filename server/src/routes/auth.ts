@@ -30,7 +30,7 @@ import {
   SESSION_MAX_AGE_SECONDS,
 } from '../auth/sessions.js';
 import { beginOidcLogin, finishOidcLogin, resolveOidcUser, oidcLogoutUrl, OidcError, logSafe } from '../auth/oidc.js';
-import type { Profile, Role } from '../types.js';
+import { LANGUAGES, type Profile, type Role } from '../types.js';
 
 const router = new Hono();
 
@@ -293,7 +293,7 @@ const registerSchema = z.object({
   // Optional, but if present must be a real address. Empty string is coerced to
   // "absent" so the front-end can always send the field.
   email: z.union([z.string().trim().email().max(200), z.literal('')]).optional(),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru']).default('en'),
+  language: z.enum(LANGUAGES).default('en'),
   // Required when signup is invite-only; optional (but still checked) when it
   // is open, where it only presets language and audience.
   invite: z.string().max(40).optional(),
