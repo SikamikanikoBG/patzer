@@ -67,9 +67,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `npm run test:oidc` (also in CI) runs the whole thing against a real
     OpenID provider.
 
-## [7.20.0] — 2026-10-29
+### Fixed: three wrong statements the coach was handed, not invented
 
-### Added
+The coach's facts are worked out by chess.js and Stockfish and only phrased by
+the model, so a wrong fact comes out of the coach's mouth as confidently as a
+right one. Three of them did.
+
+- **Your own move is no longer reported as your opponent's reply.** The
+  opponent's best answer was given as three plies of an engine line joined by
+  commas, with nothing to say whose move each one was, so the player's own
+  castling and the opponent's knight move arrived under one "the opponent
+  answered". Each ply is now named — "you" and "the opponent", or by colour in
+  Game Review, where both sides' moves get explained.
+- **A capture that gets taken back is a trade, not a material win.** Every
+  capture was reported as "it wins material", so `Bxc6+ bxc6` (bishop for
+  knight) and `dxc5 Qxc5` (pawn for pawn) both came back as material wins. A
+  capture now counts only what is left after the cheapest recapture, and the
+  count is deliberately conservative: a square the opponent still covers at all
+  is never called a win.
+- **A quiet inaccuracy gets a real "why".** When a move hangs nothing and
+  allows no mate, the reasons came out empty while the prompt still asked the
+  model to explain why — and a small model filled the gap by picking a piece
+  out of the board inventory and calling it undefended. The facts now say
+  plainly that there is nothing concrete, only a better move.
+
+Regression tests pin all three on the position that produced them (French
+advance, 7.Be2), including the engine line whose middle ply was the player's.
+
+### Added: LM Studio as an AI Coach provider
+
 - **Full LM Studio support as an AI Coach provider.** Point Patzer at your local LM Studio instance (`http://localhost:1234` by default) in **Admin → System**.
   - Independent URL and model configuration, alongside Ollama, vLLM and DeepSeek.
   - Full OpenAI-compatible chat completions and JSON structured outputs for move explanations, threat analysis, and game reviews.
@@ -77,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tailored Docker connection hints guiding users to enable "Serve on Local Network" and use `http://host.docker.internal:1234`.
   - Comprehensive multilingual localization (English, German, Russian, Spanish, Bulgarian).
   - Complete integration test suite covering URL variations, streaming responses, JSON reviews, and settings isolation (`server/test/llm-providers.test.ts`).
+
 
 ## [7.19.0] — 2026-10-18
 
