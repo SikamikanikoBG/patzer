@@ -1480,7 +1480,7 @@ function FriendTab({ onChallengeAccepted }: { onChallengeAccepted: (gameId: numb
         <div className="space-y-3 p-5">
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <div className="label mb-1">{t('play.color')}</div>
+              <div className="label mb-1">{t('challenge.opponentColor')}</div>
               <div className="grid grid-cols-3 gap-1">
                 {(['white','random','black'] as const).map((c) => (
                   <button key={c} onClick={() => setColor(c)} className={`btn text-xs ${color === c ? 'btn-primary' : 'btn-secondary'}`}>{t(`play.${c}`)}</button>
