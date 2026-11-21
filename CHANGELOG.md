@@ -66,7 +66,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     cover the screens.
   - `npm run test:oidc` (also in CI) runs the whole thing against a real
     OpenID provider.
-    
+
+### Fixed: three wrong statements the coach was handed, not invented
+
+The coach's facts are worked out by chess.js and Stockfish and only phrased by
+the model, so a wrong fact comes out of the coach's mouth as confidently as a
+right one. Three of them did.
+
+- **Your own move is no longer reported as your opponent's reply.** The
+  opponent's best answer was given as three plies of an engine line joined by
+  commas, with nothing to say whose move each one was, so the player's own
+  castling and the opponent's knight move arrived under one "the opponent
+  answered". Each ply is now named — "you" and "the opponent", or by colour in
+  Game Review, where both sides' moves get explained.
+- **A capture that gets taken back is a trade, not a material win.** Every
+  capture was reported as "it wins material", so `Bxc6+ bxc6` (bishop for
+  knight) and `dxc5 Qxc5` (pawn for pawn) both came back as material wins. A
+  capture now counts only what is left after the cheapest recapture, and the
+  count is deliberately conservative: a square the opponent still covers at all
+  is never called a win.
+- **A quiet inaccuracy gets a real "why".** When a move hangs nothing and
+  allows no mate, the reasons came out empty while the prompt still asked the
+  model to explain why — and a small model filled the gap by picking a piece
+  out of the board inventory and calling it undefended. The facts now say
+  plainly that there is nothing concrete, only a better move.
+
+Regression tests pin all three on the position that produced them (French
+advance, 7.Be2), including the engine line whose middle ply was the player's.
+
 ## [7.19.0] — 2026-10-18
 
 ### Tactic Trainer: see your move, and hear why the better one is better

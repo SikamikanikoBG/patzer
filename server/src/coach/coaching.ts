@@ -72,14 +72,20 @@ function uciToSan(fen: string, uci: string): string | null {
   }
 }
 
-/** An engine line (UCI) in words, stopping at the first move that won't play. */
-function naturalLine(fen: string, pv: string[], max: number, lang: Language, aud: Audience): string[] {
+/** An engine line (UCI) in words, stopping at the first move that won't play.
+ *  `label(ply)` names whose move each ply is. Without it a line of alternating
+ *  moves reads as if one side had played them all: the coach handed the model
+ *  "the opponent's best answer: ..., short castles, the knight from g8 to e7"
+ *  for a line whose castling was the player's own move, and the model — doing
+ *  nothing wrong — told the player their opponent had castled. */
+function naturalLine(fen: string, pv: string[], max: number, lang: Language, aud: Audience, label?: (ply: number) => string): string[] {
   const out: string[] = [];
   let pos = fen;
   for (const uci of pv.slice(0, max)) {
     const san = uciToSan(pos, uci);
     if (!san) break;
-    out.push(sanToNatural(san, pos, lang, aud));
+    const phrase = sanToNatural(san, pos, lang, aud);
+    out.push(label ? `${label(out.length)} — ${phrase}` : phrase);
     const c = new Chess(pos);
     c.move(san);
     pos = c.fen();
@@ -100,9 +106,13 @@ interface Phrases {
   allowsMate: (m: string) => string;
   hangs: (p: string) => string;
   opponentReply: (m: string) => string;
+  /** No concrete loss to point at — see the `why` block in explainCoaching. */
+  nothingConcrete: string;
+  /** How to name whose move each ply of an engine line is. */
+  side: { you: string; opponent: string; white: string; black: string };
   reasons: {
     mate: string; stopsMate: string; threatensMate: string; check: string; castles: string; develops: string;
-    wins: (p: string) => string; fork: (ps: string) => string; saves: (p: string) => string; threatens: (p: string) => string;
+    wins: (p: string) => string; trades: (p: string) => string; fork: (ps: string) => string; saves: (p: string) => string; threatens: (p: string) => string;
   };
   quiet: string;
   takeaway: Record<MistakeKind | "positional", string>;
@@ -124,11 +134,14 @@ const PHRASES: Record<Language, Phrases> = {
     on: "on",
     allowsMate: (m) => `This move lets the opponent checkmate at once: ${m}.`,
     hangs: (p) => `Left unprotected after this move: ${p}. The opponent can win material.`,
-    opponentReply: (m) => `The opponent's best answer: ${m}.`,
+    opponentReply: (m) => `The opponent's best answer and what follows: ${m}.`,
+    nothingConcrete: "This move gives nothing away and allows no checkmate — it is simply weaker than the best move.",
+    side: { you: "you", opponent: "the opponent", white: "White", black: "Black" },
     reasons: {
       mate: "it is checkmate", stopsMate: "it stops the checkmate threat", threatensMate: "it threatens checkmate",
       check: "it gives check", castles: "it brings the king to safety", develops: "it develops a piece",
       wins: (p) => `it wins material (${p})`, fork: (ps) => `it attacks two pieces at once (${ps})`,
+      trades: (p) => `it is a trade — the opponent takes back (${p})`,
       saves: (p) => `it rescues a threatened piece (${p})`, threatens: (p) => `it attacks a loose piece (${p})`,
     },
     quiet: "a quiet move that improves the position",
@@ -164,11 +177,14 @@ const PHRASES: Record<Language, Phrases> = {
     on: "на",
     allowsMate: (m) => `След този ход противникът дава мат веднага: ${m}.`,
     hangs: (p) => `Остава без защита след хода: ${p}. Противникът може да спечели материал.`,
-    opponentReply: (m) => `Най-силният отговор на противника: ${m}.`,
+    opponentReply: (m) => `Най-силният отговор на противника и продължението: ${m}.`,
+    nothingConcrete: "Този ход не подарява нищо и не допуска мат — той просто е по-слаб от най-добрия.",
+    side: { you: "ти", opponent: "противникът", white: "белите", black: "черните" },
     reasons: {
       mate: "това е мат", stopsMate: "спира заплахата от мат", threatensMate: "заплашва мат",
       check: "дава шах", castles: "скрива царя на сигурно", develops: "развива фигура",
       wins: (p) => `печели материал (${p})`, fork: (ps) => `напада две фигури едновременно (${ps})`,
+      trades: (p) => `това е размяна — противникът взема обратно (${p})`,
       saves: (p) => `спасява застрашена фигура (${p})`, threatens: (p) => `напада слабо защитена фигура (${p})`,
     },
     quiet: "тих ход, който подобрява позицията",
@@ -204,11 +220,14 @@ const PHRASES: Record<Language, Phrases> = {
     on: "en",
     allowsMate: (m) => `Esta jugada permite al rival dar mate de inmediato: ${m}.`,
     hangs: (p) => `Queda sin protección tras esta jugada: ${p}. El rival puede ganar material.`,
-    opponentReply: (m) => `La mejor respuesta del rival: ${m}.`,
+    opponentReply: (m) => `La mejor respuesta del rival y la continuación: ${m}.`,
+    nothingConcrete: "Esta jugada no regala nada ni permite mate: simplemente es más débil que la mejor.",
+    side: { you: "tú", opponent: "el rival", white: "las blancas", black: "las negras" },
     reasons: {
       mate: "es jaque mate", stopsMate: "detiene la amenaza de mate", threatensMate: "amenaza mate",
       check: "da jaque", castles: "pone al rey a salvo", develops: "desarrolla una pieza",
       wins: (p) => `gana material (${p})`, fork: (ps) => `ataca dos piezas a la vez (${ps})`,
+      trades: (p) => `es un cambio: el rival recaptura (${p})`,
       saves: (p) => `salva una pieza amenazada (${p})`, threatens: (p) => `ataca una pieza mal defendida (${p})`,
     },
     quiet: "una jugada tranquila que mejora la posición",
@@ -244,11 +263,14 @@ const PHRASES: Record<Language, Phrases> = {
     on: "auf",
     allowsMate: (m) => `Nach diesem Zug kann der Gegner sofort mattsetzen: ${m}.`,
     hangs: (p) => `Nach diesem Zug ungedeckt: ${p}. Der Gegner kann Material gewinnen.`,
-    opponentReply: (m) => `Die beste Antwort des Gegners: ${m}.`,
+    opponentReply: (m) => `Die beste Antwort des Gegners und die Fortsetzung: ${m}.`,
+    nothingConcrete: "Dieser Zug verschenkt nichts und erlaubt kein Matt — er ist einfach schwächer als der beste Zug.",
+    side: { you: "du", opponent: "der Gegner", white: "Weiß", black: "Schwarz" },
     reasons: {
       mate: "das ist Matt", stopsMate: "er verhindert die Mattdrohung", threatensMate: "er droht Matt",
       check: "er gibt Schach", castles: "er bringt den König in Sicherheit", develops: "er entwickelt eine Figur",
       wins: (p) => `er gewinnt Material (${p})`, fork: (ps) => `er greift zwei Figuren gleichzeitig an (${ps})`,
+      trades: (p) => `das ist ein Abtausch — der Gegner schlägt zurück (${p})`,
       saves: (p) => `er rettet eine bedrohte Figur (${p})`, threatens: (p) => `er greift eine schlecht gedeckte Figur an (${p})`,
     },
     quiet: "ein ruhiger Zug, der die Stellung verbessert",
@@ -284,11 +306,14 @@ const PHRASES: Record<Language, Phrases> = {
     on: "на",
     allowsMate: (m) => `После этого хода соперник сразу ставит мат: ${m}.`,
     hangs: (p) => `После этого хода без защиты остаётся: ${p}. Соперник может выиграть материал.`,
-    opponentReply: (m) => `Лучший ответ соперника: ${m}.`,
+    opponentReply: (m) => `Лучший ответ соперника и продолжение: ${m}.`,
+    nothingConcrete: "Этот ход ничего не отдаёт и не допускает мата — он просто слабее лучшего.",
+    side: { you: "ты", opponent: "соперник", white: "белые", black: "чёрные" },
     reasons: {
       mate: "это мат", stopsMate: "он отражает угрозу мата", threatensMate: "он угрожает матом",
       check: "он объявляет шах", castles: "он уводит короля в безопасность", develops: "он развивает фигуру",
       wins: (p) => `он выигрывает материал (${p})`, fork: (ps) => `он нападает сразу на две фигуры (${ps})`,
+      trades: (p) => `это размен — соперник берёт обратно (${p})`,
       saves: (p) => `он спасает фигуру под ударом (${p})`, threatens: (p) => `он нападает на плохо защищённую фигуру (${p})`,
     },
     quiet: "спокойный ход, улучшающий позицию",
@@ -336,7 +361,14 @@ export function moveReasons(m: MoveMotifs, lang: Language, aud: Audience): strin
   if (m.mate) return [r.mate];
   if (m.stopsMate) out.push(r.stopsMate);
   if (m.fork.length) out.push(r.fork(pieceList(m.fork, lang, aud)));
-  if (m.captured) out.push(r.wins(pieceLabel(m.captured, lang, aud)));
+  if (m.captured) {
+    // Only an unpaid-for capture wins material. A trade is said to be a trade,
+    // and a capture that loses material is no reason the move is good at all —
+    // the engine's evaluation already covers that.
+    const net = m.captureNet ?? 0;
+    if (net > 0) out.push(r.wins(pieceLabel(m.captured, lang, aud)));
+    else if (net === 0) out.push(r.trades(pieceLabel(m.captured, lang, aud)));
+  }
   if (m.threatensMate) out.push(r.threatensMate);
   if (m.saves.length) out.push(r.saves(pieceLabel(m.saves[0]!, lang, aud)));
   if (!m.fork.length && m.threatens.length) out.push(r.threatens(pieceLabel(m.threatens[0]!, lang, aud)));
@@ -404,6 +436,17 @@ export interface ExplainCoaching {
   mistakeKind: MistakeKind | null;
 }
 
+/** How to name the two sides in an engine line. "You" only for the player's
+ *  own move — Game Review explains both sides' moves, and there the mover is
+ *  named by colour. */
+function sideLabels(input: ExplainCoachingInput, P: Phrases): { us: string; them: string } {
+  if (input.ownMove) return { us: P.side.you, them: P.side.opponent };
+  const whiteMoved = (input.fen.split(" ")[1] ?? "w") === "w";
+  return whiteMoved
+    ? { us: P.side.white, them: P.side.black }
+    : { us: P.side.black, them: P.side.white };
+}
+
 export async function explainCoaching(input: ExplainCoachingInput, lang: Language, aud: Audience): Promise<ExplainCoaching> {
   const P = phrases(lang);
   const nat = (san: string, fen: string) => sanToNatural(san, fen, lang, aud);
@@ -428,6 +471,11 @@ export async function explainCoaching(input: ExplainCoachingInput, lang: Languag
     if (tone === "correct") {
       if (played.allowsMate) why.push(P.allowsMate(nat(played.allowsMate, fenAfter!)));
       else if (played.hangs.length) why.push(P.hangs(pieceList(played.hangs.slice(0, 2), lang, aud)));
+      // A quiet inaccuracy hangs nothing and allows no mate, and `why` came out
+      // empty — but the TASK still asks the model to explain WHY, and a small
+      // model fills that gap by inventing an undefended piece from the board
+      // inventory. Saying there is nothing concrete is the honest answer.
+      else why.push(P.nothingConcrete);
     } else {
       const reasons = moveReasons(played, lang, aud);
       if (reasons.length) why.push(`${nat(input.played_san, input.fen)}: ${reasons.join("; ")}.`);
@@ -439,7 +487,10 @@ export async function explainCoaching(input: ExplainCoachingInput, lang: Languag
   // one capture) still has a concrete "why".
   let opponentReply: string | null = null;
   if (after?.[0] && fenAfter) {
-    const line = naturalLine(fenAfter, after[0].pv, 3, lang, aud);
+    // fenAfter always has the opponent to move, so the even plies are theirs
+    // and the odd ones are the player's own.
+    const side = sideLabels(input, P);
+    const line = naturalLine(fenAfter, after[0].pv, 3, lang, aud, (ply) => (ply % 2 === 0 ? side.them : side.us));
     if (line.length) opponentReply = P.opponentReply(line.join(", "));
   }
 
