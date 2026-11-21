@@ -67,17 +67,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `npm run test:oidc` (also in CI) runs the whole thing against a real
     OpenID provider.
 
-## [7.19.2] — 2026-10-30
+### Fixed: three wrong statements the coach was handed, not invented
 
-### Changed
+The coach's facts are worked out by chess.js and Stockfish and only phrased by
+the model, so a wrong fact comes out of the coach's mouth as confidently as a
+right one. Three of them did.
+
+- **Your own move is no longer reported as your opponent's reply.** The
+  opponent's best answer was given as three plies of an engine line joined by
+  commas, with nothing to say whose move each one was, so the player's own
+  castling and the opponent's knight move arrived under one "the opponent
+  answered". Each ply is now named — "you" and "the opponent", or by colour in
+  Game Review, where both sides' moves get explained.
+- **A capture that gets taken back is a trade, not a material win.** Every
+  capture was reported as "it wins material", so `Bxc6+ bxc6` (bishop for
+  knight) and `dxc5 Qxc5` (pawn for pawn) both came back as material wins. A
+  capture now counts only what is left after the cheapest recapture, and the
+  count is deliberately conservative: a square the opponent still covers at all
+  is never called a win.
+- **A quiet inaccuracy gets a real "why".** When a move hangs nothing and
+  allows no mate, the reasons came out empty while the prompt still asked the
+  model to explain why — and a small model filled the gap by picking a piece
+  out of the board inventory and calling it undefended. The facts now say
+  plainly that there is nothing concrete, only a better move.
+
+Regression tests pin all three on the position that produced them (French
+advance, 7.Be2), including the engine line whose middle ply was the player's.
+
+### Added: run Patzer with Nix (flake, nix-shell, direnv)
+
+- **Nix environment support.** Added `flake.nix`, `shell.nix`, `default.nix`, and `.envrc` providing out-of-the-box development and runtime environments with Node.js 22 and Stockfish on Linux and macOS.
+- Launch Patzer with `nix run` or enter a complete development shell using `nix develop` or `nix-shell`.
 - **Nix Stockfish defaults & configurable thread scaling.** Configured default Stockfish threads to 2 and hash to 512 MB in `flake.nix` (`runDevScript`, `runProdScript`, and `devShells`) and `shell.nix`, overridable via `STOCKFISH_THREADS` and `STOCKFISH_HASH`.
 - **Dynamic Stockfish thread and hash options across analysis endpoints.** Single position evaluation (`/api/analyze/position`) and move validation in trainer now respect `STOCKFISH_THREADS` and `STOCKFISH_HASH` rather than fixed static limits.
 
-## [7.19.1] — 2026-10-29
-
-### Added
-- **Nix environment support.** Added `flake.nix`, `shell.nix`, `default.nix`, and `.envrc` providing out-of-the-box development and runtime environments with Node.js 22 and Stockfish on Linux and macOS.
-- Launch Patzer with `nix run` or enter a complete development shell using `nix develop` or `nix-shell`.
 
 ## [7.19.0] — 2026-10-18
 
