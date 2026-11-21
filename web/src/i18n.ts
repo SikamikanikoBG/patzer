@@ -6,13 +6,14 @@ import bg from './locales/bg.json';
 import es from './locales/es.json';
 import de from './locales/de.json';
 import ru from './locales/ru.json';
+import uk from './locales/uk.json';
 import { LANGUAGE_CODES } from './lib/languages';
 
 void i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources: { en: { translation: en }, bg: { translation: bg }, es: { translation: es }, de: { translation: de }, ru: { translation: ru } },
+    resources: { en: { translation: en }, bg: { translation: bg }, es: { translation: es }, de: { translation: de }, ru: { translation: ru }, uk: { translation: uk } },
     fallbackLng: 'en',
     supportedLngs: [...LANGUAGE_CODES],
     interpolation: { escapeValue: false },

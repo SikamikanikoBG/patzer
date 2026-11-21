@@ -2,7 +2,7 @@
 // here + a locale JSON + the server-side zod enums (grep for `'es'` in
 // server/src/routes). Everything else (toggles, TTS, signup default) iterates
 // this list.
-export type Language = 'en' | 'bg' | 'es' | 'de' | 'ru';
+export type Language = 'en' | 'bg' | 'es' | 'de' | 'ru' | 'uk';
 
 export interface LanguageInfo {
   code: Language;
@@ -22,6 +22,7 @@ export const LANGUAGES: readonly LanguageInfo[] = [
   { code: 'es', short: 'ES', native: 'Español', bcp47: 'es-ES' },
   { code: 'de', short: 'DE', native: 'Deutsch', bcp47: 'de-DE' },
   { code: 'ru', short: 'RU', native: 'Русский', bcp47: 'ru-RU' },
+  { code: 'uk', short: 'UK', native: 'Українська', bcp47: 'uk-UA' },
 ] as const;
 
 export const LANGUAGE_CODES: readonly Language[] = LANGUAGES.map((l) => l.code);

@@ -13,7 +13,7 @@ import { setSignupMode } from './invites.js';
 
 export const OIDC_CALLBACK_PATH = '/api/auth/oidc/callback';
 const SCOPES = 'openid profile email';
-const LANGUAGES = ['en', 'bg', 'es', 'de', 'ru'] as const;
+const LANGUAGES = ['en', 'bg', 'es', 'de', 'ru', 'uk'] as const;
 type Language = (typeof LANGUAGES)[number];
 
 // Stored instead of a bcrypt hash for accounts created through SSO. bcrypt

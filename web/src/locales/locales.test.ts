@@ -5,7 +5,9 @@ import de from './de.json';
 import learnEn from './learn/en.json';
 import learnDe from './learn/de.json';
 import learnRu from './learn/ru.json';
+import learnUk from './learn/uk.json';
 import ru from './ru.json';
+import uk from './uk.json';
 import bg from './bg.json';
 import es from './es.json';
 import { loadLearnTexts } from '../learn/content';
@@ -44,7 +46,7 @@ describe('de locale', () => {
 
 // Lesson texts have their own namespace; missing keys must not silently put
 // English sentences into a translated lesson.
-describe.each([['de', learnDe], ['ru', learnRu]] as const)('%s lesson texts', (lang, texts) => {
+describe.each([['de', learnDe], ['ru', learnRu], ['uk', learnUk]] as const)('%s lesson texts', (lang, texts) => {
   const enFlat = flatten(learnEn as Tree);
   const translated = flatten(texts as Tree);
 
@@ -114,8 +116,47 @@ describe('ru locale', () => {
 
 // Bulgarian and Spanish are partial (missing keys fall back to English), but
 // the Home card is on everyone's first screen every day: its texts are in all
-// five locales.
-describe.each([['de', de], ['ru', ru], ['bg', bg], ['es', es]] as const)('%s puzzle-of-the-day texts', (_lang, texts) => {
+// locales.
+describe('uk locale', () => {
+  const enFlat = flatten(en as Tree);
+  const ukFlat = flatten(uk as Tree);
+  const PLURAL = /_(one|few|many|other)$/;
+  const UK_FORMS = ['one', 'few', 'many', 'other'];
+
+  it('has every key that en has, and nothing else', () => {
+    const expected = new Set<string>();
+    for (const key of Object.keys(enFlat)) {
+      if (PLURAL.test(key)) for (const f of UK_FORMS) expected.add(key.replace(PLURAL, `_${f}`));
+      else expected.add(key);
+    }
+    expect(Object.keys(ukFlat).sort()).toEqual([...expected].sort());
+  });
+
+  it('keeps every interpolation placeholder', () => {
+    for (const [key, value] of Object.entries(ukFlat)) {
+      const enKey = PLURAL.test(key) ? key.replace(PLURAL, '_other') : key;
+      expect(placeholders(value), key).toEqual(placeholders(enFlat[enKey]!));
+    }
+  });
+
+  it('uses Ukrainian plurals for lesson and trainer counts', async () => {
+    const i18n = createInstance();
+    await i18n.init({ lng: 'uk', fallbackLng: 'en', resources: {
+      en: { translation: en }, uk: { translation: uk },
+    } });
+    for (const [count, form] of [[1, 'one'], [2, 'few'], [5, 'many'], [11, 'many'],
+      [21, 'one'], [22, 'few'], [25, 'many'], [1.5, 'other']] as const) {
+      for (const key of ['learn.tasks', 'learn.starsGained', 'learn.play.wonMate',
+        'openings.trainer.branchCount', 'openings.trainer.practiseBranches']) {
+        expect(i18n.t(key, { count }), `${key}: ${count}`).toBe(
+          ukFlat[`${key}_${form}`]!.replace('{{count}}', String(count)),
+        );
+      }
+    }
+  });
+});
+
+describe.each([['de', de], ['ru', ru], ['uk', uk], ['bg', bg], ['es', es]] as const)('%s puzzle-of-the-day texts', (_lang, texts) => {
   it('has the Home card and its Puzzles-tab texts', () => {
     const flat = flatten(texts as Tree);
     for (const key of ['home.todayPuzzle', 'home.dailyOpen', 'home.dailySolved', 'home.dailyDone', 'home.dailyStart',
