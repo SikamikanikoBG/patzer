@@ -4,7 +4,7 @@ import { streamSSE } from 'hono/streaming';
 import { requireAuth } from '../auth/middleware.js';
 import { llmConfigured } from '../coach/llm.js';
 import { coachExplain, coachHint } from '../coach/explain.js';
-import type { Audience, Classification, Language } from '../types.js';
+import { LANGUAGES, type Audience, type Classification, type Language } from '../types.js';
 
 const router = new Hono();
 router.use('*', requireAuth);
@@ -28,7 +28,7 @@ const explainSchema = z.object({
   pv_san: z.array(z.string()).optional(),
   history: z.array(z.string()).optional(),
   user_perspective: z.boolean().optional(),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru', 'uk']).optional(),
+  language: z.enum(LANGUAGES).optional(),
   audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).optional(),
 });
 
@@ -61,7 +61,7 @@ router.post('/explain', async (c) => {
 const hintReqSchema = z.object({
   fen: z.string(),
   history: z.array(z.string()).optional(),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru', 'uk']).optional(),
+  language: z.enum(LANGUAGES).optional(),
   audience: z.enum(['kid', 'beginner', 'intermediate', 'advanced']).optional(),
 });
 

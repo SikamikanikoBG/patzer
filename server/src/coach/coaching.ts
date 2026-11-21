@@ -345,6 +345,49 @@ const PHRASES: Record<Language, Phrases> = {
       topIdea: (r) => `Что даёт лучший ход по мнению движка: ${r}.`,
     },
   },
+  fr: {
+    on: "en",
+    allowsMate: (m) => `Ce coup permet à l'adversaire de mater tout de suite : ${m}.`,
+    hangs: (p) => `Sans protection après ce coup : ${p}. L'adversaire peut gagner du matériel.`,
+    opponentReply: (m) => `La meilleure réponse de l'adversaire et la suite : ${m}.`,
+    nothingConcrete: "Ce coup ne donne rien et ne permet aucun mat : il est simplement moins bon que le meilleur coup.",
+    side: { you: "vous", opponent: "l'adversaire", white: "les Blancs", black: "les Noirs" },
+    reasons: {
+      mate: "c'est échec et mat", stopsMate: "il pare la menace de mat", threatensMate: "il menace mat",
+      check: "il donne échec", castles: "il met le roi à l'abri", develops: "il développe une pièce",
+      wins: (p) => `il gagne du matériel (${p})`, fork: (ps) => `il attaque deux pièces à la fois (${ps})`,
+      trades: (p) => `c'est un échange : l'adversaire reprend (${p})`,
+      saves: (p) => `il sauve une pièce menacée (${p})`, threatens: (p) => `il attaque une pièce mal défendue (${p})`,
+    },
+    quiet: "un coup tranquille qui améliore la position",
+    takeaway: {
+      allowed_mate: "Avant chaque coup, regardez tous les échecs que l'adversaire pourrait donner ensuite, surtout sur les cases autour de votre roi.",
+      hung_piece: "Avant de lâcher la pièce, demandez-vous : après ce coup, que peut prendre l'adversaire, et est-ce défendu ?",
+      missed_mate: "Quand le roi adverse manque de cases, regardez d'abord tous les échecs : il y a peut-être mat.",
+      missed_win: "Quand vous êtes en train de gagner, cherchez d'abord le coup forçant : échecs, prises, menaces.",
+      missed_tactic: "Cherchez les pièces non défendues ou attaquables deux fois à la fois : c'est là que se cachent les tactiques.",
+      positional: "Comparez votre coup avec le meilleur : qu'apporte chacun à vos pièces et à votre roi ?",
+    },
+    kind: {
+      allowed_mate: "laisser un mat rapide", hung_piece: "laisser une pièce sans protection", missed_mate: "manquer un mat",
+      missed_win: "laisser filer un gain", missed_tactic: "manquer une tactique",
+    },
+    pattern: (n, t, l) => `Une habitude dans vos parties récentes (${n} des ${t} dernières) : ${l}.`,
+    weakPhase: (w, wa, b, ba) => `Votre phase la plus faible ces derniers temps : ${w}, ${wa} % de précision (${b} : ${ba} %).`,
+    phase: { opening: "l'ouverture", middlegame: "le milieu de partie", endgame: "la finale" },
+    greatFinds: (n) => `Vos parties récentes comptent ${n} très bons coups ou coups brillants.`,
+    trainer: (n, m) => `Cette position est dans votre entraîneur d'ouvertures (manquée ${n} fois) ; le bon coup y est : ${m}.`,
+    hint: {
+      mateAvailable: "Il y a un mat pour vous dans cette position.",
+      mateThreat: "L'adversaire menace mat au prochain coup.",
+      inCheck: "Votre roi est en échec.",
+      ourHanging: (ps) => `Attaqué et pas assez défendu : ${ps}.`,
+      theirHanging: (ps) => `L'adversaire a une pièce mal défendue : ${ps}.`,
+      undeveloped: (ps) => `Encore sur leur case de départ : ${ps}. Le développement d'abord.`,
+      notCastled: "Votre roi n'a pas encore roqué.",
+      topIdea: (r) => `Ce que fait le meilleur coup du moteur : ${r}.`,
+    },
+  },
   uk: {
     on: "на",
     allowsMate: (m) => `Після цього ходу суперник одразу ставить мат: ${m}.`,
@@ -680,6 +723,9 @@ const PRAISE: Record<Language, RegExp> = {
   es: /(gran jugada|genial|excelente|brillante|bien jugad|buena jugada|jugada fuerte|sólid|perfect|estupend|bien hecho)/i,
   de: /(großartig|ausgezeichnet|brillant|gut gespielt|guter zug|starker zug|solide|perfekt|klasse zug|stark gespielt|gut gemacht|schöner zug)/i,
   ru: /(отличн|блестящ|прекрасн|молодец|хороший ход|(?<!более )сильный ход|здорово|великолепн|солидн|хорошо сыграно)/i,
+  // "meilleur coup" and "coup plus fort" are comparatives — the mistake and
+  // missed-win verdicts use them — so only the plain forms count as praise.
+  fr: /(excellent|brillant|magnifique|superbe|formidable|g[ée]nial|bravo|bien jou[ée]|bien vu|bon coup|beau coup|joli coup|coup fort|solide|\bparfait)/i,
   uk: /(чудов|відмінн|блискуч|прекрасн|молодець|(?<!більш )(?<!помітно )хороший хід|(?<!більш )(?<!значно )сильний хід|надійн|ідеальн|супер|гарний хід|розумний хід|добре зіграно)/i,
 };
 const BLAME: Record<Language, RegExp> = {
@@ -688,6 +734,7 @@ const BLAME: Record<Language, RegExp> = {
   es: /(error|imprecisi|fallo grave)/i,
   de: /(fehler|ungenauigkeit)/i,
   ru: /(ошибк|зевок|неточност)/i,
+  fr: /(erreur|gaffe|bourde|impr[ée]cision|inexactitude)/i,
   uk: /(помилк|позіх|неточн)/i,
 };
 
@@ -720,5 +767,5 @@ export function fallbackText(c: ExplainCoaching["facts"], lang: Language): strin
 }
 
 function betterWord(lang: Language): string {
-  return { en: "Better:", bg: "По-добре:", es: "Mejor:", de: "Besser:", ru: "Лучше:", uk: "Краще:" }[lang] ?? "Better:";
+  return { en: "Better:", bg: "По-добре:", es: "Mejor:", de: "Besser:", ru: "Лучше:", fr: "Mieux :", uk: "Краще:" }[lang] ?? "Better:";
 }

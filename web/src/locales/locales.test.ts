@@ -5,11 +5,13 @@ import de from './de.json';
 import learnEn from './learn/en.json';
 import learnDe from './learn/de.json';
 import learnRu from './learn/ru.json';
+import learnFr from './learn/fr.json';
 import learnUk from './learn/uk.json';
 import ru from './ru.json';
 import uk from './uk.json';
 import bg from './bg.json';
 import es from './es.json';
+import fr from './fr.json';
 import { loadLearnTexts } from '../learn/content';
 import { goalText } from '../lib/goalText';
 
@@ -44,9 +46,26 @@ describe('de locale', () => {
   });
 });
 
+// French is a full locale like German: any missing key would silently put an
+// English sentence in the middle of a French screen, so we pin it here too.
+describe('fr locale', () => {
+  const enFlat = flatten(en as Tree);
+  const frFlat = flatten(fr as Tree);
+
+  it('has every key that en has, and nothing else', () => {
+    expect(Object.keys(frFlat).sort()).toEqual(Object.keys(enFlat).sort());
+  });
+
+  it('keeps every interpolation placeholder', () => {
+    for (const key of Object.keys(enFlat)) {
+      expect(placeholders(frFlat[key] ?? ''), key).toEqual(placeholders(enFlat[key]!));
+    }
+  });
+});
+
 // Lesson texts have their own namespace; missing keys must not silently put
 // English sentences into a translated lesson.
-describe.each([['de', learnDe], ['ru', learnRu], ['uk', learnUk]] as const)('%s lesson texts', (lang, texts) => {
+describe.each([['de', learnDe], ['ru', learnRu], ['fr', learnFr], ['uk', learnUk]] as const)('%s lesson texts', (lang, texts) => {
   const enFlat = flatten(learnEn as Tree);
   const translated = flatten(texts as Tree);
 
@@ -156,7 +175,7 @@ describe('uk locale', () => {
   });
 });
 
-describe.each([['de', de], ['ru', ru], ['uk', uk], ['bg', bg], ['es', es]] as const)('%s puzzle-of-the-day texts', (_lang, texts) => {
+describe.each([['de', de], ['ru', ru], ['uk', uk], ['bg', bg], ['es', es], ['fr', fr]] as const)('%s puzzle-of-the-day texts', (_lang, texts) => {
   it('has the Home card and its Puzzles-tab texts', () => {
     const flat = flatten(texts as Tree);
     for (const key of ['home.todayPuzzle', 'home.dailyOpen', 'home.dailySolved', 'home.dailyDone', 'home.dailyStart',

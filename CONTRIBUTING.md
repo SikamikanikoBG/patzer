@@ -6,7 +6,7 @@ Thanks for considering a contribution. Patzer is a small, opinionated project �
 
 - **Bug fixes** of any size — open a PR, no need to ask first.
 - **Small, well-scoped features** that fit the "self-hosted Chess.com Game Review alternative for a household" pitch.
-- **Translations.** EN, BG, ES, DE, RU and UK ship today; see [Adding a language](#adding-a-language) below.
+- **Translations.** EN, BG, ES, DE, RU, UK and FR ship today; see [Adding a language](#adding-a-language) below.
 - **Coach prompt improvements** for reducing hallucinations or improving voice in a specific audience (kid / beginner / etc.).
 
 ## What we'll probably push back on
@@ -135,15 +135,16 @@ No strict format, but please:
 
 ## Adding a language
 
-Every language-dependent string is in a lookup table keyed by language code, so a new language is one
-entry per table — no `if (language === …)` branches to chase. Pick an ISO 639-1 code (`es`, `ru`, …) — call
+Nearly every language-dependent string is in a lookup table keyed by language code, so a new language is one
+entry per table; the few `if (language === …)` branches left are listed in step 4. Pick an ISO 639-1 code (`es`, `ru`, …) — call
 it `<code>` below. Spanish (`es`, PR #17) is a complete worked example to diff against.
 
 1. **UI strings.** Copy `web/src/locales/en.json` to `web/src/locales/<code>.json` and translate every string. Don't change the keys. Plurals use `i18next`'s `{{count}}` syntax — leave those tokens alone.
 2. **Register it once** in `web/src/lib/languages.ts` (`LANGUAGES`: code, short badge, native name — the language's name in itself, which every language picker shows — and BCP-47 tag for text-to-speech) and import the JSON in `web/src/i18n.ts`. Every toggle, select, TTS voice filter and signup default reads that list.
-3. **Server enums.** Add `<code>` to the `z.enum(['en', 'bg', 'es'])` language schemas (`grep -rn "'es'" server/src/routes`) and to the `Language` type in `server/src/types.ts`.
+3. **Server list.** Add `<code>` to `LANGUAGES` in `server/src/types.ts`. The `Language` type and every route schema (`z.enum(LANGUAGES)`) come from that one list.
 4. **Coach text.** The coach speaks the player's language:
-   - `server/src/coach/prompts.ts` — add a `<code>` entry to each `Record<Language, …>` table (`PIECE_NAMES`, `AUDIENCE_DATA`, `PERSONA`, `HARD_RULES`, `CASTLE_*`, `MOVE_DESCRIPTIONS`, `CLASS_PHRASES`, and the evaluation/material phrase tables further down).
+   - `server/src/coach/` — add a `<code>` entry to each `Record<Language, …>` table; `npm run typecheck` lists the ones still missing (`PIECE_NAMES`, `AUDIENCE_DATA`, `PERSONA`, `HARD_RULES` and `CLASS_PHRASES` in `locales.ts`, `CASTLE_*` and `MOVE_DESCRIPTIONS` in `moves.ts`, `PHRASES`, `PRAISE` and `BLAME` in `coaching.ts`).
+   - `server/src/coach/facts.ts` and `facts-utils.ts` — these pick their text with `if (language === …)` / `switch`, so the typecheck does not see a missing language: add a branch to `explainTask`, `hintPrompt`, `evaluationStateNatural`, `boardPiecesNatural` and `materialBalanceNatural`. The "every coach language has its own text" test in `server/test/coach-french.test.ts` fails for a language that still falls back to English there.
    - `server/src/coach/review.ts` — add a `<code>` entry to `REVIEW_TEXT` (Game Review task prompts and fallback sentences).
 5. **Lesson texts.** Copy `web/src/locales/learn/en.json` to `web/src/locales/learn/<code>.json`, translate
    it (keep the keys and the `{{side}}` token) and add the file to `TEXTS` in `web/src/learn/content.ts`.

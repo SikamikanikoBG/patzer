@@ -5,6 +5,7 @@ import { db, getSetting, userCount } from '../db.js';
 import { config, type OidcMatchBy } from '../config.js';
 import { publicBaseUrl } from '../publicUrl.js';
 import { setSignupMode } from './invites.js';
+import { LANGUAGES, type Language } from '../types.js';
 
 // Single sign-on with any OpenID Connect provider (Authentik, Keycloak,
 // Authelia, …). Authorization code flow with PKCE, state and nonce; the
@@ -13,8 +14,6 @@ import { setSignupMode } from './invites.js';
 
 export const OIDC_CALLBACK_PATH = '/api/auth/oidc/callback';
 const SCOPES = 'openid profile email';
-const LANGUAGES = ['en', 'bg', 'es', 'de', 'ru', 'uk'] as const;
-type Language = (typeof LANGUAGES)[number];
 
 // Stored instead of a bcrypt hash for accounts created through SSO. bcrypt
 // rejects it (a real hash is 60 characters), so the account has no working
