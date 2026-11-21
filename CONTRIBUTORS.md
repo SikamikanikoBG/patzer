@@ -9,3 +9,7 @@
  - [aminghuf](https://github.com/aminghuf) — DeepSeek coach provider, opt-in hosted chess-api.com engine, automatic Chess.com sync and review (#44)
  - [Fristail27](https://github.com/Fristail27) — Russian localisation, Russian Learn and training texts (#52, #73)
  - [Suven-p](https://github.com/Suven-p) — Elo rating layout in Game Review (#81)
+ - [66Ton99](https://github.com/66Ton99) — honest coach facts (whose move, trades vs wins, a real "why"), LM Studio coach provider, Nix support (#90, #91, #96)
+ - [OnyxOracle](https://github.com/OnyxOracle) — Ukrainian localisation (#97)
+ - [SaberGuirat](https://github.com/SaberGuirat) — French localisation, navigation that scrolls instead of hiding titles (#99)
+ - [einkaktus64](https://github.com/einkaktus64) — pushed for Raspberry Pi / arm64 images, which led to documenting them (#101)

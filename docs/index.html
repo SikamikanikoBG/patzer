@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Patzer — your private Chess.com. Self-hosted, AI-coached, family-friendly.</title>
-<meta name="description" content="Patzer is a self-hosted, open-source alternative to Chess.com: one Docker container with Stockfish plus your own LLM (Ollama or vLLM). Game review, AI coach, family profiles, multilingual.">
+<meta name="description" content="Patzer is a self-hosted, open-source alternative to Chess.com: one Docker container with Stockfish plus your own LLM (Ollama, LM Studio or vLLM). Game review, AI coach, family profiles, multilingual.">
 <meta property="og:title" content="Patzer — your private Chess.com">
-<meta property="og:description" content="Self-hosted, AI-coached, family-friendly. Stockfish + your own LLM (Ollama or vLLM), in one Docker container.">
+<meta property="og:description" content="Self-hosted, AI-coached, family-friendly. Stockfish + your own LLM (Ollama, LM Studio or vLLM), in one Docker container.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://raw.githubusercontent.com/SikamikanikoBG/patzer/main/docs/screenshots/analyzer.png">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
@@ -88,7 +88,7 @@
   <section class="hero" id="top">
     <img class="icon" src="icon.svg" alt="Patzer">
     <h1>Your private Chess.com.</h1>
-    <p class="tag"><b>Self-hosted, AI-coached, family-friendly.</b><br>Stockfish + your own LLM (Ollama or vLLM), in one Docker container. Your games never leave home.</p>
+    <p class="tag"><b>Self-hosted, AI-coached, family-friendly.</b><br>Stockfish + your own LLM (Ollama, LM Studio or vLLM), in one Docker container. Your games never leave home.</p>
     <div class="badges">
       <a href="https://github.com/SikamikanikoBG/patzer/releases"><img alt="release" src="https://img.shields.io/github/v/release/SikamikanikoBG/patzer?style=flat-square"></a>
       <a href="https://github.com/SikamikanikoBG/patzer/pkgs/container/patzer"><img alt="GHCR" src="https://img.shields.io/badge/ghcr.io-patzer-2496ed?style=flat-square&logo=docker&logoColor=white"></a>
@@ -114,11 +114,11 @@
     <p class="h2sub">A tiny, self-hosted take on the Chess.com / Lichess workflow you actually use.</p>
     <div class="grid">
       <div class="card"><h3><span class="k">Game Review</span></h3><p>Pull your public Chess.com or Lichess games (or paste a PGN), analyze with bundled Stockfish, and get chess.com-style classifications, accuracy, estimated Elo, eval graph, key moments, top engine lines and a "What's the threat?" probe.</p></div>
-      <div class="card"><h3><span class="k">AI Coach — your LLM</span></h3><p>Point at any Ollama or vLLM host. A coach, not a commentator: it explains why a move works or fails, shows the better move, and connects the mistake to your own recent games. It never contradicts the engine.</p></div>
+      <div class="card"><h3><span class="k">AI Coach — your LLM</span></h3><p>Point at any Ollama, LM Studio or vLLM host (or DeepSeek). A coach, not a commentator: it explains why a move works or fails, shows the better move, and connects the mistake to your own recent games. It never contradicts the engine.</p></div>
       <div class="card"><h3><span class="k">Play vs Bot &amp; Friend</span></h3><p>Seven Stockfish tiers (Kid → max), all time controls, up to six premoves, kid-mode blunder warnings — plus real-time PvP between profiles on the same server with draw offers, takebacks and one-click rematch.</p></div>
-      <div class="card"><h3><span class="k">Family-ready</span></h3><p>Multi-user with admin console, per-profile language, kid-mode blunder warnings and "horsey" piece names for the youngest profiles. Open, invite-only or closed sign-up.</p></div>
+      <div class="card"><h3><span class="k">Family-ready</span></h3><p>Multi-user with admin console, per-profile language (English, Bulgarian, Spanish, German, Russian, Ukrainian, French), kid-mode blunder warnings and "horsey" piece names for the youngest profiles. Open, invite-only or closed sign-up.</p></div>
       <div class="card"><h3><span class="k">Learn &amp; openers</span></h3><p>69 interactive lessons in four levels, plus an opening trainer: drill 16 built-in main lines or your own repertoire; the moves you miss come back in a daily review queue.</p></div>
-      <div class="card"><h3><span class="k">Your games stay home</span></h3><p>One Docker container on a Pi, NAS or old laptop. No cloud, no telemetry, no upsell. It even checks GitHub every six hours and tells you when a newer release is out.</p></div>
+      <div class="card"><h3><span class="k">Your games stay home</span></h3><p>One Docker container (amd64 or arm64) on a Pi, NAS or old laptop. No cloud, no telemetry, no upsell. It even checks GitHub every six hours and tells you when a newer release is out.</p></div>
     </div>
     <div class="quote">The coach teaches from facts it is handed and never analyses on its own — Stockfish, chess.js and your own game history work out the facts server-side, so a small local model can't hallucinate moves or pieces.</div>
     <div class="shot" style="margin-top:30px">
@@ -157,7 +157,7 @@ docker run -d \
       <div class="card"><h3>docker compose</h3><p>Prefer compose? The <a href="https://github.com/SikamikanikoBG/patzer/blob/main/docker-compose.yml">docker-compose.yml</a> in the repo is the whole deployment — add the Watchtower label and your box tracks releases by itself.</p></div>
       <div class="card"><h3>Try it in your browser</h3><p><a href="https://codespaces.new/SikamikanikoBG/patzer?quickstart=1">Open in GitHub Codespaces</a> spins up a temporary environment with Patzer + Stockfish pre-installed — the full app, no install, in about a minute.</p></div>
     </div>
-    <p class="sub" style="margin-top:14px">The AI Coach needs an Ollama or vLLM host on your network (or the hosted DeepSeek API); Game Review on your own games needs a Chess.com or Lichess username. Everything else works out of the box.</p>
+    <p class="sub" style="margin-top:14px">The AI Coach needs an Ollama, LM Studio or vLLM host on your network (or the hosted DeepSeek API); Game Review on your own games needs a Chess.com or Lichess username. Everything else works out of the box.</p>
   </section>
 
   <footer>
@@ -165,7 +165,7 @@ docker run -d \
       <div><a href="https://github.com/SikamikanikoBG/patzer">GitHub</a> · <a href="https://github.com/SikamikanikoBG/patzer/discussions">Discussions</a></div>
       <div><a href="https://github.com/SikamikanikoBG/patzer/blob/main/docs/FAQ.md">FAQ</a> · <a href="https://github.com/SikamikanikoBG/patzer/blob/main/ROADMAP.md">Roadmap</a> · <a href="https://github.com/SikamikanikoBG/patzer/blob/main/CHANGELOG.md">Changelog</a></div>
     </div>
-    MIT licensed — <a href="https://github.com/SikamikanikoBG/patzer/blob/main/CONTRIBUTING.md">contributions welcome</a>, translations especially. Built with Stockfish, chess.js, Hono, React and your own LLM.
+    MIT licensed — <a href="https://github.com/SikamikanikoBG/patzer/blob/main/CONTRIBUTING.md">contributions welcome</a>, translations especially. French and Ukrainian came from the community — <a href="https://github.com/SikamikanikoBG/patzer/blob/main/CONTRIBUTORS.md">meet the contributors</a>. Built with Stockfish, chess.js, Hono, React and your own LLM.
   </footer>
 </div>
 </body>

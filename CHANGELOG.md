@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### French
+*Merged contributions in this release — thank you, [@SaberGuirat](https://github.com/SaberGuirat), [@OnyxOracle](https://github.com/OnyxOracle) and [@66Ton99](https://github.com/66Ton99).*
+
+### French (#99, @SaberGuirat)
 
 - **Patzer speaks French.** The interface, the Learn lessons and the coach:
   move explanations, hints and Game Review are written in French, with French
@@ -14,7 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   guard that stops the coach praising a blunder. Pick *Français* in Settings,
   at sign-up or in an invite; a single sign-on provider can set it too.
 
-### Fixed
+### Ukrainian (#97, @OnyxOracle)
+
+- **Patzer speaks Ukrainian.** The interface (with all four Ukrainian plural
+  forms), the Learn lessons including kid mode, and the coach: move
+  explanations, hints and Game Review in Ukrainian, with declined piece names
+  and the same guard that stops the coach praising a blunder. The language
+  picker on the setup screen is now a grid, so all seven languages fit.
+
+### Fixed (#99, @SaberGuirat)
 
 - Navigation titles stay visible in every language. When the pills do not fit,
   the navigation scrolls sideways instead of switching to icons only: an arrow
@@ -82,7 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `npm run test:oidc` (also in CI) runs the whole thing against a real
     OpenID provider.
 
-### Fixed: three wrong statements the coach was handed, not invented
+### Fixed: three wrong statements the coach was handed, not invented (#96, @66Ton99)
 
 The coach's facts are worked out by chess.js and Stockfish and only phrased by
 the model, so a wrong fact comes out of the coach's mouth as confidently as a
@@ -109,17 +119,17 @@ right one. Three of them did.
 Regression tests pin all three on the position that produced them (French
 advance, 7.Be2), including the engine line whose middle ply was the player's.
 
-### Added: LM Studio as an AI Coach provider
+### Added: LM Studio as an AI Coach provider (#91, @66Ton99)
 
 - **Full LM Studio support as an AI Coach provider.** Point Patzer at your local LM Studio instance (`http://localhost:1234` by default) in **Admin → System**.
   - Independent URL and model configuration, alongside Ollama, vLLM and DeepSeek.
   - Full OpenAI-compatible chat completions and JSON structured outputs for move explanations, threat analysis, and game reviews.
   - Automatic model listing and connection testing via LM Studio's `/v1/models` endpoint.
   - Tailored Docker connection hints guiding users to enable "Serve on Local Network" and use `http://host.docker.internal:1234`.
-  - Comprehensive multilingual localization (English, German, Russian, Spanish, Bulgarian).
+  - Comprehensive multilingual localization (English, German, Russian, Spanish, Bulgarian; French and Ukrainian added on merge).
   - Complete integration test suite covering URL variations, streaming responses, JSON reviews, and settings isolation (`server/test/llm-providers.test.ts`).
 
-### Added: run Patzer with Nix (flake, nix-shell, direnv)
+### Added: run Patzer with Nix (flake, nix-shell, direnv) (#90, @66Ton99)
 
 - **Nix environment support.** Added `flake.nix`, `shell.nix`, `default.nix`, and `.envrc` providing out-of-the-box development and runtime environments with Node.js 22 and Stockfish on Linux and macOS.
 - Launch Patzer with `nix run` or enter a complete development shell using `nix develop` or `nix-shell`.

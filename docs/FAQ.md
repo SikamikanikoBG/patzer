@@ -51,8 +51,11 @@ Review; the Coach panel just won't talk back.
 
 ## Can it run on a Raspberry Pi?
 
-Yes, with caveats. Stockfish + the web stack run comfortably on a Pi 4 / Pi 5.
-The AI Coach has to call out to an Ollama or vLLM host — which usually isn't
+Yes, with caveats. The image is multi-arch: `ghcr.io/sikamikanikobg/patzer:latest`
+(and every version tag) has `linux/arm64` next to `linux/amd64`, so the same
+`docker run` works on a 64-bit Raspberry Pi OS. Stockfish + the web stack run
+comfortably on a Pi 4 / Pi 5.
+The AI Coach has to call out to an Ollama, LM Studio or vLLM host — which usually isn't
 a Pi, because small LLMs are still pretty heavy. Point Patzer at an Ollama
 running on a desktop or NAS on the same LAN; the Pi just hosts the web app.
 That said, the coach only *phrases* facts computed by Stockfish, so a 1B
