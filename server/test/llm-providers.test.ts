@@ -9,9 +9,10 @@ import { join } from 'node:path';
 // over real HTTP. Each fake serves only the routes its real counterpart has,
 // so a request to the wrong path fails the same way it would in production:
 //
-//   Ollama   — /api/tags, /api/chat
-//   vLLM     — /v1/models, /v1/chat/completions  (bare server URL + /v1)
-//   DeepSeek — /models, /chat/completions        (URL is the API root, Bearer key)
+//   Ollama    — /api/tags, /api/chat
+//   vLLM      — /v1/models, /v1/chat/completions  (bare server URL + /v1)
+//   LM Studio — /v1/models, /v1/chat/completions  (bare server URL + /v1)
+//   DeepSeek  — /models, /chat/completions        (URL is the API root, Bearer key)
 //
 // Written after 7.15.0 sent vLLM's model list to /models: "Test" failed on
 // every existing vLLM setup, and adding /v1 to the URL as a workaround broke
@@ -30,7 +31,7 @@ interface Seen { method: string; path: string; auth?: string; body?: Record<stri
 
 interface Fake { url: string; seen: Seen[]; server: Server }
 
-const MODEL = { ollama: 'gemma3:1b', vllm: 'Qwen3-8B', deepseek: 'deepseek-chat' } as const;
+const MODEL = { ollama: 'gemma3:1b', vllm: 'Qwen3-8B', deepseek: 'deepseek-chat', lmstudio: 'qwen2.5-7b-instruct' } as const;
 
 function readBody(req: IncomingMessage): Promise<Record<string, unknown> | undefined> {
   return new Promise((resolve) => {
@@ -63,7 +64,7 @@ function openAiChat(res: ServerResponse, body: Record<string, unknown> | undefin
   json(res, 200, { choices: [{ message: { content: jsonMode ? '{"summary":"ok"}' : 'OK' } }] });
 }
 
-async function startFake(kind: 'ollama' | 'vllm' | 'deepseek'): Promise<Fake> {
+async function startFake(kind: 'ollama' | 'vllm' | 'deepseek' | 'lmstudio'): Promise<Fake> {
   const seen: Seen[] = [];
   const server = createServer(async (req, res) => {
     const body = await readBody(req);
@@ -88,6 +89,11 @@ async function startFake(kind: 'ollama' | 'vllm' | 'deepseek'): Promise<Fake> {
       if (req.method === 'POST' && path === '/v1/chat/completions') return openAiChat(res, body);
     }
 
+    if (kind === 'lmstudio') {
+      if (req.method === 'GET' && path === '/v1/models') return json(res, 200, { object: 'list', data: [{ id: MODEL.lmstudio }] });
+      if (req.method === 'POST' && path === '/v1/chat/completions') return openAiChat(res, body);
+    }
+
     if (kind === 'deepseek') {
       if (req.headers.authorization !== `Bearer ${DEEPSEEK_KEY}`) return json(res, 401, { error: { message: 'Authentication Fails' } });
       if (req.method === 'GET' && path === '/models') return json(res, 200, { object: 'list', data: [{ id: MODEL.deepseek }] });
@@ -105,14 +111,14 @@ let llm: LlmModule;
 let setSetting: (k: string, v: string) => void;
 let admin: Router;
 let adminCookie: string;
-const fakes = {} as Record<'ollama' | 'vllm' | 'deepseek', Fake>;
+const fakes = {} as Record<'ollama' | 'vllm' | 'deepseek' | 'lmstudio', Fake>;
 
 // Every spelling of the same server a user might paste into Admin → System.
 function spellings(base: string): string[] {
   return [base, `${base}/`, `${base}/v1`, `${base}/v1/`];
 }
 
-function useProvider(p: 'ollama' | 'vllm' | 'deepseek', url: string): void {
+function useProvider(p: 'ollama' | 'vllm' | 'deepseek' | 'lmstudio', url: string): void {
   setSetting('llm_provider', p);
   setSetting(`${p}_url`, url);
   setSetting(`${p}_model`, MODEL[p]);
@@ -121,6 +127,7 @@ function useProvider(p: 'ollama' | 'vllm' | 'deepseek', url: string): void {
 beforeAll(async () => {
   fakes.ollama = await startFake('ollama');
   fakes.vllm = await startFake('vllm');
+  fakes.lmstudio = await startFake('lmstudio');
   fakes.deepseek = await startFake('deepseek');
   const dbm = await import('../src/db.js');
   setSetting = dbm.setSetting;
@@ -151,9 +158,19 @@ describe('openAiRoot', () => {
     expect(llm.openAiRoot('http://gpu:8000/v1//', 'vllm')).toBe('http://gpu:8000/v1');
   });
 
+  it('puts LM Studio under /v1 however the URL is written, and never twice', () => {
+    for (const u of spellings('http://localhost:1234')) expect(llm.openAiRoot(u, 'lmstudio'), u).toBe('http://localhost:1234/v1');
+    expect(llm.openAiRoot('http://localhost:1234/v1//', 'lmstudio')).toBe('http://localhost:1234/v1');
+  });
+
   it('keeps a path prefix in front of vLLM (reverse proxy)', () => {
     expect(llm.openAiRoot('https://box.lan/llm', 'vllm')).toBe('https://box.lan/llm/v1');
     expect(llm.openAiRoot('https://box.lan/llm/v1', 'vllm')).toBe('https://box.lan/llm/v1');
+  });
+
+  it('keeps a path prefix in front of LM Studio (reverse proxy)', () => {
+    expect(llm.openAiRoot('https://box.lan/lmstudio', 'lmstudio')).toBe('https://box.lan/lmstudio/v1');
+    expect(llm.openAiRoot('https://box.lan/lmstudio/v1', 'lmstudio')).toBe('https://box.lan/lmstudio/v1');
   });
 
   it('leaves the DeepSeek root as typed', () => {
@@ -208,6 +225,59 @@ describe('vLLM', () => {
   it('reports a wrong server instead of pretending', async () => {
     const r = await llm.testConnection(fakes.ollama.url, 'vllm');
     expect(r).toEqual({ ok: false, error: 'HTTP 404' });
+  });
+});
+
+describe('LM Studio', () => {
+  for (const spell of ['', '/', '/v1', '/v1/']) {
+    describe(`URL written as <server>${spell}`, () => {
+      const url = () => fakes.lmstudio.url + spell;
+
+      it('lists models from /v1/models', async () => {
+        const r = await llm.testConnection(url(), 'lmstudio');
+        expect(r).toEqual({ ok: true, models: [{ name: MODEL.lmstudio, size: 0 }] });
+        expect(paths(fakes.lmstudio)).toEqual(['GET /v1/models']);
+      });
+
+      it('tests a model on /v1/chat/completions without vLLM-only fields or auth header', async () => {
+        const r = await llm.testModel(url(), MODEL.lmstudio, 5000, 'lmstudio');
+        expect(r.ok).toBe(true);
+        expect(r.sample).toBe('OK');
+        expect(paths(fakes.lmstudio)).toEqual(['POST /v1/chat/completions']);
+        const req = fakes.lmstudio.seen[0]!;
+        expect(req.auth).toBeUndefined();
+        expect(req.body?.model).toBe(MODEL.lmstudio);
+        expect(req.body?.chat_template_kwargs).toBeUndefined();
+      });
+
+      it('streams the coach from /v1/chat/completions', async () => {
+        useProvider('lmstudio', url());
+        let text = '';
+        await llm.chatStream([{ role: 'user', content: 'hi' }], (t) => { text += t; });
+        expect(text).toBe('Develop your knight.');
+        expect(paths(fakes.lmstudio).filter((p) => p.startsWith('POST'))).toEqual(['POST /v1/chat/completions']);
+        expect(fakes.lmstudio.seen.find((s) => s.method === 'POST')!.body?.stream).toBe(true);
+      });
+
+      it('writes JSON reviews through /v1/chat/completions', async () => {
+        useProvider('lmstudio', url());
+        const out = await llm.chatJson<{ summary: string }>([{ role: 'user', content: 'review' }]);
+        expect(out).toEqual({ summary: 'ok' });
+        const post = fakes.lmstudio.seen.find((s) => s.method === 'POST')!;
+        expect(post.path).toBe('/v1/chat/completions');
+        expect(post.body?.response_format).toEqual({ type: 'json_object' });
+      });
+    });
+  }
+
+  it('reports a wrong server instead of pretending', async () => {
+    const r = await llm.testConnection(fakes.ollama.url, 'lmstudio');
+    expect(r).toEqual({ ok: false, error: 'HTTP 404' });
+  });
+
+  it('is not configured without a URL', () => {
+    useProvider('lmstudio', '');
+    expect(llm.llmConfigured()).toBe(false);
   });
 });
 
@@ -288,10 +358,14 @@ describe('switching providers keeps each one\'s settings', () => {
   it('reads the URL and model of the selected provider only', () => {
     setSetting('ollama_url', fakes.ollama.url);
     setSetting('vllm_url', `${fakes.vllm.url}/`);
+    setSetting('lmstudio_url', `${fakes.lmstudio.url}/`);
     setSetting('ollama_model', MODEL.ollama);
     setSetting('vllm_model', MODEL.vllm);
+    setSetting('lmstudio_model', MODEL.lmstudio);
     setSetting('llm_provider', 'vllm');
     expect([llm.llmUrl(), llm.llmModel()]).toEqual([fakes.vllm.url, MODEL.vllm]);
+    setSetting('llm_provider', 'lmstudio');
+    expect([llm.llmUrl(), llm.llmModel()]).toEqual([fakes.lmstudio.url, MODEL.lmstudio]);
     setSetting('llm_provider', 'ollama');
     expect([llm.llmUrl(), llm.llmModel()]).toEqual([fakes.ollama.url, MODEL.ollama]);
   });
@@ -316,6 +390,15 @@ describe('Admin → System test buttons', () => {
       const all = await post('/test/ollama-models', { url, provider: 'vllm' });
       expect(all.body).toMatchObject({ ok: true, results: [{ model: MODEL.vllm, ok: true, sample: 'OK' }] });
       expect(paths(fakes.vllm)).toEqual(['GET /v1/models', 'GET /v1/models', 'POST /v1/chat/completions']);
+    });
+
+    it(`"Test" and "Test ALL models" work for LM Studio (<server>${spell})`, async () => {
+      const url = fakes.lmstudio.url + spell;
+      const t = await post('/test/ollama', { url, provider: 'lmstudio' });
+      expect(t.body).toMatchObject({ ok: true, models: [{ name: MODEL.lmstudio }] });
+      const all = await post('/test/ollama-models', { url, provider: 'lmstudio' });
+      expect(all.body).toMatchObject({ ok: true, results: [{ model: MODEL.lmstudio, ok: true, sample: 'OK' }] });
+      expect(paths(fakes.lmstudio)).toEqual(['GET /v1/models', 'GET /v1/models', 'POST /v1/chat/completions']);
     });
   }
 

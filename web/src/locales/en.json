@@ -55,7 +55,9 @@
     "next": "Next",
     "llmHint": {
       "docker_localhost": "Patzer runs in Docker, where \"localhost\" is the container itself, not your computer. Use http://host.docker.internal:11434 (built into Docker Desktop on Windows and Mac; on Linux only after enabling the extra_hosts lines in docker-compose.yml) or your computer's network address, e.g. http://192.168.1.20:11434. The AI server must also accept connections from the network — for Ollama, set OLLAMA_HOST=0.0.0.0 and restart Ollama.",
-      "unreachable": "Nothing answered at this address. Check that the AI server is running, that address and port are right, and that it accepts connections from the network (for Ollama: set OLLAMA_HOST=0.0.0.0, then restart it). A firewall on that computer can also block the port."
+      "unreachable": "Nothing answered at this address. Check that the AI server is running, that address and port are right, and that it accepts connections from the network (for Ollama: set OLLAMA_HOST=0.0.0.0, then restart it). A firewall on that computer can also block the port.",
+      "lmstudio_docker_localhost": "Patzer runs in Docker, where \"localhost\" is the container itself, not your computer. Use http://host.docker.internal:1234 (built into Docker Desktop on Windows and Mac; on Linux only after enabling the extra_hosts lines in docker-compose.yml) or your computer's network address, e.g. http://192.168.1.20:1234. In LM Studio, make sure the local server is started and 'Serve on Local Network' is enabled.",
+      "lmstudio_unreachable": "Nothing answered at this address. Check that LM Studio is running, a model is loaded, the Local Server is started (default port 1234), and 'Serve on Local Network' is enabled if connecting from Docker or another device."
     }
   },
   "login": {
@@ -539,7 +541,9 @@
     "sendTestEmailHint": "Save first — the test uses the saved settings.",
     "send": "Send",
     "testEmailSent": "Test email sent.",
-    "llmDesc": "LLM for the AI Coach — a local Ollama or OpenAI-compatible vLLM server, or the hosted DeepSeek API. Each is configured independently, so switching providers doesn't lose the other's settings.",
+    "llmDesc": "LLM for the AI Coach — a local Ollama, LM Studio or OpenAI-compatible vLLM server, or the hosted DeepSeek API. Each is configured independently, so switching providers doesn't lose the other's settings.",
+    "lmstudioUrl": "LM Studio URL",
+    "lmstudioModel": "LM Studio model",
     "vllmUrl": "vLLM URL",
     "vllmModel": "vLLM model",
     "testAllModels": "Test ALL models",

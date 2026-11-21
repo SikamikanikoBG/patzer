@@ -48,7 +48,11 @@
     "ollamaFailed": "No se pudo conectar: {{error}}",
     "finish": "Finalizar configuración",
     "creating": "Creando…",
-    "passwordHint": "Mínimo 10 caracteres."
+    "passwordHint": "Mínimo 10 caracteres.",
+    "llmHint": {
+      "lmstudio_docker_localhost": "Patzer se ejecuta en Docker, donde \"localhost\" es el propio contenedor, no su computadora. Use http://host.docker.internal:1234 o la dirección de red de su computadora, p. ej. http://192.168.1.20:1234. En LM Studio, asegúrese de que el servidor local esté iniciado y que 'Serve on Local Network' esté habilitado.",
+      "lmstudio_unreachable": "Nada respondió en esta dirección. Verifique que LM Studio esté ejecutándose, haya un modelo cargado, el servidor local esté iniciado (puerto 1234 predeterminado) y 'Serve on Local Network' esté habilitado."
+    }
   },
   "login": {
     "title": "Hola de nuevo",
@@ -420,6 +424,8 @@
     "sendTestEmailHint": "Guarda primero — la prueba utilizará la configuración guardada.",
     "send": "Enviar",
     "testEmailSent": "Correo de prueba enviado.",
+    "lmstudioUrl": "URL de LM Studio",
+    "lmstudioModel": "Modelo de LM Studio",
     "colSignIn": "Inicio de sesión",
     "signInSso": "SSO",
     "signInPassword": "Contraseña",

@@ -1,7 +1,7 @@
 // Single source of truth for the UI languages. Adding a language = one entry
 // here + a locale JSON + `LANGUAGES` in server/src/types.ts. Everything else
 // (toggles, TTS, signup default) iterates this list.
-export type Language = 'en' | 'bg' | 'es' | 'de' | 'ru' | 'fr';
+export type Language = 'en' | 'bg' | 'es' | 'de' | 'ru' | 'fr' | 'uk';
 
 export interface LanguageInfo {
   code: Language;
@@ -22,6 +22,7 @@ export const LANGUAGES: readonly LanguageInfo[] = [
   { code: 'de', short: 'DE', native: 'Deutsch', bcp47: 'de-DE' },
   { code: 'ru', short: 'RU', native: 'Русский', bcp47: 'ru-RU' },
   { code: 'fr', short: 'FR', native: 'Français', bcp47: 'fr-FR' },
+  { code: 'uk', short: 'UK', native: 'Українська', bcp47: 'uk-UA' },
 ] as const;
 
 export const LANGUAGE_CODES: readonly Language[] = LANGUAGES.map((l) => l.code);

@@ -55,7 +55,9 @@
     "next": "Suivant",
     "llmHint": {
       "docker_localhost": "Patzer s'exécute dans Docker, où « localhost » désigne le conteneur lui-même, et non votre ordinateur. Utilisez http://host.docker.internal:11434 (intégré à Docker Desktop sous Windows et Mac ; sous Linux uniquement après avoir activé les lignes extra_hosts dans docker-compose.yml) ou l'adresse réseau de votre ordinateur, par ex. http://192.168.1.20:11434. Le serveur IA doit également accepter les connexions provenant du réseau — pour Ollama, définissez OLLAMA_HOST=0.0.0.0 et redémarrez Ollama.",
-      "unreachable": "Aucune réponse à cette adresse. Vérifiez que le serveur IA est en cours d'exécution, que l'adresse et le port sont corrects, et qu'il accepte les connexions réseau (pour Ollama : définissez OLLAMA_HOST=0.0.0.0, puis redémarrez-le). Un pare-feu sur cet ordinateur peut également bloquer le port."
+      "unreachable": "Aucune réponse à cette adresse. Vérifiez que le serveur IA est en cours d'exécution, que l'adresse et le port sont corrects, et qu'il accepte les connexions réseau (pour Ollama : définissez OLLAMA_HOST=0.0.0.0, puis redémarrez-le). Un pare-feu sur cet ordinateur peut également bloquer le port.",
+      "lmstudio_docker_localhost": "Patzer s'exécute dans Docker, où « localhost » désigne le conteneur lui-même, et non votre ordinateur. Utilisez http://host.docker.internal:1234 (intégré à Docker Desktop sous Windows et Mac ; sous Linux uniquement après avoir activé les lignes extra_hosts dans docker-compose.yml) ou l'adresse réseau de votre ordinateur, par ex. http://192.168.1.20:1234. Dans LM Studio, vérifiez que le serveur local est démarré et que « Serve on Local Network » est activé.",
+      "lmstudio_unreachable": "Aucune réponse à cette adresse. Vérifiez que LM Studio est lancé, qu'un modèle est chargé, que le serveur local est démarré (port 1234 par défaut) et que « Serve on Local Network » est activé si vous vous connectez depuis Docker ou un autre appareil."
     }
   },
   "login": {
@@ -540,6 +542,8 @@
     "send": "Envoyer",
     "testEmailSent": "E-mail de test envoyé.",
     "llmDesc": "LLM pour le coach IA — un serveur Ollama local ou un serveur vLLM compatible OpenAI, ou l'API DeepSeek hébergée. Chacun est configuré indépendamment : changer de fournisseur ne fait pas perdre les paramètres de l'autre.",
+    "lmstudioUrl": "URL LM Studio",
+    "lmstudioModel": "Modèle LM Studio",
     "vllmUrl": "URL vLLM",
     "vllmModel": "Modèle vLLM",
     "testAllModels": "Tester TOUS les modèles",

@@ -198,7 +198,7 @@ describe('explainCoaching — the facts behind a blunder', () => {
   });
 
   it('speaks the player\'s language', async () => {
-    const expected = { bg: /дава мат веднага/, es: /dar mate de inmediato/, de: /sofort mattsetzen/, ru: /сразу ставит мат/, fr: /mater tout de suite/ } as const;
+    const expected = { bg: /дава мат веднага/, es: /dar mate de inmediato/, de: /sofort mattsetzen/, ru: /сразу ставит мат/, uk: /одразу ставить мат/, fr: /mater tout de suite/ } as const;
     for (const [lang, re] of Object.entries(expected)) {
       const c = await coaching.explainCoaching(blunderInput, lang as 'bg', 'beginner');
       expect((c.facts.why as string[])[0], lang).toMatch(re);
@@ -293,6 +293,7 @@ describe('contradiction — the guard', () => {
       en: 'Nice move, the knight comes out.', bg: 'Страхотно развитие на коня.', es: 'Excelente desarrollo del caballo.',
       de: 'Großartig, der Springer kommt raus.', ru: 'Отличное развитие коня.',
       fr: 'Bien joué, le cavalier sort.',
+      uk: 'Чудовий розвиток коня.',
     } as const;
     for (const [lang, text] of Object.entries(praise)) {
       expect(coaching.contradiction(text, 'blunder', lang as 'en'), lang).toBe('praise_for_mistake');
@@ -303,6 +304,7 @@ describe('contradiction — the guard', () => {
     const blame = {
       en: 'That is a blunder.', bg: 'Това е грешка.', es: 'Es un error.', de: 'Das ist ein Fehler.', ru: 'Это ошибка.',
       fr: "C'est une gaffe.",
+      uk: 'Це помилка.',
     } as const;
     for (const [lang, text] of Object.entries(blame)) {
       expect(coaching.contradiction(text, 'best', lang as 'en'), lang).toBe('blame_for_good_move');
