@@ -228,6 +228,8 @@ router.get('/system', async (c) => {
     ollama_model: getSetting('ollama_model'),
     vllm_url: getSetting('vllm_url'),
     vllm_model: getSetting('vllm_model'),
+    lmstudio_url: getSetting('lmstudio_url'),
+    lmstudio_model: getSetting('lmstudio_model'),
     deepseek_url: getSetting('deepseek_url') ?? '',
     deepseek_model: getSetting('deepseek_model') ?? '',
     // The API key itself is never returned — only whether one is set (and
@@ -266,11 +268,13 @@ router.get('/system', async (c) => {
 });
 
 const systemSchema = z.object({
-  llm_provider: z.enum(['ollama', 'vllm', 'deepseek']).optional(),
+  llm_provider: z.enum(['ollama', 'vllm', 'deepseek', 'lmstudio']).optional(),
   ollama_url: z.string().url().or(z.literal('')).optional(),
   ollama_model: z.string().optional(),
   vllm_url: z.string().url().or(z.literal('')).optional(),
   vllm_model: z.string().optional(),
+  lmstudio_url: z.string().url().or(z.literal('')).optional(),
+  lmstudio_model: z.string().optional(),
   deepseek_url: z.string().url().or(z.literal('')).optional(),
   deepseek_model: z.string().optional(),
   // Only written when a non-empty string is sent; empty/omitted leaves the
@@ -311,6 +315,8 @@ router.patch('/system', async (c) => {
   setStr('ollama_model', d.ollama_model);
   setStr('vllm_url', d.vllm_url);
   setStr('vllm_model', d.vllm_model);
+  setStr('lmstudio_url', d.lmstudio_url);
+  setStr('lmstudio_model', d.lmstudio_model);
   setStr('deepseek_url', d.deepseek_url);
   setStr('deepseek_model', d.deepseek_model);
   if (d.deepseek_api_key) setSetting('deepseek_api_key', d.deepseek_api_key);
@@ -358,7 +364,7 @@ router.post('/test/email', async (c) => {
 
 function bodyProvider(body: unknown): LlmProvider {
   const p = body && typeof body === 'object' && 'provider' in body ? (body as { provider?: unknown }).provider : undefined;
-  if (p === 'ollama' || p === 'vllm' || p === 'deepseek') return p;
+  if (p === 'ollama' || p === 'vllm' || p === 'deepseek' || p === 'lmstudio') return p;
   return llmProvider();
 }
 
@@ -370,9 +376,8 @@ router.post('/test/ollama', async (c) => {
   if (!url) return c.json({ ok: false, error: 'no_url_configured' });
   const provider = bodyProvider(body);
   const result = await testConnection(url, provider);
-  // The hint's how-to (port 11434, OLLAMA_HOST) is Ollama's.
-  if (result.ok || provider !== 'ollama') return c.json(result);
-  return c.json({ ...result, hint: connectionHint(url, result.error) });
+  if (result.ok || (provider !== 'ollama' && provider !== 'lmstudio')) return c.json(result);
+  return c.json({ ...result, hint: connectionHint(url, result.error, undefined, provider) });
 });
 
 router.post('/test/ollama-models', async (c) => {

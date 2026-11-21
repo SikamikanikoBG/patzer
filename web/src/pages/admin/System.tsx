@@ -4,11 +4,13 @@ import { CheckCircle2, AlertCircle, Save, Sparkles, Cpu, Loader2, FlaskConical, 
 import { api } from '../../api';
 
 interface SysSettings {
-  llm_provider?: 'ollama' | 'vllm' | 'deepseek';
+  llm_provider?: 'ollama' | 'vllm' | 'deepseek' | 'lmstudio';
   ollama_url: string | null;
   ollama_model: string | null;
   vllm_url?: string | null;
   vllm_model?: string | null;
+  lmstudio_url?: string | null;
+  lmstudio_model?: string | null;
   deepseek_url?: string | null;
   deepseek_model?: string | null;
   deepseek_key_set?: boolean;
@@ -87,9 +89,10 @@ export default function AdminSystem() {
   function loadSettings() {
     return api.get<SysSettings>('/api/admin/system').then((d) => {
       setS({
-        llm_provider: d.llm_provider === 'vllm' ? 'vllm' : d.llm_provider === 'deepseek' ? 'deepseek' : 'ollama',
+        llm_provider: d.llm_provider === 'vllm' ? 'vllm' : d.llm_provider === 'deepseek' ? 'deepseek' : d.llm_provider === 'lmstudio' ? 'lmstudio' : 'ollama',
         ollama_url: d.ollama_url ?? '', ollama_model: d.ollama_model ?? '',
         vllm_url: d.vllm_url ?? '', vllm_model: d.vllm_model ?? '',
+        lmstudio_url: d.lmstudio_url ?? '', lmstudio_model: d.lmstudio_model ?? '',
         deepseek_url: d.deepseek_url ?? '', deepseek_model: d.deepseek_model ?? '',
         deepseek_key_set: !!d.deepseek_key_set,
         deepseek_env_override: !!d.deepseek_env_override,
@@ -158,20 +161,20 @@ export default function AdminSystem() {
   }
 
   const provider = s.llm_provider ?? 'ollama';
-  const activeUrl = provider === 'vllm' ? (s.vllm_url ?? '') : provider === 'deepseek' ? (s.deepseek_url ?? '') : (s.ollama_url ?? '');
-  const activeModel = provider === 'vllm' ? (s.vllm_model ?? '') : provider === 'deepseek' ? (s.deepseek_model ?? '') : (s.ollama_model ?? '');
+  const activeUrl = provider === 'vllm' ? (s.vllm_url ?? '') : provider === 'lmstudio' ? (s.lmstudio_url ?? '') : provider === 'deepseek' ? (s.deepseek_url ?? '') : (s.ollama_url ?? '');
+  const activeModel = provider === 'vllm' ? (s.vllm_model ?? '') : provider === 'lmstudio' ? (s.lmstudio_model ?? '') : provider === 'deepseek' ? (s.deepseek_model ?? '') : (s.ollama_model ?? '');
   // DeepSeek's URL is optional — empty means the official https://api.deepseek.com.
   const activeUrlForTest = provider === 'deepseek' ? (activeUrl || 'https://api.deepseek.com') : activeUrl;
-  const providerLabel = (p: string) => (p === 'ollama' ? 'Ollama' : p === 'vllm' ? 'vLLM' : 'DeepSeek');
-  const urlLabel = provider === 'vllm' ? t('admin.vllmUrl') : provider === 'deepseek' ? t('admin.deepseekUrl') : t('admin.ollamaUrl');
-  const urlPlaceholder = provider === 'vllm' ? 'http://localhost:8000' : provider === 'deepseek' ? 'https://api.deepseek.com' : 'http://localhost:11434';
-  const modelLabel = provider === 'vllm' ? t('admin.vllmModel') : provider === 'deepseek' ? t('admin.deepseekModel') : t('admin.ollamaModel');
-  const modelPlaceholder = provider === 'vllm' ? 'Qwen3.8-27B' : provider === 'deepseek' ? 'deepseek-chat' : 'gemma3:27b';
+  const providerLabel = (p: string) => (p === 'ollama' ? 'Ollama' : p === 'vllm' ? 'vLLM' : p === 'lmstudio' ? 'LM Studio' : 'DeepSeek');
+  const urlLabel = provider === 'vllm' ? t('admin.vllmUrl') : provider === 'lmstudio' ? t('admin.lmstudioUrl') : provider === 'deepseek' ? t('admin.deepseekUrl') : t('admin.ollamaUrl');
+  const urlPlaceholder = provider === 'vllm' ? 'http://localhost:8000' : provider === 'lmstudio' ? 'http://localhost:1234' : provider === 'deepseek' ? 'https://api.deepseek.com' : 'http://localhost:11434';
+  const modelLabel = provider === 'vllm' ? t('admin.vllmModel') : provider === 'lmstudio' ? t('admin.lmstudioModel') : provider === 'deepseek' ? t('admin.deepseekModel') : t('admin.ollamaModel');
+  const modelPlaceholder = provider === 'vllm' ? 'Qwen3.8-27B' : provider === 'lmstudio' ? 'qwen2.5-7b-instruct' : provider === 'deepseek' ? 'deepseek-chat' : 'gemma3:27b';
   function setActiveUrl(v: string) {
-    setS((cur) => provider === 'vllm' ? { ...cur, vllm_url: v } : provider === 'deepseek' ? { ...cur, deepseek_url: v } : { ...cur, ollama_url: v });
+    setS((cur) => provider === 'vllm' ? { ...cur, vllm_url: v } : provider === 'lmstudio' ? { ...cur, lmstudio_url: v } : provider === 'deepseek' ? { ...cur, deepseek_url: v } : { ...cur, ollama_url: v });
   }
   function setActiveModel(v: string) {
-    setS((cur) => provider === 'vllm' ? { ...cur, vllm_model: v } : provider === 'deepseek' ? { ...cur, deepseek_model: v } : { ...cur, ollama_model: v });
+    setS((cur) => provider === 'vllm' ? { ...cur, vllm_model: v } : provider === 'lmstudio' ? { ...cur, lmstudio_model: v } : provider === 'deepseek' ? { ...cur, deepseek_model: v } : { ...cur, ollama_model: v });
   }
 
   useEffect(() => { void loadSettings(); }, []);
@@ -260,7 +263,7 @@ export default function AdminSystem() {
         </div>
         <div className="space-y-4 p-5">
           <div className="inline-flex rounded-xl border border-ink-200 p-1 dark:border-ink-700">
-            {(['ollama', 'vllm', 'deepseek'] as const).map((p) => (
+            {(['ollama', 'lmstudio', 'vllm', 'deepseek'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setS({ ...s, llm_provider: p })}
