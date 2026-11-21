@@ -205,6 +205,78 @@ describe('explainCoaching — the facts behind a blunder', () => {
   });
 });
 
+// A real coached position that produced three wrong statements at once: the
+// player's own castling reported as the opponent's reply, an even trade
+// reported as winning material, and an invented undefended knight because
+// there was no concrete "why" to give. French advance, 7.Be2 after 6...a6.
+const FRENCH = 'r1b1kbnr/1p3ppp/pqn1p3/1BppP3/P2P4/5N2/1PP2PPP/RNBQK2R w KQkq - 0 7';
+const AFTER_BE2 = 'r1b1kbnr/1p3ppp/pqn1p3/2ppP3/P2P4/5N2/1PP1BPPP/RNBQK2R b KQkq - 1 7';
+
+describe('explainCoaching — a quiet inaccuracy with nothing hanging', () => {
+  // Stockfish 17 at depth 16 on these two positions.
+  const scripted = async (fen: string) => (fen === FRENCH
+    ? [
+      { cp: -17, mate: null, pv: ['b5c6', 'b7c6'] },
+      { cp: -25, mate: null, pv: ['d4c5', 'f8c5'] },
+      { cp: -36, mate: null, pv: ['b5d3', 'c5d4'] },
+    ]
+    : [{ cp: -95, mate: null, pv: ['c5d4', 'e1g1', 'g8e7'] }]);
+  const input = { fen: FRENCH, played_san: 'Be2', best_san: 'Bxc6+', classification: 'inaccuracy' as const, userId: 2, ownMove: true };
+
+  it('says there is nothing concrete rather than leaving "why" empty', async () => {
+    const prev = coaching.setCoachEngine(scripted);
+    try {
+      const c = await coaching.explainCoaching(input, 'en', 'beginner');
+      expect(c.facts.why).toEqual(['This move gives nothing away and allows no checkmate — it is simply weaker than the best move.']);
+    } finally {
+      coaching.setCoachEngine(prev);
+    }
+  });
+
+  it('calls a recaptured capture a trade, not a material win', async () => {
+    const prev = coaching.setCoachEngine(scripted);
+    try {
+      const c = await coaching.explainCoaching(input, 'en', 'beginner');
+      // Bxc6+ bxc6 is bishop for knight, and dxc5 Qxc5 is pawn for pawn.
+      expect(c.facts.better_move).toBe('the bishop takes the knight on c6 (check): it is a trade — the opponent takes back (knight on c6); it gives check');
+      expect(c.facts.other_good_moves).toEqual([
+        'the pawn takes the pawn on c5: it is a trade — the opponent takes back (pawn on c5); it attacks a loose piece (queen on b6)',
+        'the bishop from b5 to d3: it rescues a threatened piece (bishop on b5)',
+      ]);
+      expect(JSON.stringify(c.facts)).not.toContain('wins material');
+    } finally {
+      coaching.setCoachEngine(prev);
+    }
+  });
+
+  it('does not hand the player\'s own castling to the opponent', async () => {
+    const prev = coaching.setCoachEngine(scripted);
+    try {
+      const c = await coaching.explainCoaching(input, 'en', 'beginner');
+      expect(c.facts.opponent_reply).toBe(
+        "The opponent's best answer and what follows: the opponent — the pawn takes the pawn on d4, you — short castles, the opponent — the knight from g8 to e7.",
+      );
+    } finally {
+      coaching.setCoachEngine(prev);
+    }
+  });
+
+  it('still wins material when the capture is free', async () => {
+    const { moveMotifs } = await import('../src/coach/tactics.js');
+    // A bishop that just takes an undefended knight on c6 keeps the pawn count.
+    const free = 'r1b1kbnr/5ppp/p1n1p3/1Bp1P3/P2P4/5N2/1PP2PPP/RNBQK2R w KQkq - 0 7';
+    expect(coaching.moveReasons(moveMotifs(free, 'Bxc6+')!, 'en', 'beginner')).toContain('it wins material (knight on c6)');
+    expect(moveMotifs(FRENCH, 'Bxc6+')!.captureNet).toBe(0);
+    expect(moveMotifs(free, 'Bxc6+')!.captureNet).toBe(3);
+  });
+
+  it('is the position the player saw', () => {
+    const c = new Chess(FRENCH);
+    c.move('Be2');
+    expect(c.fen()).toBe(AFTER_BE2);
+  });
+});
+
 describe('contradiction — the guard', () => {
   it('catches the exact answer from #37', () => {
     expect(coaching.contradiction(PRAISE_37, 'blunder', 'en')).toBe('praise_for_mistake');
@@ -325,12 +397,27 @@ const explainBody = {
 };
 
 describe('POST /explain (regression #37)', () => {
-  it('gives the opponent\'s answer as a short line, not just one move', async () => {
+  it('gives the opponent\'s answer as a short line, naming whose move each ply is', async () => {
     const prev = coaching.setCoachEngine(async (fen) => (fen === AFTER_NF6 ? [{ cp: 300, mate: null, pv: ['c4f7', 'e8e7', 'f7b3', 'a7a6'] }] : ENGINE[fen] ?? null));
     try {
       const c = await coaching.explainCoaching(blunderInput, 'en', 'beginner');
+      // The middle ply is the player's own king move. Unlabelled, the line read
+      // as three moves by the opponent, and the coach duly told the player the
+      // opponent had made them.
       expect(c.facts.opponent_reply).toBe(
-        "The opponent's best answer: the bishop takes the pawn on f7 (check), the king from e8 to e7, the bishop from f7 to b3.",
+        "The opponent's best answer and what follows: the opponent — the bishop takes the pawn on f7 (check), you — the king from e8 to e7, the opponent — the bishop from f7 to b3.",
+      );
+    } finally {
+      coaching.setCoachEngine(prev);
+    }
+  });
+
+  it('names the sides by colour when the move is not the player\'s own', async () => {
+    const prev = coaching.setCoachEngine(async (fen) => (fen === AFTER_NF6 ? [{ cp: 300, mate: null, pv: ['c4f7', 'e8e7'] }] : ENGINE[fen] ?? null));
+    try {
+      const c = await coaching.explainCoaching({ ...blunderInput, ownMove: false }, 'en', 'beginner');
+      expect(c.facts.opponent_reply).toBe(
+        'The opponent\'s best answer and what follows: White — the bishop takes the pawn on f7 (check), Black — the king from e8 to e7.',
       );
     } finally {
       coaching.setCoachEngine(prev);
