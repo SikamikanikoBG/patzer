@@ -240,8 +240,10 @@ router.post('/check', async (c) => {
   const engine = createAnalysisEngine();
   try {
     await engine.start();
-    await engine.setOption('Threads', '2');
-    await engine.setOption('Hash', '64');
+    const threads = Math.max(1, Math.min(16, Number(process.env.STOCKFISH_THREADS) || 2));
+    const hashMb = Math.max(16, Math.min(4096, Number(process.env.STOCKFISH_HASH) || 64));
+    await engine.setOption('Threads', String(threads));
+    await engine.setOption('Hash', String(hashMb));
     const mover = new Chess(fen).turn();
     // Win chance for the side that moved, from the engine's view of the
     // position after the move (where the other side is to move).

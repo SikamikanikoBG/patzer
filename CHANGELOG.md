@@ -119,6 +119,12 @@ advance, 7.Be2), including the engine line whose middle ply was the player's.
   - Comprehensive multilingual localization (English, German, Russian, Spanish, Bulgarian).
   - Complete integration test suite covering URL variations, streaming responses, JSON reviews, and settings isolation (`server/test/llm-providers.test.ts`).
 
+### Added: run Patzer with Nix (flake, nix-shell, direnv)
+
+- **Nix environment support.** Added `flake.nix`, `shell.nix`, `default.nix`, and `.envrc` providing out-of-the-box development and runtime environments with Node.js 22 and Stockfish on Linux and macOS.
+- Launch Patzer with `nix run` or enter a complete development shell using `nix develop` or `nix-shell`.
+- **Nix Stockfish defaults & configurable thread scaling.** Configured default Stockfish threads to 2 and hash to 512 MB in `flake.nix` (`runDevScript`, `runProdScript`, and `devShells`) and `shell.nix`, overridable via `STOCKFISH_THREADS` and `STOCKFISH_HASH`.
+- **Dynamic Stockfish thread and hash options across analysis endpoints.** Single position evaluation (`/api/analyze/position`) and move validation in trainer now respect `STOCKFISH_THREADS` and `STOCKFISH_HASH` rather than fixed static limits.
 
 ## [7.19.0] — 2026-10-18
 
