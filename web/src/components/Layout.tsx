@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope, ChevronDown, GraduationCap } from 'lucide-react';
+import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope, ChevronDown, ChevronLeft, ChevronRight, GraduationCap } from 'lucide-react';
 import { api } from '../api';
 import UpdateNotice from './UpdateNotice';
 import { useAuth } from '../state/auth';
@@ -52,38 +52,61 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
     nav('/login');
   }
 
-  // Nine destinations plus an Admin menu don't fit on a laptop with labels
-  // showing. A breakpoint can't decide this: an admin carries two more items
-  // than a regular profile, and Bulgarian labels are noticeably wider than
-  // English ones, so any fixed width is wrong for somebody. Measure instead —
-  // if the pills would overflow, drop to icons with tooltips, which keeps
-  // every destination one click away rather than hiding some of them.
-  const navRef = useRef<HTMLElement | null>(null);
-  const fullNavWidth = useRef(0);
-  const [compactNav, setCompactNav] = useState(false);
+  // The pills keep their titles in every language, so on a laptop (and more
+  // so for an admin, or in German or Bulgarian) they can be wider than the
+  // bar and the strip scrolls sideways. Two things keep every destination
+  // reachable with a plain mouse: an arrow on whichever edge has more pills
+  // behind it, and the current page's pill is always scrolled into view.
+  const navScrollRef = useRef<HTMLDivElement | null>(null);
+  const [navMore, setNavMore] = useState({ left: false, right: false });
   useEffect(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-    const check = () => {
-      const available = nav.clientWidth;
-      // dataset, not the closure: the observer can fire mid-update.
-      const isCompact = nav.dataset.compact === '1';
-      if (!isCompact) {
-        // Labels are showing, so this is the width they actually need.
-        fullNavWidth.current = nav.scrollWidth;
-        if (nav.scrollWidth > available + 1) setCompactNav(true);
-      } else if (fullNavWidth.current && available > fullNavWidth.current + 24) {
-        // 24px of hysteresis so a window sitting exactly on the boundary
-        // doesn't flip back and forth.
-        setCompactNav(false);
-      }
+    const el = navScrollRef.current;
+    if (!el) return;
+    const update = () => {
+      const left = el.scrollLeft > 1;
+      const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+      setNavMore((prev) => (prev.left === left && prev.right === right ? prev : { left, right }));
     };
-    check();
-    const ro = new ResizeObserver(check);
-    ro.observe(nav);
-    return () => ro.disconnect();
-  }, [compactNav, user?.role, i18n.language]);
-  const navLabelClass = compactNav ? 'hidden' : 'inline';
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', update);
+      ro.disconnect();
+    };
+  }, [i18n.language, user?.role]);
+  useEffect(() => {
+    navScrollRef.current
+      ?.querySelector('[aria-current="page"]')
+      ?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [location.pathname, i18n.language]);
+
+  // Pointer-only: keyboard and screen-reader users reach every pill by
+  // tabbing through the links, which scrolls the focused one into view.
+  // A plain function, not a component: a component declared in here would
+  // be remounted on every render of the layout.
+  function navScrollButton(side: 'left' | 'right') {
+    const Icon = side === 'left' ? ChevronLeft : ChevronRight;
+    return (
+      <button
+        type="button"
+        aria-hidden="true"
+        tabIndex={-1}
+        data-nav-scroll={side}
+        onClick={() => {
+          const el = navScrollRef.current;
+          el?.scrollBy({ left: (side === 'left' ? -1 : 1) * Math.max(120, el.clientWidth * 0.6), behavior: 'smooth' });
+        }}
+        className={cn(
+          'absolute inset-y-0 z-10 flex items-center from-chesscom-900 via-chesscom-900 to-transparent text-chesscom-200 hover:text-white',
+          side === 'left' ? 'left-0 bg-gradient-to-r pr-4' : 'right-0 bg-gradient-to-l pl-4',
+        )}
+      >
+        <Icon className="h-4 w-4" />
+      </button>
+    );
+  }
 
   function NavPill({ to, icon: Icon, label }: { to: string; icon: React.ElementType; label: string }) {
     return (
@@ -93,7 +116,8 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
         title={label}
         className={({ isActive }) =>
           cn(
-            'relative flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium transition-colors 2xl:px-3',
+            // scroll-mx: scrolled into view, a pill stops clear of the edge arrows.
+            'relative flex shrink-0 scroll-mx-8 items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium transition-colors 2xl:px-3',
             isActive
               ? 'text-white'
               : 'text-chesscom-300 hover:bg-chesscom-800 hover:text-white',
@@ -102,7 +126,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
         }
       >
         <Icon className="h-4 w-4 shrink-0" />
-        <span className={navLabelClass}>{label}</span>
+        <span>{label}</span>
       </NavLink>
     );
   }
@@ -139,20 +163,28 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
           </NavLink>
 
           {/* Desktop nav */}
-          <nav ref={navRef} data-compact={compactNav ? '1' : '0'} className="ml-4 hidden min-w-0 flex-1 items-center gap-0.5 md:flex">
-            <NavPill to="/" icon={Home} label={t('app.home')} />
-            <NavPill to="/play" icon={Swords} label={t('home.playTitle')} />
-            <NavPill to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
-            <NavPill to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
-            <NavPill to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
-            <NavPill to="/learn" icon={GraduationCap} label={t('learn.nav')} />
-            <NavPill to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />
-            <NavPill to="/plan" icon={ListChecks} label={t('plan.nav', { defaultValue: 'Plan' })} />
-            <NavPill to="/players" icon={Users} label={t('players.nav', { defaultValue: 'Players' })} />
-            <NavPill to="/lab" icon={Microscope} label={t('lab.nav', { defaultValue: 'Lab' })} />
+          <nav className="ml-4 hidden min-w-0 flex-1 items-center gap-0.5 md:flex">
+            <div className="relative flex min-w-0 items-center">
+              {navMore.left && navScrollButton('left')}
+              {/* No scrollbar: it would squeeze the pills inside the 56px bar. The arrows show there is more. */}
+              <div ref={navScrollRef} className="flex min-w-0 items-center gap-0.5 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <NavPill to="/" icon={Home} label={t('app.home')} />
+                <NavPill to="/play" icon={Swords} label={t('home.playTitle')} />
+                <NavPill to="/review" icon={BookOpen} label={t('home.reviewTitle')} />
+                <NavPill to="/insights" icon={BarChart3} label={t('insights.title', { defaultValue: 'Insights' })} />
+                <NavPill to="/train" icon={Target} label={t('train.nav', { defaultValue: 'Train' })} />
+                <NavPill to="/learn" icon={GraduationCap} label={t('learn.nav')} />
+                <NavPill to="/openings" icon={BookMarked} label={t('openings.nav', { defaultValue: 'Openings' })} />
+                <NavPill to="/plan" icon={ListChecks} label={t('plan.nav', { defaultValue: 'Plan' })} />
+                <NavPill to="/players" icon={Users} label={t('players.nav', { defaultValue: 'Players' })} />
+                <NavPill to="/lab" icon={Microscope} label={t('lab.nav', { defaultValue: 'Lab' })} />
+              </div>
+              {navMore.right && navScrollButton('right')}
+            </div>
+            {/* Keep the dropdown outside the scroller so it is not clipped. */}
             {user?.role === 'admin' && (
               <>
-                <span className="mx-2 h-5 w-px bg-chesscom-700" />
+                <span className="mx-2 h-5 w-px shrink-0 bg-chesscom-700" />
                 <div className="relative shrink-0">
                   <button
                     type="button"
@@ -161,14 +193,14 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
                     aria-expanded={adminOpen}
                     aria-haspopup="menu"
                     className={cn(
-                      'relative flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'relative flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                       adminOpen
                         ? 'bg-chesscom-800 text-white'
                         : 'text-chesscom-300 hover:bg-chesscom-800 hover:text-white',
                     )}
                   >
                     <Users className="h-4 w-4 shrink-0" />
-                    <span className={navLabelClass}>{t('common.admin', { defaultValue: 'Admin' })}</span>
+                    <span>{t('common.admin', { defaultValue: 'Admin' })}</span>
                     <ChevronDown className="h-3.5 w-3.5" />
                   </button>
                   {adminOpen && (

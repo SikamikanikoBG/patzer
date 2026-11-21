@@ -280,6 +280,86 @@ Schema: { "summary": string (3-5 Sätze), "skill_assessment": string (1 Satz: wa
     fallbackSkill: (elo) => `Эта партия сыграна примерно на уровне ${elo} Эло.`,
     fallbackOpening: (name) => `Дебют партии — ${name}: крепкий выбор.`,
   },
+  fr: {
+    jsonHard: `\n\nR10. Répondez avec EXACTEMENT UN objet JSON conforme au schéma de TASK. Pas de texte en dehors du JSON. Pas de blocs markdown. Pas de clés supplémentaires.`,
+    perspective: 'vous',
+    you: 'vous',
+    opponent: "l'adversaire",
+    result: { win: 'vous avez gagné', loss: 'vous avez perdu', draw: 'nulle' },
+    phase: { opening: 'ouverture', middlegame: 'milieu de partie', endgame: 'finale' },
+    keyMoment: 'Moment clé',
+    taskPhase: (phase) => `TASK: Décrivez en 2 à 4 phrases comment le joueur a joué la phase « ${phase} », en le vouvoyant.
+- Les coups de FACTS.moves avec "by": "vous" sont ceux du joueur ; avec "by": "l'adversaire", ceux de l'adversaire. N'attribuez jamais au joueur un coup de l'adversaire.
+- Nommez les coups concrets de FACTS.moves qui ont compté (en mots, tels qu'ils sont donnés) et ce qu'ils ont fait — les bons comme les coûteux.
+- Terminez par une chose concrète à améliorer dans cette phase, d'après FACTS.
+- Ne répétez pas le pourcentage de précision ; le joueur le voit déjà.
+Schéma : { "prose": string }`,
+    taskMomentOwn: `TASK: Ce moment clé était un coup du joueur LUI-MÊME ("vous"). Coachez-le, en le vouvoyant. Champs :
+- title : ≤6 mots, sans point final.
+- what_happened : 1-2 phrases — ce que vous avez joué et ce que le coup a fait ou permis, avec FACTS.moment.why et FACTS.moment.best_reply.
+- why_it_matters : 1-2 phrases — le meilleur coup de FACTS.moment.better_move et ce qu'il aurait apporté (ou, pour un bon coup, pourquoi il a marché).
+- what_to_learn : 1 phrase — la leçon (FACTS.moment.takeaway s'il existe).
+Schéma : { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`,
+    taskMomentOpponent: `TASK: Ce moment clé était un coup de l'ADVERSAIRE, pas du joueur. N'écrivez jamais "vous avez joué" à son sujet. Vouvoyez le joueur. Champs :
+- title : ≤6 mots, sans point final, sur le coup de l'adversaire.
+- what_happened : 1-2 phrases — ce que l'adversaire a joué et le verdict.
+- why_it_matters : 1-2 phrases — ce que cela signifiait pour vous : l'occasion que cela vous a donnée (FACTS.moment.best_reply montre comment le punir), et si votre réponse (FACTS.moment.your_answer) l'a saisie.
+- what_to_learn : 1 phrase — ce qu'il faut chercher quand l'adversaire fait cela.
+Schéma : { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`,
+    taskSummary: `TASK: Écrivez le bilan du coach sur cette partie pour le joueur, en le vouvoyant. Racontez l'histoire avec les faits concrets :
+- comment la partie s'est décidée — FACTS.turning_point, en nommant le coup en mots et qui l'a joué ;
+- une chose que vous avez bien faite (FACTS.your_best_moves) et la plus importante à corriger (FACTS.your_costliest_moves, avec le meilleur coup) ;
+- si FACTS.opponent_gifts n'est pas vide, si vous avez saisi ces occasions.
+Ne répétez PAS les pourcentages de précision, l'Elo ni le nombre de coups par catégorie — le joueur les voit déjà. Pas de phrases creuses comme "contrôler le tempo" ou "lutter pour l'initiative", sauf si FACTS les justifie.
+Schéma : { "summary": string (3-5 phrases), "skill_assessment": string (1 phrase : ce que cette partie montre de votre niveau et la seule habitude qui le ferait monter), "opening_prose": string (≤2 phrases sur l'ouverture) }`,
+    fallbackPhase: (phase, accuracy, plies) => `Dans la phase « ${phase} », votre précision était de ${accuracy} % sur ${plies} demi-coups.`,
+    fallbackMoment: (move, verdict, cpLoss) => `Au coup ${move}, la partie a basculé : ${verdict}. Cela a coûté environ ${(cpLoss / 100).toFixed(1).replace('.', ',')} ${cpLoss >= 200 ? 'pions' : 'pion'}.`,
+    fallbackMomentOpponent: (move, verdict) => `Au coup ${move}, l'adversaire a joué ${verdict}.`,
+    fallbackSummary: (acc, brilliant, mistakes, blunders) => `Votre précision était de ${acc} %. Coups brillants : ${brilliant}, erreurs : ${mistakes}, gaffes : ${blunders}.`,
+    fallbackSkillNone: "Pas encore d'estimation du niveau.",
+    fallbackSkill: (elo) => `Cette partie correspond à environ ${elo} Elo.`,
+    fallbackOpening: (name) => `Vous avez ouvert avec ${name} — un choix solide.`,
+  },
+  uk: {
+    jsonHard: `\n\nR10. Відповідай РІВНО ОДНИМ JSON-об’єктом за схемою з TASK. Без тексту поза JSON. Без markdown-блоків. Без зайвих ключів.`,
+    perspective: 'ти',
+    you: 'ти',
+    opponent: 'суперник',
+    result: { win: 'твоя перемога', loss: 'твоя поразка', draw: 'нічия' },
+    phase: { opening: 'дебют', middlegame: 'мітельшпіль', endgame: 'ендшпіль' },
+    keyMoment: 'Ключовий момент',
+    taskPhase: (phase) => `TASK: Опиши у 2-4 реченнях, як гравець провів стадію «${phase}». Звертайся на "ти", без дієслів минулого часу з родом.
+- Ходи у FACTS.moves з "by": "ти" — ходи гравця; з "by": "суперник" — ходи суперника. Ніколи не приписуй гравцеві хід суперника.
+- Назви конкретні ходи з FACTS.moves, які мали значення (словами, як подано), і що вони зробили — і вдалі, і дорогі.
+- Закінчи однією конкретною річчю, яку варто покращити в цій стадії, за FACTS.
+- Не повторюй відсоток точності: гравець його вже бачить.
+Схема: { "prose": string }`,
+    taskMomentOwn: `TASK: Цей ключовий момент — хід САМОГО гравця ("ти"). Розбери його як тренер. Звертайся на "ти", без дієслів минулого часу з родом. Поля:
+- title: ≤6 слів, без крапки в кінці.
+- what_happened: 1-2 речення — що зіграно і що хід зробив або допустив, за FACTS.moment.why та FACTS.moment.best_reply.
+- why_it_matters: 1-2 речення — кращий хід із FACTS.moment.better_move і чого б він досяг (або, якщо хід хороший, чому він спрацював).
+- what_to_learn: 1 речення — висновок (FACTS.moment.takeaway, якщо є).
+Схема: { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`,
+    taskMomentOpponent: `TASK: Цей ключовий момент — хід СУПЕРНИКА, а не гравця. Ніколи не пиши про нього, що це хід гравця. Поля:
+- title: ≤6 слів, без крапки в кінці, про хід суперника.
+- what_happened: 1-2 речення — що зіграв суперник і вердикт.
+- why_it_matters: 1-2 речення — що це означало для тебе: шанс, який він дав (FACTS.moment.best_reply — як його покарати), і чи використала його твоя відповідь (FACTS.moment.your_answer).
+- what_to_learn: 1 речення — на що звертати увагу, коли суперник так робить.
+Схема: { "title": string, "what_happened": string, "why_it_matters": string, "what_to_learn": string }`,
+    taskSummary: `TASK: Напиши підсумок тренера щодо цієї партії для гравця ("ти"), без дієслів минулого часу з родом. Розкажи історію на конкретних фактах:
+- як вирішилася доля партії — FACTS.turning_point, назви хід словами і хто його зробив;
+- одна вдала річ (FACTS.your_best_moves) і найважливіше, що варто виправити (FACTS.your_costliest_moves, із кращим ходом);
+- якщо FACTS.opponent_gifts не порожній — чи використано ці шанси.
+НЕ повторюй відсотки точності, Ело та кількість ходів за категоріями — гравець їх уже бачить. Без порожніх фраз на кшталт "контроль темпу" чи "боротьба за ініціативу", якщо FACTS цього не підтверджує.
+Схема: { "summary": string (3-5 речень), "skill_assessment": string (1 речення: що партія каже про рівень і яка одна звичка його підніме), "opening_prose": string (≤2 речення про дебют) }`,
+    fallbackPhase: (phase, accuracy, plies) => `У стадії «${phase}» твоя точність — ${accuracy}% за ${plies} півходів.`,
+    fallbackMoment: (move, verdict, cpLoss) => `На ${move}-му ході партія перевернулася: ${verdict}. Ціна — близько ${(cpLoss / 100).toFixed(1)} пішака.`,
+    fallbackMomentOpponent: (move, verdict) => `На ${move}-му ході суперник зіграв: ${verdict}.`,
+    fallbackSummary: (acc, brilliant, mistakes, blunders) => `Твоя точність — ${acc}%. Блискучих ходів: ${brilliant}, помилок: ${mistakes}, позіхів: ${blunders}.`,
+    fallbackSkillNone: 'Оцінки рівня поки немає.',
+    fallbackSkill: (elo) => `Цю партію зіграно приблизно на рівні ${elo} Ело.`,
+    fallbackOpening: (name) => `Дебют партії — ${name}: надійний вибір.`,
+  },
 };
 
 function reviewText(language: Language): ReviewText {

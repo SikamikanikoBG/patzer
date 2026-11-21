@@ -1,5 +1,8 @@
 export type Role = 'admin' | 'user';
-export type Language = 'en' | 'bg' | 'es' | 'de' | 'ru';
+// The one list of supported languages: the route schemas (`z.enum(LANGUAGES)`)
+// and the `Language` type both come from it.
+export const LANGUAGES = ['en', 'bg', 'es', 'de', 'ru', 'fr', 'uk'] as const;
+export type Language = (typeof LANGUAGES)[number];
 export type Audience = 'kid' | 'beginner' | 'intermediate' | 'advanced';
 export type CoachBehavior = 'silent' | 'on_demand' | 'always_on_pedagogical';
 export type Difficulty = 'kid' | 'beginner' | 'easy' | 'medium' | 'hard' | 'master' | 'stockfish';

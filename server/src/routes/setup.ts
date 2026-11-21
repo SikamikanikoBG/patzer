@@ -7,6 +7,7 @@ import { hashPassword } from '../auth/passwords.js';
 import { createSession, SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from '../auth/sessions.js';
 import { testConnection } from '../coach/llm.js';
 import { connectionHint } from '../coach/connectionHint.js';
+import { LANGUAGES } from '../types.js';
 
 const router = new Hono();
 
@@ -72,7 +73,7 @@ const setupSchema = z.object({
   // the worst dictionary attacks. Pair with bcrypt cost 12 (passwords.ts).
   password: z.string().min(10).max(200),
   display_name: z.string().trim().min(1).max(60),
-  language: z.enum(['en', 'bg', 'es', 'de', 'ru']).default('en'),
+  language: z.enum(LANGUAGES).default('en'),
   ollama_url: z.string().url().or(z.literal('')).optional(),
   ollama_model: z.string().optional(),
 });

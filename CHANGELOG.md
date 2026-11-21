@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### French
+
+- **Patzer speaks French.** The interface, the Learn lessons and the coach:
+  move explanations, hints and Game Review are written in French, with French
+  piece names ("le cavalier prend le pion en e5", "petit roque") and the same
+  guard that stops the coach praising a blunder. Pick *Français* in Settings,
+  at sign-up or in an invite; a single sign-on provider can set it too.
+
+### Fixed
+
+- Navigation titles stay visible in every language. When the pills do not fit,
+  the navigation scrolls sideways instead of switching to icons only: an arrow
+  appears on the side that has more, and the page you are on is always
+  scrolled into view.
+
 ### Single sign-on (OpenID Connect)
 
 - **Sign in with Authentik, Keycloak or any OpenID Connect provider.** Set
@@ -94,13 +109,22 @@ right one. Three of them did.
 Regression tests pin all three on the position that produced them (French
 advance, 7.Be2), including the engine line whose middle ply was the player's.
 
+### Added: LM Studio as an AI Coach provider
+
+- **Full LM Studio support as an AI Coach provider.** Point Patzer at your local LM Studio instance (`http://localhost:1234` by default) in **Admin → System**.
+  - Independent URL and model configuration, alongside Ollama, vLLM and DeepSeek.
+  - Full OpenAI-compatible chat completions and JSON structured outputs for move explanations, threat analysis, and game reviews.
+  - Automatic model listing and connection testing via LM Studio's `/v1/models` endpoint.
+  - Tailored Docker connection hints guiding users to enable "Serve on Local Network" and use `http://host.docker.internal:1234`.
+  - Comprehensive multilingual localization (English, German, Russian, Spanish, Bulgarian).
+  - Complete integration test suite covering URL variations, streaming responses, JSON reviews, and settings isolation (`server/test/llm-providers.test.ts`).
+
 ### Added: run Patzer with Nix (flake, nix-shell, direnv)
 
 - **Nix environment support.** Added `flake.nix`, `shell.nix`, `default.nix`, and `.envrc` providing out-of-the-box development and runtime environments with Node.js 22 and Stockfish on Linux and macOS.
 - Launch Patzer with `nix run` or enter a complete development shell using `nix develop` or `nix-shell`.
 - **Nix Stockfish defaults & configurable thread scaling.** Configured default Stockfish threads to 2 and hash to 512 MB in `flake.nix` (`runDevScript`, `runProdScript`, and `devShells`) and `shell.nix`, overridable via `STOCKFISH_THREADS` and `STOCKFISH_HASH`.
 - **Dynamic Stockfish thread and hash options across analysis endpoints.** Single position evaluation (`/api/analyze/position`) and move validation in trainer now respect `STOCKFISH_THREADS` and `STOCKFISH_HASH` rather than fixed static limits.
-
 
 ## [7.19.0] — 2026-10-18
 

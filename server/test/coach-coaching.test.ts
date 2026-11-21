@@ -5,6 +5,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Chess } from 'chess.js';
+import { LANGUAGES } from '../src/types.js';
 
 // The coach as a coach: why a move is good or bad, the better idea, the
 // player's history, next steps — and never contradicting the engine.
@@ -197,7 +198,7 @@ describe('explainCoaching — the facts behind a blunder', () => {
   });
 
   it('speaks the player\'s language', async () => {
-    const expected = { bg: /дава мат веднага/, es: /dar mate de inmediato/, de: /sofort mattsetzen/, ru: /сразу ставит мат/ } as const;
+    const expected = { bg: /дава мат веднага/, es: /dar mate de inmediato/, de: /sofort mattsetzen/, ru: /сразу ставит мат/, uk: /одразу ставить мат/, fr: /mater tout de suite/ } as const;
     for (const [lang, re] of Object.entries(expected)) {
       const c = await coaching.explainCoaching(blunderInput, lang as 'bg', 'beginner');
       expect((c.facts.why as string[])[0], lang).toMatch(re);
@@ -291,6 +292,8 @@ describe('contradiction — the guard', () => {
     const praise = {
       en: 'Nice move, the knight comes out.', bg: 'Страхотно развитие на коня.', es: 'Excelente desarrollo del caballo.',
       de: 'Großartig, der Springer kommt raus.', ru: 'Отличное развитие коня.',
+      fr: 'Bien joué, le cavalier sort.',
+      uk: 'Чудовий розвиток коня.',
     } as const;
     for (const [lang, text] of Object.entries(praise)) {
       expect(coaching.contradiction(text, 'blunder', lang as 'en'), lang).toBe('praise_for_mistake');
@@ -300,10 +303,41 @@ describe('contradiction — the guard', () => {
   it('catches a good move called a blunder in every language', () => {
     const blame = {
       en: 'That is a blunder.', bg: 'Това е грешка.', es: 'Es un error.', de: 'Das ist ein Fehler.', ru: 'Это ошибка.',
+      fr: "C'est une gaffe.",
+      uk: 'Це помилка.',
     } as const;
     for (const [lang, text] of Object.entries(blame)) {
       expect(coaching.contradiction(text, 'best', lang as 'en'), lang).toBe('blame_for_good_move');
     }
+  });
+
+  it('catches French praise and blame in several wordings, but not comparatives', () => {
+    for (const text of ['Excellent développement du cavalier.', 'Joli coup !', 'Un bon coup qui développe une pièce.']) {
+      expect(coaching.contradiction(text, 'blunder', 'fr'), text).toBe('praise_for_mistake');
+    }
+    // "un meilleur coup" / "un coup plus fort" describe the move that was
+    // missed, not the one that was played.
+    expect(coaching.contradiction("C'est une gaffe : il y avait un meilleur coup.", 'blunder', 'fr')).toBeNull();
+    expect(coaching.contradiction('Un coup bien plus fort était possible.', 'miss', 'fr')).toBeNull();
+    for (const text of ["C'est une erreur.", 'Une petite imprécision ici.']) {
+      expect(coaching.contradiction(text, 'best', 'fr'), text).toBe('blame_for_good_move');
+    }
+  });
+
+  it('French facts say vous, never tu', async () => {
+    // Case-sensitive: the audience block has a "TON :" (tone) label.
+    const tu = /(?<!\p{L})([Tt]u|[Tt]oi|te|[Tt]on|[Tt]a|[Tt]es|[Tt]utoie\p{L}*)(?!\p{L})/u;
+    const P = coaching.phrases('fr');
+    const said = [
+      ...Object.values(P.takeaway), ...Object.values(P.kind), P.pattern(2, 5, 'x'), P.weakPhase('a', 1, 'b', 2),
+      P.greatFinds(3), P.trainer(2, 'x'), P.hint.mateAvailable, P.hint.mateThreat, P.hint.inCheck, P.hint.notCastled,
+      P.hint.ourHanging('x'), P.hint.theirHanging('x'), P.hint.undeveloped('x'), P.hint.topIdea('x'),
+    ];
+    for (const text of said) expect(text).not.toMatch(tu);
+    expect(P.hint.inCheck).toBe('Votre roi est en échec.');
+    const c = await coaching.explainCoaching(blunderInput, 'fr', 'kid');
+    expect(JSON.stringify(c.facts)).not.toMatch(tu);
+    expect(JSON.stringify(c.facts)).not.toMatch(/cheval|reine/);
   });
 
   it('never flags the verdict itself, in any language, for any class', async () => {
@@ -312,7 +346,7 @@ describe('contradiction — the guard', () => {
     // answer quoting the verdict used to be rejected as praise.
     const { verdictPhrase } = await import('../src/coach/locales.js');
     const classes = ['brilliant', 'great', 'best', 'excellent', 'good', 'book', 'forced', 'inaccuracy', 'mistake', 'blunder', 'miss'] as const;
-    for (const lang of ['en', 'bg', 'es', 'de', 'ru'] as const) {
+    for (const lang of LANGUAGES) {
       for (const cls of classes) {
         const v = verdictPhrase(cls, lang);
         expect(coaching.contradiction(`${v.charAt(0).toUpperCase()}${v.slice(1)}.`, cls, lang), `${lang} ${cls}`).toBeNull();

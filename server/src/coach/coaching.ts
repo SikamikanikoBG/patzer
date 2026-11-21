@@ -3,7 +3,7 @@ import { cpToWinPct } from "../chess/classifier.js";
 import { createAnalysisEngine } from "../chess/engine.js";
 import { hasBackRankSignature } from "../chess/phases.js";
 import type { Audience, Classification, Language } from "../types.js";
-import { pieceNames, ruPlural, verdictPhrase } from "./locales.js";
+import { pieceNames, ruPlural, ukPlural, verdictPhrase } from "./locales.js";
 import { sanToNatural } from "./moves.js";
 import { evaluationStateNatural } from "./facts-utils.js";
 import { mistakeKind, missedInTrainer, playerMemory, weakestPhase, type MistakeKind, type PlayerMemory } from "./memory.js";
@@ -345,6 +345,92 @@ const PHRASES: Record<Language, Phrases> = {
       topIdea: (r) => `Что даёт лучший ход по мнению движка: ${r}.`,
     },
   },
+  fr: {
+    on: "en",
+    allowsMate: (m) => `Ce coup permet à l'adversaire de mater tout de suite : ${m}.`,
+    hangs: (p) => `Sans protection après ce coup : ${p}. L'adversaire peut gagner du matériel.`,
+    opponentReply: (m) => `La meilleure réponse de l'adversaire et la suite : ${m}.`,
+    nothingConcrete: "Ce coup ne donne rien et ne permet aucun mat : il est simplement moins bon que le meilleur coup.",
+    side: { you: "vous", opponent: "l'adversaire", white: "les Blancs", black: "les Noirs" },
+    reasons: {
+      mate: "c'est échec et mat", stopsMate: "il pare la menace de mat", threatensMate: "il menace mat",
+      check: "il donne échec", castles: "il met le roi à l'abri", develops: "il développe une pièce",
+      wins: (p) => `il gagne du matériel (${p})`, fork: (ps) => `il attaque deux pièces à la fois (${ps})`,
+      trades: (p) => `c'est un échange : l'adversaire reprend (${p})`,
+      saves: (p) => `il sauve une pièce menacée (${p})`, threatens: (p) => `il attaque une pièce mal défendue (${p})`,
+    },
+    quiet: "un coup tranquille qui améliore la position",
+    takeaway: {
+      allowed_mate: "Avant chaque coup, regardez tous les échecs que l'adversaire pourrait donner ensuite, surtout sur les cases autour de votre roi.",
+      hung_piece: "Avant de lâcher la pièce, demandez-vous : après ce coup, que peut prendre l'adversaire, et est-ce défendu ?",
+      missed_mate: "Quand le roi adverse manque de cases, regardez d'abord tous les échecs : il y a peut-être mat.",
+      missed_win: "Quand vous êtes en train de gagner, cherchez d'abord le coup forçant : échecs, prises, menaces.",
+      missed_tactic: "Cherchez les pièces non défendues ou attaquables deux fois à la fois : c'est là que se cachent les tactiques.",
+      positional: "Comparez votre coup avec le meilleur : qu'apporte chacun à vos pièces et à votre roi ?",
+    },
+    kind: {
+      allowed_mate: "laisser un mat rapide", hung_piece: "laisser une pièce sans protection", missed_mate: "manquer un mat",
+      missed_win: "laisser filer un gain", missed_tactic: "manquer une tactique",
+    },
+    pattern: (n, t, l) => `Une habitude dans vos parties récentes (${n} des ${t} dernières) : ${l}.`,
+    weakPhase: (w, wa, b, ba) => `Votre phase la plus faible ces derniers temps : ${w}, ${wa} % de précision (${b} : ${ba} %).`,
+    phase: { opening: "l'ouverture", middlegame: "le milieu de partie", endgame: "la finale" },
+    greatFinds: (n) => `Vos parties récentes comptent ${n} très bons coups ou coups brillants.`,
+    trainer: (n, m) => `Cette position est dans votre entraîneur d'ouvertures (manquée ${n} fois) ; le bon coup y est : ${m}.`,
+    hint: {
+      mateAvailable: "Il y a un mat pour vous dans cette position.",
+      mateThreat: "L'adversaire menace mat au prochain coup.",
+      inCheck: "Votre roi est en échec.",
+      ourHanging: (ps) => `Attaqué et pas assez défendu : ${ps}.`,
+      theirHanging: (ps) => `L'adversaire a une pièce mal défendue : ${ps}.`,
+      undeveloped: (ps) => `Encore sur leur case de départ : ${ps}. Le développement d'abord.`,
+      notCastled: "Votre roi n'a pas encore roqué.",
+      topIdea: (r) => `Ce que fait le meilleur coup du moteur : ${r}.`,
+    },
+  },
+  uk: {
+    on: "на",
+    allowsMate: (m) => `Після цього ходу суперник одразу ставить мат: ${m}.`,
+    hangs: (p) => `Після цього ходу без захисту залишається: ${p}. Суперник може виграти матеріал.`,
+    opponentReply: (m) => `Найкраща відповідь суперника й продовження: ${m}.`,
+    nothingConcrete: "Цей хід нічого не віддає й не допускає мату — він просто слабший за найкращий.",
+    side: { you: "ти", opponent: "суперник", white: "білі", black: "чорні" },
+    reasons: {
+      mate: "це мат", stopsMate: "він відбиває загрозу мату", threatensMate: "він загрожує матом",
+      check: "він оголошує шах", castles: "він ховає короля в безпечне місце", develops: "він розвиває фігуру",
+      wins: (p) => `він виграє матеріал (${p})`, fork: (ps) => `він нападає одразу на дві фігури (${ps})`,
+      trades: (p) => `це розмін — суперник забирає назад (${p})`,
+      saves: (p) => `він рятує фігуру під ударом (${p})`, threatens: (p) => `він нападає на слабко захищену фігуру (${p})`,
+    },
+    quiet: "спокійний хід, що покращує позицію",
+    takeaway: {
+      allowed_mate: "Перед кожним ходом перевір усі шахи, які суперник зможе дати після нього, особливо на полях навколо твого короля.",
+      hung_piece: "Перш ніж відпустити фігуру, запитай себе: що суперник зможе забрати після цього ходу й чи захищено це?",
+      missed_mate: "Коли у короля суперника мало полів, спершу перевір усі шахи: можливо, тут є мат.",
+      missed_win: "Коли у тебе виграшна позиція, спершу шукай форсований хід: шахи, взяття, загрози.",
+      missed_tactic: "Шукай незахищені фігури й ті, на які можна напасти одразу двічі: саме там ховається тактика.",
+      positional: "Порівняй свій хід із кращим: що кожен із них дає твоїм фігурам і королю?",
+    },
+    kind: {
+      allowed_mate: "допущено швидкий мат", hung_piece: "фігуру залишено без захисту", missed_mate: "пропущено мат",
+      missed_win: "упущено виграш", missed_tactic: "пропущено тактику",
+    },
+    pattern: (n, t, l) => `Закономірність із твоїх останніх партій (${n} із ${t}): ${l}.`,
+    weakPhase: (w, wa, b, ba) => `Твоя найслабша стадія останнім часом: ${w}, точність ${wa}% (${b}: ${ba}%).`,
+    phase: { opening: "дебют", middlegame: "мітельшпіль", endgame: "ендшпіль" },
+    greatFinds: (n) => `У твоїх останніх партіях ${n} ${ukPlural(n, "чудовий або блискучий хід", "чудові або блискучі ходи", "чудових або блискучих ходів")}.`,
+    trainer: (n, m) => `Ця позиція є у твоєму тренажері дебютів (помилок: ${n}); правильний хід там — ${m}.`,
+    hint: {
+      mateAvailable: "У цій позиції ти можеш поставити мат.",
+      mateThreat: "Суперник загрожує матом наступним ходом.",
+      inCheck: "Твоєму королю оголошено шах.",
+      ourHanging: (ps) => `Під ударом і без достатнього захисту: ${ps}.`,
+      theirHanging: (ps) => `У суперника є слабко захищена фігура: ${ps}.`,
+      undeveloped: (ps) => `Ще не розвинені: ${ps}. Спершу розвиток.`,
+      notCastled: "Твій король ще не зробив рокіровку.",
+      topIdea: (r) => `Що дає найкращий хід на думку рушія: ${r}.`,
+    },
+  },
 };
 
 export const phrases = (lang: Language): Phrases => PHRASES[lang] ?? PHRASES.en;
@@ -637,6 +723,10 @@ const PRAISE: Record<Language, RegExp> = {
   es: /(gran jugada|genial|excelente|brillante|bien jugad|buena jugada|jugada fuerte|sólid|perfect|estupend|bien hecho)/i,
   de: /(großartig|ausgezeichnet|brillant|gut gespielt|guter zug|starker zug|solide|perfekt|klasse zug|stark gespielt|gut gemacht|schöner zug)/i,
   ru: /(отличн|блестящ|прекрасн|молодец|хороший ход|(?<!более )сильный ход|здорово|великолепн|солидн|хорошо сыграно)/i,
+  // "meilleur coup" and "coup plus fort" are comparatives — the mistake and
+  // missed-win verdicts use them — so only the plain forms count as praise.
+  fr: /(excellent|brillant|magnifique|superbe|formidable|g[ée]nial|bravo|bien jou[ée]|bien vu|bon coup|beau coup|joli coup|coup fort|solide|\bparfait)/i,
+  uk: /(чудов|відмінн|блискуч|прекрасн|молодець|(?<!більш )(?<!помітно )хороший хід|(?<!більш )(?<!значно )сильний хід|надійн|ідеальн|супер|гарний хід|розумний хід|добре зіграно)/i,
 };
 const BLAME: Record<Language, RegExp> = {
   en: /\b(blunder|mistake|inaccura)/i,
@@ -644,6 +734,8 @@ const BLAME: Record<Language, RegExp> = {
   es: /(error|imprecisi|fallo grave)/i,
   de: /(fehler|ungenauigkeit)/i,
   ru: /(ошибк|зевок|неточност)/i,
+  fr: /(erreur|gaffe|bourde|impr[ée]cision|inexactitude)/i,
+  uk: /(помилк|позіх|неточн)/i,
 };
 
 const firstSentence = (t: string) => t.trim().split(/(?<=[.!?…])\s/)[0] ?? t;
@@ -675,5 +767,5 @@ export function fallbackText(c: ExplainCoaching["facts"], lang: Language): strin
 }
 
 function betterWord(lang: Language): string {
-  return { en: "Better:", bg: "По-добре:", es: "Mejor:", de: "Besser:", ru: "Лучше:" }[lang] ?? "Better:";
+  return { en: "Better:", bg: "По-добре:", es: "Mejor:", de: "Besser:", ru: "Лучше:", fr: "Mieux :", uk: "Краще:" }[lang] ?? "Better:";
 }

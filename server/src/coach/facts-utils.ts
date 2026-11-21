@@ -1,6 +1,6 @@
 import { Chess } from "chess.js";
 import type { Audience, Language } from "../types.js";
-import { deForm, pieceNames, ruForm, ruPlural } from "./locales.js";
+import { deForm, frForm, pieceNames, ruForm, ruPlural, ukForm, ukPlural } from "./locales.js";
 import { sanToNatural } from "./moves.js";
 
 /** Natural-language label for a win-percentage value, from the player's
@@ -104,6 +104,42 @@ export function evaluationStateNatural(
           return "проигранная позиция";
       }
 
+    case "fr":
+      switch (key) {
+        case "winning":
+          return "position gagnante";
+        case "clearly_better":
+          return "nettement mieux";
+        case "slightly_better":
+          return "un peu mieux";
+        case "equal":
+          return "à peu près égal";
+        case "slightly_worse":
+          return "un peu moins bien";
+        case "clearly_worse":
+          return "nettement moins bien";
+        case "losing":
+          return "position perdante";
+      }
+
+    case "uk":
+      switch (key) {
+        case "winning":
+          return "виграшна позиція";
+        case "clearly_better":
+          return "помітно краще";
+        case "slightly_better":
+          return "трохи краще";
+        case "equal":
+          return "приблизно рівно";
+        case "slightly_worse":
+          return "трохи гірше";
+        case "clearly_worse":
+          return "помітно гірше";
+        case "losing":
+          return "програшна позиція";
+      }
+
     case "en":
     default:
       switch (key) {
@@ -172,6 +208,12 @@ export function boardPiecesNatural(
           case "ru":
             location = `${pieceName} на ${sq}`;
             break;
+          case "fr":
+            location = `${pieceName} en ${sq}`;
+            break;
+          case "uk":
+            location = `${pieceName} на ${sq}`;
+            break;
           default:
             location = `${pieceName} on ${sq}`;
         }
@@ -191,6 +233,10 @@ export function boardPiecesNatural(
         return n === 1 ? `${n} ${names.P}` : `${n} Bauern`;
       case "ru":
         return `${n} ${ruPlural(n, "пешка", "пешки", "пешек")}`;
+      case "fr":
+        return n === 1 ? `${n} ${names.P}` : `${n} pions`;
+      case "uk":
+        return `${n} ${ukPlural(n, "пішак", "пішаки", "пішаків")}`;
       case "en":
       default:
         return `${n} ${names.P}${n === 1 ? "" : "s"}`;
@@ -224,6 +270,8 @@ export function materialBalanceNatural(
     if (language === "es") return "el material está igualado";
     if (language === "de") return "das Material ist ausgeglichen";
     if (language === "ru") return "материал равен";
+    if (language === "fr") return "le matériel est égal";
+    if (language === "uk") return "матеріал рівний";
     return "material is equal";
   }
 
@@ -237,6 +285,8 @@ export function materialBalanceNatural(
       else if (language === "es") pieceLabel = `${abs.toFixed(0)} peones`;
       else if (language === "de") pieceLabel = `${abs.toFixed(0)} Bauern`;
       else if (language === "ru") pieceLabel = `${abs.toFixed(0)} пешки`;
+      else if (language === "fr") pieceLabel = `${abs.toFixed(0)} pions`;
+      else if (language === "uk") pieceLabel = `${abs.toFixed(0)} пішаки`;
       else pieceLabel = `${abs.toFixed(0)} ${names.P}s`;
     } else {
       pieceLabel = names.P!;
@@ -260,6 +310,16 @@ export function materialBalanceNatural(
     // "на 2 пешки" is already declined; a single piece takes the accusative.
     const label = /^\d/.test(pieceLabel) ? pieceLabel : ruForm(pieceLabel, "acc");
     return ahead ? `у тебя на ${label} больше` : `у тебя на ${label} меньше`;
+  }
+  if (language === "fr") {
+    // "2 pions" already carries its number; a single piece needs "un"/"une".
+    const label = /^\d/.test(pieceLabel) ? pieceLabel : frForm(pieceLabel, "indef");
+    return ahead ? `vous avez ${label} de plus` : `vous avez ${label} de moins`;
+  }
+  if (language === "uk") {
+    // "на 2 пішаки" is already declined; a single piece takes the accusative.
+    const label = /^\d/.test(pieceLabel) ? pieceLabel : ukForm(pieceLabel, "acc");
+    return ahead ? `у тебе на ${label} більше` : `у тебе на ${label} менше`;
   }
   return ahead ? `you are up a ${pieceLabel}` : `you are down a ${pieceLabel}`;
 }

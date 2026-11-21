@@ -147,6 +147,14 @@ describe('registration when invite-only', () => {
     expect(profileOf('guest1')).toEqual({ invite_id: invite.id, language: 'es', audience: 'kid' });
   }, SLOW);
 
+  it('applies a French preset from an invite', async () => {
+    const invite = inv.createInvite({ max_uses: 1, language: 'fr', audience: 'kid' }, 1);
+    const res = await register({ username: 'frenchy', invite: invite.code });
+    expect(res.status).toBe(200);
+    expect(usesOf(invite.id)).toBe(1);
+    expect(profileOf('frenchy')).toEqual({ invite_id: invite.id, language: 'fr', audience: 'kid' });
+  }, SLOW);
+
   it('refuses a used-up, an expired and a revoked code', async () => {
     const usedUp = inv.createInvite({ max_uses: 1 }, 1);
     db.prepare('UPDATE invites SET uses = 1 WHERE id = ?').run(usedUp.id);
@@ -192,6 +200,12 @@ describe('registration in the other modes', () => {
     expect(profileOf('walkin')).toEqual({ invite_id: null, language: 'de', audience: 'beginner' });
   }, SLOW);
 
+  it('open: accepts French as a signup language', async () => {
+    inv.setSignupMode('open');
+    expect((await register({ username: 'frwalkin', language: 'fr' })).status).toBe(200);
+    expect(profileOf('frwalkin')).toMatchObject({ invite_id: null, language: 'fr' });
+  }, SLOW);
+
   it('open: a code is optional but still checked', async () => {
     inv.setSignupMode('open');
     expect(await register({ username: 'typo', invite: 'ZZZZ-ZZZZ-ZZZZ' })).toMatchObject({ status: 403, json: { error: 'invite_invalid' } });
@@ -215,6 +229,12 @@ describe('public invite check', () => {
     expect(await (await auth.request(`/invite?code=${invite.code}`)).json()).toEqual({ valid: false, reason: 'revoked' });
     expect(await (await auth.request('/invite?code=nope')).json()).toEqual({ valid: false, reason: 'invalid' });
     expect(await (await auth.request('/invite')).json()).toEqual({ valid: false, reason: 'invalid' });
+  });
+
+  it('returns the French preset language to the signup page', async () => {
+    const invite = inv.createInvite({ language: 'fr' }, 1);
+    const ok = await (await auth.request(`/invite?code=${inv.formatInviteCode(invite.code)}`)).json();
+    expect(ok).toEqual({ valid: true, language: 'fr' });
   });
 
   it('tells the login page which mode is on', async () => {
@@ -253,6 +273,13 @@ describe('admin invite endpoints', () => {
     const { json } = await adminCall('POST', '/invites', { max_uses: null, expires_in_days: null, note: '  Club  ', language: 'de', audience: 'advanced' });
     expect(json.invite).toMatchObject({ max_uses: null, expires_at: null, note: 'Club', language: 'de', audience: 'advanced' });
     expect((await adminCall('POST', '/invites', { max_uses: 0 })).status).toBe(400);
+    expect((await adminCall('POST', '/invites', { language: 'xx' })).status).toBe(400);
+  });
+
+  it('accepts French as a preset language and still rejects unknown ones', async () => {
+    const { status, json } = await adminCall('POST', '/invites', { language: 'fr', audience: 'beginner' });
+    expect(status).toBe(200);
+    expect(json.invite).toMatchObject({ language: 'fr', audience: 'beginner' });
     expect((await adminCall('POST', '/invites', { language: 'xx' })).status).toBe(400);
   });
 

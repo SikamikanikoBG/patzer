@@ -39,6 +39,13 @@ describe('connectionHint', () => {
     expect(connectionHint('http://192.168.1.20:11434', 'The operation was aborted due to timeout', false)).toBe('unreachable');
   });
 
+  it('gives LM Studio-specific hints when provider is lmstudio', () => {
+    expect(connectionHint('http://localhost:1234', 'fetch failed', true, 'lmstudio')).toBe('lmstudio_docker_localhost');
+    expect(connectionHint('http://127.0.0.1:1234', 'fetch failed', true, 'lmstudio')).toBe('lmstudio_docker_localhost');
+    expect(connectionHint('http://192.168.1.20:1234', 'fetch failed', true, 'lmstudio')).toBe('lmstudio_unreachable');
+    expect(connectionHint('http://localhost:1234', 'fetch failed', false, 'lmstudio')).toBe('lmstudio_unreachable');
+  });
+
   it('stays quiet when something did answer', () => {
     expect(connectionHint('http://localhost:11434', 'HTTP 404', true)).toBeUndefined();
     expect(connectionHint('http://localhost:11434', 'Unexpected token \'<\', "<!doctype "... is not valid JSON', true)).toBeUndefined();

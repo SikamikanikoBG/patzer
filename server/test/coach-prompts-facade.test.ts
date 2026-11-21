@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { boardPiecesNatural as facadeBoardPiecesNatural } from "../src/coach/prompts.js";
 import { boardPiecesNatural as directBoardPiecesNatural } from "../src/coach/facts-utils.js";
+import { LANGUAGES } from "../src/types.js";
 
 const POSITIONS = [
   {
@@ -19,7 +20,7 @@ const POSITIONS = [
 
 describe("coach prompt facade exports", () => {
   it("re-exports boardPiecesNatural from the implementation module", () => {
-    for (const language of ["en", "bg", "es", "de", "ru"] as const) {
+    for (const language of LANGUAGES) {
       for (const audience of ["kid", "beginner", "intermediate", "advanced"] as const) {
         for (const position of POSITIONS) {
           for (const playerColor of ["white", "black"] as const) {
