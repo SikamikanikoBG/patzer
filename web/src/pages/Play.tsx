@@ -6,6 +6,8 @@ import { motion, AnimatePresence, useDragControls, useReducedMotion } from 'fram
 import { Chess } from 'chess.js';
 import ChessBoard from '../components/ChessBoard';
 import ClassificationBadge from '../components/ClassificationBadge';
+import { CLASS_STYLE, MoveGlyph } from '../lib/classification';
+import { useTheme } from '../themes';
 import CoachPanel from '../components/CoachPanel';
 import CapturedPieces from '../components/CapturedPieces';
 import PieceEmotionsOverlay from '../components/PieceEmotionsOverlay';
@@ -1567,15 +1569,17 @@ function MovesList({ moves }: { moves: Move[] }) {
 }
 
 function ClsGlyph({ c }: { c: Classification }) {
+  const { glyph, textClass } = CLASS_STYLE[c];
+  if (useTheme().moveGlyphs) {
+    return (
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" className={`ml-1 inline-block align-[-2px] ${textClass}`}>
+        <MoveGlyph kind={glyph} />
+      </svg>
+    );
+  }
   const map: Record<Classification, string> = {
     brilliant: '!!', great: '!', best: '★', excellent: '✓', good: '·', book: '📖',
     forced: '🔒', inaccuracy: '?!', mistake: '?', blunder: '??', miss: '✗',
   };
-  const color: Record<Classification, string> = {
-    brilliant: 'text-move-brilliant', great: 'text-move-great', best: 'text-move-best',
-    excellent: 'text-move-excellent', good: 'text-move-good', book: 'text-move-book',
-    forced: 'text-move-forced', inaccuracy: 'text-move-inaccuracy',
-    mistake: 'text-move-mistake', blunder: 'text-move-blunder', miss: 'text-move-miss',
-  };
-  return <span className={`ml-1 text-[11px] font-bold ${color[c]}`}>{map[c]}</span>;
+  return <span className={`ml-1 text-[11px] font-bold ${textClass}`}>{map[c]}</span>;
 }

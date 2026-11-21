@@ -118,7 +118,7 @@ function Hero({ displayName, avatar, stats, tagline }: {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
-      className="relative isolate overflow-hidden rounded-2xl bg-gradient-to-br from-chesscom-900 via-[#3b4c2f] to-board-dark text-white shadow-lift"
+      className="relative isolate overflow-hidden rounded-2xl bg-gradient-to-br from-chesscom-900 via-hero to-board-dark text-white shadow-lift"
     >
       {/* Background pattern — a subtle chess-board grid that fades to the
           edges. SVG inline so it ships as a data-URI; no extra request. */}

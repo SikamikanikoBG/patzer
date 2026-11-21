@@ -1,0 +1,4 @@
+m6x11 by Daniel Linssen (https://managore.itch.io/m6x11).
+Cyrillic extension m6x11cyrillic by Natto Games (https://nattogames.itch.io/m6x11cyrillic).
+Free to use with attribution.
+Estonian s-caron and z-caron are not in this build.

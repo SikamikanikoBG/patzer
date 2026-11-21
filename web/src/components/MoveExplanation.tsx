@@ -8,7 +8,7 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Swords } from 'lucide-react';
-import { CLASS_STYLE, GLYPH_SVG } from '../lib/classification';
+import { CLASS_STYLE, MoveGlyph } from '../lib/classification';
 import CoachPanel from './CoachPanel';
 import type { AnalyzedMove } from '../types';
 
@@ -58,7 +58,7 @@ export default function MoveExplanation({ move, userColor, coachConfigured, coac
     <div className="mb-3 rounded-lg border border-chesscom-200 bg-chesscom-50/60 p-3 dark:border-chesscom-700 dark:bg-chesscom-900/40">
       <div className="flex items-center gap-2">
         <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white ${s.bgClass}`}>
-          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">{GLYPH_SVG[s.glyph]}</svg>
+          <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><MoveGlyph kind={s.glyph} /></svg>
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-[11px] uppercase tracking-wide text-chesscom-500">{who}</div>

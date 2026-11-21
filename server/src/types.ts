@@ -28,6 +28,8 @@ export interface Profile {
   tts_pitch: number;
   board_theme: string;
   piece_set: string;
+  ui_theme: string;
+  show_github_star: number;
 }
 
 export interface AuthedUser extends User {

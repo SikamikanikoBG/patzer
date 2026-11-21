@@ -7,7 +7,7 @@
 import { Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import AccuracyDonut from './AccuracyDonut';
-import { CLASS_STYLE, GLYPH_SVG } from '../lib/classification';
+import { CLASS_STYLE, MoveGlyph } from '../lib/classification';
 import type { AnalyzedMove, Classification, PhaseSplit } from '../types';
 
 interface Props {
@@ -81,7 +81,7 @@ export default function GameReportCard({
                 className={`-mx-1 flex items-center gap-2 rounded-md px-1 py-0.5 text-left ${onPick ? 'cursor-pointer hover:bg-chesscom-100 dark:hover:bg-chesscom-800' : ''} ${isPicked(c, 'both') ? 'bg-gold-500/20' : ''}`}
               >
                 <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white ${s.bgClass}`}>
-                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">{GLYPH_SVG[s.glyph]}</svg>
+                  <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><MoveGlyph kind={s.glyph} /></svg>
                 </span>
                 <span>{t(`classification.${s.labelKey}`)}</span>
               </button>

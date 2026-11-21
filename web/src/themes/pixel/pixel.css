@@ -1,0 +1,212 @@
+/* Nectar's pixel art for the whole app, shared by every Pixel theme: chunky
+   arcade buttons, stepped frames and a flat board. Colours come from the --px-*
+   variables in index.ts. m6x11 has one weight, so no faux bold, and letter
+   spacing stays in whole font pixels (0.0625em = 1 font pixel). */
+@font-face {
+  font-family: 'm6x11';
+  src: url('./m6x11-400.woff2') format('woff2');
+  font-display: swap;
+}
+
+:root[data-theme^="pixel"] {
+  body {
+    font-synthesis: none;
+    letter-spacing: 0;
+    -webkit-font-smoothing: none;
+  }
+
+  /* Sizes the components hard-code; the rest come through Tailwind's text-*. */
+  :is(.text-\[10px\], .text-\[11px\], .text-\[12px\], .text-\[13px\], .text-\[15px\]) {
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  :is(.tracking-tight, .tracking-wide, .tracking-wider, .tracking-widest, .page-h1) {
+    letter-spacing: 0;
+  }
+
+  /* Every icon in hard, square strokes. */
+  svg.lucide {
+    shape-rendering: crispEdges;
+    stroke-linecap: square;
+    stroke-linejoin: miter;
+    stroke-width: 2.5;
+  }
+
+  /* Buttons press down onto a solid lip. */
+  :is(.btn, .btn-primary, .btn-secondary, .btn-ghost, .btn-danger) {
+    margin-bottom: 4px;
+    border: 3px solid var(--px-outline);
+    background: var(--px-button);
+    box-shadow: 0 4px 0 var(--px-button-lip);
+    color: var(--px-button-ink);
+    font-size: 16px;
+    letter-spacing: 0.0625em;
+    line-height: 1.1;
+    text-shadow: var(--px-text-shadow);
+    text-transform: uppercase;
+    transition: none;
+
+    &:hover {
+      background: var(--px-button);
+      filter: brightness(1.12);
+    }
+
+    &:active {
+      box-shadow: none;
+      transform: translateY(4px);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      &:active {
+        transform: none;
+      }
+    }
+  }
+
+  .btn-danger {
+    background: transparent;
+    color: theme('colors.bad');
+    text-shadow: none;
+
+    &:hover {
+      background: transparent;
+    }
+  }
+
+  :is(.card, .card-hover) {
+    border: 3px solid var(--px-card-rim);
+    box-shadow: 4px 4px 0 rgb(0 0 0 / 25%);
+    transition: none;
+  }
+
+  .card-hover:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 rgb(0 0 0 / 25%);
+  }
+
+  .input {
+    border-width: 3px;
+    font-size: 16px;
+  }
+
+  .label {
+    font-weight: 400;
+    letter-spacing: 0.0625em;
+  }
+
+  & ::-webkit-scrollbar-thumb {
+    border-radius: 0;
+  }
+
+  /* The board: flat squares in a stepped frame. Piece icons are .cg-wrap too. */
+  .cg-wrap:not(.learn-piece) {
+    box-shadow:
+      0 0 0 3px var(--px-outline),
+      0 0 0 6px var(--px-frame),
+      0 0 0 9px var(--px-outline),
+      6px 9px 0 9px rgb(0 0 0 / 35%);
+  }
+
+  cg-board {
+    border-radius: 0;
+    background-image: conic-gradient(
+      var(--px-square-dark) 25%,
+      var(--px-square-light) 0 50%,
+      var(--px-square-dark) 0 75%,
+      var(--px-square-light) 0
+    ) !important;
+    background-size: 25% 25% !important;
+
+    square.last-move,
+    square.last-move.move-dest,
+    square.last-move.premove-dest {
+      background-color: var(--px-last) !important;
+      animation: none;
+    }
+
+    square.selected {
+      background: var(--px-selected);
+      box-shadow: inset 0 0 0 3px var(--px-select-rim);
+    }
+
+    square.check {
+      background: rgb(255 60 80 / 55%);
+    }
+
+    /* A move target is a small square "pixel". */
+    :is(square.move-dest, square.premove-dest) {
+      background: linear-gradient(var(--px-hint), var(--px-hint)) center / 25% 25% no-repeat;
+
+      &:hover {
+        background: var(--px-selected);
+      }
+    }
+
+    /* A piece that can be taken gets a rim in the capture colour. */
+    :is(square.oc.move-dest, square.oc.premove-dest) {
+      background: none;
+      box-shadow: inset 0 0 0 3px var(--px-capture);
+    }
+  }
+
+  /* Coordinates sit outside the squares, as in Nectar, so a piece never covers
+     them: ranks left of the frame, files below its 18px hard shadow. The board's
+     wrapper makes room with margins rather than padding, so it stays the size of
+     the board and what's drawn over the board still lines up. */
+  [class*="board-theme-"] {
+    margin-left: 24px;
+    margin-bottom: 34px;
+
+    &.w-full {
+      width: calc(100% - 24px);
+    }
+  }
+
+  /* Arrows with hard, stepped edges. */
+  svg.cg-shapes :is(line, path, circle) {
+    shape-rendering: crispEdges;
+  }
+
+  svg.cg-shapes line {
+    stroke-linecap: butt;
+  }
+
+  /* Hard edges for any theme here that draws its pieces from an image. */
+  .cg-wrap piece {
+    image-rendering: pixelated;
+  }
+
+  .cg-wrap coords {
+    opacity: 1;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 16px;
+    text-shadow: none;
+
+    &.ranks {
+      top: 0;
+      left: -24px;
+      width: 12px;
+      height: 100%;
+    }
+
+    &.files {
+      bottom: -34px;
+      left: 0;
+      width: 100%;
+      height: 16px;
+    }
+
+    coord {
+      display: flex;
+      flex: 1 1 0;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      color: var(--px-coord) !important;
+      transform: none;
+    }
+  }
+}

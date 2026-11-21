@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
-import { styleFor, GLYPH_SVG } from '../lib/classification';
+import { styleFor, MoveGlyph } from '../lib/classification';
 
 interface Move { ply: number; san: string; classification?: string }
 
@@ -90,13 +90,13 @@ function Half({
       {style && (
         <span
           className={cn(
-            'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white',
+            'move-badge flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white',
             style.bgClass,
             current && 'ring-1 ring-white/60',
           )}
         >
           <svg viewBox="0 0 24 24" width={14} height={14} aria-hidden="true">
-            {GLYPH_SVG[style.glyph]}
+            <MoveGlyph kind={style.glyph} />
           </svg>
         </span>
       )}

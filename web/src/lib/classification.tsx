@@ -3,6 +3,7 @@
 // the colour, glyph, and label stay in sync across the review screen.
 
 import type { ReactNode } from 'react';
+import { useTheme } from '../themes';
 import type { Classification } from '../types';
 
 export interface ClassificationStyle {
@@ -15,7 +16,7 @@ export interface ClassificationStyle {
 }
 
 export type GlyphKind =
-  | 'check' | 'doubleCheck' | 'star' | 'dot' | 'book'
+  | 'check' | 'doubleCheck' | 'dot' | 'book'
   | 'questionMark' | 'doubleQuestion' | 'inaccuracy' | 'cross'
   | 'lightning' | 'lock';
 
@@ -36,7 +37,6 @@ export const CLASS_STYLE: Record<Classification, ClassificationStyle> = {
 export const GLYPH_SVG: Record<GlyphKind, ReactNode> = {
   check:          <path d="M5 12.5 L10 17 L19 7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />,
   doubleCheck:    <g fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 13 L7 17 L13 9"/><path d="M11 13 L15 17 L21 7"/></g>,
-  star:           <path d="M12 3 L14.6 9.5 L21.5 10 L16.2 14.4 L17.8 21 L12 17.4 L6.2 21 L7.8 14.4 L2.5 10 L9.4 9.5 Z" fill="currentColor"/>,
   dot:            <circle cx="12" cy="12" r="3.5" fill="currentColor" />,
   book:           <path d="M5 5 H10 Q12 5 12 7 V19 Q12 17 10 17 H5 Z M19 5 H14 Q12 5 12 7 V19 Q12 17 14 17 H19 Z" fill="currentColor" />,
   questionMark:   <text x="12" y="18" textAnchor="middle" fontSize="18" fontWeight="900" fill="currentColor" fontFamily="Inter,system-ui,sans-serif">?</text>,
@@ -46,6 +46,12 @@ export const GLYPH_SVG: Record<GlyphKind, ReactNode> = {
   lightning:      <path d="M13 2 L4 14 H11 L9 22 L20 9 H12 Z" fill="currentColor" />,
   lock:           <path d="M8 11 V8 a4 4 0 1 1 8 0 V11 H17 a1 1 0 0 1 1 1 v8 a1 1 0 0 1-1 1 H7 a1 1 0 0 1-1-1 v-8 a1 1 0 0 1 1-1 Z M10 11 H14 V8 a2 2 0 1 0-4 0 Z" fill="currentColor"/>,
 };
+
+/** A move's mark, in the active theme's drawing if it has its own. */
+export function MoveGlyph({ kind }: { kind: GlyphKind }) {
+  const glyphs = useTheme().moveGlyphs;
+  return <>{glyphs?.[kind] ?? GLYPH_SVG[kind]}</>;
+}
 
 export function styleFor(c: string | undefined | null): ClassificationStyle | null {
   if (!c) return null;

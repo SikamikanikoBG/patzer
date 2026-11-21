@@ -30,6 +30,7 @@ import IncomingChallengeModal from './components/IncomingChallengeModal';
 import CommandPalette from './components/CommandPalette';
 import ShortcutsModal from './components/ShortcutsModal';
 import { LogoMark } from './components/Logo';
+import { applyScheme, applyTheme } from './themes';
 
 export default function App() {
   const { loading, setupRequired, user, refresh } = useAuth();
@@ -122,20 +123,14 @@ export default function App() {
   }, [user, nav]);
 
   // Apply site theme (light / dark / auto) — toggles `dark` class on <html>
+  const scheme = user?.profile?.site_theme ?? 'auto';
+  useEffect(() => applyScheme(scheme), [scheme]);
+
+  // Apply the profile's theme. Logged out, the last one stays (applyStoredTheme).
+  const uiTheme = user?.profile?.ui_theme;
   useEffect(() => {
-    const theme = user?.profile?.site_theme ?? 'auto';
-    const mql = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = () => {
-      const wantDark = theme === 'dark' || (theme === 'auto' && mql.matches);
-      document.documentElement.classList.toggle('dark', wantDark);
-    };
-    apply();
-    if (theme === 'auto') {
-      mql.addEventListener('change', apply);
-      return () => mql.removeEventListener('change', apply);
-    }
-    return undefined;
-  }, [user?.profile?.site_theme]);
+    if (uiTheme) applyTheme(uiTheme);
+  }, [uiTheme]);
 
   if (loading) {
     return (

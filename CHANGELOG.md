@@ -6,6 +6,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Themes
+
+- **Themes for the whole app.** *Settings → Appearance* now has a theme picker
+  beside light, dark and auto, saved per profile. Picking a theme or a colour
+  scheme previews it at once; *Save* keeps it, and leaving without saving goes
+  back. Classic is the default and looks as before.
+- **Pixel and Pixel Sunset.** Pixel-art pieces, the m6x11 font (Latin and
+  Cyrillic), arcade buttons and a flat board with its coordinates outside the
+  squares.
+- **Heroes.** Knights against demons from Heroes Chess by Null Tale (CC BY 4.0),
+  on the Pixel look with a parchment and stone board from the same palette.
+- **Nine Jelly themes.** Glossy pieces, squares and buttons in three piece sets
+  and nine board colours, each with matching interface colours.
+- **Arrows follow the theme.** Each theme colours the board's arrows to suit its
+  board, keeping what each colour means, and can restyle them: Pixel's have hard
+  edges.
+- **Icons follow the theme.** Pixel and Jelly have their own marks on moves, every
+  app icon takes the theme's style, and Jelly uses its own art where the set has one.
+- **Easy to add.** A theme is one folder and one line in `web/src/themes`: see
+  the README there.
+
+### Settings
+
+- **Hide "Star on GitHub".** *Settings → Appearance* can turn the link off for a
+  profile, in the footer and the changelog. It also stops the daily request to
+  GitHub for the count. The login page has no profile, so it keeps the link.
+
+### Interface
+
+- **Every page fades in when it opens**, on the same timing as Learn. It respects
+  the reduced-motion setting.
+
+### Fixed
+
+- **A quieter Resign button.** It's now red text on a plain background, which fills
+  faintly on hover, instead of a solid red block next to the board.
+- **A piece no longer jumps when you click it.** Pressing a piece only selects
+  it; dragging starts once the pointer really moves.
+
 ### Single sign-on (OpenID Connect)
 
 - **Sign in with Authentik, Keycloak or any OpenID Connect provider.** Set

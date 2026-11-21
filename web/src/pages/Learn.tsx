@@ -145,7 +145,7 @@ function Overview({ cur, progress, totalStars, onOpenLesson, onOpenCourse }: {
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="relative isolate overflow-hidden rounded-2xl bg-gradient-to-br from-chesscom-900 via-[#3b4c2f] to-board-dark p-6 text-white shadow-lift sm:p-8"
+        className="relative isolate overflow-hidden rounded-2xl bg-gradient-to-br from-chesscom-900 via-hero to-board-dark p-6 text-white shadow-lift sm:p-8"
       >
         <div className="grid gap-6 md:grid-cols-[1fr_minmax(260px,340px)] md:items-center">
           <div className="min-w-0">

@@ -1,0 +1,5 @@
+Jelly Chess Assets by mightea (https://mightea.itch.io/jelly-chess-assets).
+"Free to use, modify, and adapt in any of your commercial or non-commercial games!
+Attribution is appreciated but never required. (Redistribution or reselling of the
+raw asset files on their own is strictly prohibited.)"
+The files in assets/ are not under this project's MIT license.

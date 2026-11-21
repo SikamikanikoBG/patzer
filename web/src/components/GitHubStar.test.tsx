@@ -8,7 +8,8 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-import GitHubStar, { formatStars } from './GitHubStar';
+import { useAuth, type User } from '../state/auth';
+import GitHubStar, { formatStars, useStarPreview } from './GitHubStar';
 
 const ok = (stars: number) => Promise.resolve({ ok: true, json: () => Promise.resolve({ stargazers_count: stars }) });
 
@@ -65,5 +66,34 @@ describe('GitHubStar', () => {
 
     render(<GitHubStar />);
     expect(screen.getByText('Starred')).toBeTruthy();
+  });
+});
+
+describe('GitHubStar visibility', () => {
+  const withStar = (show: number) => useAuth.setState({ user: { profile: { show_github_star: show } } as User });
+  afterEach(() => useAuth.setState({ user: null }));
+
+  it('shows when logged out, because there is no profile to ask', () => {
+    useAuth.setState({ user: null });
+    const { container, unmount } = render(<GitHubStar />);
+    expect(container.querySelector('a')).toBeTruthy();
+    unmount();
+  });
+
+  it('renders nothing and asks GitHub nothing when the profile turned it off', () => {
+    withStar(0);
+    const { container, unmount } = render(<GitHubStar />);
+    expect(container.innerHTML).toBe('');
+    expect(fetch).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('follows the unsaved choice in Settings over the saved one', () => {
+    withStar(1);
+    useStarPreview.setState({ preview: false });
+    const { container, unmount } = render(<GitHubStar />);
+    expect(container.querySelector('a')).toBeNull();
+    useStarPreview.setState({ preview: null });
+    unmount();
   });
 });

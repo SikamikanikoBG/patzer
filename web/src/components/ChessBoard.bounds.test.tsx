@@ -33,6 +33,14 @@ beforeEach(() => {
   } as unknown as typeof ResizeObserver;
 });
 
+describe('ChessBoard pressing a piece', () => {
+  it('waits for real movement before dragging, so the piece does not jump', async () => {
+    const { Chessground } = await import('chessground');
+    render(<ChessBoard fen="8/8/8/8/8/8/8/K6k w - - 0 1" />);
+    expect(vi.mocked(Chessground).mock.lastCall?.[1]?.draggable?.autoDistance).toBe(false);
+  });
+});
+
 describe('ChessBoard keeps chessground\'s cached bounds fresh', () => {
   it('calls redrawAll when the board moves on screen without resizing', () => {
     // Black's board mounts while the "opponent is offline" banner is up…

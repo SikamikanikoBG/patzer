@@ -314,8 +314,8 @@ function OwnPuzzle({ puzzle, onNext }: { puzzle: Puzzle; onNext: () => void }) {
             {ownMoves > 1 && <> {t('train.mine.moves', { count: ownMoves })}</>}
           </div>
           <div className="mt-2 flex items-center gap-2 text-xs text-chesscom-500">
-            {/* The colour of the board's red arrow (chessground's `red` brush). */}
-            <span aria-hidden="true" className="h-1 w-5 shrink-0 rounded bg-[#882020]" />
+            {/* The colour of the board's red arrow. */}
+            <span aria-hidden="true" className="h-1 w-5 shrink-0 rounded bg-[var(--arrow-red)]" />
             {t('train.mine.playedArrow', { played: puzzle.played_san })}
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-chesscom-500">

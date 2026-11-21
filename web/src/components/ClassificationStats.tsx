@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { CLASSIFICATIONS, type Classification, type AnalyzedMove } from '../types';
-import { CLASS_STYLE, GLYPH_SVG } from '../lib/classification';
+import { CLASS_STYLE, MoveGlyph } from '../lib/classification';
 
 interface Props {
   moves: AnalyzedMove[];
@@ -38,7 +38,7 @@ export default function ClassificationStats({ moves, whiteName, blackName, onCli
           <div key={c} className="grid grid-cols-[1fr_3rem_3rem] items-center border-b border-ink-100 last:border-0 dark:border-ink-800">
             <div className="flex items-center gap-2 px-3 py-1.5">
               <span className={`flex h-6 w-6 items-center justify-center rounded-full text-white ${s.bgClass}`}>
-                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">{GLYPH_SVG[s.glyph]}</svg>
+                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><MoveGlyph kind={s.glyph} /></svg>
               </span>
               <span className="text-sm">{t(`classification.${s.labelKey}`)}</span>
             </div>
