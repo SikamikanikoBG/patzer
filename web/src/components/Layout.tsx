@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope, ChevronDown, GraduationCap } from 'lucide-react';
+import { LogOut, Home, Swords, BookOpen, Settings as SettingsIcon, Users, Server, Link2, Menu, X, BarChart3, Target, Search, Keyboard, BookMarked, ListChecks, Microscope, ChevronDown, GraduationCap } from 'lucide-react';
 import { api } from '../api';
 import UpdateNotice from './UpdateNotice';
 import { useAuth } from '../state/auth';
@@ -191,6 +191,15 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
                         <span>{t('admin.users')}</span>
                       </NavLink>
                       <NavLink
+                        to="/admin/mcp"
+                        role="menuitem"
+                        onClick={() => setAdminOpen(false)}
+                        className={({ isActive }) => cn('flex items-center gap-2 rounded-md px-3 py-2 text-sm', isActive ? 'bg-chesscom-800 text-white' : 'text-chesscom-200 hover:bg-chesscom-800 hover:text-white')}
+                      >
+                        <Link2 className="h-4 w-4" />
+                        <span>ChatGPT / MCP</span>
+                      </NavLink>
+                      <NavLink
                         to="/admin/system"
                         role="menuitem"
                         onClick={() => setAdminOpen(false)}
@@ -330,6 +339,7 @@ export default function Layout({ onOpenPalette, onOpenShortcuts }: LayoutProps) 
                   <div className="px-3 pt-4 pb-1 text-[11px] uppercase tracking-wide text-chesscom-400">{t('common.admin')}</div>
                   <MobileNavItem to="/admin/users" icon={Users} label={t('admin.users')} />
                   <MobileNavItem to="/admin/system" icon={Server} label={t('admin.system')} />
+                  <MobileNavItem to="/admin/mcp" icon={Link2} label="ChatGPT / MCP" />
                 </>
               )}
             </nav>
