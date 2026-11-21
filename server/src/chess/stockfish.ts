@@ -56,9 +56,55 @@ export interface EngineMultiEval extends EngineEval {
   candidates: PvCandidate[]; // sorted by multipv ascending; index 0 == best
 }
 
+/**
+ * After a deadline we send `stop`; this is how long the `bestmove` that should
+ * follow it may take before we write the engine off. Worth raising on hardware
+ * where unwinding a search with many threads and a large hash is slow.
+ */
+function searchStopGraceMs(): number {
+  return Math.max(100, Number(process.env.STOCKFISH_SEARCH_STOP_GRACE_MS) || 3_000);
+}
+
+/** Longest a running search may say nothing at all before we step in. */
+function searchIdleMs(): number {
+  return Math.max(1_000, Number(process.env.STOCKFISH_SEARCH_IDLE_MS) || 20_000);
+}
+
+/** Hard ceiling on one search, however talkative the engine is. */
+function searchTotalMs(): number {
+  return Math.max(5_000, Number(process.env.STOCKFISH_SEARCH_TIMEOUT_MS) || 600_000);
+}
+
+// Is the OS process still running? A child killed by a signal keeps
+// `exitCode === null` forever (the status lands in `signalCode` instead), and
+// `killed` only means "a signal was successfully *sent*" — neither alone is a
+// liveness check, and `killed` in particular must never gate an escalation:
+// SIGTERM sets it, which would make the SIGKILL below unreachable.
+function isRunning(proc: ChildProcessWithoutNullStreams): boolean {
+  return proc.exitCode === null && proc.signalCode === null;
+}
+
+// Every started engine, until its process is confirmed gone. The last line of
+// defence: on server shutdown or a `tsx watch` reload these children would
+// otherwise survive us and keep burning a core each. Entries are removed in
+// exactly one place — the child's own `exit` event — so an engine that dies on
+// its own (crash, OOM-kill, external SIGKILL) doesn't pin itself here forever.
+const activeStockfishEngines = new Set<StockfishEngine>();
+
+/** SIGKILL every engine whose process is still up. Sync — safe on `exit`. */
+export function terminateAllActiveEngines(): void {
+  for (const engine of activeStockfishEngines) engine.killNow();
+  activeStockfishEngines.clear();
+}
+
 export class StockfishEngine {
   readonly kind = 'local' as const;
+  // The handle callers talk to; quit() clears it so no further UCI goes out.
   private proc: ChildProcessWithoutNullStreams | null = null;
+  // The same child, held until its `exit` fires. quit() must not drop this:
+  // while the process is still winding down it has to stay reachable from the
+  // shutdown hook, or a slow teardown during a server stop leaks an orphan.
+  private child: ChildProcessWithoutNullStreams | null = null;
   private buffer = '';
   private waiters: ((line: string) => void)[] = [];
   // Reject callbacks for in-flight evaluate()/bestMove() promises. quit() walks
@@ -88,13 +134,32 @@ export class StockfishEngine {
   }
 
   async start(): Promise<void> {
-    this.proc = spawn(this.path, [], { stdio: ['pipe', 'pipe', 'pipe'] });
-    this.proc.stdout.setEncoding('utf8');
-    this.proc.stdout.on('data', (chunk: string) => this.onData(chunk));
-    this.proc.on('error', (err) => console.error('[stockfish]', err));
+    const proc = spawn(this.path, [], { stdio: ['pipe', 'pipe', 'pipe'] });
+    this.proc = proc;
+    this.child = proc;
+    activeStockfishEngines.add(this);
+    // The only place an engine leaves the registry. Covers quit() *and* a
+    // process that dies without us asking (crash, OOM-kill, outside SIGKILL),
+    // which otherwise kept the engine object — and its buffer — alive for the
+    // lifetime of the server.
+    proc.once('exit', () => {
+      this.child = null;
+      this.ready = false;
+      activeStockfishEngines.delete(this);
+    });
+    proc.stdout.setEncoding('utf8');
+    proc.stdout.on('data', (chunk: string) => this.onData(chunk));
+    proc.on('error', (err) => console.error('[stockfish]', err));
     await this.send('uci');
     await this.waitFor((l) => l === 'uciok');
     this.ready = true;
+  }
+
+  /** Sync, unconditional SIGKILL. Used by the process-exit hook. */
+  killNow(): void {
+    const proc = this.child;
+    if (!proc || !isRunning(proc)) return;
+    try { proc.kill('SIGKILL'); } catch { /* ignore */ }
   }
 
   private onData(chunk: string) {
@@ -148,6 +213,84 @@ export class StockfishEngine {
     return 'Stockfish';
   }
 
+  /**
+   * Wait out one `go`. `onLine` gets every line and returns true once it has
+   * seen the one that ends the search (`bestmove`); anything else keeps us
+   * waiting. Resolves when the search is over, rejects if the engine has to be
+   * written off.
+   *
+   * Why this exists: a search used to be awaited with no deadline whatsoever.
+   * Stockfish 19 on twelve threads was seen to take a `go depth 14` and never
+   * answer — twelve threads spinning, the engine's own main thread back to
+   * reading stdin as if nothing was pending. The caller then awaits forever,
+   * and a caller's `finally { engine.quit() }` never runs while the await above
+   * it never returns, so nothing reaped it: one wedged search held twelve cores
+   * for five hours, 61 hours of CPU.
+   *
+   * Two deadlines, because a healthy search can legitimately be very long but
+   * is never quiet — it prints an `info` line each time it finishes a depth:
+   *   - idle: nothing said for a while. The fast signal, and tolerant of deep
+   *     searches on slow hardware.
+   *   - total: the backstop for an engine that keeps talking and never lands.
+   *
+   * Either one first sends `stop`, which is how UCI ends a search and what the
+   * wedged engine above was in fact sitting ready to read. If a `bestmove`
+   * follows we hand back the shallower result rather than failing the caller.
+   * Only an engine that won't even answer `stop` is rejected — and then killed,
+   * since whatever it is doing, it is doing it with our cores.
+   */
+  private awaitSearch(onLine: (line: string) => boolean): Promise<void> {
+    const idleMs = searchIdleMs();
+    const totalMs = searchTotalMs();
+    return new Promise<void>((res, rej) => {
+      let settled = false;
+      let stopSent = false;
+      let idleTimer: NodeJS.Timeout;
+      let graceTimer: NodeJS.Timeout | undefined;
+
+      const finish = (err?: Error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(idleTimer);
+        clearTimeout(totalTimer);
+        clearTimeout(graceTimer);
+        this.deathHandlers.delete(death);
+        if (err) rej(err); else res();
+      };
+
+      // quit() walks these, so a terminated engine still unblocks us.
+      const death = (err: Error) => finish(err);
+      this.deathHandlers.add(death);
+
+      const giveUp = (why: string) => {
+        if (settled || stopSent) return;
+        stopSent = true;
+        console.warn(`[stockfish] search ${why}; sending stop`);
+        try { this.proc?.stdin.write('stop\n'); } catch { /* ignore */ }
+        graceTimer = setTimeout(() => {
+          finish(new Error(`engine_search_timeout (${why})`));
+          // It ignored `stop` mid-search: unusable, and expensive to leave be.
+          void this.quit().catch(() => { /* ignore */ });
+        }, searchStopGraceMs());
+      };
+
+      const armIdle = () => {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => giveUp(`said nothing for ${idleMs} ms`), idleMs);
+      };
+      const totalTimer = setTimeout(() => giveUp(`ran past ${totalMs} ms`), totalMs);
+
+      const handler = (line: string) => {
+        if (settled) return;
+        armIdle();
+        if (onLine(line)) finish();
+        else this.waiters.push(handler);
+      };
+      this.waiters.push(handler);
+      armIdle();
+    });
+  }
+
   async evaluate(fen: string, depth: number): Promise<EngineEval> {
     assertNoNewline(fen, 'fen');
     await this.send(`position fen ${fen}`);
@@ -162,35 +305,29 @@ export class StockfishEngine {
     };
     let bestMove: string | null = null;
 
-    await new Promise<void>((res, rej) => {
-      const reject = (err: Error) => { this.deathHandlers.delete(reject); rej(err); };
-      this.deathHandlers.add(reject);
-      const handler = (line: string) => {
-        if (line.startsWith('info ')) {
-          const parsed = parseInfoLine(line);
-          // Skip search noise: lines without a real score, lowerbound/upperbound,
-          // currmove progress reports, and `info string` chatter. Accept only
-          // when this depth/seldepth is at least as deep as what we have.
-          if (
-            parsed
-            && (parsed.cp !== null || parsed.mate !== null)
-            && !parsed.bound
-            && (parsed.depth > lastInfo.depth
-                || (parsed.depth === lastInfo.depth && parsed.seldepth >= lastInfo.seldepth))
-          ) {
-            lastInfo = parsed;
-          }
-          this.waiters.push(handler);
-        } else if (line.startsWith('bestmove')) {
-          const m = line.split(' ')[1];
-          bestMove = m === '(none)' ? null : (m ?? null);
-          this.deathHandlers.delete(reject);
-          res();
-        } else {
-          this.waiters.push(handler);
+    await this.awaitSearch((line) => {
+      if (line.startsWith('info ')) {
+        const parsed = parseInfoLine(line);
+        // Skip search noise: lines without a real score, lowerbound/upperbound,
+        // currmove progress reports, and `info string` chatter. Accept only
+        // when this depth/seldepth is at least as deep as what we have.
+        if (
+          parsed
+          && (parsed.cp !== null || parsed.mate !== null)
+          && !parsed.bound
+          && (parsed.depth > lastInfo.depth
+              || (parsed.depth === lastInfo.depth && parsed.seldepth >= lastInfo.seldepth))
+        ) {
+          lastInfo = parsed;
         }
-      };
-      this.waiters.push(handler);
+        return false;
+      }
+      if (line.startsWith('bestmove')) {
+        const m = line.split(' ')[1];
+        bestMove = m === '(none)' ? null : (m ?? null);
+        return true;
+      }
+      return false;
     });
 
     return {
@@ -217,37 +354,31 @@ export class StockfishEngine {
     let bestMove: string | null = null;
     let topDepth = 0;
 
-    await new Promise<void>((res, rej) => {
-      const reject = (err: Error) => { this.deathHandlers.delete(reject); rej(err); };
-      this.deathHandlers.add(reject);
-      const handler = (line: string) => {
-        if (line.startsWith('info ')) {
-          const parsed = parseInfoLine(line);
-          if (
-            parsed
-            && (parsed.cp !== null || parsed.mate !== null)
-            && !parsed.bound
-          ) {
-            const rank = parsed.multipv ?? 1;
-            const prev = perRank.get(rank);
-            if (!prev
-                || parsed.depth > prev.depth
-                || (parsed.depth === prev.depth && parsed.seldepth >= prev.seldepth)) {
-              perRank.set(rank, parsed);
-              if (rank === 1) topDepth = Math.max(topDepth, parsed.depth);
-            }
+    await this.awaitSearch((line) => {
+      if (line.startsWith('info ')) {
+        const parsed = parseInfoLine(line);
+        if (
+          parsed
+          && (parsed.cp !== null || parsed.mate !== null)
+          && !parsed.bound
+        ) {
+          const rank = parsed.multipv ?? 1;
+          const prev = perRank.get(rank);
+          if (!prev
+              || parsed.depth > prev.depth
+              || (parsed.depth === prev.depth && parsed.seldepth >= prev.seldepth)) {
+            perRank.set(rank, parsed);
+            if (rank === 1) topDepth = Math.max(topDepth, parsed.depth);
           }
-          this.waiters.push(handler);
-        } else if (line.startsWith('bestmove')) {
-          const m = line.split(' ')[1];
-          bestMove = m === '(none)' ? null : (m ?? null);
-          this.deathHandlers.delete(reject);
-          res();
-        } else {
-          this.waiters.push(handler);
         }
-      };
-      this.waiters.push(handler);
+        return false;
+      }
+      if (line.startsWith('bestmove')) {
+        const m = line.split(' ')[1];
+        bestMove = m === '(none)' ? null : (m ?? null);
+        return true;
+      }
+      return false;
     });
 
     // Restore single-line mode for any later evaluate() callers on this engine.
@@ -277,49 +408,76 @@ export class StockfishEngine {
     if (opts.movetimeMs !== undefined) await this.send(`go movetime ${opts.movetimeMs}`);
     else await this.send(`go depth ${opts.depth ?? 12}`);
     let best: string | null = null;
-    await new Promise<void>((res, rej) => {
-      const reject = (err: Error) => { this.deathHandlers.delete(reject); rej(err); };
-      this.deathHandlers.add(reject);
-      const handler = (line: string) => {
-        if (line.startsWith('bestmove')) {
-          const m = line.split(' ')[1];
-          best = m === '(none)' ? null : (m ?? null);
-          this.deathHandlers.delete(reject);
-          res();
-        } else {
-          this.waiters.push(handler);
-        }
-      };
-      this.waiters.push(handler);
+    await this.awaitSearch((line) => {
+      if (line.startsWith('bestmove')) {
+        const m = line.split(' ')[1];
+        best = m === '(none)' ? null : (m ?? null);
+        return true;
+      }
+      return false;
     });
     return best;
   }
 
   // Async, idempotent shutdown. Sends `stop` + `quit` so any in-flight `go`
-  // finishes promptly, awaits the `bestmove`, then guarantees the OS process
-  // is gone within ~250 ms. Rejects pending waiters so callers stop hanging.
+  // finishes promptly, closes stdin (without which the engine sits blocked on
+  // a stdin read), then escalates SIGTERM -> SIGKILL until the OS process is
+  // actually gone. Rejects pending waiters so callers never deadlock.
+  //
+  // Each step is gated on `isRunning` only. An earlier version also checked
+  // `!proc.killed`, which SIGTERM sets — so the SIGKILL step could never run
+  // and quit() resolved on an engine that was still alive, exactly in the case
+  // it exists for (a large Hash takes a while to free).
   async quit(): Promise<void> {
     const proc = this.proc;
     if (!proc) return;
     this.proc = null;
     this.ready = false;
-    try { proc.stdin.write('stop\nquit\n'); } catch { /* ignore */ }
-
-    const exited = new Promise<void>((res) => {
-      if (proc.exitCode !== null) return res();
-      proc.once('exit', () => res());
-    });
-    const killed = new Promise<void>((res) => setTimeout(() => {
-      if (proc.exitCode === null) { try { proc.kill('SIGKILL'); } catch { /* ignore */ } }
-      res();
-    }, 250));
-    await Promise.race([exited, killed]);
 
     // Reject every dangling waiter so consumers don't deadlock.
     const handlers = Array.from(this.deathHandlers);
     this.deathHandlers.clear();
     this.waiters = [];
     for (const h of handlers) h(new Error('engine_terminated'));
+
+    try {
+      proc.stdin.write('stop\nquit\n');
+      proc.stdin.end();
+    } catch { /* ignore */ }
+
+    if (!isRunning(proc)) return;
+
+    await new Promise<void>((res) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(termTimer);
+        clearTimeout(killTimer);
+        clearTimeout(giveUpTimer);
+        res();
+      };
+
+      proc.once('exit', finish);
+      proc.once('close', finish);
+
+      // Graceful UCI `quit` gets 250 ms, then SIGTERM.
+      const termTimer = setTimeout(() => {
+        if (isRunning(proc)) { try { proc.kill('SIGTERM'); } catch { /* ignore */ } }
+      }, 250);
+
+      // Still up 350 ms after SIGTERM: stop being polite.
+      const killTimer = setTimeout(() => {
+        if (isRunning(proc)) { try { proc.kill('SIGKILL'); } catch { /* ignore */ } }
+      }, 600);
+
+      // SIGKILL is not instantaneous, so give the kernel a moment to reap and
+      // let `exit` resolve us normally. If even that doesn't land we stop
+      // blocking the caller — but the engine stays in `activeStockfishEngines`
+      // (it is dropped on `exit`, not here), so the shutdown hook can still
+      // finish the job rather than leaving an orphan behind.
+      const giveUpTimer = setTimeout(finish, 1_500);
+    });
   }
 
   isReady(): boolean { return this.ready; }

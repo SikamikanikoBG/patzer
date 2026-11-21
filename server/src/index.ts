@@ -27,6 +27,7 @@ import openingsRoutes from './routes/openings.js';
 import planRoutes from './routes/plan.js';
 import achievementsRoutes from './routes/achievements.js';
 import { startChessComSync } from './autoImport.js';
+import { terminateAllActiveEngines } from './chess/stockfish.js';
 import learnRoutes from './routes/learn.js';
 import { attachPlayWebSocket } from './ws/play.js';
 import { attachLobbyWebSocket } from './ws/lobby.js';
@@ -164,3 +165,25 @@ attachLobbyWebSocket(server as unknown as Server);
 // Background Chess.com auto-import (and the analysis/review of the imported
 // games). Idempotent — safe to run alongside the manual Import button.
 startChessComSync();
+
+// Shutdown. Stockfish children are not part of this process's own exit, so a
+// plain SIGTERM (`docker stop`, a `tsx watch` reload) used to leave them behind
+// pegging a core each. Kill them, stop accepting connections, then go.
+//
+// This lives here, in the entrypoint, rather than in the engine module: a
+// library that installs `process.exit` on a signal silently pre-empts any
+// graceful shutdown added next to it, and does it in the test runner too.
+let shuttingDown = false;
+function shutdown(signal: 'SIGINT' | 'SIGTERM'): void {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  terminateAllActiveEngines();
+  try { server.close(); } catch { /* ignore */ }
+  // Re-raise so the parent sees a signal death rather than a plain exit code.
+  process.removeAllListeners(signal);
+  process.kill(process.pid, signal);
+}
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+// Last resort for every other way out (an uncaught throw, `process.exit`).
+process.once('exit', terminateAllActiveEngines);
