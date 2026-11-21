@@ -348,6 +348,7 @@
     "waiting": "Waiting for accept",
     "players": "Players",
     "playersDesc": "Pick someone, choose your side and time, then send a challenge.",
+    "opponentColor": "Opponent's color",
     "noPlayers": "No other players exist yet. Ask an admin to create another account.",
     "send": "Send challenge",
     "accept": "Accept",

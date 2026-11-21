@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { createInstance } from 'i18next';
 import en from './en.json';
 import de from './de.json';
@@ -183,6 +185,21 @@ describe.each([['de', de], ['ru', ru], ['uk', uk], ['bg', bg], ['es', es], ['fr'
       'train.puzzles.daily.title', 'train.puzzles.daily.more', 'train.puzzles.daily.already']) {
       expect(flat[key], key).toBeTruthy();
     }
+  });
+});
+
+// In vs Friend the colour picks the invited opponent's side, so its label must
+// not be the "Your color" the vs Bot picker uses.
+describe('vs Friend colour label', () => {
+  it('names the opponent in English', () => {
+    expect(flatten(en as Tree)['challenge.opponentColor']).toBe("Opponent's color");
+  });
+
+  it('is the label the vs Friend picker renders', () => {
+    const playSrc = readFileSync(fileURLToPath(new URL('../pages/Play.tsx', import.meta.url)), 'utf8');
+    const friendTab = playSrc.slice(playSrc.indexOf('function FriendTab('));
+    expect(friendTab).toContain("{t('challenge.opponentColor')}");
+    expect(friendTab).not.toContain("{t('play.color')}");
   });
 });
 
