@@ -62,6 +62,6 @@ describe("Ukrainian coach phrasing", () => {
     expect(systemPrompt("beginner", "uk")).toContain("Мова відповіді: українська");
     expect(systemPrompt("kid", "uk")).toContain("коник");
     expect(systemPrompt("kid", "uk")).toContain("слоник");
-    expect(verdictPhrase("blunder", "uk")).toMatch(/^грубий прорахунок/);
+    expect(verdictPhrase("blunder", "uk")).toMatch(/^позіх/);
   });
 });
