@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Chess } from 'chess.js';
 import { Crosshair, Loader2 } from 'lucide-react';
 import { api } from '../api';
+import { withBusyRetry } from '../lib/busyRetry';
 
 // "What's the threat?" — for the current position, what would the side that
 // just moved play next if the side to move simply passed? We build the
@@ -94,8 +95,8 @@ export default function ThreatPanel({ fen, currentCpWhite }: { fen: string; curr
     setState('loading');
     // The endpoint is single-flight per user: if the engine-lines panel is
     // mid-search we get a 429, so back off and retry a few times.
-    const attempt = (n: number) => {
-      api.post<{ lines: EngineLine[] }>('/api/analyze/position', { fen: nullFen, depth: 14, lines: 1 })
+    const attempt = () => {
+      withBusyRetry(() => api.post<{ lines: EngineLine[] }>('/api/analyze/position', { fen: nullFen, depth: 14, lines: 1 }), () => cancelled)
         .then((r) => {
           if (cancelled) return;
           const line = r.lines?.[0];
@@ -103,15 +104,13 @@ export default function ThreatPanel({ fen, currentCpWhite }: { fen: string; curr
           setThreat(th);
           setState(th ? 'ok' : 'error');
         })
-        .catch((err: unknown) => {
+        .catch(() => {
           if (cancelled) return;
-          const status = (err as { status?: number } | null)?.status;
-          if (status === 429 && n < 4) { window.setTimeout(() => { if (!cancelled) attempt(n + 1); }, 900); return; }
           setThreat(null);
           setState('error');
         });
     };
-    const handle = window.setTimeout(() => attempt(0), 400);
+    const handle = window.setTimeout(attempt, 400);
     return () => { cancelled = true; window.clearTimeout(handle); };
   }, [enabled, fen, nullFen, currentCpStm]);
 
