@@ -136,6 +136,29 @@ advance, 7.Be2), including the engine line whose middle ply was the player's.
 - **Nix Stockfish defaults & configurable thread scaling.** Configured default Stockfish threads to 2 and hash to 512 MB in `flake.nix` (`runDevScript`, `runProdScript`, and `devShells`) and `shell.nix`, overridable via `STOCKFISH_THREADS` and `STOCKFISH_HASH`.
 - **Dynamic Stockfish thread and hash options across analysis endpoints.** Single position evaluation (`/api/analyze/position`) and move validation in trainer now respect `STOCKFISH_THREADS` and `STOCKFISH_HASH` rather than fixed static limits.
 
+### Fixed: Stockfish no longer lingers after an analysis (#92, @66Ton99)
+
+- **An engine that stopped answering no longer holds your CPU.** A search
+  used to be awaited with no deadline, so a Stockfish that went quiet mid-search
+  kept every thread it had busy until the server restarted. A search that says
+  nothing for 20 s, or runs past 10 minutes, is now sent `stop` and keeps the
+  result it had. An engine that won't even answer that is killed.
+- **Every engine is cleaned up.** A Game Review that fails or is cancelled
+  halfway, a PvP game both players left, and a server shutdown no longer leave
+  Stockfish processes behind. When the coach explains a move it now uses one
+  engine for both positions instead of starting two.
+- Operational knobs for unusual hardware, in `.env.example`:
+  `STOCKFISH_SEARCH_IDLE_MS`, `STOCKFISH_SEARCH_TIMEOUT_MS`,
+  `STOCKFISH_SEARCH_STOP_GRACE_MS`.
+
+### Fixed: Engine Lines in Game Review stayed empty (#89)
+
+- Engine Lines and *What's the threat?* ask the engine at the same moment,
+  and the server runs one position search per user at a time, so one of the
+  two was turned away. The threat panel tried again; Engine Lines showed a dash
+  until you moved to another position. Both retry now. Thanks @ricodotzed for
+  the precise report.
+
 ## [7.19.0] — 2026-10-18
 
 ### Tactic Trainer: see your move, and hear why the better one is better
