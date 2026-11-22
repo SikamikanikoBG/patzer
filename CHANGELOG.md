@@ -4,9 +4,9 @@ All notable changes to this project are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [7.20.0] — 2026-11-22
 
-*Merged contributions in this release — thank you, [@SaberGuirat](https://github.com/SaberGuirat), [@OnyxOracle](https://github.com/OnyxOracle) and [@66Ton99](https://github.com/66Ton99).*
+*Merged contributions in this release — thank you, [@SaberGuirat](https://github.com/SaberGuirat), [@OnyxOracle](https://github.com/OnyxOracle), [@66Ton99](https://github.com/66Ton99), [@gregoriopompei](https://github.com/gregoriopompei) and [@jay23606](https://github.com/jay23606).*
 
 ### French (#99, @SaberGuirat)
 
@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   appears on the side that has more, and the page you are on is always
   scrolled into view.
 
-### Single sign-on (OpenID Connect)
+### Single sign-on (OpenID Connect) (#72, @gregoriopompei)
 
 - **Sign in with Authentik, Keycloak or any OpenID Connect provider.** Set
   `OIDC_ISSUER`, `OIDC_CLIENT_ID` and `OIDC_CLIENT_SECRET`, and the login page
