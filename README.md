@@ -110,7 +110,7 @@ docker run -d \
   -p 8800:8800 \
   -v patzer-data:/app/data \
   --name patzer \
-  ghcr.io/SikamikanikoBG/patzer:latest
+  ghcr.io/sikamikanikobg/patzer:latest
 ```
 
 **`docker compose`**
@@ -118,7 +118,7 @@ docker run -d \
 ```yaml
 services:
   patzer:
-    image: ghcr.io/SikamikanikoBG/patzer:latest
+    image: ghcr.io/sikamikanikobg/patzer:latest
     container_name: patzer
     restart: unless-stopped
     ports:

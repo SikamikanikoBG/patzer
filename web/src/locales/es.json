@@ -297,7 +297,7 @@
     "incomingList": "Retos recibidos",
     "waiting": "Esperando respuesta",
     "players": "Jugadores",
-    "playersDesc": "Elige a alguien, selecciona las piezas y el tiempo, y envíale un reto.",
+    "playersDesc": "Elige a alguien, selecciona el color del rival y el tiempo, y envíale un reto.",
     "opponentColor": "Color del rival",
     "noPlayers": "Aún no hay otros jugadores. Pide a un administrador que cree más cuentas.",
     "send": "Enviar reto",

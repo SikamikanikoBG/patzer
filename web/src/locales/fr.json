@@ -347,7 +347,7 @@
     "incomingList": "Défis entrants",
     "waiting": "En attente d'acceptation",
     "players": "Joueurs",
-    "playersDesc": "Choisissez un joueur, votre couleur et la cadence, puis envoyez un défi.",
+    "playersDesc": "Choisissez un joueur, la couleur de l'adversaire et la cadence, puis envoyez un défi.",
     "opponentColor": "Couleur de l'adversaire",
     "noPlayers": "Aucun autre joueur n'existe encore. Demandez à un administrateur de créer un autre compte.",
     "send": "Envoyer le défi",
