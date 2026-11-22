@@ -20,6 +20,7 @@ import ThreatPanel from '../components/ThreatPanel';
 import ExplorerPanel from '../components/ExplorerPanel';
 import { soundForMove, inferMoveFlagsFromSan } from '../lib/sounds';
 import { api } from '../api';
+import { withBusyRetry } from '../lib/busyRetry';
 import { useAuth } from '../state/auth';
 import { parseFromPosition, playFromPosition, playFromUrl } from '../lib/fromPosition';
 import type { AnalysisResult, AnalyzedMove, KeyMomentSummary, PhaseSplit } from '../types';
@@ -220,7 +221,8 @@ export default function GameAnalyzer() {
     setLinesError(false);
     setLinesLoading(true);
     const handle = window.setTimeout(() => {
-      api.post<{ fen: string; depth: number; lines: EngineLine[] }>('/api/analyze/position', { fen: currentFen, depth: 18, lines: 3 })
+      // Single-flight per user: the threat panel may hold the engine — retry a 429 (#89).
+      withBusyRetry(() => api.post<{ fen: string; depth: number; lines: EngineLine[] }>('/api/analyze/position', { fen: currentFen, depth: 18, lines: 3 }), () => cancelled)
         .then((r) => { if (!cancelled) { setLines(r.lines ?? []); setLinesLoading(false); } })
         .catch(() => { if (!cancelled) { setLinesError(true); setLinesLoading(false); setLines([]); } });
     }, 400);
