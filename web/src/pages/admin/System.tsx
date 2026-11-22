@@ -4,7 +4,7 @@ import { CheckCircle2, AlertCircle, Save, Sparkles, Cpu, Loader2, FlaskConical, 
 import { api } from '../../api';
 
 interface SysSettings {
-  llm_provider?: 'ollama' | 'vllm' | 'deepseek' | 'lmstudio';
+  llm_provider?: 'ollama' | 'vllm' | 'deepseek' | 'lmstudio' | 'gemini';
   ollama_url: string | null;
   ollama_model: string | null;
   vllm_url?: string | null;
@@ -15,6 +15,12 @@ interface SysSettings {
   deepseek_model?: string | null;
   deepseek_key_set?: boolean;
   deepseek_env_override?: boolean;
+  gemini_url?: string | null;
+  gemini_model?: string | null;
+  gemini_key_set?: boolean;
+  gemini_env_override?: boolean;
+  gemini_reasoning_effort?: 'none' | 'low' | 'medium' | 'high';
+  gemini_reasoning_effort_env_override?: boolean;
   stockfish_path: string | null;
   last_model_used?: string | null;
   last_error?: string | null;
@@ -54,7 +60,7 @@ interface MailState {
 
 export default function AdminSystem() {
   const { t } = useTranslation();
-  const [s, setS] = useState<SysSettings>({ llm_provider: 'ollama', ollama_url: '', ollama_model: '', vllm_url: '', vllm_model: '', stockfish_path: '' });
+  const [s, setS] = useState<SysSettings>({ llm_provider: 'ollama', ollama_url: '', ollama_model: '', vllm_url: '', vllm_model: '', gemini_reasoning_effort: 'none', stockfish_path: '' });
   const [runtime, setRuntime] = useState<{ last_model_used: string | null; last_error: string | null; p95_ms: number | null; call_count: number } | null>(null);
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
@@ -85,17 +91,26 @@ export default function AdminSystem() {
   const [deepseekKey, setDeepseekKey] = useState('');
   const [deepseekKeySet, setDeepseekKeySet] = useState(false);
   const [deepseekEnvOverride, setDeepseekEnvOverride] = useState(false);
+  // Google AI Studio (Gemini) — secret API key, same pattern as DeepSeek.
+  const [geminiKey, setGeminiKey] = useState('');
+  const [geminiKeySet, setGeminiKeySet] = useState(false);
+  const [geminiEnvOverride, setGeminiEnvOverride] = useState(false);
 
   function loadSettings() {
     return api.get<SysSettings>('/api/admin/system').then((d) => {
       setS({
-        llm_provider: d.llm_provider === 'vllm' ? 'vllm' : d.llm_provider === 'deepseek' ? 'deepseek' : d.llm_provider === 'lmstudio' ? 'lmstudio' : 'ollama',
+        llm_provider: d.llm_provider === 'vllm' ? 'vllm' : d.llm_provider === 'deepseek' ? 'deepseek' : d.llm_provider === 'lmstudio' ? 'lmstudio' : d.llm_provider === 'gemini' ? 'gemini' : 'ollama',
         ollama_url: d.ollama_url ?? '', ollama_model: d.ollama_model ?? '',
         vllm_url: d.vllm_url ?? '', vllm_model: d.vllm_model ?? '',
         lmstudio_url: d.lmstudio_url ?? '', lmstudio_model: d.lmstudio_model ?? '',
         deepseek_url: d.deepseek_url ?? '', deepseek_model: d.deepseek_model ?? '',
         deepseek_key_set: !!d.deepseek_key_set,
         deepseek_env_override: !!d.deepseek_env_override,
+        gemini_url: d.gemini_url ?? '', gemini_model: d.gemini_model ?? '',
+        gemini_key_set: !!d.gemini_key_set,
+        gemini_env_override: !!d.gemini_env_override,
+        gemini_reasoning_effort: d.gemini_reasoning_effort ?? 'none',
+        gemini_reasoning_effort_env_override: !!d.gemini_reasoning_effort_env_override,
         stockfish_path: d.stockfish_path ?? '',
       });
       setRuntime({
@@ -123,6 +138,9 @@ export default function AdminSystem() {
       setDeepseekKeySet(!!d.deepseek_key_set);
       setDeepseekEnvOverride(!!d.deepseek_env_override);
       setDeepseekKey('');
+      setGeminiKeySet(!!d.gemini_key_set);
+      setGeminiEnvOverride(!!d.gemini_env_override);
+      setGeminiKey('');
       setHydrated(true);
     });
   }
@@ -161,20 +179,20 @@ export default function AdminSystem() {
   }
 
   const provider = s.llm_provider ?? 'ollama';
-  const activeUrl = provider === 'vllm' ? (s.vllm_url ?? '') : provider === 'lmstudio' ? (s.lmstudio_url ?? '') : provider === 'deepseek' ? (s.deepseek_url ?? '') : (s.ollama_url ?? '');
-  const activeModel = provider === 'vllm' ? (s.vllm_model ?? '') : provider === 'lmstudio' ? (s.lmstudio_model ?? '') : provider === 'deepseek' ? (s.deepseek_model ?? '') : (s.ollama_model ?? '');
-  // DeepSeek's URL is optional — empty means the official https://api.deepseek.com.
-  const activeUrlForTest = provider === 'deepseek' ? (activeUrl || 'https://api.deepseek.com') : activeUrl;
-  const providerLabel = (p: string) => (p === 'ollama' ? 'Ollama' : p === 'vllm' ? 'vLLM' : p === 'lmstudio' ? 'LM Studio' : 'DeepSeek');
-  const urlLabel = provider === 'vllm' ? t('admin.vllmUrl') : provider === 'lmstudio' ? t('admin.lmstudioUrl') : provider === 'deepseek' ? t('admin.deepseekUrl') : t('admin.ollamaUrl');
-  const urlPlaceholder = provider === 'vllm' ? 'http://localhost:8000' : provider === 'lmstudio' ? 'http://localhost:1234' : provider === 'deepseek' ? 'https://api.deepseek.com' : 'http://localhost:11434';
-  const modelLabel = provider === 'vllm' ? t('admin.vllmModel') : provider === 'lmstudio' ? t('admin.lmstudioModel') : provider === 'deepseek' ? t('admin.deepseekModel') : t('admin.ollamaModel');
-  const modelPlaceholder = provider === 'vllm' ? 'Qwen3.8-27B' : provider === 'lmstudio' ? 'qwen2.5-7b-instruct' : provider === 'deepseek' ? 'deepseek-chat' : 'gemma3:27b';
+  const activeUrl = provider === 'vllm' ? (s.vllm_url ?? '') : provider === 'lmstudio' ? (s.lmstudio_url ?? '') : provider === 'deepseek' ? (s.deepseek_url ?? '') : provider === 'gemini' ? (s.gemini_url ?? '') : (s.ollama_url ?? '');
+  const activeModel = provider === 'vllm' ? (s.vllm_model ?? '') : provider === 'lmstudio' ? (s.lmstudio_model ?? '') : provider === 'deepseek' ? (s.deepseek_model ?? '') : provider === 'gemini' ? (s.gemini_model ?? '') : (s.ollama_model ?? '');
+  // DeepSeek and Gemini URLs are optional — empty means the official endpoint.
+  const activeUrlForTest = (provider === 'deepseek' || provider === 'gemini') ? (activeUrl || (provider === 'gemini' ? 'https://generativelanguage.googleapis.com/v1beta/openai' : 'https://api.deepseek.com')) : activeUrl;
+  const providerLabel = (p: string) => (p === 'ollama' ? 'Ollama' : p === 'vllm' ? 'vLLM' : p === 'lmstudio' ? 'LM Studio' : p === 'deepseek' ? 'DeepSeek' : 'Google Gemini');
+  const urlLabel = provider === 'vllm' ? t('admin.vllmUrl') : provider === 'lmstudio' ? t('admin.lmstudioUrl') : provider === 'deepseek' ? t('admin.deepseekUrl') : provider === 'gemini' ? t('admin.geminiUrl') : t('admin.ollamaUrl');
+  const urlPlaceholder = provider === 'vllm' ? 'http://localhost:8000' : provider === 'lmstudio' ? 'http://localhost:1234' : provider === 'deepseek' ? 'https://api.deepseek.com' : provider === 'gemini' ? 'https://generativelanguage.googleapis.com/v1beta/openai' : 'http://localhost:11434';
+  const modelLabel = provider === 'vllm' ? t('admin.vllmModel') : provider === 'lmstudio' ? t('admin.lmstudioModel') : provider === 'deepseek' ? t('admin.deepseekModel') : provider === 'gemini' ? t('admin.geminiModel') : t('admin.ollamaModel');
+  const modelPlaceholder = provider === 'vllm' ? 'Qwen3.8-27B' : provider === 'lmstudio' ? 'qwen2.5-7b-instruct' : provider === 'deepseek' ? 'deepseek-chat' : provider === 'gemini' ? 'gemini-3.8-flash' : 'gemma3:27b';
   function setActiveUrl(v: string) {
-    setS((cur) => provider === 'vllm' ? { ...cur, vllm_url: v } : provider === 'lmstudio' ? { ...cur, lmstudio_url: v } : provider === 'deepseek' ? { ...cur, deepseek_url: v } : { ...cur, ollama_url: v });
+    setS((cur) => provider === 'vllm' ? { ...cur, vllm_url: v } : provider === 'lmstudio' ? { ...cur, lmstudio_url: v } : provider === 'deepseek' ? { ...cur, deepseek_url: v } : provider === 'gemini' ? { ...cur, gemini_url: v } : { ...cur, ollama_url: v });
   }
   function setActiveModel(v: string) {
-    setS((cur) => provider === 'vllm' ? { ...cur, vllm_model: v } : provider === 'lmstudio' ? { ...cur, lmstudio_model: v } : provider === 'deepseek' ? { ...cur, deepseek_model: v } : { ...cur, ollama_model: v });
+    setS((cur) => provider === 'vllm' ? { ...cur, vllm_model: v } : provider === 'lmstudio' ? { ...cur, lmstudio_model: v } : provider === 'deepseek' ? { ...cur, deepseek_model: v } : provider === 'gemini' ? { ...cur, gemini_model: v } : { ...cur, ollama_model: v });
   }
 
   useEffect(() => { void loadSettings(); }, []);
@@ -184,24 +202,39 @@ export default function AdminSystem() {
   useEffect(() => {
     if (!hydrated) return;
     setModels([]); setOllamaStatus(null); setAllResults(null);
-    if (activeUrl) void fetchModels(activeUrl, /* silent */ true);
+    // activeUrlForTest, not activeUrl: DeepSeek and Gemini are normally left
+    // blank (meaning the official endpoint), and gating on the raw field left
+    // their model list — and so the model auto-pick — empty until the admin
+    // clicked Test by hand.
+    if (activeUrlForTest) void fetchModels(activeUrlForTest, /* silent */ true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, provider, activeUrl]);
+  }, [hydrated, provider, activeUrlForTest]);
 
   async function fetchModels(url: string, silent = false) {
     if (!url) return;
     setLoadingModels(true);
     if (!silent) setOllamaStatus(null);
     try {
-      const r = await api.post<{ ok: boolean; models?: { name: string }[]; error?: string; hint?: string }>('/api/admin/test/ollama', { url, provider });
+      const activeKey = provider === 'gemini' ? geminiKey : provider === 'deepseek' ? deepseekKey : undefined;
+      const r = await api.post<{ ok: boolean; models?: { name: string }[]; error?: string; hint?: string }>(
+        '/api/admin/test/ollama',
+        { url, provider, ...(activeKey ? { api_key: activeKey } : {}) }
+      );
       if (r.ok) {
         const ns = (r.models ?? []).map((m) => m.name).sort();
         setModels(ns);
         setOllamaStatus({ ok: true, msg: t('admin.modelsFound', { count: ns.length }) });
-        if (!activeModel && ns[0]) setActiveModel(ns[0]!);
+        const preferredDefault = provider === 'gemini' ? 'gemini-3.8-flash' : provider === 'deepseek' ? 'deepseek-chat' : undefined;
+        const picked = (preferredDefault && ns.includes(preferredDefault)) ? preferredDefault : ns[0];
+        if (!activeModel && picked) setActiveModel(picked);
       } else {
         setModels([]);
-        setOllamaStatus({ ok: false, msg: r.error ?? t('admin.connectionFailed'), hint: r.hint });
+        const errorMsg = r.error === 'gemini_api_key_missing'
+          ? t('admin.geminiKeyMissing')
+          : r.error === 'deepseek_api_key_missing'
+          ? t('admin.deepseekKeyMissing')
+          : (r.error ?? t('admin.connectionFailed'));
+        setOllamaStatus({ ok: false, msg: errorMsg, hint: r.hint });
       }
     } catch (e) {
       setModels([]);
@@ -218,13 +251,19 @@ export default function AdminSystem() {
   }
 
   async function save() {
-    await api.patch('/api/admin/system', {
+    const payload: Record<string, unknown> = {
       ...s,
       // Only send the API key when the admin typed a new one — empty leaves the
       // stored secret untouched (same contract as the SMTP password).
       ...(deepseekKey ? { deepseek_api_key: deepseekKey } : {}),
-    });
+      ...(geminiKey ? { gemini_api_key: geminiKey } : {}),
+    };
+    // The field is read-only while the env var supplies it, so what it holds is
+    // the env value — don't write that into the settings table.
+    if (s.gemini_reasoning_effort_env_override) delete payload.gemini_reasoning_effort;
+    await api.patch('/api/admin/system', payload);
     if (deepseekKey) { setDeepseekKeySet(true); setDeepseekKey(''); }
+    if (geminiKey) { setGeminiKeySet(true); setGeminiKey(''); }
     // This is the button people reach for. It used to save only the coach and
     // engine fields, so a changed signup mode was silently lost unless "Save
     // email settings" further down was clicked instead.
@@ -234,13 +273,36 @@ export default function AdminSystem() {
 
   async function testAllModels() {
     if (!activeUrlForTest) return;
+    // It tests every model the host serves, as the button says. On DeepSeek or
+    // Gemini that is one paid call per model (up to 30s each), and Google serves
+    // dozens — so say so before spending the admin's money and their minutes.
+    if (provider === 'deepseek' || provider === 'gemini') {
+      const warning = models.length
+        ? t('admin.testAllModelsConfirm', { models: models.length, provider: providerLabel(provider) })
+        : t('admin.testAllModelsConfirmUnknown', { provider: providerLabel(provider) });
+      if (!confirm(warning)) return;
+    }
     setAllTesting(true); setAllResults(null);
     try {
+      const activeKey = provider === 'gemini' ? geminiKey : provider === 'deepseek' ? deepseekKey : undefined;
       const r = await api.post<{ ok: boolean; results?: Array<{ model: string; ok: boolean; latencyMs: number; sample?: string; error?: string }>; error?: string }>(
-        '/api/admin/test/ollama-models', { url: activeUrlForTest, provider }
+        '/api/admin/test/ollama-models',
+        {
+          url: activeUrlForTest,
+          provider,
+          ...(activeKey ? { api_key: activeKey } : {}),
+          ...(provider === 'gemini' ? { reasoning_effort: s.gemini_reasoning_effort ?? 'none' } : {}),
+        }
       );
       if (r.ok && r.results) setAllResults(r.results);
-      else setAllResults([{ model: 'all', ok: false, latencyMs: 0, error: r.error ?? 'failed' }]);
+      else {
+        const errorMsg = r.error === 'gemini_api_key_missing'
+          ? t('admin.geminiKeyMissing')
+          : r.error === 'deepseek_api_key_missing'
+          ? t('admin.deepseekKeyMissing')
+          : (r.error ?? 'failed');
+        setAllResults([{ model: 'all', ok: false, latencyMs: 0, error: errorMsg }]);
+      }
     } finally { setAllTesting(false); }
   }
 
@@ -263,7 +325,7 @@ export default function AdminSystem() {
         </div>
         <div className="space-y-4 p-5">
           <div className="inline-flex rounded-xl border border-ink-200 p-1 dark:border-ink-700">
-            {(['ollama', 'lmstudio', 'vllm', 'deepseek'] as const).map((p) => (
+            {(['ollama', 'lmstudio', 'vllm', 'deepseek', 'gemini'] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setS({ ...s, llm_provider: p })}
@@ -295,7 +357,10 @@ export default function AdminSystem() {
             <div>
               <label className="label mb-1 block">{t('admin.deepseekKey')}</label>
               <input className="input" type="password" autoComplete="new-password" value={deepseekKey}
-                onChange={(e) => setDeepseekKey(e.target.value)} placeholder={deepseekKeySet ? '••••••••' : 'sk-…'} />
+                onChange={(e) => {
+                  setDeepseekKey(e.target.value);
+                  if (ollamaStatus && !ollamaStatus.ok) setOllamaStatus(null);
+                }} placeholder={deepseekKeySet ? '••••••••' : 'sk-…'} />
               {deepseekEnvOverride ? (
                 <p className="mt-1 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"><AlertCircle className="h-3.5 w-3.5" /> {t('admin.deepseekKeyEnv')}</p>
               ) : deepseekKeySet && !deepseekKey ? (
@@ -304,6 +369,58 @@ export default function AdminSystem() {
                 <p className="mt-1 text-xs text-ink-400">{t('admin.deepseekKeyHint')}</p>
               )}
             </div>
+          )}
+          {provider === 'gemini' && (
+            <>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="label">{t('admin.geminiKey')}</label>
+                  <a
+                    href="https://aistudio.google.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-accent-600 hover:underline"
+                  >
+                    {t('admin.getGeminiKey')} ↗
+                  </a>
+                </div>
+                <input className="input" type="password" autoComplete="new-password" value={geminiKey}
+                  onChange={(e) => {
+                    setGeminiKey(e.target.value);
+                    if (ollamaStatus && !ollamaStatus.ok) setOllamaStatus(null);
+                  }} placeholder={geminiKeySet ? '••••••••' : 'AIza…'} />
+                {geminiEnvOverride ? (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"><AlertCircle className="h-3.5 w-3.5" /> {t('admin.geminiKeyEnv')}</p>
+                ) : geminiKeySet && !geminiKey ? (
+                  <p className="mt-1 text-xs text-ink-400">{t('admin.geminiKeySaved')}</p>
+                ) : (
+                  <p className="mt-1 text-xs text-ink-400">{t('admin.geminiKeyHint')}</p>
+                )}
+              </div>
+              <div>
+                <label className="label mb-1 block">{t('admin.geminiReasoningEffort')}</label>
+                <select
+                  className="input"
+                  value={s.gemini_reasoning_effort ?? 'none'}
+                  onChange={(e) => setS({ ...s, gemini_reasoning_effort: e.target.value as 'none' | 'low' | 'medium' | 'high' })}
+                  disabled={s.gemini_reasoning_effort_env_override}
+                >
+                  <option value="none">{t('admin.geminiReasoningEffortNone')}</option>
+                  <option value="low">{t('admin.geminiReasoningEffortLow')}</option>
+                  <option value="medium">{t('admin.geminiReasoningEffortMedium')}</option>
+                  <option value="high">{t('admin.geminiReasoningEffortHigh')}</option>
+                </select>
+                {s.gemini_reasoning_effort_env_override ? (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                    <AlertCircle className="h-3.5 w-3.5" /> {t('admin.geminiReasoningEffortEnv')}
+                  </p>
+                ) : (
+                  <p className="mt-1 text-xs text-ink-400 leading-relaxed">
+                    {t('admin.geminiReasoningEffortHelp')}
+                  </p>
+                )}
+              </div>
+            </>
           )}
           <div>
             <label className="label mb-1 block">{modelLabel}</label>
