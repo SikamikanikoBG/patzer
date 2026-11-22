@@ -347,7 +347,7 @@
     "incomingList": "Eingehende Herausforderungen",
     "waiting": "Warte auf Annahme",
     "players": "Spieler",
-    "playersDesc": "Wähle jemanden aus, dazu deine Farbe und die Bedenkzeit, und schick eine Herausforderung.",
+    "playersDesc": "Wähle jemanden aus, dazu die Farbe des Gegners und die Bedenkzeit, und schick eine Herausforderung.",
     "opponentColor": "Farbe des Gegners",
     "noPlayers": "Es gibt noch keine anderen Spieler. Bitte einen Admin, ein weiteres Konto anzulegen.",
     "send": "Herausforderung senden",

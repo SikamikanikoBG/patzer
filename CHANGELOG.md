@@ -158,6 +158,15 @@ advance, 7.Be2), including the engine line whose middle ply was the player's.
   two was turned away. The threat panel tried again; Engine Lines showed a dash
   until you moved to another position. Both retry now. Thanks @ricodotzed for
   the precise report.
+### Fixed: the README's Docker snippet works as pasted (#60)
+
+- The `docker run` and `docker compose` examples in the README and on the
+  homepage named the image `ghcr.io/SikamikanikoBG/patzer`, and Docker
+  refuses capitals in an image name. They now say
+  `ghcr.io/sikamikanikobg/patzer`. Thanks @Catif for the report.
+- **vs Friend says whose colour you pick** (#94, #102, @jay23606). The picker
+  sets the colour of the player you challenge, so it now reads *Opponent's
+  color*, and the sentence above the player list agrees.
 
 ## [7.19.0] — 2026-10-18
 
