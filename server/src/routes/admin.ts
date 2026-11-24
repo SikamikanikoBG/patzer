@@ -5,7 +5,7 @@ import { updateCheckEnabled, setUpdateCheckEnabled } from '../updates.js';
 import { requireAdmin } from '../auth/middleware.js';
 import { hashPassword } from '../auth/passwords.js';
 import { connectionHint } from '../coach/connectionHint.js';
-import { testConnection, testModel, llmUrl, llmStats, llmProvider, deepseekApiKey, type LlmProvider } from '../coach/llm.js';
+import { testConnection, testModel, llmUrl, llmStats, llmProvider, deepseekApiKey, geminiApiKey, geminiReasoningEffort, type LlmProvider } from '../coach/llm.js';
 import { StockfishEngine } from '../chess/stockfish.js';
 import { isMailerConfigured, sendMail, verifyConnection, welcomeTemplate } from '../email/mailer.js';
 import {
@@ -236,6 +236,12 @@ router.get('/system', async (c) => {
     // whether an env var is supplying it, in which case the UI field is read-only).
     deepseek_key_set: !!deepseekApiKey(),
     deepseek_env_override: !!process.env.DEEPSEEK_API_KEY,
+    gemini_url: getSetting('gemini_url') ?? '',
+    gemini_model: getSetting('gemini_model') ?? '',
+    gemini_key_set: !!geminiApiKey(),
+    gemini_env_override: !!process.env.GEMINI_API_KEY,
+    gemini_reasoning_effort: geminiReasoningEffort(),
+    gemini_reasoning_effort_env_override: !!process.env.GEMINI_REASONING_EFFORT,
     stockfish_path: getSetting('stockfish_path'),
     // Live runtime stats so admins can confirm which model the coach is
     // actually calling (the saved setting vs. what runtime resolved to may
@@ -268,7 +274,7 @@ router.get('/system', async (c) => {
 });
 
 const systemSchema = z.object({
-  llm_provider: z.enum(['ollama', 'vllm', 'deepseek', 'lmstudio']).optional(),
+  llm_provider: z.enum(['ollama', 'vllm', 'deepseek', 'lmstudio', 'gemini']).optional(),
   ollama_url: z.string().url().or(z.literal('')).optional(),
   ollama_model: z.string().optional(),
   vllm_url: z.string().url().or(z.literal('')).optional(),
@@ -280,6 +286,10 @@ const systemSchema = z.object({
   // Only written when a non-empty string is sent; empty/omitted leaves the
   // stored key untouched (so re-saving the form doesn't wipe it).
   deepseek_api_key: z.string().max(255).optional(),
+  gemini_url: z.string().url().or(z.literal('')).optional(),
+  gemini_model: z.string().optional(),
+  gemini_api_key: z.string().max(255).optional(),
+  gemini_reasoning_effort: z.enum(['none', 'low', 'medium', 'high']).optional(),
   stockfish_path: z.string().optional(),
   update_check_enabled: z.boolean().optional(),
   // Signup + email config
@@ -320,6 +330,13 @@ router.patch('/system', async (c) => {
   setStr('deepseek_url', d.deepseek_url);
   setStr('deepseek_model', d.deepseek_model);
   if (d.deepseek_api_key) setSetting('deepseek_api_key', d.deepseek_api_key);
+  setStr('gemini_url', d.gemini_url);
+  setStr('gemini_model', d.gemini_model);
+  if (d.gemini_api_key) setSetting('gemini_api_key', d.gemini_api_key);
+  // While the env var owns this one the UI field is read-only and submits the
+  // env value back; storing it would leave that value behind after the var is
+  // removed.
+  if (!process.env.GEMINI_REASONING_EFFORT) setStr('gemini_reasoning_effort', d.gemini_reasoning_effort);
   setStr('stockfish_path', d.stockfish_path);
 
   if (d.update_check_enabled !== undefined) setUpdateCheckEnabled(d.update_check_enabled);
@@ -364,8 +381,25 @@ router.post('/test/email', async (c) => {
 
 function bodyProvider(body: unknown): LlmProvider {
   const p = body && typeof body === 'object' && 'provider' in body ? (body as { provider?: unknown }).provider : undefined;
-  if (p === 'ollama' || p === 'vllm' || p === 'deepseek' || p === 'lmstudio') return p;
+  if (p === 'ollama' || p === 'vllm' || p === 'deepseek' || p === 'lmstudio' || p === 'gemini') return p;
   return llmProvider();
+}
+
+/** A trimmed non-empty string field from a test-button body, or undefined. */
+function bodyStr(body: unknown, key: string): string | undefined {
+  if (!body || typeof body !== 'object' || !(key in body)) return undefined;
+  const v = (body as Record<string, unknown>)[key];
+  return typeof v === 'string' && v.trim() ? v.trim() : undefined;
+}
+
+// The key the admin typed but hasn't saved yet, so "Test" works before "Save".
+const bodyApiKey = (body: unknown) => bodyStr(body, 'api_key');
+
+// Same enum as the saved setting — an unvalidated value would only come back as
+// a 400 from Google.
+function bodyReasoningEffort(body: unknown): string | undefined {
+  const v = bodyStr(body, 'reasoning_effort');
+  return v === 'none' || v === 'low' || v === 'medium' || v === 'high' ? v : undefined;
 }
 
 router.post('/test/ollama', async (c) => {
@@ -375,7 +409,7 @@ router.post('/test/ollama', async (c) => {
     : llmUrl();
   if (!url) return c.json({ ok: false, error: 'no_url_configured' });
   const provider = bodyProvider(body);
-  const result = await testConnection(url, provider);
+  const result = await testConnection(url, provider, bodyApiKey(body));
   if (result.ok || (provider !== 'ollama' && provider !== 'lmstudio')) return c.json(result);
   return c.json({ ...result, hint: connectionHint(url, result.error, undefined, provider) });
 });
@@ -387,12 +421,15 @@ router.post('/test/ollama-models', async (c) => {
     : llmUrl();
   if (!url) return c.json({ ok: false, error: 'no_url_configured' }, 400);
   const provider = bodyProvider(body);
-  const tags = await testConnection(url, provider);
+  const apiKey = bodyApiKey(body);
+  const tags = await testConnection(url, provider, apiKey);
   if (!tags.ok) return c.json({ ok: false, error: tags.error });
-  // Test each model serially with a 30s budget per model.
+  // Test each model serially with a 30s budget per model. Every model the host
+  // serves, as the button says — on a hosted provider that is a paid call each,
+  // which is what the UI warns about before it gets here.
   const results: Array<{ model: string; ok: boolean; latencyMs: number; sample?: string; error?: string }> = [];
   for (const m of tags.models) {
-    const r = await testModel(url, m.name, 30_000, provider);
+    const r = await testModel(url, m.name, 30_000, provider, apiKey, bodyReasoningEffort(body));
     results.push({ model: m.name, ...r });
   }
   return c.json({ ok: true, results });
