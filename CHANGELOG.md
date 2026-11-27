@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Google AI Studio (Gemini) as a coach provider
+## [7.21.0] — 2026-11-27
+
+*Merged contributions in this release — thank you, [@66Ton99](https://github.com/66Ton99).*
+
+### Google AI Studio (Gemini) as a coach provider (#107, @66Ton99)
 
 - **Gemini joins Ollama, LM Studio, vLLM and DeepSeek** in *Admin → System*. Its URL defaults to Google's
   OpenAI-compatible endpoint, so an API key from [Google AI Studio](https://aistudio.google.com/) is all it
